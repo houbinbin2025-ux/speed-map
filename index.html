@@ -111,6 +111,22 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 <body>
 
 <div class="wrap" id="home">
+  <div class="panel" id="testBar" hidden style="border-color:var(--warn)">
+    <div style="font-weight:900;color:var(--warn)">测试模式 · 这里的数据和孩子的正式进度分开，互不影响</div>
+    <div class="row"><span class="time" id="testDay"></span></div>
+    <div class="row">
+      <button class="sbtn" data-t="day+1">日期 +1 天</button>
+      <button class="sbtn" data-t="day+3">日期 +3 天</button>
+      <button class="sbtn" data-t="day0">回到真实今天</button>
+    </div>
+    <div class="row">
+      <button class="sbtn" data-t="w1y">世界 1 全部淡黄（昨天）</button>
+      <button class="sbtn" data-t="w1r">世界 1 全部淡红（3 天前）</button>
+      <button class="sbtn" data-t="w1d">世界 1 全部深红（解锁 Boss）</button>
+      <button class="sbtn" data-t="alld">全部深红（解锁末影龙）</button>
+      <button class="sbtn" data-t="reset">清空测试数据</button>
+    </div>
+  </div>
   <div class="top">
     <h1><span class="px">SPEED MAP</span>秒答地图</h1>
     <div class="sync" id="sync">正在读取进度…</div>
@@ -193,7 +209,9 @@ window.addEventListener("error", function (e) { var d = document.createElement("
 
   // ---------- 规则 ----------
   const FAST_MS = 2000, STUCK_MS = 5000, GAP_DAYS = 3;
-  const today = () => { const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  const TEST = location.hash === '#test';
+  window.addEventListener('hashchange', () => location.reload());
+  const today = () => { const d = new Date(Date.now() + (TEST ? (S.testDays || 0) * 864e5 : 0)); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
   const dayDiff = (a, b) => Math.round((new Date(b+'T00:00') - new Date(a+'T00:00')) / 864e5);
 
   // ---------- 状态 ----------
@@ -211,7 +229,7 @@ window.addEventListener("error", function (e) { var d = document.createElement("
   }
 
   // ---------- 存储：只存在这台设备的浏览器里 ----------
-  const LS = 'speedmap.v1';
+  const LS = TEST ? 'speedmap.test' : 'speedmap.v1';
   const lsGet = () => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch { return null; } };
   let canSave = true;
   function save() {
@@ -229,7 +247,7 @@ window.addEventListener("error", function (e) { var d = document.createElement("
   const $ = id => document.getElementById(id);
   const worldCards = wi => CARDS.filter(c => c.w === wi);
   const worldDone = wi => worldCards(wi).every(c => cs(c.id).lv === 3);
-  function renderHome() {
+  var renderHome = function () {
     const n = [0,0,0,0]; CARDS.forEach(c => n[cs(c.id).lv]++);
     $('stats').innerHTML =
       `<span class="chip"><i style="background:var(--lv3)"></i>深红 ${n[3]}</span>` +
@@ -472,6 +490,31 @@ function spread(arr, rnd) {
       S = Object.assign(blank(), v); save(); renderHome(); $('ioMsg').textContent = '已导入';
     } catch { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
+
+  // ---------- 测试模式 ----------
+  if (TEST) {
+    $('testBar').hidden = false;
+    const showDay = () => { $('testDay').textContent = `当前模拟日期：${today()}（比真实日期 ${S.testDays ? '晚 ' + S.testDays + ' 天' : '相同'}）`; };
+    const shift = (n) => { const d = new Date(Date.now() + ((S.testDays || 0) + n) * 864e5); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+    const setLv = (cards, lv, back) => cards.forEach(c => {
+      const st = cs(c.id); st.lv = lv; st.seen = Math.max(st.seen, 1); st.intro = true;
+      st.d = [shift(-back - 1), shift(-back), shift(-back)].slice(0, lv);
+    });
+    $('testBar').addEventListener('click', e => {
+      const b = e.target.closest('[data-t]'); if (!b) return;
+      const t = b.dataset.t, w1 = worldCards(0);
+      if (t === 'day+1') S.testDays = (S.testDays || 0) + 1;
+      else if (t === 'day+3') S.testDays = (S.testDays || 0) + 3;
+      else if (t === 'day0') S.testDays = 0;
+      else if (t === 'w1y') setLv(w1, 1, 1);
+      else if (t === 'w1r') setLv(w1, 2, 3);
+      else if (t === 'w1d') setLv(w1, 3, 0);
+      else if (t === 'alld') setLv(CARDS, 3, 0);
+      else if (t === 'reset') S = blank();
+      save(); renderHome(); showDay();
+    });
+    const origRender = renderHome; renderHome = function () { origRender(); showDay(); };
+  }
 
   boot();
 })();
