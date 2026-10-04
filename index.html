@@ -118,7 +118,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
   <div class="stats" id="stats"></div>
   <div class="hint" id="hint" hidden></div>
   <div class="modes">
-    <button class="mbtn main" id="btnDaily"><b>每日练习</b><span>20 题随机 · 待升级的卡优先 · 没练会的卡每张出 2 次 · 开头结尾都是会的</span></button>
+    <button class="mbtn main" id="btnDaily"><b>单次练习</b><span>题数不限，想停就点「结束」· 结束后显示本次总结 · 待升级的卡优先，开头都是会的</span></button>
     <button class="mbtn" id="btnScan"><b>摸底（可选）</b><span>想一次把某个世界全过一遍时，点地图里那个世界的「摸底」</span></button>
   </div>
   <div class="legend">
@@ -238,7 +238,7 @@ window.addEventListener("error", function (e) { var d = document.createElement("
       `<span class="chip">共 ${CARDS.length} 张</span>`;
     const anyIntro = CARDS.some(c => cs(c.id).seen > 0);
     $('hint').hidden = anyIntro;
-    $('hint').textContent = '第一次用：直接点「每日练习」。第一轮会从世界 1 随机出 20 题，会的卡当场点亮。';
+    $('hint').textContent = '第一次用：直接点「单次练习」。会先从世界 1 随机出题，会的卡当场点亮。';
     const t = today(), todayUp = new Set((S.log[t]||{}).ups || []);
     const allDone = WORLDS.every((w, i) => worldDone(i));
     $('map').innerHTML = WORLDS.map((w, wi) => {
@@ -316,13 +316,22 @@ function spread(arr, rnd) {
   // ---------- 练习流程 ----------
   let P = null; // {mode, title, deck, warm, i, t0, phase, ms, wrong, results:[], ups:[], misses}
   function start(mode, title, deck, warm, extra) {
-    P = {mode, title, deck, warm: warm || [], i:0, phase:'q', results:[], ups:[], misses:0, ...extra};
+    P = {mode, title, deck, warm: warm || [], i:0, phase:'q', results:[], ups:[], misses:0, startAt: Date.now(), ...extra};
     $('home').hidden = true; $('summary').hidden = true; $('play').hidden = false;
     $('pTitle').textContent = title;
+    $('btnQuit').textContent = mode === 'daily' ? '结束' : '退出';
     try { navigator.wakeLock?.request('screen').then(l => P && (P.lock = l)).catch(()=>{}); } catch {}
     showQ();
   }
-  function startDaily() { const deck = buildDaily(S, CARDS, today()); start('daily', '每日练习', deck, CARDS.filter(c => cs(c.id).lv >= 1)); }
+  function startDaily() { start('daily', '单次练习', buildDaily(S, CARDS, today()), CARDS.filter(c => cs(c.id).lv >= 1)); }
+  // 单次练习不设题数：一批出完就按最新进度再出一批，开头避开刚出过的卡
+  function moreCards() {
+    const recent = new Set(P.deck.slice(-3).map(c => c.id));
+    const batch = buildDaily(S, CARDS, today());
+    for (let k = 0; k < batch.length && recent.has(batch[0].id); k++) batch.push(batch.shift());
+    P.deck.push(...batch);
+    P.warm = CARDS.filter(c => cs(c.id).lv >= 1);
+  }
   function startScan(wi) { const d = shuffle(worldCards(wi).slice()); start('scan', '摸底 · ' + WORLDS[wi].name, d, []); }
   function startBoss(key) {
     let pool, n, title;
@@ -332,6 +341,11 @@ function spread(arr, rnd) {
     start('boss', title, deck.slice(0, n), [], {bossKey:key});
   }
   function renderDots() {
+    if (P.mode === 'daily') {
+      const f = P.results.filter(r => r && r.fast).length;
+      $('dots').innerHTML = `<span class="time">第 ${P.i + 1} 题 · ⚡ 秒答 ${f}</span>`;
+      return;
+    }
     $('dots').innerHTML = P.deck.map((c, k) => {
       const r = P.results[k];
       const cls = k === P.i ? 'cur' : r ? (r.wrong ? 'wrong' : r.fast ? 'fast' : 'done') : '';
@@ -381,11 +395,12 @@ function spread(arr, rnd) {
     P.misses = stuck ? P.misses + 1 : 0;
     if (P.mode === 'daily' && P.misses >= 2 && P.i + 1 < P.deck.length && P.warm.length) {
       const easy = P.warm.find(w => cs(w.id).lv >= 2) || P.warm[0];
-      P.deck.splice(P.i + 1, 0, easy); P.deck.pop();
+      P.deck.splice(P.i + 1, 0, easy);
       P.misses = 0;
     }
     P.i++;
-    if (P.i >= P.deck.length) finish(); else showQ();
+    if (P.i >= P.deck.length) { if (P.mode === 'daily') moreCards(); else return finish(); }
+    showQ();
   }
   function advance() { if (!P) return; if (P.phase === 'q') reveal(); else commit(); }
 
@@ -403,27 +418,37 @@ function spread(arr, rnd) {
 
   function finish(quit) {
     const done = P.results.filter(Boolean), fast = done.filter(r => r.fast).length;
-    try { P.lock?.release(); } catch {}
+    try { P.lock && P.lock.release(); } catch (e) {}
+    const goHome = () => { $('summary').hidden = true; $('play').hidden = true; $('home').hidden = false; P = null; renderHome(); window.scrollTo(0,0); };
+    if (!done.length) return goHome();
+    const wrong = done.filter(r => r.wrong).length;
+    const mins = Math.max(1, Math.round((Date.now() - P.startAt) / 60000));
+    const okTimes = done.filter(r => !r.wrong).map(r => r.ms);
+    const avg = okTimes.length ? (okTimes.reduce((a, b) => a + b, 0) / okTimes.length / 1000).toFixed(1) : '–';
+    const blk = id => { const c = BYID[id]; return `<div class="b l${cs(id).lv}">${c.a}${c.op==='+'?'+':'−'}${c.b}</div>`; };
+    const lastOf = {}; done.forEach(r => { lastOf[r.id] = r; });
+    const again = Object.values(lastOf).filter(r => !r.fast).map(r => r.id).slice(0, 12); // 按这次最后一次作答判断
     let bossLine = '';
     if (P.mode === 'boss' && !quit) {
       const need = Math.ceil(P.deck.length * 0.9);
       if (fast >= need) { S.boss[P.bossKey] = today(); save(); bossLine = `<div class="badge fast">Boss 被打败了！</div>`; }
       else bossLine = `<div class="time">秒答 ${need} 题就能打败 Boss，想打随时再来</div>`;
     }
-    const ups = P.ups.map(id => { const c = BYID[id]; return `<div class="b l${cs(id).lv}">${c.a}${c.op==='+'?'+':'−'}${c.b}</div>`; }).join('');
-    const gem = P.mode === 'daily' && !quit ? `<div class="gem">今天的口算练完了，去贴 1 颗珠子</div>` : '';
+    const title = P.mode === 'daily' ? '本次练习总结' : quit ? '先练到这里' : '练完啦';
+    const gem = P.mode === 'daily' && mins >= 10 ? `<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>` : '';
     $('sumBody').innerHTML = `
-      <h2>${quit ? '先练到这里' : '练完啦'}</h2>
+      <h2>${title}</h2>
       <div class="big">⚡ ${fast}<span style="font-size:28px;color:var(--mute)"> / ${done.length}</span></div>
-      <div class="time">秒答的题数</div>
+      <div class="time">秒答 ${fast} 题 · 共答 ${done.length} 题 · 答错 ${wrong} 题 · 用时约 ${mins} 分钟 · 答对的平均 ${avg} 秒</div>
       ${bossLine}
-      ${ups ? `<div style="font-weight:900">今天升级的方块（去墙上的地图涂上这个颜色）</div><div class="ups">${ups}</div>` : '<div class="time">今天没有方块升级，明天继续</div>'}
+      ${P.ups.length ? `<div style="font-weight:900">这次升级的方块（去墙上的地图涂上这个颜色）</div><div class="ups">${P.ups.map(blk).join('')}</div>` : '<div class="time">这次没有方块升级</div>'}
+      ${again.length ? `<div style="font-weight:900">这几张下次多练练</div><div class="ups">${again.map(blk).join('')}</div>` : ''}
       ${gem}
       <div class="row" style="justify-content:center">
         <button class="mbtn main" id="sumHome" style="min-width:200px;text-align:center"><b>回到地图</b></button>
       </div>`;
     $('play').hidden = true; $('summary').hidden = false;
-    $('sumHome').addEventListener('click', () => { $('summary').hidden = true; $('home').hidden = false; P = null; renderHome(); window.scrollTo(0,0); });
+    $('sumHome').addEventListener('click', goHome);
   }
 
   // ---------- 备份 ----------
