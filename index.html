@@ -136,15 +136,16 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
   <div class="stats" id="stats"></div>
   <div class="hint" id="hint" hidden></div>
   <div class="modes">
-    <button class="mbtn main" id="btnDaily"><b>单次练习</b><span>题数不限，想停就点「结束」· 结束后显示本次总结 · 待升级的卡优先，开头都是会的</span></button>
-    <button class="mbtn" id="btnScan"><b>摸底（可选）</b><span>想一次把某个世界全过一遍时，点地图里那个世界的「摸底」</span></button>
+    <button class="mbtn main" data-series="add"><b>加法练习</b><span>只出加法 · 题数不限，点「结束」看总结</span></button>
+    <button class="mbtn main" data-series="sub"><b>减法练习</b><span>只出减法 · 题数不限，点「结束」看总结</span></button>
+    <button class="mbtn main" data-series="mix"><b>加减混合</b><span>加法减法一起出 · 题数不限，点「结束」看总结</span></button>
   </div>
   <div class="legend">
     <span><i style="background:var(--lv0)"></i>还没秒答</span>
     <span><i style="background:var(--lv1)"></i>淡黄：第 1 天秒答</span>
     <span><i style="background:var(--lv2)"></i>淡红：另一天又秒答</span>
     <span><i style="background:var(--lv3)"></i>深红：隔 3 天以上再秒答</span>
-    <span>秒答 = 2 秒内说对</span>
+    <span>秒答 = 2 秒内说对 · 每个世界右边的「摸底」可以把整个世界过一遍</span>
   </div>
   <div id="map"></div>
   <div class="tools">
@@ -262,7 +263,7 @@ window.addEventListener("error", function (e) { var d = document.createElement("
       `<span class="chip">共 ${CARDS.length} 张</span>`;
     const anyIntro = CARDS.some(c => cs(c.id).seen > 0);
     $('hint').hidden = anyIntro;
-    $('hint').textContent = '第一次用：直接点「单次练习」。会先从世界 1 随机出题，会的卡当场点亮。';
+    $('hint').textContent = '第一次用：先点「加法练习」。会从世界 1 随机出题，会的卡当场点亮。三个系列共用一张地图。';
     const t = today(), todayUp = new Set((S.log[t]||{}).ups || []);
     const allDone = WORLDS.every((w, i) => worldDone(i));
     $('map').innerHTML = WORLDS.map((w, wi) => {
@@ -285,7 +286,6 @@ window.addEventListener("error", function (e) { var d = document.createElement("
     if (s) startScan(+s.dataset.scan);
     else if (b && !b.disabled) startBoss(b.dataset.boss);
   });
-  $('btnScan').addEventListener('click', () => { $('map').scrollIntoView({behavior:'smooth'}); });
 
   // ---------- 出题 ----------
   const shuffle = (a, rnd = Math.random) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
@@ -358,14 +358,24 @@ function spread(arr, rnd) {
     const sec = Math.ceil(left / 1000);
     $('timer').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
   }
-  function startDaily() { start('daily', '单次练习', buildDaily(S, CARDS, today()), CARDS.filter(c => cs(c.id).lv >= 1)); }
+  // 三个练习系列：只决定出哪些卡；进度按卡记录，三个系列共用一张地图
+  const SERIES = {
+    add: {name: '加法练习', pool: CARDS.filter(c => c.op === '+')},
+    sub: {name: '减法练习', pool: CARDS.filter(c => c.op === '-')},
+    mix: {name: '加减混合', pool: CARDS},
+  };
+  function startDaily(key) {
+    const se = SERIES[key];
+    start('daily', se.name, buildDaily(S, se.pool, today()), se.pool.filter(c => cs(c.id).lv >= 1), {series: key});
+  }
   // 单次练习不设题数：一批出完就按最新进度再出一批，开头避开刚出过的卡
   function moreCards() {
     const recent = new Set(P.deck.slice(-3).map(c => c.id));
-    const batch = buildDaily(S, CARDS, today());
+    const pool = SERIES[P.series].pool;
+    const batch = buildDaily(S, pool, today());
     for (let k = 0; k < batch.length && recent.has(batch[0].id); k++) batch.push(batch.shift());
     P.deck.push(...batch);
-    P.warm = CARDS.filter(c => cs(c.id).lv >= 1);
+    P.warm = pool.filter(c => cs(c.id).lv >= 1);
   }
   function startScan(wi) { const d = shuffle(worldCards(wi).slice()); start('scan', '摸底 · ' + WORLDS[wi].name, d, []); }
   function startBoss(key) {
@@ -444,7 +454,7 @@ function spread(arr, rnd) {
   $('btnNext').addEventListener('click', e => { e.stopPropagation(); if (P && P.phase === 'a') commit(); });
   $('btnWrong').addEventListener('click', e => { e.stopPropagation(); toggleWrong(); });
   $('btnQuit').addEventListener('click', () => finish(true));
-  $('btnDaily').addEventListener('click', startDaily);
+  document.querySelectorAll('[data-series]').forEach(b => b.addEventListener('click', () => startDaily(b.dataset.series)));
   document.addEventListener('keydown', e => {
     if (!P || $('play').hidden) return;
     if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); advance(); }
@@ -471,7 +481,7 @@ function spread(arr, rnd) {
       if (fast >= need) { S.boss[P.bossKey] = today(); save(); bossLine = `<div class="badge fast">Boss 被打败了！</div>`; }
       else bossLine = `<div class="time">秒答 ${need} 题就能打败 Boss，想打随时再来</div>`;
     }
-    const title = P.mode === 'daily' ? '本次练习总结' : quit ? '先练到这里' : '练完啦';
+    const title = P.mode === 'daily' ? SERIES[P.series].name + ' · 本次总结' : quit ? '先练到这里' : '练完啦';
     const gem = P.mode === 'daily' && Date.now() - P.startAt >= GOAL_MS ? `<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>` : '';
     $('sumBody').innerHTML = `
       <h2>${title}</h2>
