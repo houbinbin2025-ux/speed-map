@@ -380,10 +380,11 @@ function spread(arr, rnd) {
     $('pfoot').hidden = true;
     renderDots();
     // 等题目真正画到屏幕上再开始计时
-    requestAnimationFrame(() => requestAnimationFrame(() => { P.t0 = performance.now(); }));
+    P.t0 = performance.now(); // 先记下起点，画面刷新后再校准，保证用时永远有效
+    const myI = P.i; requestAnimationFrame(() => requestAnimationFrame(() => { if (P && P.i === myI && P.phase === 'q') P.t0 = performance.now(); }));
   }
   function reveal() {
-    P.ms = performance.now() - P.t0;
+    P.ms = Math.max(0, performance.now() - P.t0);
     P.phase = 'a';
     const c = P.deck[P.i];
     $('q').innerHTML = `${show(c)} = <span class="ans">${c.ans}</span>`;
