@@ -6,8 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="秒答地图">
 <title>秒答地图</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Press+Start+2P&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
 /* 布局：一屏工具。首页 = 状态条 + 模式按钮 + 7 个世界地图；练习页 = 全屏大卡片，点任意处推进 */
 :root{
@@ -20,10 +18,11 @@
   --grass:#5d9b3a;     /* 主强调：草方块绿 */
   --lv0:#3a3e47; --lv1:#fff3b0; --lv2:#f6a5a0; --lv3:#b3261e;
   --ok:#7bd88f; --warn:#f2c14e;
-  --f-num:"Nunito", "Arial Rounded MT Bold", system-ui, sans-serif;
-  --f-px:"Press Start 2P", ui-monospace, monospace;
-  --f-cn:"Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+  --f-num:ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "PingFang SC", system-ui, sans-serif;
+  --f-px:ui-monospace, Menlo, monospace;
+  --f-cn:"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
 }
+[hidden]{display:none!important}
 html,body{height:100%}
 body{background:var(--cave);color:var(--ink);font-family:var(--f-cn);margin:0;-webkit-tap-highlight-color:transparent}
 *{box-sizing:border-box}
@@ -168,6 +167,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 </div>
 
 <script>
+window.addEventListener("error", function (e) { var d = document.createElement("div"); d.style.cssText = "position:fixed;left:0;right:0;bottom:0;background:#8a2f27;color:#fff;padding:12px 16px;font:14px sans-serif;z-index:99"; d.textContent = "页面出错了，请截图发给维护的人：" + (e.message || e); document.body.appendChild(d); });
 (() => {
   // ---------- 卡片定义（与打印版完全一致：7 个世界 110 张） ----------
   const WORLDS = [
@@ -199,7 +199,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
   // ---------- 状态 ----------
   const blank = () => ({v:1, savedAt:0, cards:{}, boss:{}, log:{}});
   let S = blank();
-  const cs = id => (S.cards[id] ||= {lv:0, intro:false, d:[], seen:0, last:''});
+  const cs = id => (S.cards[id] = S.cards[id] || {lv:0, intro:false, d:[], seen:0, last:''});
 
   // 升级：2 秒内答对时调用；返回是否升级
   function tryUp(id) {
@@ -372,9 +372,9 @@ function spread(arr, rnd) {
     const st = cs(c.id); st.seen++; st.last = new Date().toISOString(); st.intro = true;
     let up = false;
     if (fast) up = tryUp(c.id);
-    if (up) { P.ups.push(c.id); const L = (S.log[today()] ||= {ups:[], n:0}); if (!L.ups.includes(c.id)) L.ups.push(c.id); }
+    if (up) { P.ups.push(c.id); const L = (S.log[today()] = S.log[today()] || {ups:[], n:0}); if (!L.ups.includes(c.id)) L.ups.push(c.id); }
     P.results[P.i] = {id:c.id, fast, wrong:P.wrong, ms:P.ms};
-    (S.log[today()] ||= {ups:[], n:0}).n++;
+    (S.log[today()] = S.log[today()] || {ups:[], n:0}).n++;
     save();
     // 连着两张卡住，下一张换成会的卡
     const stuck = P.wrong || P.ms > STUCK_MS;
