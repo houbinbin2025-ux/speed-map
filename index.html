@@ -79,6 +79,8 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .pbar{display:flex;align-items:center;gap:10px;padding:12px 16px}
 .pbar .ttl{font-weight:900;font-size:15px}
 .dots{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.timer{font-size:13px;color:var(--mute);opacity:.7;font-variant-numeric:tabular-nums;white-space:nowrap}
+.timer.done{color:var(--ok);opacity:.9}
 .dots i{width:12px;height:12px;border:2px solid #000;background:var(--stone-hi)}
 .dots i.cur{background:var(--ink)}
 .dots i.fast{background:var(--ok)}
@@ -166,6 +168,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
     <button class="sbtn" id="btnQuit">退出</button>
     <span class="ttl" id="pTitle"></span>
     <div class="dots" id="dots"></div>
+    <span class="timer" id="timer" hidden></span>
   </div>
   <div class="stage" id="stage">
     <div class="wname" id="wname"></div>
@@ -338,8 +341,19 @@ function spread(arr, rnd) {
     $('home').hidden = true; $('summary').hidden = true; $('play').hidden = false;
     $('pTitle').textContent = title;
     $('btnQuit').textContent = mode === 'daily' ? '结束' : '退出';
+    clearInterval(timerId); $('timer').hidden = mode !== 'daily'; $('timer').classList.remove('done');
+    if (mode === 'daily') { tick(); timerId = setInterval(tick, 1000); }
     try { navigator.wakeLock?.request('screen').then(l => P && (P.lock = l)).catch(()=>{}); } catch {}
     showQ();
+  }
+  // 10 分钟倒计时：只做提示，到点不打断练习
+  const GOAL_MS = 10 * 60 * 1000; let timerId = null;
+  function tick() {
+    if (!P) return clearInterval(timerId);
+    const left = GOAL_MS - (Date.now() - P.startAt);
+    if (left <= 0) { $('timer').textContent = '10 分钟 ✓'; $('timer').classList.add('done'); clearInterval(timerId); return; }
+    const sec = Math.ceil(left / 1000);
+    $('timer').textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
   }
   function startDaily() { start('daily', '单次练习', buildDaily(S, CARDS, today()), CARDS.filter(c => cs(c.id).lv >= 1)); }
   // 单次练习不设题数：一批出完就按最新进度再出一批，开头避开刚出过的卡
@@ -437,6 +451,7 @@ function spread(arr, rnd) {
 
   function finish(quit) {
     const done = P.results.filter(Boolean), fast = done.filter(r => r.fast).length;
+    clearInterval(timerId);
     try { P.lock && P.lock.release(); } catch (e) {}
     const goHome = () => { $('summary').hidden = true; $('play').hidden = true; $('home').hidden = false; P = null; renderHome(); window.scrollTo(0,0); };
     if (!done.length) return goHome();
@@ -454,7 +469,7 @@ function spread(arr, rnd) {
       else bossLine = `<div class="time">秒答 ${need} 题就能打败 Boss，想打随时再来</div>`;
     }
     const title = P.mode === 'daily' ? '本次练习总结' : quit ? '先练到这里' : '练完啦';
-    const gem = P.mode === 'daily' && mins >= 10 ? `<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>` : '';
+    const gem = P.mode === 'daily' && Date.now() - P.startAt >= GOAL_MS ? `<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>` : '';
     $('sumBody').innerHTML = `
       <h2>${title}</h2>
       <div class="big">⚡ ${fast}<span style="font-size:28px;color:var(--mute)"> / ${done.length}</span></div>
