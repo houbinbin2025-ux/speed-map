@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>首页</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <div style="font-size: 22px; font-weight: 900; letter-spacing: 1px; white-space: nowrap">秒答地图</div>
+    <div style="display: flex; gap: 6px; margin-left: 4px">
+      <a href="Main.dc.html" style="background: #ecebe4; color: #1b1d22; border: 2px solid #000; padding: 8px 10px; font-weight: 900; font-size: 15px; white-space: nowrap">10 以内</a>
+      <a href="Main.dc.html" style="background: #2a2d34; color: #b8bac3; border: 2px solid #000; padding: 8px 10px; font-weight: 900; font-size: 15px; white-space: nowrap">20 以内</a>
+      <a href="Main.dc.html" style="background: #2a2d34; color: #b8bac3; border: 2px solid #000; padding: 8px 10px; font-weight: 900; font-size: 15px; white-space: nowrap">50 以内</a>
+      <a href="Main.dc.html" style="background: #2a2d34; color: #b8bac3; border: 2px solid #000; padding: 8px 10px; font-weight: 900; font-size: 15px; white-space: nowrap">100 以内</a>
+    </div>
+    <div style="flex-grow: 1"></div>
+    <div style="font-size: 12px; color: #f2c14e; border: 1px dashed #f2c14e; padding: 4px 8px; white-space: nowrap">预览版 · 不计入正式进度</div>
+    <div style="font-size: 12px; color: #9a9ca6; white-space: nowrap">9 天没备份</div>
+    <a href="Parent.dc.html" aria-label="家长区" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: #2a2d34; border: 2px solid #000">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8bac3" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
+    </a>
+  </div>
+  <div style="display: flex; gap: 14px; flex-grow: 1; min-height: 0">
+    <div style="width: 250px; display: flex; flex-direction: column; gap: 8px">
+      <a href="Calibrate.dc.html" style="background: #3d7524; color: #ffffff; border: 3px solid #000; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; box-shadow: inset -4px -4px 0 rgba(0,0,0,.3)">
+        <span style="font-size: 22px; font-weight: 900">加法练习</span>
+        <span style="font-size: 13px; color: #e6f5dc">只出加法</span>
+      </a>
+      <a href="Play.dc.html" style="background: #3d7524; color: #ffffff; border: 3px solid #000; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; box-shadow: inset -4px -4px 0 rgba(0,0,0,.3)">
+        <span style="font-size: 22px; font-weight: 900">减法练习</span>
+        <span style="font-size: 13px; color: #e6f5dc">只出减法</span>
+      </a>
+      <a href="Play.dc.html" style="background: #3d7524; color: #ffffff; border: 3px solid #000; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; box-shadow: inset -4px -4px 0 rgba(0,0,0,.3)">
+        <span style="font-size: 22px; font-weight: 900">加减混合</span>
+        <span style="font-size: 13px; color: #e6f5dc">加法减法一起出</span>
+      </a>
+      <a href="Mistakes.dc.html" style="background: #2a2d34; color: #ecebe4; border: 3px solid #000; padding: 12px 16px; display: flex; align-items: center; gap: 10px; box-shadow: inset -4px -4px 0 rgba(0,0,0,.3)">
+        <span style="font-size: 20px; font-weight: 900">错题本</span>
+        <span style="flex-grow: 1"></span>
+        <span style="background: #b3261e; color: #ffffff; font-family: Nunito, sans-serif; font-weight: 900; font-size: 16px; min-width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; padding: 0 6px">3</span>
+      </a>
+    </div>
+    <div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; gap: 8px; align-items: center; font-size: 13px; color: #b8bac3">
+        <span style="display: flex; align-items: center; gap: 5px; background: #2a2d34; border: 2px solid #000; padding: 4px 8px"><span style="width: 12px; height: 12px; background: #b3261e; border: 2px solid #000"></span>深红 31</span>
+        <span style="display: flex; align-items: center; gap: 5px; background: #2a2d34; border: 2px solid #000; padding: 4px 8px"><span style="width: 12px; height: 12px; background: #f6a5a0; border: 2px solid #000"></span>淡红 18</span>
+        <span style="display: flex; align-items: center; gap: 5px; background: #2a2d34; border: 2px solid #000; padding: 4px 8px"><span style="width: 12px; height: 12px; background: #fff3b0; border: 2px solid #000"></span>淡黄 12</span>
+        <span>共 110 张 · 秒答 = 又对又快</span>
+      </div>
+      <div style="flex-grow: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px">
+        <sc-for list="{{worlds}}" as="w" hint-placeholder-count="3">
+          <div style="background: #2a2d34; border: 2px solid #000; padding: 4px 10px 6px; display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 14px; font-weight: 900">{{w.name}}</span>
+              <span style="font-size: 12px; color: #b8bac3">{{w.count}}</span>
+              <span style="flex-grow: 1"></span>
+              <a href="Play.dc.html" style="background: #3a3e47; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 14px; font-weight: 700">摸底</a>
+              <span style="background: #5a1f1a; color: #ffd9d4; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 14px; font-weight: 700; opacity: .45">Boss 关</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px">
+              <sc-for list="{{w.blocks}}" as="b" hint-placeholder-count="10">
+                <div style="{{b.style}}">{{b.t}}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = 'height: 30px; border: 2px solid #000; display: flex; align-items: center; justify-content: center; font-family: Nunito, sans-serif; font-weight: 900; font-size: 14px; ';
+    const col = { 0: 'background: #3a3e47; color: #b8bac3;', 1: 'background: #fff3b0; color: #4a3d00;', 2: 'background: #f6a5a0; color: #5a1410;', 3: 'background: #b3261e; color: #ffffff;' };
+    const mk = (list) => list.map(([t, lv]) => ({ t, style: base + col[lv] }));
+    return {
+      worlds: [
+        { name: '世界 1 · 草地', count: '深红 10/12', blocks: mk([['1+1',3],['1+2',3],['2+1',3],['1+3',3],['3+1',3],['2+2',3],['2−1',3],['3−1',3],['3−2',3],['4−1',3]]) },
+        { name: '世界 2 · 森林', count: '深红 6/10', blocks: mk([['1+5',3],['2+4',3],['3+3',2],['4+2',2],['5+1',3],['6−1',3],['6−2',1],['6−3',2],['6−4',3],['6−5',1]]) },
+        { name: '世界 3 · 沙漠', count: '深红 1/12', blocks: mk([['1+6',2],['2+5',1],['3+4',0],['4+3',1],['5+2',0],['6+1',3],['7−1',1],['7−2',0],['7−3',0],['7−4',0]]) }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

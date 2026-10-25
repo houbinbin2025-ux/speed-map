@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>写对但不算秒答</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; gap: 16px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="Summary.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+      <span style="font-size: 14px; font-weight: 700">加法练习</span>
+      <span style="flex-grow: 1"></span>
+      <span style="font-size: 13px; color: #9a9ca6">还剩 6:09</span>
+    </div>
+    <div style="font-size: 14px; color: #b8bac3">第 7 题 · ⚡ 秒答 5</div>
+    <div style="align-self: flex-start; background: #b8921c; color: #ffffff; border: 2px solid #000; padding: 4px 10px; font-size: 14px; font-weight: 700">世界 3 · 沙漠</div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px">
+      <div style="font-family: Nunito, sans-serif; font-weight: 900; font-size: 62px; line-height: 1; white-space: nowrap">8 + 5 =&nbsp;<span style="color: #f2c14e">13</span></div>
+      <div style="font-size: 34px; font-weight: 900; color: #ecebe4">✓ 写对了</div>
+      <div style="font-size: 15px; color: #b8bac3">4.6 秒 · 下次再快一点</div>
+    </div>
+    <div style="font-size: 13px; color: #9a9ca6">慢了、或靠「你写的是？」认出来时都显示这页：算写对，不算秒答，方块不升级</div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+    <a href="Play.dc.html" aria-label="手写板（原型：点一下进入下一题）" style="flex-grow: 1; position: relative; display: block; background-color: #f4ecd8; background-image: linear-gradient(#e3d7b9 1px, transparent 1px); background-size: 100% 48px; border: 3px solid #000; border-radius: 10px; overflow: hidden">
+      <svg width="100%" height="100%" viewBox="0 0 500 340" role="img" aria-label="孩子写的 13，被识别为正确">
+        <path d="M150 112 L182 84 L184 262" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M245 105 C270 78 332 82 330 122 C328 150 295 160 278 165 C308 166 340 182 338 222 C335 268 268 280 236 248" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </a>
+    <div style="display: flex; gap: 10px; align-items: center; height: 52px">
+      <span style="font-size: 14px; color: #b8bac3">马上进入下一题…</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

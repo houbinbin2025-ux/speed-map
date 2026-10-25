@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>答错 · 描一遍</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; gap: 16px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="Summary.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+      <span style="font-size: 14px; font-weight: 700">加法练习</span>
+      <span style="flex-grow: 1"></span>
+      <span style="font-size: 13px; color: #9a9ca6">还剩 6:05</span>
+    </div>
+    <div style="font-size: 14px; color: #b8bac3">第 7 题 · ⚡ 秒答 5</div>
+    <div style="align-self: flex-start; background: #b8921c; color: #ffffff; border: 2px solid #000; padding: 4px 10px; font-size: 14px; font-weight: 700">世界 3 · 沙漠</div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px">
+      <div style="font-family: Nunito, sans-serif; font-weight: 900; font-size: 62px; line-height: 1; white-space: nowrap">8 + 5 =&nbsp;<span style="color: #f2c14e">13</span></div>
+      <div style="font-size: 28px; font-weight: 900; color: #ffb4a8">这题再练一下</div>
+      <div style="font-size: 15px; color: #b8bac3">你写的是 18 · 已放进错题本，明天再来</div>
+      <div style="font-size: 13px; color: #9a9ca6; line-height: 1.5">点「不会」时这行写：没关系，记住它<br>这一批连着第 2 道错题起，不用描</div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+    <a href="Play.dc.html" aria-label="描字板（原型：点一下进入下一题）" style="flex-grow: 1; position: relative; display: block; background-color: #f4ecd8; background-image: linear-gradient(#e3d7b9 1px, transparent 1px); background-size: 100% 48px; border: 3px solid #000; border-radius: 10px; overflow: hidden">
+      <div style="position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-54%); text-align: center; font-family: Nunito, sans-serif; font-weight: 900; font-size: 230px; line-height: 1; color: #ddd0ae; letter-spacing: 10px">13</div>
+      <svg width="100%" height="100%" viewBox="0 0 500 340" style="position: absolute; left: 0; top: 0" role="img" aria-label="孩子正在沿着淡色的 13 描写">
+        <path d="M158 92 L190 66 L190 160" fill="none" stroke="#2b2b2b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <div style="position: absolute; left: 0; right: 0; top: 10px; text-align: center; font-size: 18px; font-weight: 900; color: #5a4a20">照着描一遍</div>
+    </a>
+    <div style="display: flex; gap: 10px; align-items: center; height: 52px">
+      <span style="font-size: 14px; color: #b8bac3">描一笔就继续 · 或 3 秒后自动下一题</span>
+      <span style="flex-grow: 1"></span>
+      <span style="width: 120px; height: 10px; background: #2a2d34; border: 2px solid #000"><span style="display: block; width: 60%; height: 100%; background: #9a9ca6"></span></span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>识别确认</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; gap: 16px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="Summary.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+      <span style="font-size: 14px; font-weight: 700">加法练习</span>
+      <span style="flex-grow: 1"></span>
+      <span style="font-size: 13px; color: #9a9ca6">还剩 6:12</span>
+    </div>
+    <div style="font-size: 14px; color: #b8bac3">第 7 题 · ⚡ 秒答 5</div>
+    <div style="align-self: flex-start; background: #b8921c; color: #ffffff; border: 2px solid #000; padding: 4px 10px; font-size: 14px; font-weight: 700">世界 3 · 沙漠</div>
+    <div style="flex-grow: 1; display: flex; align-items: center">
+      <div style="font-family: Nunito, sans-serif; font-weight: 900; font-size: 92px; line-height: 1; letter-spacing: 2px; white-space: nowrap">8 + 5 =</div>
+    </div>
+    <div style="font-size: 14px; color: #b8bac3">没看清你写的，帮我选一下</div>
+  </div>
+  <div style="flex-grow: 1; position: relative; display: flex; flex-direction: column; gap: 8px">
+    <div style="flex-grow: 1; position: relative; background-color: #f4ecd8; background-image: linear-gradient(#e3d7b9 1px, transparent 1px); background-size: 100% 48px; border: 3px solid #000; border-radius: 10px; overflow: hidden">
+      <svg width="100%" height="100%" viewBox="0 0 500 340" aria-hidden="true" style="opacity: .35">
+        <path d="M150 112 L182 84 L184 262" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M250 110 C270 80 330 85 326 125 C322 150 290 158 280 168 C300 160 342 175 336 225 C330 268 262 278 240 240 C232 215 262 180 282 168" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 400px; background: #2a2d34; border: 3px solid #000; box-shadow: 0 8px 0 rgba(0,0,0,.35); padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; align-items: center">
+        <div style="font-size: 20px; font-weight: 900; display: flex; align-items: center; gap: 8px">你写的是
+          <span style="font-family: Nunito, sans-serif; font-size: 34px">1</span>
+          <span style="width: 30px; height: 38px; border: 3px dashed #f2c14e"></span>
+          <span>？</span>
+        </div>
+        <div style="font-size: 15px; color: #b8bac3">虚线这一位是哪个？</div>
+        <div style="display: flex; gap: 14px">
+          <a href="CorrectSlow.dc.html" style="width: 110px; height: 84px; display: flex; align-items: center; justify-content: center; background: #ecebe4; color: #1b1d22; border: 3px solid #000; font-family: Nunito, sans-serif; font-weight: 900; font-size: 54px">3</a>
+          <a href="Wrong.dc.html" style="width: 110px; height: 84px; display: flex; align-items: center; justify-content: center; background: #ecebe4; color: #1b1d22; border: 3px solid #000; font-family: Nunito, sans-serif; font-weight: 900; font-size: 54px">8</a>
+        </div>
+        <a href="Play.dc.html" style="font-size: 16px; font-weight: 700; color: #ecebe4; min-height: 48px; display: flex; align-items: center; padding: 0 18px; border: 2px solid #3a3e47">都不是，我重写</a>
+      </div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; height: 52px">
+      <span style="font-size: 12px; color: #9a9ca6">两个选项只看笔迹像什么，不看答案；选对算写对，但这题不算秒答</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

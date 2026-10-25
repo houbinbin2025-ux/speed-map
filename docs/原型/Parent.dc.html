@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>家长区</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <a href="Main.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">返回</a>
+    <span style="font-size: 20px; font-weight: 900">家长区</span>
+    <span style="font-size: 13px; color: #b8bac3">首页右上角齿轮长按 2 秒进入，防止孩子误点</span>
+  </div>
+  <div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+    <div style="background: #2a2d34; border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 16px; font-weight: 900">进度备份</div>
+      <div style="background: #3b3420; border: 2px solid #f2c14e; padding: 8px 10px; font-size: 14px; line-height: 1.5">上次备份是 <b>9 天前</b>（10月16日）<br>建议每周备份一次</div>
+      <a href="Parent.dc.html" style="height: 46px; display: flex; align-items: center; justify-content: center; background: #3a3e47; border: 2px solid #000; font-size: 15px; font-weight: 700">导出进度（复制到备忘录）</a>
+      <a href="Parent.dc.html" style="height: 46px; display: flex; align-items: center; justify-content: center; background: #3a3e47; border: 2px solid #000; font-size: 15px; font-weight: 700">导入进度</a>
+      <div style="font-size: 12px; color: #b8bac3; line-height: 1.5">进度只存在这部手机的 Safari 里。请一直用 Safari 打开，不要改成「添加到主屏幕」，否则会看不到进度。</div>
+    </div>
+    <div style="background: #2a2d34; border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 16px; font-weight: 900">手写</div>
+      <div style="font-size: 14px; line-height: 1.5">已认识空空的笔迹 · 每个数字 9–15 个样本<br>最近 100 次自动认对 96 次</div>
+      <a href="Calibrate.dc.html" style="height: 46px; display: flex; align-items: center; justify-content: center; background: #3a3e47; border: 2px solid #000; font-size: 15px; font-weight: 700">重新校准笔迹</a>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <a href="Parent.dc.html" style="height: 42px; display: flex; align-items: center; justify-content: center; background: #3a3e47; border: 2px solid #000; font-size: 14px; font-weight: 700">导出笔迹</a>
+        <a href="Parent.dc.html" style="height: 42px; display: flex; align-items: center; justify-content: center; background: #3a3e47; border: 2px solid #000; font-size: 14px; font-weight: 700">导入笔迹</a>
+      </div>
+      <div style="font-size: 12px; color: #b8bac3">换手机或换打开方式时用</div>
+    </div>
+    <div style="background: #2a2d34; border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 16px; font-weight: 900">口答模式</div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <label for="oral" style="font-size: 14px; flex-grow: 1; line-height: 1.5">家长陪着时用：孩子说答案，家长点「答错了」</label>
+        <input id="oral" type="checkbox" style="width: 44px; height: 44px; margin: 0">
+      </div>
+      <div style="height: 1px; background: #3a3e47"></div>
+      <div style="font-size: 16px; font-weight: 900">清空进度</div>
+      <a href="Parent.dc.html" style="height: 46px; display: flex; align-items: center; justify-content: center; background: #5a1f1a; color: #ffd9d4; border: 2px solid #000; font-size: 15px; font-weight: 700">清空进度（要点两次）</a>
+      <div style="font-size: 12px; color: #b8bac3">测试快进日期：网址后加 #test，数据与正式进度分开</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
