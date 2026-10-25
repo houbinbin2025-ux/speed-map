@@ -1,0 +1,7 @@
+{
+  "name": "speed-map",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
