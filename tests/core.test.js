@@ -54,3 +54,88 @@ test('题目编号与线上 v1 index.html 逐个一致（旧进度不丢）', ()
   const v1Units = new Function(html.slice(start, end) + '; return UNITS;')();
   assert.deepEqual(v1Units.map(u => u.id), C.UNITS.map(u => u.id));
 });
+
+// ---------- 任务 2：存储键与迁移 ----------
+const memStore = (init) => {
+  const m = Object.assign({}, init);
+  return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; }, _m: m };
+};
+const v1With = (cards, extra) => JSON.stringify(Object.assign({v: 1, savedAt: 1, cards, boss: {}, log: {}, level: 0}, extra));
+const lvCount = S => [0, 1, 2, 3].map(lv => Object.values(S.cards).filter(c => c.lv === lv).length);
+const NOW = Date.parse('2026-10-25T10:00:00');
+
+test('存储键：正式 / 预览 / 测试 分开，笔迹测试键独立', () => {
+  assert.deepEqual(C.keysFor({}), {prog: 'speedmap.v2', ink: 'speedmap.ink'});
+  assert.deepEqual(C.keysFor({preview: true}), {prog: 'speedmap.v2.preview', ink: 'speedmap.ink'});
+  assert.deepEqual(C.keysFor({test: true}), {prog: 'speedmap.v2.test', ink: 'speedmap.ink.test'});
+});
+
+test('①预览期：v1 有新进度，下次打开预览就能看到', () => {
+  const st = memStore({'speedmap.v1': v1With({'3+4': {lv: 1, d: ['2026-10-24'], seen: 1}})});
+  let S = C.loadState(st, {preview: true}, NOW);
+  assert.equal(S.cards['3+4'].lv, 1);
+  st.setItem('speedmap.v1', v1With({'3+4': {lv: 2, d: ['2026-10-24', '2026-10-25'], seen: 2}}));
+  S = C.loadState(st, {preview: true}, NOW);
+  assert.equal(S.cards['3+4'].lv, 2);
+});
+
+test('②预览中练习、加错题：v1 一个字节都不变，错题本留在预览键', () => {
+  const raw = v1With({'3+4': {lv: 1, d: ['2026-10-24'], seen: 1}});
+  const st = memStore({'speedmap.v1': raw});
+  const S = C.loadState(st, {preview: true}, NOW);
+  C.tryUp(S, '3+4', '2026-10-25');
+  C.addMistake(S, C.inst({id: '5+2'}), '2026-10-25');
+  C.saveState(st, {preview: true}, S, NOW);
+  assert.equal(st.getItem('speedmap.v1'), raw);
+  const again = C.loadState(st, {preview: true}, NOW);
+  assert.ok(again.mistakes['5+2']);           // 错题本在预览里保留
+  assert.equal(again.cards['3+4'].lv, 1);     // 地图仍以 v1 为准
+});
+
+test('③正式首启：从 v1 迁移，颜色数一致，记迁移标记并立即写入 v2', () => {
+  const cards = {'3+4': {lv: 3, d: [], seen: 5}, '5+2': {lv: 2, d: [], seen: 3}, '1+1': {lv: 1, d: [], seen: 1}, '2+2': {lv: 0, d: [], seen: 1}};
+  const st = memStore({'speedmap.v1': v1With(cards, {level: 1, boss: {'0': '2026-10-01'}})});
+  const S = C.loadState(st, {}, NOW);
+  assert.deepEqual(lvCount(S), lvCount({cards}));
+  assert.equal(S.level, 1);
+  assert.equal(S.boss['0'], '2026-10-01');
+  assert.equal(S.migratedFromV1At, NOW);
+  assert.ok(st.getItem('speedmap.v2'));
+});
+
+test('④⑤迁移只发生一次：之后 v1 再被改也不影响 v2', () => {
+  const st = memStore({'speedmap.v1': v1With({'3+4': {lv: 1, d: [], seen: 1}})});
+  C.loadState(st, {}, NOW);
+  st.setItem('speedmap.v1', v1With({'3+4': {lv: 3, d: [], seen: 9}}));
+  const S = C.loadState(st, {}, NOW + 1000);
+  assert.equal(S.cards['3+4'].lv, 1);
+  assert.equal(S.migratedFromV1At, NOW);
+});
+
+test('没有任何旧数据：正式版从空白开始', () => {
+  const S = C.loadState(memStore({}), {}, NOW);
+  assert.deepEqual(S.cards, {});
+  assert.deepEqual(S.mistakes, {});
+});
+
+test('⑥导出 → 导入（含换入口）：颜色数与错题一致，笔迹不在备份里', () => {
+  const st = memStore({'speedmap.v1': v1With({'3+4': {lv: 3, d: [], seen: 5}, '5+2': {lv: 2, d: [], seen: 2}})});
+  const S = C.loadState(st, {}, NOW);
+  C.addMistake(S, C.inst({id: '6+3'}), '2026-10-25');
+  const text = C.exportText(S);
+  assert.ok(!/ink|templates/.test(text));
+  const other = memStore({});                  // 另一个入口：空存储
+  const T = C.importText(text);
+  C.saveState(other, {}, T, NOW);
+  const back = C.loadState(other, {}, NOW);
+  assert.deepEqual(lvCount(back), lvCount(S));
+  assert.ok(back.mistakes['6+3']);
+});
+
+test('⑦v1 备份也能导入；坏备份被拒', () => {
+  const T = C.importText(v1With({'3+4': {lv: 2, d: [], seen: 2}}));
+  assert.equal(T.cards['3+4'].lv, 2);
+  assert.deepEqual(T.mistakes, {});
+  assert.throws(() => C.importText('不是备份'));
+  assert.throws(() => C.importText('{"a":1}'));
+});

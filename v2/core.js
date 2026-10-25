@@ -100,9 +100,73 @@
   const digits = n => String(Math.abs(n)).length;
   const fastLimit = (u, ans, mode, speed) => mode === 'oral' ? u.fast : u.fast + (speed || 1000) * digits(ans);
 
+  // ---------- 错题本：答错的具体算式，按 1/2/4/7/15 天回炉，过 5 关算掌握 ----------
+  const INTERVALS = [1, 2, 4, 7, 15];
+  const mkeyOf = q => BYID[q.id] && BYID[q.id].gen ? `${q.id}|${q.a}${q.op}${q.b}` : q.id;
+  function addMistake(S, q, t) {
+    const key = mkeyOf(q), m = S.mistakes[key];
+    if (m) { m.passes = 0; m.due = addDays(t, INTERVALS[0]); m.last = t; return key; }
+    S.mistakes[key] = {key, uid: q.id, a: q.a, op: q.op, b: q.b, ans: q.ans, L: q.L, passes: 0, due: addDays(t, INTERVALS[0]), added: t, last: t};
+    return key;
+  }
+  // result：fast（对且快）→ 过一关；slow（对但慢 / 靠弹层认出）→ 留原档明天再来；wrong → 回第 1 关
+  function reviewMistake(S, key, result, t) {
+    const m = S.mistakes[key]; if (!m || m.due === null) return;
+    m.last = t;
+    if (result === 'fast') { m.passes++; m.due = m.passes >= INTERVALS.length ? null : addDays(t, INTERVALS[m.passes]); }
+    else if (result === 'slow') m.due = addDays(t, 1);
+    else { m.passes = 0; m.due = addDays(t, INTERVALS[0]); }
+  }
+  const seriesOk = (series, op) => series === 'mix' || !series || op === (series === 'add' ? '+' : '-');
+  const dueMistakes = (S, t, L, series) => Object.values(S.mistakes || {})
+    .filter(m => m.due !== null && m.due <= t && m.L === L && seriesOk(series, m.op))
+    .sort((x, y) => x.due.localeCompare(y.due) || x.added.localeCompare(y.added));
+  const mistakeGroups = (S, t) => {
+    const all = Object.values(S.mistakes || {});
+    return {
+      due: all.filter(m => m.due !== null && m.due <= t),
+      doing: all.filter(m => m.due !== null && m.due > t),
+      done: all.filter(m => m.due === null),
+    };
+  };
+
+  // ---------- 存储：只存在这台设备的浏览器里 ----------
+  // 预览期（地址在 /v2/ 下）：地图每次从 v1 只读复制，错题本等写进预览键；上线期：从 v1 迁移一次后不再读 v1
+  const V1 = 'speedmap.v1';
+  const keysFor = ctx => ctx.test ? {prog: 'speedmap.v2.test', ink: 'speedmap.ink.test'}
+    : {prog: ctx.preview ? 'speedmap.v2.preview' : 'speedmap.v2', ink: 'speedmap.ink'};
+  const parse = s => { try { return JSON.parse(s || 'null'); } catch (e) { return null; } };
+  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; return S; };
+  function loadState(store, ctx, now) {
+    const k = keysFor(ctx).prog, own = parse(store.getItem(k));
+    if (ctx.test) return own && own.cards ? upgrade(own) : blank();
+    const v1 = parse(store.getItem(V1));
+    if (ctx.preview) {
+      const S = upgrade(own && own.cards ? own : {});
+      if (v1 && v1.cards) Object.assign(S, {cards: v1.cards, boss: v1.boss || {}, log: v1.log || {}, level: v1.level || 0});
+      return S;
+    }
+    if (own && own.cards) return upgrade(own);
+    const S = upgrade(v1 && v1.cards ? v1 : {});
+    if (v1 && v1.cards) { S.migratedFromV1At = now; saveState(store, ctx, S, now); }
+    return S;
+  }
+  function saveState(store, ctx, S, now) {
+    S.savedAt = now;
+    store.setItem(keysFor(ctx).prog, JSON.stringify(S));
+  }
+  const exportText = S => JSON.stringify(S);
+  function importText(text) {
+    const v = parse(text);
+    if (!v || typeof v.cards !== 'object' || v.cards === null) throw new Error('不是有效的备份');
+    return upgrade(v);
+  }
+
   return {
     LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
+    INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
+    keysFor, loadState, saveState, exportText, importText,
     _setRnd: f => { rnd = f; },
   };
 });
