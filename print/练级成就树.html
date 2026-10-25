@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>练级成就树</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2b2b2b; --grass:#5d9b3a; --grass-d:#3f6e25; --dirt:#8a5a35; --dirt-d:#5e3b21;
+    --stone:#8b8b8b; --stone-l:#c6c6c6; --paper:#fbf8f0;
+    --iron:#d8d8d8; --gold:#f5c542; --diamond:#4fd6d0; --nether:#4a3b3b;
+    --math:#3d7cc9; --eng:#d9532c; --self:#7a4fc0;
+  }
+  @page{ size:A4; margin:0; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:#ddd; font-family:"Noto Sans SC",sans-serif; color:var(--ink);
+        -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .page{ width:210mm; height:297mm; margin:8mm auto; background:var(--paper);
+         position:relative; overflow:hidden; padding:12mm 12mm 10mm; }
+  @media print{ body{background:none} .page{margin:0; page-break-after:always} }
+
+  .px{ font-family:"Press Start 2P",monospace; }
+  /* 像素描边块 */
+  .blk{ border:3px solid var(--ink); box-shadow:inset -4px -4px 0 rgba(0,0,0,.18), inset 4px 4px 0 rgba(255,255,255,.35); }
+
+  /* 顶部草地标题 */
+  .head{ background:var(--grass); border:3px solid var(--ink); position:relative; padding:6mm 6mm 9mm; color:#fff; }
+  .head::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:4mm;
+    background:repeating-linear-gradient(90deg,var(--dirt) 0 4mm,var(--dirt-d) 4mm 8mm); border-top:3px solid var(--ink); }
+  .head h1{ font-size:30pt; font-weight:900; letter-spacing:2px; text-shadow:3px 3px 0 var(--grass-d); }
+  .head .sub{ font-size:9pt; margin-top:2mm; opacity:.95 }
+  .head .tag{ position:absolute; right:6mm; top:6mm; font-size:8pt; background:var(--ink); padding:2mm 3mm; }
+
+  .name{ margin:4mm 0 3mm; font-size:11pt; display:flex; gap:8mm; }
+  .name span{ border-bottom:2px solid var(--ink); display:inline-block; min-width:38mm; }
+
+  /* 三条分支 */
+  .tree{ display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; }
+  .branch h2{ font-size:13pt; font-weight:900; color:#fff; padding:2.5mm 3mm; text-align:center; border:3px solid var(--ink); }
+  .math h2{ background:var(--math) } .eng h2{ background:var(--eng) } .self h2{ background:var(--self) }
+  .node{ background:#fff; margin-top:5mm; padding:3mm; position:relative; min-height:30mm; display:flex; flex-direction:column; }
+  .node + .node::before{ content:""; position:absolute; left:50%; top:-5mm; width:4px; height:5mm; background:var(--ink); transform:translateX(-50%); }
+  .branch > h2 + .node::before{ content:""; position:absolute; left:50%; top:-5mm; width:4px; height:5mm; background:var(--ink); transform:translateX(-50%); }
+  .node .lv{ font-size:6.5pt; color:#888; }
+  .node .t{ font-size:10.5pt; font-weight:700; line-height:1.4; margin:1.5mm 0 2mm; flex:1; }
+  .node .en{ font-size:7.5pt; color:#666; font-weight:500; display:block; margin-top:1mm }
+  .node .foot{ display:flex; justify-content:space-between; align-items:center; }
+  .check{ width:9mm; height:9mm; border:3px solid var(--ink); background:#fff; }
+  .plus{ font-size:8pt; font-weight:900; background:var(--gold); border:2px solid var(--ink); padding:1mm 2mm; }
+
+  /* 终点 */
+  .cap{ margin-top:6mm; background:var(--nether); color:#fff; padding:4mm 5mm; display:flex; align-items:center; gap:5mm; }
+  .cap .t{ font-size:13pt; font-weight:900; } .cap .d{ font-size:9pt; opacity:.9; margin-top:1mm }
+  .cap .check{ border-color:#fff; background:transparent; width:12mm; height:12mm; flex:none }
+  .note{ font-size:8pt; color:#777; margin-top:3mm; text-align:center; }
+
+  /* 第二页 */
+  h3{ font-size:14pt; font-weight:900; margin:4mm 0 2.5mm; display:flex; align-items:center; gap:3mm; }
+  h3 .px{ font-size:9pt; background:var(--ink); color:#fff; padding:1.5mm 2mm; }
+  .earn{ display:grid; grid-template-columns:repeat(3,1fr); gap:4mm; }
+  .earn .c{ background:#fff; padding:4mm; text-align:center; }
+  .earn .n{ font-size:22pt; font-weight:900; }
+  .earn .w{ font-size:10pt; font-weight:700; margin-top:1mm; line-height:1.45 }
+  .earn .s{ font-size:7.5pt; color:#777; margin-top:1.5mm; line-height:1.4 }
+  .shop{ display:grid; grid-template-columns:repeat(3,1fr); gap:4mm; }
+  .tier{ padding:0; background:#fff; }
+  .tier .top{ padding:3mm; text-align:center; border-bottom:3px solid var(--ink); }
+  .tier .top b{ font-size:14pt; font-weight:900; display:block }
+  .tier .top i{ font-style:normal; font-size:9pt; font-weight:700 }
+  .iron .top{ background:var(--iron) } .gold .top{ background:var(--gold) } .dia .top{ background:var(--diamond) }
+  .tier ul{ list-style:none; padding:3mm 3.5mm; font-size:9.5pt; line-height:1.55 }
+  .tier li{ padding-left:4mm; position:relative; margin-bottom:1.2mm }
+  .tier li::before{ content:""; position:absolute; left:0; top:1.9mm; width:2mm; height:2mm; background:var(--ink) }
+  .tier li.blank{ border-bottom:1.5px dashed #999; height:6mm }
+  .wish{ margin:0 3.5mm 3.5mm; border:2px dashed var(--ink); height:18mm; display:flex; align-items:flex-end; justify-content:center; font-size:7.5pt; color:#888; padding-bottom:1.5mm }
+
+  .bank{ background:#fff; padding:4mm; }
+  .slots{ display:grid; grid-template-columns:repeat(10,1fr); gap:1.6mm 0; justify-items:center; }
+  .slot{ width:12mm; height:12mm; border-radius:1.5mm; border:2px dashed #aaa; position:relative; }
+  .slot.m5{ border:2.5px solid var(--ink); }
+  .slot .k{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:7pt; color:#bbb; font-weight:700 }
+  .slot.iron-m{ background:var(--iron) } .slot.gold-m{ background:var(--gold) } .slot.dia-m{ background:var(--diamond) }
+  .legend{ font-size:8pt; color:#666; margin-top:2.5mm; text-align:center }
+
+  .rules{ display:grid; grid-template-columns:1fr 1fr; gap:4mm; margin-top:4mm; }
+  .rules .c{ background:#fff; padding:3.5mm 4mm; font-size:9pt; line-height:1.6 }
+  .rules .c b.h{ display:block; font-size:10.5pt; font-weight:900; margin-bottom:1mm }
+  .rules ol{ padding-left:4.5mm }
+
+  .world{ margin-top:2.2mm; }
+  .world .wt{ font-size:10pt; font-weight:900; margin-bottom:1.5mm; display:flex; gap:2mm; align-items:center }
+  .world .wt .px{ font-size:7pt; color:#fff; padding:1mm 1.5mm; border:2px solid var(--ink) }
+  .blocks{ display:flex; flex-wrap:wrap; gap:1.2mm; }
+  .b{ width:13.2mm; height:8.6mm; border:2px solid var(--ink); background:#fff; font-size:8.5pt; font-weight:700;
+      display:flex; align-items:center; justify-content:center; box-shadow:inset -2px -2px 0 rgba(0,0,0,.12) }
+  .b.sub{ background:#f3f0e8 }
+
+  .lg{ display:flex; align-items:center; gap:2.5mm; margin-top:3mm; font-size:9pt; flex-wrap:wrap }
+  .lg i{ display:inline-block; width:7mm; height:5mm; border:2px solid var(--ink); vertical-align:-1.2mm; margin-right:1.5mm }
+  .lg .ar{ font-weight:900 }
+</style>
+</head>
+<body>
+
+<!-- ============ 第 1 页：成就树（给孩子看，贴墙） ============ -->
+<section class="page">
+  <div class="head">
+    <div class="tag px">ADVANCEMENTS</div>
+    <h1>练级成就树</h1>
+    <div class="sub">点亮一个成就 = 大人在方框里画勾 + 奖励珠子（LV.1–2 给 3 颗，LV.3–4 给 5 颗） · 从上往下一格一格解锁</div>
+  </div>
+  <div class="name">玩家：<span></span> 开始日期：<span></span></div>
+
+  <div class="tree">
+    <div class="branch math">
+      <h2>➕ 口算练级</h2>
+      <div class="node blk"><div class="lv px">LV.1</div><div class="t">秒答地图<br>世界 1–2 全部深红<span class="en">2–6 的加减</span></div><div class="foot"><span class="plus">+3 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.2</div><div class="t">秒答地图<br>世界 3–4 全部深红<span class="en">7–8 的加减</span></div><div class="foot"><span class="plus">+3 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.3</div><div class="t">秒答地图<br>世界 5 全部深红<span class="en">9 的加减</span></div><div class="foot"><span class="plus">+5 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.4</div><div class="t">下界 + 末地全部深红<br>+ 打败末影龙<span class="en">10 和 0 的加减</span></div><div class="foot"><span class="plus">+5 珠</span><span class="check"></span></div></div>
+    </div>
+
+    <div class="branch eng">
+      <h2>📖 阅读练级</h2>
+      <div class="node blk"><div class="lv px">LV.1</div><div class="t">听有声书，手指跟读<br>Woodsword 一章</div><div class="foot"><span class="plus">+3 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.2</div><div class="t">桥梁书<br>自己读完第 1 章<span class="en">Press Start / Diary of a Pug</span></div><div class="foot"><span class="plus">+3 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.3</div><div class="t">自己读完<br>一整本桥梁书</div><div class="foot"><span class="plus">+5 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.4</div><div class="t">读完第 3 本桥梁书<br>给妈妈讲最喜欢的一段</div><div class="foot"><span class="plus">+5 珠</span><span class="check"></span></div></div>
+    </div>
+
+    <div class="branch self">
+      <h2>🧠 自己练级</h2>
+      <div class="node blk"><div class="lv px">LV.1</div><div class="t">不用提醒<br>自己开始练 1 次</div><div class="foot"><span class="plus">+3 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.2</div><div class="t">卡住的卡<br>自己多练几遍练会</div><div class="foot"><span class="plus">+3 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.3</div><div class="t">不用提醒<br>累计自己开始 5 次</div><div class="foot"><span class="plus">+5 珠</span><span class="check"></span></div></div>
+      <div class="node blk"><div class="lv px">LV.4</div><div class="t">不用提醒<br>累计自己开始 15 次</div><div class="foot"><span class="plus">+5 珠</span><span class="check"></span></div></div>
+    </div>
+  </div>
+
+  <div class="cap blk">
+    <span class="check"></span>
+    <div>
+      <div class="t">🏆 下界合金大师：12 个成就全部点亮</div>
+      <div class="d">直接兑换一次「金锭」奖励，不用花珠子 · 然后打印新的一张，开始第二季</div>
+    </div>
+  </div>
+  <div class="note">口算怎么玩见第 3 页「秒答地图」 · 成就点亮后一直亮着，不会被取消 · 漫画随便看，不算任务</div>
+</section>
+
+<!-- ============ 第 2 页：珠子规则 + 兑换商店 + 珠子格 ============ -->
+<section class="page">
+  <div class="head" style="padding-bottom:8mm">
+    <div class="tag px">GEM SHOP</div>
+    <h1>珠子怎么赚，怎么花</h1>
+    <div class="sub">每天练完后的 10 分钟 Minecraft 视频照常看，不用珠子换。珠子是额外攒的。</div>
+  </div>
+
+  <h3><span class="px">EARN</span>怎么赚珠子</h3>
+  <div class="earn">
+    <div class="c blk"><div class="n">+1</div><div class="w">口算练满<br>10 分钟</div><div class="s">看的是专注，不是做得快</div></div>
+    <div class="c blk" style="background:#fff6d6"><div class="n">+1</div><div class="w">桥梁书读满<br>10 分钟</div><div class="s">漫画不算；听有声书跟读也算</div></div>
+    <div class="c blk" style="background:#e8f6e0"><div class="n">+3/5</div><div class="w">点亮成就树<br>上的一个成就</div><div class="s">LV.1–2 +3 · LV.3–4 +5</div></div>
+  </div>
+
+  <h3><span class="px">SHOP</span>怎么花珠子</h3>
+  <div class="shop">
+    <div class="tier blk iron">
+      <div class="top"><b>铁锭</b><i>5 颗</i></div>
+      <ul>
+        <li>多看 10 分钟 MC 故事 / 教程视频</li>
+        <li>今晚吃什么我来选</li>
+        <li>爸爸 / 妈妈陪我玩 MC 20 分钟</li>
+        <li class="blank"></li>
+      </ul>
+    </div>
+    <div class="tier blk gold">
+      <div class="top"><b>金锭</b><i>15 颗</i></div>
+      <ul>
+        <li>周末联机，地图我来选</li>
+        <li>一个小玩具 / MC 盲盒</li>
+        <li>周末去一个我想去的地方</li>
+        <li class="blank"></li>
+      </ul>
+    </div>
+    <div class="tier blk dia">
+      <div class="top"><b>钻石</b><i>40 颗</i></div>
+      <ul><li>我的心愿大奖：</li></ul>
+      <div class="wish">在这里写下或画出来</div>
+    </div>
+  </div>
+
+  <h3><span class="px">BANK</span>我的珠子（贴在方格里）</h3>
+  <div class="bank blk">
+    <div class="slots" id="slots"></div>
+    <div class="legend">第 5 格灰色 = 可换铁锭 · 第 15 格金色 = 可换金锭 · 第 40 格青色 = 可换钻石</div>
+  </div>
+
+  <div class="rules">
+    <div class="c blk"><b class="h">给孩子的规则</b>
+      <ol><li>珠子可以马上花，也可以攒着换更大的</li><li>花掉的珠子从格子里拿走</li><li>心愿大奖自己决定，可以改</li></ol>
+    </div>
+    <div class="c blk"><b class="h">给大人的 3 条铁律</b>
+      <ol><li><b>只加不扣</b>：不拿珠子当惩罚</li><li><b>当场就给</b>：做到马上贴，不攒到晚上</li><li><b>4 周不改规则</b>：到期一起商量再调整</li></ol>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============ 第 3 页：秒答地图（口算主线） ============ -->
+<section class="page">
+  <div class="head" style="padding-bottom:8mm">
+    <div class="tag px">SPEED MAP</div>
+    <h1>秒答地图</h1>
+    <div class="sub">每张卡 2 秒内说对，方块就升一级颜色 · 每天最多升一级 · 颜色只升不降</div>
+  </div>
+  <div class="lg">
+    <span><i style="background:#fff3b0"></i><b>淡黄</b> 第 1 天秒答</span><span class="ar">→</span>
+    <span><i style="background:#f6a5a0"></i><b>淡红</b> 另一天又秒答</span><span class="ar">→</span>
+    <span><i style="background:#b3261e"></i><b>深红</b> 隔 3 天以上再秒答 = 完全点亮</span>
+  </div>
+  <div id="map"></div>
+
+  <div class="rules" style="grid-template-columns:1.15fr 1fr">
+    <div class="c blk"><b class="h">每天 10 分钟怎么玩</b>
+      <ol>
+        <li><b>热身 2 分钟</b>：只抽已点亮的卡，一路秒答开场</li>
+        <li><b>闯关 6 分钟</b>：会的卡 7 张 + 新卡 3 张混在一起，轮着来</li>
+        <li><b>收尾 2 分钟</b>：再抽会的卡，<b>最后一张一定答对</b>，然后去涂方块</li>
+      </ol>
+      没练会的卡少于 3 张才加新卡。用「秒答小工具」时出题、计时、升级都自动完成，这页只用来涂色。
+    </div>
+    <div class="c blk"><b class="h">大人的 4 条防挫败规则</b>
+      <ol>
+        <li>不说「错了」，只说「这张再练一下」</li>
+        <li>卡住超过 5 秒，马上给提示（掰手指 / 分合图），答出来就算练过</li>
+        <li>连着两张卡住，下一张塞一张他会的</li>
+        <li>他说烦了，就抽一张会的结束，不硬撑</li>
+      </ol>
+    </div>
+  </div>
+  <div class="note">Boss 关：一个世界全部变深红后，混抽 20 张一口气答完 · 最终 Boss 末影龙：7 个世界全部深红后，从全部卡里混抽 30 张 · 没过随时再打，没有任何惩罚</div>
+</section>
+
+<script>
+  const s = document.getElementById('slots');
+  for (let i = 1; i <= 40; i++) {
+    const d = document.createElement('div');
+    d.className = 'slot' + (i % 5 === 0 ? ' m5' : '') +
+      (i === 5 ? ' iron-m' : i === 15 ? ' gold-m' : i === 40 ? ' dia-m' : '');
+    d.innerHTML = '<span class="k">' + i + '</span>';
+    s.appendChild(d);
+  }
+
+  const worlds = [
+    {name:'世界 1 · 草地', nums:[2,3,4,5], c:'#5d9b3a'},
+    {name:'世界 2 · 森林', nums:[6], c:'#3f6e25'},
+    {name:'世界 3 · 沙漠', nums:[7], c:'#c9a227'},
+    {name:'世界 4 · 雪山', nums:[8], c:'#6aa9d8'},
+    {name:'世界 5 · 矿洞', nums:[9], c:'#8b8b8b'},
+    {name:'世界 6 · 下界（10 的好朋友）', nums:[10], c:'#a8322d'},
+    {name:'世界 7 · 末地（0 的魔法）', zero:true, c:'#2e2350'},
+  ];
+  const map = document.getElementById('map');
+  worlds.forEach(w => {
+    const add = [], sub = [];
+    if (w.zero) { [2,4,6,8,10].forEach(n => { add.push(n + '+0'); sub.push(n + '-0'); }); [1,3,5,7,9].forEach(n => { add.push('0+' + n); sub.push(n + '-' + n); }); }
+    else w.nums.forEach(n => { for (let a = 1; a < n; a++) { add.push(a + '+' + (n - a)); sub.push(n + '-' + a); } });
+    const div = document.createElement('div'); div.className = 'world';
+    div.innerHTML = '<div class="wt"><span class="px" style="background:' + w.c + '">' + (add.length + sub.length) + '</span>' + w.name + '</div>';
+    const bl = document.createElement('div'); bl.className = 'blocks';
+    add.forEach(t => bl.insertAdjacentHTML('beforeend', '<div class="b">' + t + '</div>'));
+    sub.forEach(t => bl.insertAdjacentHTML('beforeend', '<div class="b sub">' + t + '</div>'));
+    div.appendChild(bl); map.appendChild(div);
+  });
+</script>
+</body>
+</html>
