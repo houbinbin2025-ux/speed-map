@@ -16,18 +16,17 @@
   function groupStrokes(strokes) {
     strokes = strokes.filter(s => s.length);
     if (!strokes.length) return [];
-    const all = box([].concat(...strokes)), minW = (all.y1 - all.y0) * 0.1;
-    const items = strokes.map(s => ({s, b: box(s)})).sort((p, q) => p.b.x0 - q.b.x0);
+    // 每笔左右各放宽高度的 5%：笔直的一竖（宽度为 0）也有宽度，落在「4」的横折里能被合进去
+    const all = box([].concat(...strokes)), pad = (all.y1 - all.y0) * 0.05;
+    const items = strokes.map(s => { const b = box(s); return {s, x0: b.x0 - pad, x1: b.x1 + pad}; }).sort((p, q) => p.x0 - q.x0);
     const groups = [];
     items.forEach(it => {
       const g = groups[groups.length - 1];
       if (g) {
-        const overlap = Math.min(g.x1, it.b.x1) - Math.max(g.x0, it.b.x0);
-        // 细笔画（如「1」）按格子高度的 10% 算宽度，免得和旁边的数字粘在一起
-        const w = Math.max(minW, Math.min(g.x1 - g.x0, it.b.x1 - it.b.x0));
-        if (overlap > 0.1 * w) { g.s.push(it.s); g.x1 = Math.max(g.x1, it.b.x1); return; }
+        const overlap = Math.min(g.x1, it.x1) - Math.max(g.x0, it.x0);
+        if (overlap > 0.3 * Math.min(g.x1 - g.x0, it.x1 - it.x0)) { g.s.push(it.s); g.x1 = Math.max(g.x1, it.x1); return; }
       }
-      groups.push({s: [it.s], x0: it.b.x0, x1: it.b.x1});
+      groups.push({s: [it.s], x0: it.x0, x1: it.x1});
     });
     return groups.map(g => g.s);
   }
@@ -102,8 +101,14 @@
       .sort((x, y) => x.dist - y.dist);
   }
   // 返回 {text, digits:[{strokes, cands:[前两名], sure}]}；没校准或空白时 text=null
+  // 杂笔：点数不足 2 个，或比最大那组小到 8% 以下（轻点一下、手掌蹭到）→ 丢掉
+  function dropStray(groups) {
+    const m = groups.map(g => { const p = [].concat(...g), b = box(p); return {g, n: p.length, size: Math.max(b.x1 - b.x0, b.y1 - b.y0)}; });
+    const ref = Math.max(0, ...m.map(x => x.size));
+    return m.filter(x => x.n >= 2 && ref > 0 && x.size >= 0.08 * ref).map(x => x.g);
+  }
   function recognize(strokes, store) {
-    const groups = groupStrokes(strokes || []);
+    const groups = dropStray(groupStrokes(strokes || []));
     if (!groups.length || !Object.keys(store.t).some(d => store.t[d].length)) return {text: null, digits: []};
     const digits = groups.map(g => {
       const r = rankGroup(g, store);

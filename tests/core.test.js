@@ -275,3 +275,18 @@ test('热身：会的题足够时，开头 3 道不是难题', () => {
   const learnIds = new Set(pool.slice(0, 2).map(u => u.id));
   deck.slice(0, 3).forEach(p => assert.ok(!p.mkey && !learnIds.has(p.id)));
 });
+
+test('到期早的错题优先进这一批', () => {
+  const S = C.blank(), pool = C.unitsOf(1);
+  pool.slice(40, 70).forEach(u => Object.assign(C.cs(S, u.id), {lv: 2, d: ['2026-10-20', '2026-10-24'], seen: 3, last: '2026-10-24T00:00'}));
+  pool.slice(0, 6).forEach((u, i) => { Object.assign(C.cs(S, u.id), {lv: 3, d: [], seen: 5}); C.addMistake(S, C.inst({id: u.id}), '2026-10-1' + (5 - i)); }); // 越靠后越早到期
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(2), series: 'mix', L: 1});
+  const got = deck.filter(p => p.mkey).map(p => p.mkey).sort();
+  const expect = pool.slice(0, 6).map(u => u.id).slice(-6).sort();
+  assert.equal(got.length, 6);
+  assert.deepEqual(got, expect);
+  // 名额只有 4 个时（加 2 张练习中，各占 2 次）：应该是到期最早的 4 道
+  pool.slice(10, 12).forEach((u, i) => Object.assign(C.cs(S, u.id), {lv: 0, seen: 2, last: '2026-10-2' + i + 'T00:00'}));
+  const deck2 = C.buildDaily(S, pool, T0, {rnd: seq(2), series: 'mix', L: 1});
+  assert.deepEqual(deck2.filter(p => p.mkey).map(p => p.mkey).sort(), pool.slice(2, 6).map(u => u.id).sort());
+});

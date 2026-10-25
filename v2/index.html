@@ -19,9 +19,10 @@
 }
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
-body{background:var(--cave);color:var(--ink);font-family:var(--f-cn);-webkit-tap-highlight-color:transparent;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body{background:var(--cave);color:var(--ink);font-family:var(--f-cn);-webkit-tap-highlight-color:transparent;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 *{box-sizing:border-box}
-button{font:inherit;color:inherit;cursor:pointer;border:2px solid #000;background:var(--stone)}
+button{font:inherit;color:inherit;cursor:pointer;border:2px solid #000;background:var(--stone);touch-action:manipulation}
+.gear,.hold-btn{touch-action:none} /* 长按按钮：不让 iOS 判成滚动后打断长按 */
 button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .scr{position:fixed;inset:0;display:flex;padding:10px var(--padR) max(12px, env(safe-area-inset-bottom)) var(--padL);gap:16px;overflow:hidden}
 .col{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
@@ -255,6 +256,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
       <div class="warnbox" id="bkInfo"></div>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
       <button class="btn" id="btnImport">导入进度</button>
+      <div class="muted" id="previewNote" hidden style="font-size:12px;color:var(--warn)">预览版的地图每次都读正式版进度，所以这里不能导入或清空</div>
       <div class="muted" style="font-size:12px;line-height:1.5">进度只存在这部手机的 Safari 里。请一直用 Safari 打开，不要改成「添加到主屏幕」，否则会看不到进度。</div>
     </div>
     <div class="panel">
@@ -386,7 +388,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
   // ---------- 手写板 ----------
   function Pad(wrap, onPenUp) {
     const cv = wrap.querySelector('canvas'), ctx = cv.getContext('2d');
-    let strokes = [], cur = null;
+    let strokes = [], cur = null, active = null; // 只认第一根手指，手掌和第二根手指一律忽略
     const fit = () => { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); redraw(); };
     const pt = e => { const r = cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now()}; };
     function redraw() {
@@ -394,18 +396,20 @@ window.addEventListener('error', function (e) { var d = document.createElement('
       ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = Math.max(7, r.height / 34); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       strokes.forEach(s => { ctx.beginPath(); s.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); if (s.length === 1) ctx.lineTo(s[0].x + .1, s[0].y); ctx.stroke(); });
     }
-    const api = {enabled: true, clear() { strokes = []; cur = null; redraw(); }, strokes: () => strokes, fit, lastUp: 0, onDown: null};
+    const api = {enabled: true, clear() { strokes = []; cur = null; active = null; redraw(); }, strokes: () => strokes, fit, lastUp: 0, onDown: null};
     cv.addEventListener('pointerdown', e => {
-      if (!api.enabled) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+      if (!api.enabled || active !== null) return;
+      active = e.pointerId; try { cv.setPointerCapture(e.pointerId); } catch (err) {}
       cur = [pt(e)]; strokes.push(cur); api.onDown && api.onDown(); redraw();
     });
     cv.addEventListener('pointermove', e => {
-      if (!cur) return; e.preventDefault();
+      if (!cur || e.pointerId !== active) return; e.preventDefault();
       const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
       (list.length ? list : [e]).forEach(ev => cur.push(pt(ev)));
       redraw();
     });
-    const end = e => { if (!cur) return; cur = null; api.lastUp = performance.now(); onPenUp && onPenUp(); };
+    const end = e => { if (e.pointerId !== active) return; active = null; if (!cur) return; cur = null; api.lastUp = performance.now(); onPenUp && onPenUp(); };
     cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
     window.addEventListener('resize', () => setTimeout(fit, 60));
     return api;
@@ -451,7 +455,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
   const SERIES_NAME = {add: '加法练习', sub: '减法练习', mix: '加减混合'};
   const seriesPool = (key, L) => C.unitsOf(L).filter(u => C.seriesOk(key, u.op));
   const playPad = Pad($('pad'), () => schedule());
-  playPad.onDown = () => { clearTimeout(P && P.submitT); if (P && P.phase === 'trace') nextAfterTrace(); };
+  playPad.onDown = () => { clearTimeout(P && P.submitT); if (P && P.phase === 'q') $('footNote').textContent = ''; if (P && P.phase === 'trace') nextAfterTrace(); };
   function start(kind, title, picks, extra) {
     P = Object.assign({kind, title, deck: picks.map(C.inst), i: 0, phase: 'q', results: [], ups: [], misses: 0, wrongRun: 0, newMist: 0, passed: 0, startAt: Date.now(), L: curL()}, extra);
     P.word = C.LEVELS[P.L].word;
@@ -531,7 +535,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     const strokes = playPad.strokes(); if (!strokes.length) return;
     P.ms = Math.max(0, playPad.lastUp - P.t0);
     const res = I.recognize(strokes, INKS);
-    if (res.text === null) return;
+    if (res.text === null) { playPad.clear(); $('footNote').textContent = '没看清，再写一次'; return; } // 只碰了个点之类：清掉重写，不算答错
     P.rec = res; P.picked = res.digits.map(d => d.cands[0].d);
     P.unsure = res.digits.map((d, i) => d.sure ? -1 : i).filter(i => i >= 0);
     if (TEST && forceUnsure && res.digits[0].cands.length > 1) { forceUnsure = false; P.unsure = [0]; } // 测试模式：演示识别确认
@@ -715,6 +719,9 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     const n = Object.values(INKS.t || {}).map(a => a.length), st = INKS.stats || [];
     $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${st.length ? `<br>最近 ${st.length} 次不用确认就认出 ${st.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
     $('oralBox').checked = !!S.oral;
+    // 预览期地图每次都从正式版读，导入和清空对地图无效 → 预览期不提供，免得以为生效了
+    ['btnImport', 'btnReset'].forEach(id => { $(id).hidden = CTX.preview; });
+    $('previewNote').hidden = !CTX.preview;
     $('btnResetYes').hidden = true; $('btnReset').textContent = '清空进度'; $('resetMsg').textContent = ''; $('ioPanel').hidden = true;
   }
   $('parBack').addEventListener('click', () => { renderHome(); show('home'); });
@@ -740,7 +747,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
   $('ioApply').addEventListener('click', () => {
     try {
       if (ioKind === 'inkin') {
-        const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object') throw 0;
+        const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
         INKS = Object.assign(I.blankStore(), v); saveInk();
       } else { const keep = S.testDays; S = C.importText($('ioText').value); S.testDays = keep; save(); }
       $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
@@ -768,7 +775,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
       save(); renderHome();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get INK() { return INKS; }, CTX}; // 调试用
+  window.__sm = {get S() { return S; }, get P() { return P; }, get INK() { return INKS; }, CTX, pad: playPad}; // 调试用
   renderHome(); show('home');
 })();
 </script>

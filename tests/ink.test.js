@@ -86,3 +86,23 @@ test('书写速度：取每个数字用时的中位数', () => {
   const s = sample(3, seq(1));
   assert.ok(I.writeMs(s) > 0);
 });
+
+test('杂笔：旁边多碰出一个点或很小的一划，不影响识别', () => {
+  const store = calibrated(21), r = seq(31);
+  const one = sample(1, r, 0);
+  const dot = [[{x: 200, y: 60, t: 1}]];                          // 轻点一下
+  const tiny = [[{x: 260, y: 40, t: 1}, {x: 262, y: 41, t: 2}]];  // 手掌蹭到的一小划
+  assert.equal(I.recognize(one.concat(dot), store).text, '1');
+  assert.equal(I.recognize(one.concat(tiny), store).text, '1');
+  assert.equal(I.recognize(dot, store).text, null);               // 只有一个点：不算写了
+});
+
+test('分组：笔直的一竖落在另一笔范围内（如「4」）算同一个数字；两个分开的「1」算两个', () => {
+  const P = pts => pts.map(([x, y], i) => ({x, y, t: i}));
+  const four = [P([[70, 5], [40, 60], [8, 110], [50, 110], [95, 110]]), P([[72, 40], [72, 100], [72, 158]])];
+  assert.equal(I.groupStrokes(four).length, 1);
+  const elevens = [P([[50, 5], [50, 80], [50, 158]]), P([[130, 5], [130, 80], [130, 158]])];
+  assert.equal(I.groupStrokes(elevens).length, 2);
+  const oneThree = [P([[50, 5], [50, 158]]), P([[90, 20], [150, 40], [110, 80], [150, 120], [90, 150]])];
+  assert.equal(I.groupStrokes(oneThree).length, 2);
+});
