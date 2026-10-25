@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>秒答地图</title>
+<style>
+/* 布局：iPhone 横屏一屏工具。首页 = 左边三个练习 + 错题本，右边地图；练习页 = 左题右手写板 */
+:root{
+  color-scheme: dark;
+  --cave:#1b1d22; --stone:#2a2d34; --stone-hi:#3a3e47;
+  --ink:#ecebe4; --mute:#b8bac3; --dim:#9a9ca6;
+  --grass:#3d7524; --lv0:#3a3e47; --lv1:#fff3b0; --lv2:#f6a5a0; --lv3:#b3261e;
+  --ok:#7bd88f; --warn:#f2c14e; --bad:#ffb4a8;
+  --paper:#f4ecd8; --paper-line:#e3d7b9; --ghost:#ddd0ae;
+  --f-num:ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "PingFang SC", system-ui, sans-serif;
+  --f-cn:"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --padL:max(16px, env(safe-area-inset-left)); --padR:max(16px, env(safe-area-inset-right));
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--cave);color:var(--ink);font-family:var(--f-cn);-webkit-tap-highlight-color:transparent;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer;border:2px solid #000;background:var(--stone)}
+button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.scr{position:fixed;inset:0;display:flex;padding:10px var(--padR) max(12px, env(safe-area-inset-bottom)) var(--padL);gap:16px;overflow:hidden}
+.col{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}
+.btn{min-height:44px;padding:0 14px;font-size:15px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.big{min-height:56px;min-width:96px;font-size:17px;font-weight:900;border-width:3px}
+.go{background:var(--grass);color:#fff;border:3px solid #000;box-shadow:inset -4px -4px 0 rgba(0,0,0,.3)}
+.muted{font-size:13px;color:var(--mute)}
+.num{font-family:var(--f-num);font-weight:900;font-variant-numeric:tabular-nums}
+
+/* 首页 */
+#home{flex-direction:column}
+.top{display:flex;align-items:center;gap:10px}
+.top h1{margin:0;font-size:22px;font-weight:900;white-space:nowrap}
+.lvtab{min-height:44px;padding:0 10px;font-weight:900;font-size:15px;color:var(--mute);white-space:nowrap}
+.lvtab.on{background:var(--ink);color:var(--cave)}
+.badge-pre{font-size:12px;color:var(--warn);border:1px dashed var(--warn);padding:4px 8px;white-space:nowrap}
+.gear{width:44px;height:44px;padding:0;position:relative;overflow:hidden}
+.gear i{position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--warn)}
+.gear.hold i{width:100%;transition:width 2s linear}
+.mbtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 16px;text-align:left}
+.mbtn b{font-size:22px;font-weight:900}
+.mbtn span{font-size:13px;color:#e6f5dc}
+.mistbtn{background:var(--stone);border:3px solid #000;box-shadow:inset -4px -4px 0 rgba(0,0,0,.3);display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:20px;font-weight:900}
+.mistbtn .dot{margin-left:auto;background:var(--lv3);color:#fff;min-width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;padding:0 6px;font-size:16px}
+.chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--mute)}
+.chip{display:flex;align-items:center;gap:5px;background:var(--stone);border:2px solid #000;padding:4px 8px}
+.chip i{width:12px;height:12px;border:2px solid #000;display:inline-block}
+.map{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+.world{background:var(--stone);border:2px solid #000;padding:4px 10px 6px;display:flex;flex-direction:column;gap:4px}
+.wh{display:flex;align-items:center;gap:8px}
+.wh b{font-size:14px;font-weight:900}
+.wh .sp{flex:1}
+.wh .btn{font-size:14px}
+.boss{background:#5a1f1a;color:#ffd9d4}
+.boss[disabled]{opacity:.45;cursor:not-allowed}
+.blocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px}
+.blocks.types{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.b{height:30px;border:2px solid #000;display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-weight:900;font-size:14px;background:var(--lv0);color:var(--mute)}
+.b.l1{background:var(--lv1);color:#4a3d00}.b.l2{background:var(--lv2);color:#5a1410}.b.l3{background:var(--lv3);color:#fff}
+.b.new{outline:3px solid var(--warn);outline-offset:-5px}
+.b.tb{height:auto;min-height:56px;flex-direction:column;gap:1px;padding:4px;font-family:var(--f-cn);text-align:center}
+.b.tb strong{font-family:var(--f-num);font-size:16px}.b.tb span{font-size:11px;font-weight:700}.b.tb em{font-style:normal;font-size:11px}
+.testbar{background:#3b3420;border:2px solid var(--warn);padding:6px 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}
+.testbar button{min-height:32px;font-size:12px;padding:0 8px}
+
+/* 练习页 */
+.qcol{width:36%;max-width:340px}
+.pbar{display:flex;align-items:center;gap:10px}
+.hold-btn{position:relative;overflow:hidden}
+.hold-btn i{position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--warn)}
+.hold-btn.hold i{width:100%;transition:width 1s linear}
+.hint-pop{font-size:13px;color:var(--warn)}
+.wname{align-self:flex-start;color:#fff;border:2px solid #000;padding:4px 10px;font-size:14px;font-weight:700}
+.q{font-size:clamp(56px,9.5vw,92px);line-height:1;white-space:nowrap}
+.q.small{font-size:clamp(44px,7vw,64px)}
+.q .ans{color:var(--warn)}
+.say{font-size:34px;font-weight:900}
+.say.fast{color:var(--ok)}.say.bad{color:var(--bad);font-size:28px}
+.pcol{flex:1}
+.padwrap{flex:1;position:relative;min-height:0;background-color:var(--paper);background-image:linear-gradient(var(--paper-line) 1px,transparent 1px);background-size:100% 48px;border:3px solid #000;border-radius:10px;overflow:hidden;touch-action:none}
+.padwrap.good{border:4px solid var(--grass)}
+.padwrap canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ghost{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-weight:900;color:var(--ghost);letter-spacing:10px;pointer-events:none;line-height:1}
+.padtip{position:absolute;left:0;right:0;text-align:center;font-size:15px;color:#5a4a20;font-weight:900;pointer-events:none}
+.check{position:absolute;right:16px;top:14px;width:60px;height:60px;border-radius:30px;background:var(--grass);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.confirm{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(400px,92%);background:var(--stone);border:3px solid #000;box-shadow:0 8px 0 rgba(0,0,0,.35);padding:14px 16px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.confirm .slot{display:inline-block;width:30px;height:38px;border:3px dashed var(--warn);vertical-align:middle}
+.cand{width:110px;height:84px;background:var(--ink);color:var(--cave);border:3px solid #000;font-family:var(--f-num);font-weight:900;font-size:54px}
+.pfoot{display:flex;gap:10px;align-items:center;min-height:56px}
+.bar{width:120px;height:10px;background:var(--stone);border:2px solid #000;margin-left:auto}
+.bar i{display:block;height:100%;width:0;background:var(--dim)}
+.bar.run i{width:100%;transition:width 3s linear}
+.oraltap{flex:1;display:flex;align-items:center;justify-content:center;border:3px dashed var(--stone-hi);border-radius:10px;font-size:18px;color:var(--mute);touch-action:manipulation}
+
+/* 校准 */
+.calnum{font-size:110px;color:var(--warn);line-height:1}
+.digits{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px;text-align:center;font-size:14px}
+.digits span{border:2px solid #000;background:var(--lv0);color:var(--mute)}
+.digits span.done{background:var(--grass);color:#fff}.digits span.cur{background:var(--ink);color:var(--cave)}
+.prog{height:14px;background:var(--stone);border:2px solid #000}.prog i{display:block;height:100%;background:var(--grass)}
+.reps{display:flex;gap:6px;align-items:center;font-size:15px}
+.reps i{width:16px;height:16px;border:2px solid #000;background:var(--stone-hi)}
+.reps i.done{background:var(--ok)}.reps i.cur{background:var(--ink)}
+
+/* 结算、错题本、家长区 */
+#summary{gap:24px}
+.sumbig{font-size:76px;line-height:1}
+.gem{background:#20363a;border:2px solid #4fd6d0;padding:10px 14px;font-size:16px;font-weight:700}
+.ups{display:flex;gap:6px;flex-wrap:wrap}
+.ups .b{min-width:64px;padding:0 6px}
+.ups .b.tb{min-width:120px}
+.panel{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto}
+.mrow{background:var(--stone-hi);border:2px solid #000;padding:6px 10px;display:flex;align-items:center;gap:8px}
+.mrow .num{font-size:20px;flex:1;white-space:nowrap}
+.dots5{display:flex;gap:3px}.dots5 i{width:12px;height:12px;border:2px solid #000;background:var(--cave)}.dots5 i.on{background:var(--ok)}
+.grid3{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ptitle{font-size:16px;font-weight:900}
+.warnbox{background:#3b3420;border:2px solid var(--warn);padding:8px 10px;font-size:14px;line-height:1.5}
+textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);border:2px solid #000;font:12px ui-monospace,monospace;padding:6px;-webkit-user-select:text;user-select:text}
+.danger{background:#5a1f1a;color:#ffd9d4}
+.msg{font-size:13px;color:var(--ok)}
+
+/* 竖屏提示：手写模式下手机竖着拿时盖住全屏 */
+#rotate{position:fixed;inset:0;z-index:50;background:var(--cave);display:none;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;padding:32px}
+@media (orientation: portrait) and (max-width: 700px){ body.write #rotate{display:flex} }
+</style>
+</head>
+<body class="write">
+
+<!-- 1 首页 -->
+<div class="scr" id="home">
+  <div class="testbar" id="testBar" hidden>
+    <b style="color:var(--warn)">测试模式（数据和正式进度分开）</b><span id="testDay"></span>
+    <button data-t="day+1">日期 +1 天</button><button data-t="day+3">+3 天</button><button data-t="day0">回到今天</button>
+    <button data-t="w1y">第 1 世界淡黄</button><button data-t="w1d">第 1 世界深红</button><button data-t="mist">造 3 道到期错题</button><button data-t="unsure">下一题演示识别确认</button><button data-t="reset">清空测试数据</button>
+  </div>
+  <div class="top">
+    <h1>秒答地图</h1>
+    <div style="display:flex;gap:6px" id="levels"></div>
+    <span style="flex:1"></span>
+    <span class="badge-pre" id="preBadge" hidden>预览版 · 不计入正式进度</span>
+    <span class="muted" id="backupHint" style="white-space:nowrap"></span>
+    <button class="gear" id="gear" aria-label="家长区（长按 2 秒）"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8bac3" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg><i></i></button>
+  </div>
+  <div style="display:flex;gap:14px;flex:1;min-height:0">
+    <div class="col" style="width:250px;flex:none">
+      <button class="mbtn go" data-series="add"><b>加法练习</b><span>只出加法</span></button>
+      <button class="mbtn go" data-series="sub"><b>减法练习</b><span>只出减法</span></button>
+      <button class="mbtn go" data-series="mix"><b>加减混合</b><span>加法减法一起出</span></button>
+      <button class="mistbtn" id="btnMist">错题本<span class="dot num" id="mistDot" hidden></span></button>
+      <div class="muted" id="hint" hidden></div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="chips" id="stats"></div>
+      <div class="map" id="map"></div>
+    </div>
+  </div>
+  <div class="muted" id="sync" hidden></div>
+</div>
+
+<!-- 2 笔迹校准 -->
+<div class="scr" id="calib" hidden>
+  <div class="col qcol">
+    <div class="pbar"><button class="btn" id="calBack">返回</button><span class="muted">第一次用手写，先认识一下你的字</span></div>
+    <div style="font-size:26px;font-weight:900;line-height:1.3">教我认识<br>你写的数字</div>
+    <div style="display:flex;align-items:baseline;gap:12px"><span style="font-size:20px;font-weight:700">请写</span><span class="num calnum" id="calNum">0</span></div>
+    <div class="reps" id="calReps"></div>
+    <div style="flex:1"></div>
+    <div class="muted" style="display:flex;justify-content:space-between"><span>0 到 9 每个写 3 遍</span><span id="calCount"></span></div>
+    <div class="prog"><i id="calBar"></i></div>
+    <div class="digits num" id="calDigits"></div>
+  </div>
+  <div class="col pcol">
+    <div class="padwrap" id="calPad"><canvas></canvas><div class="padtip" style="bottom:10px">像平时一样写，不用特别慢 · 写完停一下会自动记下来</div></div>
+    <div class="pfoot" style="justify-content:flex-end"><button class="big" id="calClear">擦掉</button></div>
+  </div>
+</div>
+
+<!-- 3–6 练习 -->
+<div class="scr" id="play" hidden>
+  <div class="col qcol">
+    <div class="pbar">
+      <button class="btn hold-btn" id="btnQuit">长按结束<i></i></button>
+      <span style="font-size:14px;font-weight:700" id="pTitle"></span>
+      <span style="flex:1"></span>
+      <span class="muted" id="timer" style="color:var(--dim)"></span>
+    </div>
+    <div class="muted" id="pCount"></div>
+    <div class="hint-pop" id="quitHint" hidden>要按住不放，才能结束</div>
+    <div class="wname" id="wname"></div>
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px">
+      <div class="q num" id="q"></div>
+      <div id="res"></div>
+    </div>
+    <div class="muted" id="pNote">在右边写出答案，写完停一下就好</div>
+  </div>
+  <div class="col pcol" id="writeCol">
+    <div class="padwrap" id="pad">
+      <div class="ghost" id="ghost" hidden></div>
+      <canvas></canvas>
+      <div class="padtip" id="padTip" style="top:10px" hidden>照着描一遍</div>
+      <div class="check" id="check" hidden><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M7 17l7 7 13-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div class="confirm" id="confirm" hidden>
+        <div style="font-size:20px;font-weight:900;display:flex;align-items:center;gap:6px">你写的是 <span class="num" style="font-size:34px" id="cfShown"></span> ？</div>
+        <div class="muted" style="font-size:15px">虚线这一位是哪个？</div>
+        <div style="display:flex;gap:14px"><button class="cand" id="cfA"></button><button class="cand" id="cfB"></button></div>
+        <button class="btn" id="cfRewrite" style="min-height:48px;border-color:var(--stone-hi)">都不是，我重写</button>
+      </div>
+    </div>
+    <div class="pfoot" id="writeFoot">
+      <span class="muted" id="footNote" style="flex:1"></span>
+      <button class="big" id="btnClear">擦掉</button>
+      <button class="big" id="btnDunno">不会</button>
+    </div>
+  </div>
+  <div class="col pcol" id="oralCol" hidden>
+    <div class="oraltap" id="oralTap">说出答案后，点这里看答案</div>
+    <div class="pfoot" id="oralFoot" hidden style="justify-content:flex-end">
+      <button class="big" id="btnOralWrong">答错了</button>
+      <button class="big go" id="btnOralNext">下一题</button>
+    </div>
+  </div>
+</div>
+
+<!-- 7 结算 -->
+<div class="scr" id="summary" hidden></div>
+
+<!-- 8 错题本 -->
+<div class="scr" id="mist" hidden style="flex-direction:column;gap:10px">
+  <div class="top">
+    <button class="btn" id="mistBack">返回地图</button>
+    <h1>错题本</h1><span class="muted" id="mistLevel"></span>
+    <span style="flex:1"></span>
+    <span style="font-size:16px">今天要复习 <b class="num" style="font-size:22px;color:var(--warn)" id="mistN">0</b> 道</span>
+    <button class="btn go big" id="mistGo" style="min-width:150px">现在复习</button>
+  </div>
+  <div class="muted">写错的题会隔 1、2、4、7、15 天回来，每次都写对，就过 1 关；过完 5 关就算真的会了。平时练习也会自动带上它们。</div>
+  <div class="grid3">
+    <div class="panel"><div class="ptitle" id="mDueT"></div><div id="mDue" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div class="panel"><div class="ptitle" id="mDoingT"></div><div id="mDoing" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div class="panel"><div class="ptitle" id="mDoneT"></div><div class="ups" id="mDone"></div></div>
+  </div>
+</div>
+
+<!-- 9 家长区 -->
+<div class="scr" id="parent" hidden style="flex-direction:column;gap:10px">
+  <div class="top"><button class="btn" id="parBack">返回</button><h1>家长区</h1><span class="muted">首页右上角齿轮长按 2 秒进入</span></div>
+  <div class="grid3">
+    <div class="panel">
+      <div class="ptitle">进度备份</div>
+      <div class="warnbox" id="bkInfo"></div>
+      <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
+      <button class="btn" id="btnImport">导入进度</button>
+      <div class="muted" style="font-size:12px;line-height:1.5">进度只存在这部手机的 Safari 里。请一直用 Safari 打开，不要改成「添加到主屏幕」，否则会看不到进度。</div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">手写</div>
+      <div style="font-size:14px;line-height:1.5" id="inkInfo"></div>
+      <button class="btn" id="btnRecal">重新校准笔迹</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" id="btnInkOut">导出笔迹</button><button class="btn" id="btnInkIn">导入笔迹</button></div>
+      <div class="muted" style="font-size:12px">换手机或换打开方式时用</div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">口答模式</div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">家长陪着时用：孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
+      <div class="ptitle">清空进度</div>
+      <button class="btn danger" id="btnReset">清空进度</button>
+      <button class="btn danger" id="btnResetYes" hidden>确认清空（不能恢复）</button>
+      <span class="msg" id="resetMsg"></span>
+      <div class="muted" style="font-size:12px">测试快进日期：网址后加 #test，数据与正式进度分开</div>
+    </div>
+  </div>
+  <div class="panel" id="ioPanel" hidden style="flex:none">
+    <div id="ioTitle" style="font-weight:900"></div>
+    <textarea id="ioText" aria-label="备份内容"></textarea>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="ioCopy">复制</button><button class="btn" id="ioApply" hidden>确认导入（会覆盖当前内容）</button><button class="btn" id="ioClose">关闭</button><span class="msg" id="ioMsg"></span>
+    </div>
+  </div>
+</div>
+
+<!-- 10 竖屏提示 -->
+<div id="rotate">
+  <svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="把手机从竖着转成横着">
+    <rect x="70" y="30" width="60" height="110" rx="10" fill="none" stroke="#9a9ca6" stroke-width="5" stroke-dasharray="8 6"></rect>
+    <rect x="30" y="120" width="140" height="66" rx="12" fill="#2a2d34" stroke="#ecebe4" stroke-width="6"></rect>
+    <rect x="62" y="132" width="98" height="42" rx="4" fill="#f4ecd8"></rect>
+    <path d="M150 52 C178 70 182 98 168 116" fill="none" stroke="#f2c14e" stroke-width="6" stroke-linecap="round"></path>
+    <path d="M156 110 L168 118 L176 104" fill="none" stroke="#f2c14e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <div style="font-size:32px;font-weight:900">把手机横过来</div>
+  <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
+</div>
+
+<script src="core.js"></script>
+<script src="ink.js"></script>
+<script>
+window.addEventListener('error', function (e) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#8a2f27;color:#fff;padding:12px 16px;font:14px sans-serif;z-index:99'; d.textContent = '页面出错了，请截图发给维护的人：' + (e.message || e); document.body.appendChild(d); });
+(() => {
+  const C = window.SM, I = window.INK, $ = id => document.getElementById(id);
+  // ---------- 环境：预览（/v2/ 下）/ 测试（#test）/ 正式 ----------
+  const TEST = location.hash === '#test';
+  const PREVIEW = /\/v2\//.test(location.pathname);
+  const CTX = {test: TEST, preview: PREVIEW && !TEST};
+  window.addEventListener('hashchange', () => location.reload());
+  const KEYS = C.keysFor(CTX);
+  let canSave = true;
+  const store = {
+    getItem: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    setItem: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { canSave = false; } },
+  };
+  let S = C.loadState(store, CTX, Date.now());
+  const today = () => C.dayOf(Date.now(), TEST ? (S.testDays || 0) : 0);
+  const save = () => C.saveState(store, CTX, S, Date.now());
+  const loadInk = () => { try { return Object.assign(I.blankStore(), JSON.parse(store.getItem(KEYS.ink) || 'null') || {}); } catch (e) { return I.blankStore(); } };
+  let INKS = loadInk();
+  const saveInk = () => store.setItem(KEYS.ink, JSON.stringify(INKS));
+  const calibrated = () => INKS.done === true;
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  const cs = id => C.cs(S, id);
+  const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
+  const mode = () => S.oral ? 'oral' : 'write';
+  const show = (id) => { ['home', 'calib', 'play', 'summary', 'mist', 'parent'].forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
+
+  // ---------- 长按：结束练习 1 秒、家长区 2 秒 ----------
+  function longPress(el, ms, onDone, onShort) {
+    let timer = null, t0 = 0;
+    const down = e => { e.preventDefault(); t0 = Date.now(); el.classList.add('hold'); timer = setTimeout(() => { timer = null; el.classList.remove('hold'); onDone(); }, ms); };
+    const up = () => { if (!timer) return; clearTimeout(timer); timer = null; el.classList.remove('hold'); if (Date.now() - t0 < ms && onShort) onShort(); };
+    el.addEventListener('pointerdown', down);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => el.addEventListener(ev, up));
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  // ---------- 首页 ----------
+  const worldDone = (L, w) => C.worldUnits(L, w).every(u => cs(u.id).lv === 3);
+  const bossKey = (L, w) => L === 0 ? String(w) : C.LEVELS[L].key + ':' + w; // 级别 1 沿用旧编号
+  const blockHtml = (u, extra) => {
+    const st = cs(u.id), cls = `b l${st.lv}${extra || ''}`;
+    if (!u.gen) return `<div class="${cls}">${C.label(u)}</div>`;
+    const t = today(), prog = st.fday === t && st.fn ? `<em>今天 ${Math.min(st.fn, C.TYPE_NEED)}/${C.TYPE_NEED}</em>` : '';
+    return `<div class="${cls} tb"><strong>${u.short}</strong><span>${u.name}</span>${prog}</div>`;
+  };
+  const dueCount = () => C.dueMistakes(S, today(), curL()).length;
+  function renderHome() {
+    const L = curL(), LV = C.LEVELS[L], units = C.unitsOf(L), t = today();
+    $('levels').innerHTML = C.LEVELS.map((x, i) => `<button class="lvtab${i === L ? ' on' : ''}" data-level="${i}">${x.name}</button>`).join('');
+    const n = [0, 0, 0, 0]; units.forEach(u => n[cs(u.id).lv]++);
+    const rule = S.oral ? (L === 0 ? '秒答 = 2 秒内说对' : L === 1 ? '秒答 = 3 秒内说对' : '达标 = 3～5 秒内说对，一天 5 次升一级') : (L >= 2 ? '达标 = 又对又快，一天 5 次升一级' : '秒答 = 又对又快');
+    $('stats').innerHTML = `<span class="chip"><i style="background:var(--lv3)"></i>深红 ${n[3]}</span><span class="chip"><i style="background:var(--lv2)"></i>淡红 ${n[2]}</span><span class="chip"><i style="background:var(--lv1)"></i>淡黄 ${n[1]}</span><span>共 ${units.length} ${L >= 2 ? '种题型' : '张'} · ${rule}</span>`;
+    const fresh = !units.some(u => cs(u.id).seen > 0);
+    $('hint').hidden = !fresh;
+    $('hint').textContent = `第一次练「${LV.name}」：点「加法练习」，从第一个世界开始，会的当场点亮。`;
+    const d = dueCount(); $('mistDot').hidden = !d; $('mistDot').textContent = d;
+    $('preBadge').hidden = !CTX.preview;
+    const hasProg = Object.keys(S.cards).length > 0, days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+    $('backupHint').textContent = !canSave ? '这个浏览器存不了进度' : hasProg && days === null ? '还没备份过' : days !== null && days > 7 ? `${days} 天没备份` : '';
+    const todayUp = new Set((S.log[t] || {}).ups || []);
+    const allDone = LV.worlds.every((w, i) => worldDone(L, i));
+    $('map').innerHTML = LV.worlds.map((w, wi) => {
+      const us = C.worldUnits(L, wi), lit = us.filter(u => cs(u.id).lv === 3).length;
+      const won = S.boss[bossKey(L, wi)] ? ' · Boss 已通关' : '';
+      return `<div class="world"><div class="wh"><b>${w.name}</b><span class="muted" style="font-size:12px">深红 ${lit}/${us.length}${won}</span><span class="sp"></span>
+        <button class="btn" data-scan="${wi}">摸底</button><button class="btn boss" data-boss="${wi}" ${worldDone(L, wi) ? '' : 'disabled'}>Boss 关</button></div>
+        <div class="blocks${L >= 2 ? ' types' : ''}">${us.map(u => blockHtml(u, todayUp.has(u.id) ? ' new' : '')).join('')}</div></div>`;
+    }).join('') + `<div class="world"><div class="wh"><b>最终 Boss · ${LV.boss.name}</b><span class="muted" style="font-size:12px">${S.boss[LV.boss.key] ? '已击败' : '这一级全部深红后解锁'}</span><span class="sp"></span>
+      <button class="btn boss" data-boss="final" ${allDone ? '' : 'disabled'}>挑战${LV.boss.name}</button></div></div>`;
+    if (TEST) showTestDay();
+  }
+  $('map').addEventListener('click', e => {
+    const s = e.target.closest('[data-scan]'), b = e.target.closest('[data-boss]');
+    if (s) begin(() => startScan(+s.dataset.scan));
+    else if (b && !b.disabled) begin(() => startBoss(b.dataset.boss));
+  });
+  $('levels').addEventListener('click', e => { const b = e.target.closest('[data-level]'); if (!b) return; S.level = +b.dataset.level; save(); renderHome(); });
+  document.querySelectorAll('[data-series]').forEach(b => b.addEventListener('click', () => begin(() => startDaily(b.dataset.series))));
+  $('btnMist').addEventListener('click', () => { renderMist(); show('mist'); });
+  longPress($('gear'), 2000, () => { renderParent(); show('parent'); });
+  // 手写模式第一次练习前先校准
+  const begin = fn => { if (!S.oral && !calibrated()) startCalib(fn); else fn(); };
+
+  // ---------- 手写板 ----------
+  function Pad(wrap, onPenUp) {
+    const cv = wrap.querySelector('canvas'), ctx = cv.getContext('2d');
+    let strokes = [], cur = null;
+    const fit = () => { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); redraw(); };
+    const pt = e => { const r = cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now()}; };
+    function redraw() {
+      const r = cv.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height);
+      ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = Math.max(7, r.height / 34); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      strokes.forEach(s => { ctx.beginPath(); s.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); if (s.length === 1) ctx.lineTo(s[0].x + .1, s[0].y); ctx.stroke(); });
+    }
+    const api = {enabled: true, clear() { strokes = []; cur = null; redraw(); }, strokes: () => strokes, fit, lastUp: 0, onDown: null};
+    cv.addEventListener('pointerdown', e => {
+      if (!api.enabled) return; e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+      cur = [pt(e)]; strokes.push(cur); api.onDown && api.onDown(); redraw();
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!cur) return; e.preventDefault();
+      const list = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+      (list.length ? list : [e]).forEach(ev => cur.push(pt(ev)));
+      redraw();
+    });
+    const end = e => { if (!cur) return; cur = null; api.lastUp = performance.now(); onPenUp && onPenUp(); };
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+    window.addEventListener('resize', () => setTimeout(fit, 60));
+    return api;
+  }
+
+  // ---------- 2 笔迹校准 ----------
+  const REPS = 3;
+  let CAL = null;
+  const calPad = Pad($('calPad'), () => { clearTimeout(CAL && CAL.timer); CAL.timer = setTimeout(acceptCal, 900); });
+  calPad.onDown = () => { CAL && clearTimeout(CAL.timer); };
+  function startCal(then) {
+    INKS = Object.assign(I.blankStore(), {samples: []}); // 重新校准：从头来
+    CAL = {d: 0, k: 0, then, timer: null, speeds: []};
+    show('calib'); calPad.fit(); calPad.clear(); drawCal();
+  }
+  const startCalib = startCal;
+  function drawCal() {
+    const done = CAL.d * REPS + CAL.k;
+    $('calNum').textContent = CAL.d;
+    $('calReps').innerHTML = `<span>第 ${CAL.k + 1} 遍，共 ${REPS} 遍</span>` + [0, 1, 2].map(i => `<i class="${i < CAL.k ? 'done' : i === CAL.k ? 'cur' : ''}"></i>`).join('');
+    $('calCount').textContent = `已写 ${done} / ${REPS * 10}`;
+    $('calBar').style.width = (done / (REPS * 10) * 100) + '%';
+    $('calDigits').innerHTML = Array.from({length: 10}, (_, d) => `<span class="${d < CAL.d ? 'done' : d === CAL.d ? 'cur' : ''}">${d}</span>`).join('');
+  }
+  function acceptCal() {
+    const s = calPad.strokes(); if (!s.length) return;
+    I.addTemplate(INKS, CAL.d, s); CAL.speeds.push(I.writeMs(s));
+    calPad.clear();
+    if (++CAL.k >= REPS) { CAL.k = 0; CAL.d++; }
+    if (CAL.d > 9) {
+      INKS.speed = I.medianSpeed(CAL.speeds); INKS.samples = CAL.speeds; INKS.done = true; saveInk();
+      const then = CAL.then; CAL = null; then ? then() : (renderHome(), show('home'));
+      return;
+    }
+    drawCal();
+  }
+  $('calClear').addEventListener('click', () => { clearTimeout(CAL && CAL.timer); calPad.clear(); });
+  $('calBack').addEventListener('click', () => { if (CAL) clearTimeout(CAL.timer); CAL = null; INKS = loadInk(); renderHome(); show('home'); });
+
+  // ---------- 练习流程 ----------
+  let P = null, timerId = null, forceUnsure = false;
+  const GOAL_MS = 10 * 60 * 1000, STUCK_MS = 6000;
+  const SERIES_NAME = {add: '加法练习', sub: '减法练习', mix: '加减混合'};
+  const seriesPool = (key, L) => C.unitsOf(L).filter(u => C.seriesOk(key, u.op));
+  const playPad = Pad($('pad'), () => schedule());
+  playPad.onDown = () => { clearTimeout(P && P.submitT); if (P && P.phase === 'trace') nextAfterTrace(); };
+  function start(kind, title, picks, extra) {
+    P = Object.assign({kind, title, deck: picks.map(C.inst), i: 0, phase: 'q', results: [], ups: [], misses: 0, wrongRun: 0, newMist: 0, passed: 0, startAt: Date.now(), L: curL()}, extra);
+    P.word = C.LEVELS[P.L].word;
+    show('play');
+    $('pTitle').textContent = title;
+    $('writeCol').hidden = S.oral; $('oralCol').hidden = !S.oral; $('pNote').textContent = S.oral ? '说出答案，再点右边看答案' : '在右边写出答案，写完停一下就好';
+    clearInterval(timerId); $('timer').textContent = '';
+    if (kind === 'daily') { tick(); timerId = setInterval(tick, 1000); }
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => P && (P.lock = l)).catch(() => {}); } catch (e) {}
+    playPad.fit(); showQ(); // 读尺寸会立刻排版，不必等下一帧（等帧会和已开始的书写抢状态）
+  }
+  function tick() {
+    if (!P) return clearInterval(timerId);
+    const left = GOAL_MS - (Date.now() - P.startAt);
+    if (left <= 0) { $('timer').textContent = '10 分钟 ✓'; $('timer').style.color = 'var(--ok)'; clearInterval(timerId); return; }
+    const sec = Math.ceil(left / 1000); $('timer').style.color = '';
+    $('timer').textContent = '还剩 ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+  function startDaily(key) {
+    const L = curL(), pool = seriesPool(key, L);
+    start('daily', SERIES_NAME[key], C.buildDaily(S, pool, today(), {series: key, L}), {series: key, warm: pool.filter(u => cs(u.id).lv >= 1)});
+  }
+  // 题数不限：一批出完就按最新进度再出一批，开头避开刚出过的
+  function moreCards() {
+    const recent = new Set(P.deck.slice(-3).map(c => c.id)), pool = seriesPool(P.series, P.L);
+    const batch = C.buildDaily(S, pool, today(), {series: P.series, L: P.L});
+    if (!batch.length) return false;
+    for (let k = 0; k < batch.length && recent.has(batch[0].id); k++) batch.push(batch.shift());
+    P.deck.push(...batch.map(C.inst)); P.warm = pool.filter(u => cs(u.id).lv >= 1);
+    return true;
+  }
+  function startScan(wi) {
+    const L = curL(), us = C.worldUnits(L, wi);
+    const d = L >= 2 ? C.shuffle([].concat(us, us, us)) : C.shuffle(us.slice());
+    start('scan', '摸底 · ' + C.LEVELS[L].worlds[wi].name, d.map(u => ({id: u.id})));
+  }
+  function startBoss(key) {
+    const L = curL(), LV = C.LEVELS[L];
+    let pool, n, title, bk;
+    if (key === 'final') { pool = C.unitsOf(L); n = LV.boss.n; title = '最终 Boss · ' + LV.boss.name; bk = LV.boss.key; }
+    else { pool = C.worldUnits(L, +key); n = 20; title = 'Boss 关 · ' + LV.worlds[+key].name; bk = bossKey(L, +key); }
+    const deck = []; while (deck.length < n) deck.push(...C.shuffle(pool.slice()));
+    start('boss', title, deck.slice(0, n).map(u => ({id: u.id})), {bossKey: bk});
+  }
+  function startReview() {
+    const list = C.dueMistakes(S, today(), curL());
+    if (!list.length) return;
+    start('review', '错题复习', C.shuffle(list.slice()).map(m => ({id: m.uid, mkey: m.key, fixed: {a: m.a, b: m.b, ans: m.ans}})));
+  }
+  const limitOf = c => C.fastLimit(c, c.ans, mode(), INKS.speed);
+  function showQ() {
+    const c = P.deck[P.i];
+    P.phase = 'q'; P.result = null; P.typed = '';
+    const w = C.LEVELS[c.L].worlds[c.w];
+    $('wname').textContent = c.gen ? c.name : w.name; $('wname').style.background = w.c;
+    $('q').className = 'q num'; $('q').textContent = C.show(c) + ' =';
+    $('res').innerHTML = '';
+    const f = P.results.filter(r => r && r.fast).length;
+    $('pCount').textContent = `第 ${P.i + 1} 题 · ⚡ ${P.word} ${f}`;
+    $('pad').classList.remove('good'); $('check').hidden = true; $('ghost').hidden = true; $('padTip').hidden = true; $('confirm').hidden = true;
+    $('footNote').textContent = ''; $('btnClear').hidden = false; $('btnDunno').hidden = false;
+    $('oralTap').hidden = false; $('oralFoot').hidden = true; $('oralTap').textContent = '说出答案后，点这里看答案';
+    playPad.clear(); playPad.enabled = !S.oral;
+    P.t0 = performance.now();
+    // 画面刷新后再校准起点；已经落笔就不再挪（否则用时会比真实写字时间还短）
+    const myI = P.i; requestAnimationFrame(() => requestAnimationFrame(() => { if (P && P.i === myI && P.phase === 'q' && !playPad.strokes().length) P.t0 = performance.now(); }));
+  }
+  // 自动提交：最后一笔抬起后停 0.9 秒；写的位数少于答案位数时等 1.5 秒；新落笔重新计时
+  function schedule() {
+    if (!P || P.phase !== 'q') return;
+    clearTimeout(P.submitT);
+    const groups = I.groupStrokes(playPad.strokes()).length, c = P.deck[P.i];
+    P.submitT = setTimeout(submit, groups < C.digits(c.ans) ? 1500 : 900);
+  }
+  function submit() {
+    if (!P || P.phase !== 'q') return;
+    const strokes = playPad.strokes(); if (!strokes.length) return;
+    P.ms = Math.max(0, playPad.lastUp - P.t0);
+    const res = I.recognize(strokes, INKS);
+    if (res.text === null) return;
+    P.rec = res; P.picked = res.digits.map(d => d.cands[0].d);
+    P.unsure = res.digits.map((d, i) => d.sure ? -1 : i).filter(i => i >= 0);
+    if (TEST && forceUnsure && res.digits[0].cands.length > 1) { forceUnsure = false; P.unsure = [0]; } // 测试模式：演示识别确认
+    INKS.stats = (INKS.stats || []).concat(P.unsure.length ? 0 : 1).slice(-100); saveInk();
+    if (P.unsure.length) return askConfirm();
+    decide(false);
+  }
+  // 识别没把握：只问那一位，两个候选只按笔迹排名，不参考答案
+  function askConfirm() {
+    P.phase = 'confirm'; playPad.enabled = false;
+    const i = P.unsure[0], d = P.rec.digits[i];
+    $('cfShown').innerHTML = P.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
+    $('cfA').textContent = d.cands[0].d; $('cfB').textContent = d.cands[1].d;
+    $('confirm').hidden = false;
+  }
+  function pickCand(v) {
+    if (!P || P.phase !== 'confirm') return;
+    P.picked[P.unsure.shift()] = v; P.confirmed = true;
+    $('confirm').hidden = true;
+    if (P.unsure.length) return askConfirm();
+    decide(true);
+  }
+  $('cfA').addEventListener('click', () => pickCand($('cfA').textContent));
+  $('cfB').addEventListener('click', () => pickCand($('cfB').textContent));
+  $('cfRewrite').addEventListener('click', () => { if (!P) return; $('confirm').hidden = true; P.phase = 'q'; P.confirmed = false; playPad.clear(); playPad.enabled = true; });
+  // 判定：对且快 = fast；对但慢或经弹层确认 = slow；其余 = wrong
+  function decide(viaConfirm) {
+    const c = P.deck[P.i], text = P.picked.join(''), right = text === String(c.ans);
+    P.typed = text;
+    P.result = !right ? 'wrong' : (!viaConfirm && P.ms <= limitOf(c)) ? 'fast' : 'slow';
+    // 高把握且写对的笔迹，加进模板（越用越准）
+    if (right && !viaConfirm) P.rec.digits.forEach((d, k) => I.addTemplate(INKS, text[k], d.strokes)), saveInk();
+    feedback();
+  }
+  function feedback() {
+    const c = P.deck[P.i];
+    P.phase = 'a'; playPad.enabled = false; clearTimeout(P.submitT);
+    $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`;
+    $('btnClear').hidden = true; $('btnDunno').hidden = true;
+    const sec = (P.ms / 1000).toFixed(1);
+    if (P.result === 'fast') {
+      $('res').innerHTML = `<div class="say fast">⚡ ${P.word === '秒答' ? '秒答！' : '又快又对！'}</div><div class="muted" style="font-size:15px">${sec} 秒</div>`;
+      $('pad').classList.add('good'); $('check').hidden = false; $('footNote').textContent = '马上进入下一题…';
+      return later(800);
+    }
+    if (P.result === 'slow') {
+      $('res').innerHTML = `<div class="say">✓ 写对了</div><div class="muted" style="font-size:15px">${S.oral ? '' : sec + ' 秒 · '}下次再快一点</div>`;
+      $('footNote').textContent = '马上进入下一题…';
+      return later(1000);
+    }
+    const why = P.dunno ? '没关系，记住它' : S.oral ? '已放进错题本，明天再来' : `你写的是 ${P.typed} · 已放进错题本，明天再来`;
+    $('res').innerHTML = `<div class="say bad">这题再练一下</div><div class="muted" style="font-size:15px">${why}</div>`;
+    if (S.oral) return;
+    // 答错：照着描一遍（描一笔或 3 秒自动下一题）；这一批连续第 2 道错题起不描
+    playPad.clear();
+    if (P.wrongRun >= 1) { $('footNote').textContent = '马上进入下一题…'; return later(1500); }
+    const g = $('ghost'); g.textContent = c.ans; g.style.fontSize = Math.min($('pad').clientHeight * 0.75, $('pad').clientWidth / (String(c.ans).length * 0.8)) + 'px'; g.hidden = false;
+    $('padTip').hidden = false; $('footNote').innerHTML = '描一笔就继续 · 或 3 秒后自动下一题<span class="bar"><i></i></span>';
+    P.phase = 'trace'; playPad.enabled = true;
+    requestAnimationFrame(() => { const b = $('footNote').querySelector('.bar'); b && b.classList.add('run'); });
+    P.nextT = setTimeout(commit, 3000);
+  }
+  function nextAfterTrace() { if (!P || P.phase !== 'trace') return; P.phase = 'traced'; clearTimeout(P.nextT); P.nextT = setTimeout(commit, 600); }
+  const later = ms => { P.nextT = setTimeout(commit, ms); };
+  // 记录这一题，进下一题
+  function commit() {
+    if (!P) return;
+    clearTimeout(P.nextT);
+    const c = P.deck[P.i], t = today(), r = P.result, fast = r === 'fast';
+    const st = cs(c.id); st.seen++; st.last = new Date().toISOString(); st.intro = true;
+    let up = false;
+    if (fast) {
+      if (c.gen) { if (st.fday !== t) { st.fday = t; st.fn = 0; } st.fn++; if (st.fn >= C.TYPE_NEED) up = C.tryUp(S, c.id, t); }
+      else up = C.tryUp(S, c.id, t);
+    }
+    if (up) { P.ups.push(c.id); const Lg = (S.log[t] = S.log[t] || {ups: [], n: 0}); if (!Lg.ups.includes(c.id)) Lg.ups.push(c.id); }
+    (S.log[t] = S.log[t] || {ups: [], n: 0}).n++;
+    // 错题本：复习题按结果过关 / 留档 / 回第 1 关；新错题进本
+    if (c.mkey && S.mistakes[c.mkey] && S.mistakes[c.mkey].due !== null && S.mistakes[c.mkey].due <= t) { C.reviewMistake(S, c.mkey, r, t); if (fast) P.passed++; }
+    else if (r === 'wrong') { const isNew = !S.mistakes[C.mkeyOf(c)] || S.mistakes[C.mkeyOf(c)].due === null; C.addMistake(S, c, t); if (isNew) P.newMist++; }
+    P.results[P.i] = {id: c.id, fast, wrong: r === 'wrong', slow: r === 'slow', ms: P.ms, c};
+    P.wrongRun = r === 'wrong' ? P.wrongRun + 1 : 0; P.dunno = false;
+    save();
+    // 连着两题卡住，下一题换成会的
+    const stuck = r === 'wrong' || P.ms > Math.max(STUCK_MS, c.fast + 3000);
+    P.misses = stuck ? P.misses + 1 : 0;
+    if (P.kind === 'daily' && P.misses >= 2 && P.i + 1 < P.deck.length && P.warm.length) {
+      const easy = P.warm.find(w => cs(w.id).lv >= 2) || P.warm[0];
+      P.deck.splice(P.i + 1, 0, C.inst({id: easy.id})); P.misses = 0;
+    }
+    P.i++;
+    if (P.i >= P.deck.length && !(P.kind === 'daily' && moreCards())) return finish(false);
+    showQ();
+  }
+  $('btnClear').addEventListener('click', () => { if (P && P.phase === 'q') { clearTimeout(P.submitT); playPad.clear(); } });
+  $('btnDunno').addEventListener('click', () => {
+    if (!P || P.phase !== 'q') return;
+    clearTimeout(P.submitT); P.ms = performance.now() - P.t0; P.result = 'wrong'; P.dunno = true; P.typed = '';
+    feedback();
+  });
+  // 口答模式（家长陪着）：说出答案 → 点一下看答案 → 家长判
+  $('oralTap').addEventListener('click', () => {
+    if (!P || P.phase !== 'q' || !S.oral) return;
+    P.ms = Math.max(0, performance.now() - P.t0); const c = P.deck[P.i];
+    P.phase = 'oral'; P.result = P.ms <= limitOf(c) ? 'fast' : 'slow';
+    $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`;
+    $('res').innerHTML = P.result === 'fast' ? `<div class="say fast">⚡ ${P.word === '秒答' ? '秒答！' : '又快又对！'}</div>` : '<div class="say">✓</div>';
+    $('res').innerHTML += `<div class="muted" style="font-size:15px">${(P.ms / 1000).toFixed(1)} 秒</div>`;
+    $('oralTap').hidden = true; $('oralFoot').hidden = false; $('btnOralWrong').textContent = '答错了';
+  });
+  $('btnOralWrong').addEventListener('click', () => {
+    if (!P || P.phase !== 'oral') return;
+    const c = P.deck[P.i];
+    if (P.result === 'wrong') { P.result = P.ms <= limitOf(c) ? 'fast' : 'slow'; $('btnOralWrong').textContent = '答错了'; $('res').innerHTML = '<div class="say">✓</div>'; }
+    else { P.result = 'wrong'; $('btnOralWrong').textContent = '其实答对了'; $('res').innerHTML = '<div class="say bad">这题再练一下</div>'; }
+  });
+  $('btnOralNext').addEventListener('click', () => { if (P && P.phase === 'oral') commit(); });
+  longPress($('btnQuit'), 1000, () => finish(true), () => { $('quitHint').hidden = false; clearTimeout(window._qh); window._qh = setTimeout(() => { $('quitHint').hidden = true; }, 1500); });
+
+  // ---------- 7 结算 ----------
+  function finish(quit) {
+    clearInterval(timerId); clearTimeout(P.submitT); clearTimeout(P.nextT);
+    try { P.lock && P.lock.release(); } catch (e) {}
+    const done = P.results.filter(Boolean);
+    const goHome = () => { P = null; renderHome(); show('home'); };
+    if (!done.length) return goHome();
+    const fast = done.filter(r => r.fast).length, wrong = done.filter(r => r.wrong).length, slow = done.length - fast - wrong;
+    const mins = Math.max(1, Math.round((Date.now() - P.startAt) / 60000));
+    const okT = done.filter(r => !r.wrong).map(r => r.ms), avg = okT.length ? (okT.reduce((a, b) => a + b, 0) / okT.length / 1000).toFixed(1) : '–';
+    const lastOf = {}; done.forEach(r => { lastOf[r.id] = r; });
+    const slowIds = Object.values(lastOf).filter(r => r.slow).map(r => r.id).slice(0, 8);
+    let bossLine = '';
+    if (P.kind === 'boss' && !quit) {
+      const need = Math.ceil(P.deck.length * 0.9);
+      if (fast >= need) { S.boss[P.bossKey] = today(); save(); bossLine = '<div class="say fast">Boss 被打败了！</div>'; }
+      else bossLine = `<div class="muted">${P.word} ${need} 题就能打败 Boss，想打随时再来</div>`;
+    }
+    const blk = id => blockHtml(C.BYID[id]);
+    const gem = P.kind === 'daily' && Date.now() - P.startAt >= GOAL_MS ? '<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>' : '';
+    const titles = {daily: P.title + ' · 本次总结', review: '错题复习 · 本次总结'};
+    $('summary').innerHTML = `
+      <div class="col" style="width:330px;flex:none;justify-content:center">
+        <div style="font-size:24px;font-weight:900">${titles[P.kind] || (quit ? '先练到这里' : '练完啦')}</div>
+        <div class="num sumbig">⚡ ${fast}<span style="font-size:30px;color:var(--mute)"> / ${done.length}</span></div>
+        <div class="muted" style="font-size:15px;line-height:1.6">${P.word} ${fast} 题 · 慢了 ${slow} 题 · 写错 ${wrong} 题<br>用时约 ${mins} 分钟 · 写对的平均 ${avg} 秒</div>
+        ${bossLine}${gem}
+      </div>
+      <div class="col" style="flex:1;justify-content:center;gap:12px;overflow-y:auto">
+        ${P.ups.length ? `<div style="font-weight:900">这次升级的方块${P.L === 0 ? '（去墙上的地图涂上这个颜色）' : ''}</div><div class="ups">${P.ups.map(blk).join('')}</div>` : '<div class="muted">这次没有方块升级</div>'}
+        <div class="panel" style="flex-direction:row;align-items:center;gap:12px"><b>错题本</b><span>新放进 <b style="color:var(--bad)">${P.newMist}</b> 道 · 今天复习过关 <b style="color:var(--ok)">${P.passed}</b> 道</span><span style="flex:1"></span><button class="btn" id="sumMist" style="background:var(--stone-hi)">去看看</button></div>
+        ${slowIds.length ? `<div style="font-weight:900">这几个写对了，还不够快</div><div class="ups">${slowIds.map(blk).join('')}</div>` : ''}
+        <button class="btn go big" id="sumHome" style="align-self:flex-start;min-width:220px;font-size:20px">回到地图</button>
+      </div>`;
+    show('summary');
+    $('sumHome').addEventListener('click', goHome);
+    $('sumMist').addEventListener('click', () => { P = null; renderMist(); show('mist'); });
+  }
+
+  // ---------- 8 错题本（当前级别） ----------
+  const mq = m => `${m.a} ${m.op === '+' ? '+' : '−'} ${m.b}`;
+  function renderMist() {
+    const t = today(), L = curL(), g = C.mistakeGroups(S, t);
+    const of = list => list.filter(m => m.L === L);
+    const due = of(g.due), doing = of(g.doing), done = of(g.done);
+    $('mistLevel').textContent = C.LEVELS[L].name;
+    $('mistN').textContent = due.length; $('mistGo').disabled = !due.length; $('mistGo').style.opacity = due.length ? 1 : .45;
+    $('mDueT').textContent = `今天要复习 · ${due.length}`; $('mDoingT').textContent = `过关中 · ${doing.length}`; $('mDoneT').textContent = `已经会了 · ${done.length}`;
+    $('mDue').innerHTML = due.map(m => `<div class="mrow"><span class="num">${mq(m)}</span><span style="font-size:13px;color:var(--warn)">${m.passes ? `第 ${m.passes + 1} 关` : (C.dayDiff(m.added, t) <= 1 ? '昨天写错' : '第 1 关')}</span></div>`).join('') || '<div class="muted">今天没有要复习的</div>';
+    const dots = n => `<span class="dots5">${[0, 1, 2, 3, 4].map(i => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+    const when = d => { const n = C.dayDiff(t, d); return n === 1 ? '明天' : `${n} 天后`; };
+    $('mDoing').innerHTML = doing.sort((x, y) => x.due.localeCompare(y.due)).map(m => `<div class="mrow"><span class="num" style="font-size:18px">${mq(m)}</span>${dots(m.passes)}<span class="muted" style="font-size:12px;white-space:nowrap">${when(m.due)}</span></div>`).join('') || '<div class="muted">还没有</div>';
+    $('mDone').innerHTML = done.map(m => `<span class="b l3">${mq(m).replace(/ /g, '')}</span>`).join('') || '<div class="muted">还没有</div>';
+  }
+  $('mistBack').addEventListener('click', () => { renderHome(); show('home'); });
+  $('mistGo').addEventListener('click', () => begin(startReview));
+
+  // ---------- 9 家长区 ----------
+  function renderParent() {
+    const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+    $('bkInfo').innerHTML = days === null ? '还没备份过<br>建议每周备份一次' : `上次备份是 <b>${days} 天前</b>（${C.dayOf(S.lastBackup)}）<br>建议每周备份一次`;
+    const n = Object.values(INKS.t || {}).map(a => a.length), st = INKS.stats || [];
+    $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${st.length ? `<br>最近 ${st.length} 次不用确认就认出 ${st.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
+    $('oralBox').checked = !!S.oral;
+    $('btnResetYes').hidden = true; $('btnReset').textContent = '清空进度'; $('resetMsg').textContent = ''; $('ioPanel').hidden = true;
+  }
+  $('parBack').addEventListener('click', () => { renderHome(); show('home'); });
+  $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
+  $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }));
+  let ioKind = null;
+  function openIO(kind) {
+    ioKind = kind; $('ioPanel').hidden = false; $('ioMsg').textContent = '';
+    const out = kind === 'out' || kind === 'inkout';
+    $('ioTitle').textContent = out ? '把下面这段文字复制下来，存到备忘录里' : '把之前导出的文字粘贴到下面';
+    $('ioText').value = kind === 'out' ? C.exportText(S) : kind === 'inkout' ? JSON.stringify(INKS) : '';
+    $('ioCopy').hidden = !out; $('ioApply').hidden = out;
+  }
+  $('btnExport').addEventListener('click', () => openIO('out'));
+  $('btnImport').addEventListener('click', () => openIO('in'));
+  $('btnInkOut').addEventListener('click', () => openIO('inkout'));
+  $('btnInkIn').addEventListener('click', () => openIO('inkin'));
+  $('ioClose').addEventListener('click', () => { $('ioPanel').hidden = true; });
+  $('ioCopy').addEventListener('click', () => {
+    const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } };
+    navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; });
+  });
+  $('ioApply').addEventListener('click', () => {
+    try {
+      if (ioKind === 'inkin') {
+        const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object') throw 0;
+        INKS = Object.assign(I.blankStore(), v); saveInk();
+      } else { const keep = S.testDays; S = C.importText($('ioText').value); S.testDays = keep; save(); }
+      $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
+    } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
+  });
+  $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
+  $('btnResetYes').addEventListener('click', () => { const keep = {oral: S.oral, testDays: S.testDays}; S = Object.assign(C.blank(), keep); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
+
+  // ---------- 测试模式（#test） ----------
+  function showTestDay() { $('testDay').textContent = `模拟日期 ${today()}`; }
+  if (TEST) {
+    $('testBar').hidden = false;
+    const setLv = (units, lv) => units.forEach(u => { const st = cs(u.id); st.lv = lv; st.seen = Math.max(st.seen, 1); st.d = [C.addDays(today(), -4), C.addDays(today(), -3), today()].slice(0, lv); });
+    $('testBar').addEventListener('click', e => {
+      const b = e.target.closest('[data-t]'); if (!b) return;
+      const t = b.dataset.t, w1 = C.worldUnits(curL(), 0);
+      if (t === 'day+1') S.testDays = (S.testDays || 0) + 1;
+      else if (t === 'day+3') S.testDays = (S.testDays || 0) + 3;
+      else if (t === 'day0') S.testDays = 0;
+      else if (t === 'w1y') setLv(w1, 1);
+      else if (t === 'w1d') setLv(w1, 3);
+      else if (t === 'unsure') { forceUnsure = true; b.textContent = '已开启：下一题会问'; return; }
+      else if (t === 'mist') C.unitsOf(curL()).slice(0, 3).forEach(u => C.addMistake(S, C.inst({id: u.id}), C.addDays(today(), -1)));
+      else if (t === 'reset') { const keep = S.level; S = C.blank(); S.level = keep; }
+      save(); renderHome();
+    });
+  }
+  window.__sm = {get S() { return S; }, get P() { return P; }, get INK() { return INKS; }, CTX}; // 调试用
+  renderHome(); show('home');
+})();
+</script>
+</body>
+</html>
