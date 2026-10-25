@@ -130,6 +130,84 @@
     };
   };
 
+  // ---------- 出题（v1 规则 + 错题合并） ----------
+  const shuffle = (a, r) => { r = r || Math.random; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const DECK = 20, LEARN_MAX = 4, PROBE_MIN = 6, HARD_MAX = 8, ERR_FIRST = 4;
+  const stOf = (S, id) => S.cards[id] || {lv: 0, seen: 0, d: [], last: ''};
+  // 今天答对就能升级的卡
+  const isDue = (s, t) => (s.lv === 1 && s.d[0] !== t) || (s.lv === 2 && dayDiff(s.d[1], t) >= GAP_DAYS);
+  // 返回一批题：[{id, mkey?, fixed?, hard?}]；难题（到期错题 + 练习中）每批合计 ≤8 题次
+  function buildDaily(S, CARDS, t, opts) {
+    opts = opts || {};
+    const r = opts.rnd || Math.random, st = c => stOf(S, c.id);
+    const ids = new Set(CARDS.map(c => c.id));
+    // 练过但还没达标的：最久没练的优先，每轮最多 4 个，每个出 2 次
+    const backlog = CARDS.filter(c => st(c).lv === 0 && st(c).seen > 0)
+      .sort((x, y) => (st(x).last || '').localeCompare(st(y).last || ''));
+    const learning = backlog.slice(0, LEARN_MAX), learnIds = new Set(learning.map(c => c.id));
+    // 到期错题：练习中的同一单位只挂一道在它第 1 次出现上，其余单独出
+    const L = opts.L !== undefined ? opts.L : (CARDS[0] ? CARDS[0].L : 0);
+    const attached = {}, free = [];
+    dueMistakes(S, t, L, opts.series).filter(m => ids.has(m.uid)).forEach(m => {
+      if (learnIds.has(m.uid) && !attached[m.uid]) attached[m.uid] = m;
+      else if (!learnIds.has(m.uid) || BYID[m.uid].gen) free.push(m);
+    });
+    const errPick = m => ({id: m.uid, mkey: m.key, fixed: {a: m.a, b: m.b, ans: m.ans}, hard: true});
+    const hard = free.splice(0, ERR_FIRST).map(errPick);
+    let room = HARD_MAX - hard.length;
+    learning.forEach(c => {
+      const n = Math.min(2, room);
+      for (let k = 0; k < n; k++) hard.push(Object.assign({id: c.id, hard: true}, k === 0 && attached[c.id] ? errPick(attached[c.id]) : {}));
+      room -= n;
+    });
+    hard.push(...free.splice(0, Math.max(0, room)).map(errPick));
+    // 非难题：同 v1（新题少量 → 今天能升级的 → 会的 → 更多新题）；已作为错题出的卡不再重复出
+    const taken = new Set(hard.filter(p => !BYID[p.id].gen).map(p => p.id));
+    const easyPool = f => CARDS.filter(c => !learnIds.has(c.id) && !taken.has(c.id) && f(c));
+    const due = shuffle(easyPool(c => isDue(st(c), t)), r);
+    const probeCap = backlog.length < 3 ? DECK : 0;
+    const unseen = [];
+    for (let w = 0; unseen.length < DECK && w < 10; w++) unseen.push(...shuffle(easyPool(c => c.w === w && st(c).seen === 0), r));
+    const known = shuffle(easyPool(c => st(c).lv >= 1 && !isDue(st(c), t)), r);
+    const pick = hard.slice(), room2 = () => DECK - pick.length;
+    const plain = c => ({id: c.id});
+    pick.push(...unseen.splice(0, Math.min(PROBE_MIN, probeCap, room2())).map(plain));
+    pick.push(...due.splice(0, room2()).map(plain));
+    pick.push(...known.splice(0, room2()).map(plain));
+    pick.push(...unseen.splice(0, Math.min(probeCap, room2())).map(plain));
+    // 题型级别：可选的题型少，用非难题补满（每次数字都不一样）；没有非难题就让这批短一点
+    const base = pick.filter(p => !p.hard);
+    if (CARDS.some(c => c.gen) && base.length) while (pick.length < DECK) pick.push({id: base[pick.length % base.length].id});
+    // 排序：开头 3 题、结尾 3 题放会的；中间打乱，同一个至少隔 3 题；错题跟在热身题之后
+    const isEasy = p => !p.hard && st(p).lv >= 1;
+    const easy = shuffle(pick.filter(isEasy), r), rest = pick.filter(p => !isEasy(p));
+    let head = [], tail = [];
+    if (easy.length >= 6) { head = easy.splice(0, 3); tail = easy.splice(0, 3); }
+    const mid = spread(shuffle(rest.concat(easy), r), r);
+    // 一题一卡的练习中卡：错题挂在它在牌堆里第 1 次出现的位置
+    const seenId = {};
+    mid.forEach((p, i) => {
+      if (!p.hard || BYID[p.id].gen || !attached[p.id]) return;
+      if (!seenId[p.id]) { seenId[p.id] = 1; if (!p.mkey) { mid[i] = Object.assign({}, p, errPick(attached[p.id])); strip(mid, p.id, i); } }
+    });
+    return head.concat(mid, tail);
+  }
+  // 把同一卡后面那次出现上的错题标记去掉（只让第 1 次算复习）
+  function strip(arr, id, keep) { arr.forEach((p, i) => { if (i !== keep && p.id === id && p.mkey) arr[i] = {id: p.id, hard: true}; }); }
+  // 打散：同一个在牌堆里尽量隔 3 个位置（题型太少时放宽）
+  function spread(arr, r) {
+    const gap = Math.min(3, new Set(arr.map(c => c.id)).size - 1);
+    for (let tries = 0; tries < 200 && gap > 0; tries++) {
+      let ok = true;
+      for (let i = 0; i < arr.length && ok; i++)
+        for (let k = 1; k <= gap && i + k < arr.length; k++)
+          if (arr[i].id === arr[i + k].id) { ok = false; break; }
+      if (ok) return arr;
+      shuffle(arr, r);
+    }
+    return arr;
+  }
+
   // ---------- 存储：只存在这台设备的浏览器里 ----------
   // 预览期（地址在 /v2/ 下）：地图每次从 v1 只读复制，错题本等写进预览键；上线期：从 v1 迁移一次后不再读 v1
   const V1 = 'speedmap.v1';
@@ -167,6 +245,7 @@
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
     keysFor, loadState, saveState, exportText, importText,
+    buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
   };
 });

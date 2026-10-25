@@ -139,3 +139,139 @@ test('⑦v1 备份也能导入；坏备份被拒', () => {
   assert.throws(() => C.importText('不是备份'));
   assert.throws(() => C.importText('{"a":1}'));
 });
+
+// ---------- 任务 3：错题本 + 配题合并 ----------
+const T0 = '2026-10-25';
+test('错题间隔 1/2/4/7/15，过 5 关算掌握；慢了留原档；错了回第 1 关', () => {
+  const S = C.blank();
+  const key = C.addMistake(S, C.inst({id: '8+5'}), T0);
+  assert.equal(key, '8+5');
+  assert.equal(S.mistakes[key].due, '2026-10-26');
+  let t = '2026-10-26';
+  const expectGap = [2, 4, 7, 15];
+  for (let i = 0; i < 4; i++) {
+    C.reviewMistake(S, key, 'fast', t);
+    assert.equal(S.mistakes[key].passes, i + 1);
+    assert.equal(C.dayDiff(t, S.mistakes[key].due), expectGap[i]);
+    t = S.mistakes[key].due;
+  }
+  C.reviewMistake(S, key, 'slow', t);
+  assert.equal(S.mistakes[key].passes, 4);
+  assert.equal(S.mistakes[key].due, C.addDays(t, 1));
+  C.reviewMistake(S, key, 'fast', C.addDays(t, 1));
+  assert.equal(S.mistakes[key].due, null);   // 已掌握
+  const k2 = C.addMistake(S, C.inst({id: '6+3'}), T0);
+  C.reviewMistake(S, k2, 'fast', '2026-10-26');
+  C.reviewMistake(S, k2, 'wrong', '2026-10-28');
+  assert.equal(S.mistakes[k2].passes, 0);
+  assert.equal(S.mistakes[k2].due, '2026-10-29');
+});
+
+test('题型级别错题按具体数字记，复习时用原来的数字', () => {
+  const S = C.blank();
+  const q = Object.assign(C.inst({id: 'L4:add2c'}), {a: 27, b: 15, ans: 42});
+  const key = C.addMistake(S, q, T0);
+  assert.equal(key, 'L4:add2c|27+15');
+  const again = C.inst({id: 'L4:add2c', mkey: key, fixed: {a: 27, b: 15, ans: 42}});
+  assert.equal(C.show(again), '27 + 15');
+});
+
+test('今天新进的错题明天才到期；复习过的当天不再到期', () => {
+  const S = C.blank();
+  const key = C.addMistake(S, C.inst({id: '8+5'}), T0);
+  assert.equal(C.dueMistakes(S, T0, 1).length, 0);
+  assert.equal(C.dueMistakes(S, '2026-10-26', 1).length, 1);
+  C.reviewMistake(S, key, 'wrong', '2026-10-26');
+  assert.equal(C.dueMistakes(S, '2026-10-26', 1).length, 0);
+});
+
+// 造一个级别 1（20 以内，一题一卡）的状态：nErr 道到期错题（会的卡）+ nLearn 张练习中的卡 + 其余部分会
+function scenario(nErr, nLearn, series) {
+  const S = C.blank();
+  const pool = C.unitsOf(1).filter(u => C.seriesOk(series, u.op));
+  const yesterday = '2026-10-24';
+  pool.slice(40, 60).forEach(u => { Object.assign(C.cs(S, u.id), {lv: 2, d: ['2026-10-20', '2026-10-24'], seen: 3, last: '2026-10-24T00:00'}); });
+  pool.slice(0, nLearn).forEach((u, i) => { Object.assign(C.cs(S, u.id), {lv: 0, seen: 2, last: '2026-10-2' + i + 'T00:00'}); });
+  pool.slice(20, 20 + nErr).forEach(u => { Object.assign(C.cs(S, u.id), {lv: 3, d: [], seen: 5, last: '2026-10-24T00:00'}); C.addMistake(S, C.inst({id: u.id}), yesterday); });
+  return {S, pool};
+}
+const seq = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+test('配题合并：错题 0/3/6/10 × 练习中 0/1/3/5，每批难题 ≤8 题次、错题不重复、补满不含难题', () => {
+  for (const nErr of [0, 3, 6, 10]) for (const nLearn of [0, 1, 3, 5]) for (const seed of [1, 7, 42]) {
+    const {S, pool} = scenario(nErr, nLearn, 'mix');
+    const deck = C.buildDaily(S, pool, T0, {rnd: seq(seed), series: 'mix', L: 1});
+    const learnIds = new Set(pool.filter(u => S.cards[u.id] && S.cards[u.id].lv === 0 && S.cards[u.id].seen > 0).map(u => u.id));
+    const isHard = p => learnIds.has(p.id) || !!p.mkey;
+    const hard = deck.filter(isHard).length;
+    const tag = `错题${nErr} 练习中${nLearn} seed${seed}`;
+    assert.ok(hard <= 8, `${tag}：难题 ${hard}`);
+    const mkeys = deck.filter(p => p.mkey).map(p => p.mkey);
+    assert.equal(new Set(mkeys).size, mkeys.length, `${tag}：错题重复`);
+    assert.ok(deck.length <= 20, tag);
+    // 难题名额够用时应全部用上：错题先占 ≤4，练习中每张 2 次
+    const expectLearn = Math.min(nLearn, 4), wantHard = Math.min(8, nErr + expectLearn * 2);
+    assert.equal(hard, wantHard, `${tag}：难题应为 ${wantHard}，实际 ${hard}`);
+    if (nErr > 0) assert.ok(mkeys.length >= Math.min(4, nErr), `${tag}：错题至少先占 min(4, 错题数)`);
+    // 同一张一题一卡的卡在一批里最多出 2 次
+    const cnt = {}; deck.forEach(p => { cnt[p.id] = (cnt[p.id] || 0) + 1; });
+    assert.ok(Object.values(cnt).every(n => n <= 2), `${tag}：同卡超过 2 次`);
+  }
+});
+
+test('奇数名额：错题 3 + 练习中 3 → 练习中出 2、2、1 次', () => {
+  const {S, pool} = scenario(3, 3, 'mix');
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(3), series: 'mix', L: 1});
+  const learn = pool.slice(0, 3).map(u => deck.filter(p => p.id === u.id).length);
+  assert.deepEqual(learn, [2, 2, 1]);
+});
+
+test('去重：练习中的卡本身就是到期错题 → 不另出，挂在它第 1 次出现上', () => {
+  const S = C.blank();
+  const pool = C.unitsOf(1);
+  const u = pool[0];
+  Object.assign(C.cs(S, u.id), {lv: 0, seen: 3, last: '2026-10-24T00:00'});
+  C.addMistake(S, C.inst({id: u.id}), '2026-10-24');
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(5), series: 'mix', L: 1});
+  const hits = deck.map((p, i) => [p, i]).filter(([p]) => p.id === u.id);
+  assert.equal(hits.length, 2);
+  assert.equal(hits.filter(([p]) => p.mkey).length, 1);
+  assert.ok(hits[0][0].mkey, '错题挂在第 1 次出现上');
+});
+
+test('系列过滤：加法练习只出加法（含错题）', () => {
+  const {S, pool} = scenario(6, 3, 'add');
+  C.addMistake(S, C.inst({id: '13-8'}), '2026-10-24'); // 减法错题不该出现
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(9), series: 'add', L: 1});
+  assert.ok(deck.every(p => C.BYID[p.id].op === '+'));
+  assert.ok(!deck.some(p => p.mkey === '13-8'));
+});
+
+test('题型级别：补满只用非难题；所属题型在练习中的错题顶替一次该题型出题', () => {
+  const S = C.blank();
+  const pool = C.unitsOf(3);
+  pool.forEach((u, i) => Object.assign(C.cs(S, u.id), i < 2 ? {lv: 0, seen: 3, last: '2026-10-2' + i + 'T00:00'} : {lv: 2, d: ['2026-10-20', '2026-10-24'], seen: 9, last: '2026-10-24T00:00'}));
+  const learnType = pool[0];
+  const key = C.addMistake(S, Object.assign(C.inst({id: learnType.id}), {a: 60, b: 20, ans: 80}), '2026-10-24');
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(11), series: 'mix', L: 3});
+  assert.equal(deck.filter(p => p.id === learnType.id).length, 2, '该题型仍只出 2 次');
+  assert.equal(deck.filter(p => p.mkey === key).length, 1);
+  const hard = deck.filter(p => p.id === pool[0].id || p.id === pool[1].id || p.mkey).length;
+  assert.ok(hard <= 8);
+  assert.equal(deck.length, 20);
+});
+
+test('题型级别刚开始、全是练习中：本批可以不满 20，不拿难题补满', () => {
+  const S = C.blank();
+  const pool = C.unitsOf(2);
+  pool.forEach((u, i) => { if (i < 12) Object.assign(C.cs(S, u.id), {lv: 0, seen: 1, last: '2026-10-24T00:0' + (i % 10)}); });
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(13), series: 'mix', L: 2});
+  assert.ok(deck.length <= 8, `应 ≤8 题，实际 ${deck.length}`);
+});
+
+test('热身：会的题足够时，开头 3 道不是难题', () => {
+  const {S, pool} = scenario(4, 2, 'mix');
+  const deck = C.buildDaily(S, pool, T0, {rnd: seq(17), series: 'mix', L: 1});
+  const learnIds = new Set(pool.slice(0, 2).map(u => u.id));
+  deck.slice(0, 3).forEach(p => assert.ok(!p.mkey && !learnIds.has(p.id)));
+});
