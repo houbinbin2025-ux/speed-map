@@ -106,3 +106,9 @@ test('分组：笔直的一竖落在另一笔范围内（如「4」）算同一�
   const oneThree = [P([[50, 5], [50, 158]]), P([[90, 20], [150, 40], [110, 80], [150, 120], [90, 150]])];
   assert.equal(I.groupStrokes(oneThree).length, 2);
 });
+
+test('分组：斜写的「11」在正常间距（字高 25%）下仍分成两个数字', () => {
+  const P = pts => pts.map(([x, y], i) => ({x, y, t: i}));
+  const slant = x => P([[x + 8, 0], [x + 4, 50], [x, 100]]);
+  assert.equal(I.groupStrokes([slant(0), slant(33)]).length, 2);
+});
