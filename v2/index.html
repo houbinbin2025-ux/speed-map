@@ -76,7 +76,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .hold-btn.hold i{width:100%;transition:width 1s linear}
 .hint-pop{font-size:13px;color:var(--warn)}
 .wname{align-self:flex-start;color:#fff;border:2px solid #000;padding:4px 10px;font-size:14px;font-weight:700}
-.q{font-size:clamp(56px,9.5vw,92px);line-height:1;white-space:nowrap}
+.q{font-size:clamp(56px,9.5vw,92px);line-height:1;white-space:nowrap;overflow:hidden;max-width:100%}
 .q.small{font-size:clamp(44px,7vw,64px)}
 .q .ans{color:var(--warn)}
 .say{font-size:34px;font-weight:900}
@@ -505,13 +505,20 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     if (!list.length) return;
     start('review', '错题复习', C.shuffle(list.slice()).map(m => ({id: m.uid, mkey: m.key, fixed: {a: m.a, b: m.b, ans: m.ans}})));
   }
+  // 题目字号：默认大字，放不下左栏就按比例缩小（真机 Safari 左右有安全区，左栏比电脑上窄）
+  function fitQ() {
+    const q = $('q'); q.style.fontSize = '';
+    const w = q.clientWidth, need = q.scrollWidth;
+    if (w && need > w) q.style.fontSize = Math.floor(parseFloat(getComputedStyle(q).fontSize) * w / need) + 'px';
+  }
+  window.addEventListener('resize', () => setTimeout(() => { if (P && !$('play').hidden) fitQ(); }, 80));
   const limitOf = c => C.fastLimit(c, c.ans, mode(), INKS.speed);
   function showQ() {
     const c = P.deck[P.i];
     P.phase = 'q'; P.result = null; P.typed = '';
     const w = C.LEVELS[c.L].worlds[c.w];
     $('wname').textContent = c.gen ? c.name : w.name; $('wname').style.background = w.c;
-    $('q').className = 'q num'; $('q').textContent = C.show(c) + ' =';
+    $('q').className = 'q num'; $('q').textContent = C.show(c) + ' ='; fitQ();
     $('res').innerHTML = '';
     const f = P.results.filter(r => r && r.fast).length;
     $('pCount').textContent = `第 ${P.i + 1} 题 · ⚡ ${P.word} ${f}`;
@@ -573,7 +580,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
   function feedback() {
     const c = P.deck[P.i];
     P.phase = 'a'; playPad.enabled = false; clearTimeout(P.submitT);
-    $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`;
+    $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`; fitQ();
     $('btnClear').hidden = true; $('btnDunno').hidden = true;
     const sec = (P.ms / 1000).toFixed(1);
     if (P.result === 'fast') {
@@ -641,7 +648,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     if (!P || P.phase !== 'q' || !S.oral) return;
     P.ms = Math.max(0, performance.now() - P.t0); const c = P.deck[P.i];
     P.phase = 'oral'; P.result = P.ms <= limitOf(c) ? 'fast' : 'slow';
-    $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`;
+    $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`; fitQ();
     $('res').innerHTML = P.result === 'fast' ? `<div class="say fast">⚡ ${P.word === '秒答' ? '秒答！' : '又快又对！'}</div>` : '<div class="say">✓</div>';
     $('res').innerHTML += `<div class="muted" style="font-size:15px">${(P.ms / 1000).toFixed(1)} 秒</div>`;
     $('oralTap').hidden = true; $('oralFoot').hidden = false; $('btnOralWrong').textContent = '答错了';
