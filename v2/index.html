@@ -298,8 +298,9 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<script src="core.js"></script>
-<script src="ink.js"></script>
+<!-- 改了 core.js / ink.js 必须同时把 v= 加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v2:16f7be0b0a8e -->
+<script src="core.js?v=2"></script>
+<script src="ink.js?v=2"></script>
 <script>
 window.addEventListener('error', function (e) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#8a2f27;color:#fff;padding:12px 16px;font:14px sans-serif;z-index:99'; d.textContent = '页面出错了，请截图发给维护的人：' + (e.message || e); document.body.appendChild(d); });
 (() => {
@@ -543,14 +544,15 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     P.ms = Math.max(0, playPad.lastUp - P.t0);
     const res = I.recognize(strokes, INKS);
     if (res.text === null) { playPad.clear(); $('footNote').textContent = '没看清，再写一次'; return; } // 只碰了个点之类：清掉重写，不算答错
-    P.rec = res; P.picked = res.digits.map(d => d.cands[0].d);
-    P.unsure = res.digits.map((d, i) => d.sure ? -1 : i).filter(i => i >= 0);
-    if (TEST && forceUnsure && res.digits[0].cands.length > 1) { forceUnsure = false; P.unsure = [0]; } // 测试模式：演示识别确认
-    INKS.stats = (INKS.stats || []).concat(P.unsure.length ? 0 : 1).slice(-100); saveInk();
+    const rv = I.resolveWith(res, P.deck[P.i].ans);   // 两可的笔迹用答案定夺，免得两位数老弹窗
+    P.rec = res; P.picked = rv.picked; P.unsure = rv.unsure; P.byAnswer = rv.byAnswer;
+    if (TEST && forceUnsure && res.digits[0].cands.length > 1) { forceUnsure = false; P.unsure = [0]; P.byAnswer = []; } // 测试模式：演示识别确认
+    // 识别率只算「笔迹本身就有把握」的：靠答案定夺的也算没把握，免得家长区的数字虚高
+    INKS.stats = (INKS.stats || []).concat(P.unsure.length || P.byAnswer.length ? 0 : 1).slice(-100); saveInk();
     if (P.unsure.length) return askConfirm();
     decide(false);
   }
-  // 识别没把握：只问那一位，两个候选只按笔迹排名，不参考答案
+  // 识别没把握且答案也定夺不了：只问那一位，两个候选只按笔迹排名，不参考答案
   function askConfirm() {
     P.phase = 'confirm'; playPad.enabled = false;
     const i = P.unsure[0], d = P.rec.digits[i];
@@ -573,8 +575,8 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     const c = P.deck[P.i], text = P.picked.join(''), right = text === String(c.ans);
     P.typed = text;
     P.result = !right ? 'wrong' : (!viaConfirm && P.ms <= limitOf(c)) ? 'fast' : 'slow';
-    // 高把握且写对的笔迹，加进模板（越用越准）
-    if (right && !viaConfirm) P.rec.digits.forEach((d, k) => I.addTemplate(INKS, text[k], d.strokes)), saveInk();
+    // 高把握且写对的笔迹，加进模板（越用越准）；弹窗确认的、靠答案定夺的那一位不加（两可的字可能是形近写错，学进去会越学越糊）
+    if (right && !viaConfirm) P.rec.digits.forEach((d, k) => { if (!P.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }), saveInk();
     feedback();
   }
   function feedback() {

@@ -112,3 +112,34 @@ test('分组：斜写的「11」在正常间距（字高 25%）下仍分成两�
   const slant = x => P([[x + 8, 0], [x + 4, 50], [x, 100]]);
   assert.equal(I.groupStrokes([slant(0), slant(33)]).length, 2);
 });
+
+test('答案定夺：没把握的那一位，前两名里有答案要的数字且拼起来等于答案 → 直接认，不再问', () => {
+  const dg = (top, second, sure) => ({strokes: [], cands: [{d: top, dist: 1}, {d: second, dist: 1.1}], sure});
+  // 写「86」，8 被认成 0/8 拿不准 → 答案 86 → 直接认 86
+  let r = I.resolveWith({text: '06', digits: [dg('0', '8', false), dg('6', '5', true)]}, 86);
+  assert.deepEqual(r, {picked: ['8', '6'], unsure: [], byAnswer: [0]});
+  // 两位都拿不准、都能对上 → 都定
+  r = I.resolveWith({text: '06', digits: [dg('0', '8', false), dg('6', '5', false)]}, 85);
+  assert.deepEqual(r, {picked: ['8', '5'], unsure: [], byAnswer: [0, 1]});
+  // 前两名里没有答案要的数字 → 照常问
+  r = I.resolveWith({text: '06', digits: [dg('0', '8', false), dg('6', '5', true)]}, 96);
+  assert.deepEqual(r, {picked: ['0', '6'], unsure: [0], byAnswer: []});
+  // 有把握的那一位和答案不同 → 整体对不上答案，不替她改，照常问
+  r = I.resolveWith({text: '06', digits: [dg('0', '8', false), dg('6', '5', true)]}, 87);
+  assert.deepEqual(r, {picked: ['0', '6'], unsure: [0], byAnswer: []});
+  // 位数和答案不同 → 照常问
+  r = I.resolveWith({text: '0', digits: [dg('0', '8', false)]}, 86);
+  assert.deepEqual(r, {picked: ['0'], unsure: [0], byAnswer: []});
+  // 全都有把握 → 原样
+  r = I.resolveWith({text: '06', digits: [dg('0', '8', true), dg('6', '5', true)]}, 86);
+  assert.deepEqual(r, {picked: ['0', '6'], unsure: [], byAnswer: []});
+});
+
+test('答案定夺：一位数答案、答案为 0、只有 1 个候选、答案数字在另一位', () => {
+  const dg = (top, second, sure) => ({strokes: [], cands: second ? [{d: top, dist: 1}, {d: second, dist: 1.1}] : [{d: top, dist: 1}], sure});
+  assert.deepEqual(I.resolveWith({text: '6', digits: [dg('6', '0', false)]}, 0), {picked: ['0'], unsure: [], byAnswer: [0]});
+  assert.deepEqual(I.resolveWith({text: '3', digits: [dg('3', '8', false)]}, 8), {picked: ['8'], unsure: [], byAnswer: [0]});
+  assert.deepEqual(I.resolveWith({text: '3', digits: [dg('3', null, false)]}, 8), {picked: ['3'], unsure: [0], byAnswer: []});
+  // 第 1 位拿不准（0/8），答案要的 8 出现在第 2 位的候选里也不算：每一位只看自己的候选
+  assert.deepEqual(I.resolveWith({text: '06', digits: [dg('0', '6', false), dg('6', '8', true)]}, 86), {picked: ['0', '6'], unsure: [0], byAnswer: []});
+});

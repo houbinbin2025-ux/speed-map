@@ -119,6 +119,17 @@
     return {text: digits.map(d => d.cands[0].d).join(''), digits};
   }
 
+  // 答案定夺：拿不准的那一位，若前两名里有答案要的数字、且这样拼出来正好等于答案 → 直接按答案认，不弹窗问
+  // 只在「笔迹本来就两可」时起作用；前两名都对不上，或有把握的位和答案不同，照常问
+  function resolveWith(res, ans) {
+    const want = String(ans), picked = res.digits.map(d => d.cands[0].d);
+    const unsure = res.digits.map((d, i) => d.sure ? -1 : i).filter(i => i >= 0);
+    if (!unsure.length || res.digits.length !== want.length) return {picked, unsure, byAnswer: []};
+    const fixed = picked.map((x, k) => unsure.includes(k) && res.digits[k].cands.some(c => c.d === want[k]) ? want[k] : x);
+    if (fixed.join('') !== want) return {picked, unsure, byAnswer: []};
+    return {picked: fixed, unsure: [], byAnswer: unsure};
+  }
+
   // ---------- 书写速度：写一个数字用时的中位数 ----------
   const writeMs = strokes => { const p = [].concat(...strokes); return p.length ? p[p.length - 1].t - p[0].t : 0; };
   function medianSpeed(samples) {
@@ -127,5 +138,5 @@
     return s[Math.floor(s.length / 2)];
   }
 
-  return {groupStrokes, recognize, rankGroup, addTemplate, blankStore, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
+  return {groupStrokes, recognize, resolveWith, rankGroup, addTemplate, blankStore, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
 });
