@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>对但慢</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; gap: 16px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="Summary.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+      <div style="flex-grow: 1; height: 10px; background: #2a2d34; border: 2px solid #000" aria-label="今天已练 1 分钟，共 10 分钟"><div style="width: 10%; height: 100%; background: #6fae3a"></div></div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center"><span style="background: #2a2d34; border: 2px solid #000; padding: 3px 10px; font-size: 14px; font-weight: 700">分合 · 6 到 9</span></div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px">
+      <div style="font-family: Nunito, sans-serif; font-weight: 900; font-size: 64px; line-height: 1; white-space: nowrap">7 = 3 + <span style="color: #7bd88f">4</span></div>
+      <div style="font-size: 28px; font-weight: 900; color: #7bd88f">✓ 对了</div>
+      <div style="font-size: 18px; color: #ecebe4">再快一点就能升级</div>
+      <div style="font-size: 14px; color: #9a9ca6">用了 6 秒 · 4 秒内写完就升级</div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+    <a href="BondEq.dc.html" aria-label="下一题（0.8 秒后自动）" style="flex-grow: 1; display: block; background-color: #f4ecd8; background-image: linear-gradient(#e3d7b9 1px, transparent 1px); background-size: 100% 48px; border: 3px solid #000; border-radius: 10px">
+      <svg width="100%" height="100%" viewBox="0 0 500 320" aria-hidden="true"><path d="M280 70 L200 200 L310 200 M286 120 L286 260" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </a>
+    <div style="height: 56px; display: flex; align-items: center; font-size: 13px; color: #9a9ca6">0.8 秒后自动下一题 · 原型：点手写板继续</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

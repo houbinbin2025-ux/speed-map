@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>答对 · 点亮了</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; gap: 16px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="Summary.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+      <div style="flex-grow: 1; height: 10px; background: #2a2d34; border: 2px solid #000" aria-label="今天已练 2 分钟，共 10 分钟"><div style="width: 20%; height: 100%; background: #6fae3a"></div></div>
+    </div>
+    <div style="font-size: 15px; font-weight: 700">看一眼，有几个？</div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px">
+      <div style="font-family: Nunito, sans-serif; font-weight: 900; font-size: 92px; line-height: 1; color: #7bd88f">13</div>
+      <div style="font-size: 30px; font-weight: 900; color: #7bd88f">✓ 对了！点亮了</div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <i style="width: 40px; height: 40px; background: #3a3e47; border: 3px solid #000"></i>
+        <svg width="30" height="18" viewBox="0 0 30 18" aria-hidden="true"><path d="M2 9h22M18 3l6 6-6 6" fill="none" stroke="#b8bac3" stroke-width="3"></path></svg>
+        <i style="width: 40px; height: 40px; background: #fff3b0; border: 3px solid #000"></i>
+        <span style="font-size: 14px; color: #b8bac3">两个十格框 · 13</span>
+      </div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+    <a href="Bond.dc.html" aria-label="下一题（0.8 秒后自动）" style="flex-grow: 1; position: relative; display: block; background-color: #f4ecd8; background-image: linear-gradient(#e3d7b9 1px, transparent 1px); background-size: 100% 48px; border: 3px solid #000; border-radius: 10px">
+      <svg width="100%" height="100%" viewBox="0 0 500 320" aria-hidden="true"><path d="M150 100 L178 76 L180 250" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path><path d="M240 96 C270 62 330 72 320 118 C312 150 280 156 266 158 C310 160 340 186 326 222 C310 262 250 260 234 232" fill="none" stroke="#2b2b2b" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div style="position: absolute; right: 16px; top: 16px; width: 64px; height: 64px; border-radius: 32px; background: #3d7524; border: 3px solid #000; display: flex; align-items: center; justify-content: center"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M7 17l7 7 13-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+    </a>
+    <div style="height: 56px; display: flex; align-items: center; font-size: 13px; color: #9a9ca6">0.8 秒后自动下一题 · 原型：点手写板继续</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

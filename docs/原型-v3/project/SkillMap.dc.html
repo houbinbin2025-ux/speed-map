@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>技能组地图</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 12px 60px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+  <div style="display: flex; align-items: center; gap: 8px">
+    <a href="Main.dc.html" style="height: 44px; display: flex; align-items: center; padding: 0 14px; background: #2a2d34; border: 2px solid #000; font-size: 15px; font-weight: 700">回到岛上</a>
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button type="button" onClick="{{t.pick}}" style="{{t.style}}">{{t.name}}</button>
+    </sc-for>
+  </div>
+  <div style="display: flex; align-items: center; gap: 14px">
+    <div style="font-size: 20px; font-weight: 900">{{rule}}</div>
+    <div style="flex-grow: 1"></div>
+    <a href="FreeSummary.dc.html" style="height: 44px; display: flex; align-items: center; padding: 0 10px; font-size: 13px; color: #9a9ca6; border: 1px dashed #3a3e47">原型：练完一组后</a>
+    <a href="Bond.dc.html" style="height: 56px; display: flex; align-items: center; padding: 0 26px; background: #6fae3a; color: #10140c; border: 3px solid #000; box-shadow: 0 4px 0 #000; font-size: 20px; font-weight: 900">练这个</a>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 5px; min-height: 0; overflow-y: auto">
+    <sc-for list="{{skills}}" as="s" hint-placeholder-count="4">
+      <div style="display: flex; align-items: center; gap: 12px; background: #2a2d34; border: 2px solid #000; padding: 5px 12px; flex-shrink: 0">
+        <div style="width: 110px; font-size: 15px; font-weight: 700; flex-shrink: 0">{{s.name}}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 3px; flex-grow: 1">
+          <sc-for list="{{s.cells}}" as="c" hint-placeholder-count="6">
+            <div style="{{c.style}}">{{c.text}}</div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tab = this.state.tab || 'bond';
+    const COL = ['#3a3e47', '#fff3b0', '#f6a5a0', '#b3261e'], INK = ['#b8bac3', '#1b1d22', '#1b1d22', '#ffffff'];
+    const card = lv => ({style: 'width: 18px; height: 18px; border: 2px solid #000; background: ' + COL[lv], text: ''});
+    const type = (lv, label, win) => ({style: 'min-width: 120px; height: 30px; box-sizing: border-box; border: 2px solid #000; padding: 2px 8px; display: flex; align-items: center; font-size: 12px; white-space: nowrap; background: ' + COL[lv] + '; color: ' + INK[lv], text: label + (win ? ' · 最近 8 次对了 ' + win + ' 次' : '')});
+    const cards = s => s.split('').map(n => card(+n));
+    const G = {
+      look: {name: '看数', rule: '看一眼，写出有几个', skills: [
+        {name: '骰子点', cells: cards('333322')}, {name: '乱点', cells: cards('33221')},
+        {name: '一个十格框', cells: cards('3322211100')}, {name: '两个十格框', cells: cards('2111000000')}]},
+      bond: {name: '分合', rule: '先做对，再做快', skills: [
+        {name: '5 以内', cells: cards('3333222211').concat([type(1, '合起来是几')])},
+        {name: '6 到 9', cells: cards('22221111111111000000000000').concat([type(0, '合起来是几', 5)])},
+        {name: '凑十', cells: cards('111000000')},
+        {name: '缺数算式', cells: [type(1, '□ + a = b'), type(0, 'a + □ = b', 6), type(0, '□ − a = b'), type(0, 'a − □ = b')]},
+        {name: '过十准备', cells: [type(0, '9 + a = 10 + □', 4), type(0, '8 + a = 10 + □'), type(0, '7 + a = 10 + □')]}]},
+      place: {name: '数位', rule: '一根是 10，一块是 1', skills: [
+        {name: '看十和一写数', cells: [type(0, '数一数写出来')]}, {name: '几个十几个一', cells: [type(0, '47 里有几个十')]}]},
+      cmp: {name: '比大小', rule: '看清楚，再点大的', skills: [
+        {name: '10 以内谁大', cells: [type(2, '10 以内')]}, {name: '20 以内谁大', cells: [type(1, '20 以内', 3)]},
+        {name: '两位数谁大', cells: [type(0, '普通'), type(0, '47 和 74 这种')]},
+        {name: '前后数', cells: [type(0, '多 1'), type(0, '少 1'), type(0, '多 10'), type(0, '少 10')]}]},
+      line: {name: '数线', rule: '把旗子插到这个数的位置', skills: [
+        {name: '0 到 10', cells: [type(1, '0 到 10', 5)]}, {name: '0 到 20', cells: [type(0, '0 到 20')]},
+        {name: '0 到 100 整十', cells: [type(0, '整十')]}, {name: '0 到 100', cells: [type(0, '任意数')]}]},
+    };
+    const tabs = Object.keys(G).map(k => ({name: G[k].name, pick: () => this.setState({tab: k}),
+      style: 'height: 44px; padding: 0 14px; border: 2px solid #000; font: inherit; font-size: 15px; font-weight: 900; cursor: pointer; ' + (k === tab ? 'background: #ecebe4; color: #1b1d22' : 'background: #2a2d34; color: #b8bac3')}));
+    return {tabs, rule: G[tab].rule, skills: G[tab].skills};
+  }
+}
+</script>
+</body>
+</html>

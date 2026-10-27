@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>数线 · 插旗子</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <a href="Summary.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+    <div style="flex-grow: 1; height: 10px; background: #2a2d34; border: 2px solid #000" aria-label="今天已练 9 分钟，共 10 分钟"><div style="width: 90%; height: 100%; background: #6fae3a"></div></div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px"><span style="background: #2a2d34; border: 2px solid #000; padding: 3px 10px; font-size: 14px; font-weight: 700">数线 · 0 到 10</span></div>
+  <div style="font-size: 26px; font-weight: 900">把旗子插到 <span style="font-family: Nunito, sans-serif; font-size: 52px; color: #f2c14e">7</span> 的位置</div>
+  <a href="LineOk.dc.html" aria-label="数线（原型：点一下看放好后）" style="flex-grow: 1; position: relative; display: block; margin: 0 24px">
+    <div style="position: absolute; left: 0; right: 0; top: 118px; height: 8px; background: #ecebe4"></div>
+    <div style="position: absolute; left: 0; top: 104px; width: 6px; height: 36px; background: #ecebe4"></div>
+    <div style="position: absolute; right: 0; top: 104px; width: 6px; height: 36px; background: #ecebe4"></div>
+    <div style="position: absolute; left: -10px; top: 146px; font-family: Nunito, sans-serif; font-weight: 900; font-size: 30px">0</div>
+    <div style="position: absolute; right: -16px; top: 146px; font-family: Nunito, sans-serif; font-weight: 900; font-size: 30px">10</div>
+    <div style="position: absolute; left: 66%; top: 34px; display: flex; flex-direction: column; align-items: flex-start">
+      <svg width="46" height="90" viewBox="0 0 46 90" aria-hidden="true"><path d="M4 4 L42 16 L4 30 Z" fill="#b3261e" stroke="#000" stroke-width="2"></path><path d="M4 4 L4 88" stroke="#ecebe4" stroke-width="4"></path></svg>
+    </div>
+    <div style="position: absolute; left: calc(66% - 18px); top: 150px; width: 40px; height: 40px; border-radius: 20px; background: rgba(236, 235, 228, 0.18); border: 2px dashed #9a9ca6" aria-hidden="true"></div>
+  </a>
+  <div style="display: flex; align-items: center; gap: 12px">
+    <span style="flex-grow: 1; font-size: 14px; color: #b8bac3">手指按在线上，可以拖；放开停一下就交</span>
+    <a href="LineNo.dc.html" style="height: 44px; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #9a9ca6; border: 1px dashed #3a3e47">原型：看放偏了</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

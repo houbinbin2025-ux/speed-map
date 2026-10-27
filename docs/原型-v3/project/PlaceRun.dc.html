@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>摸底中</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 10px 60px 14px; display: flex; gap: 16px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <a href="PlaceResult.dc.html" style="background: #2a2d34; border: 2px solid #000; height: 44px; display: flex; align-items: center; padding: 0 14px; font-size: 15px; font-weight: 700">长按结束</a>
+      <span style="font-size: 14px; font-weight: 700">看看你会什么</span>
+    </div>
+    <div style="display: flex; gap: 4px" aria-label="摸底进度：第 9 题">
+      <i style="flex: 9; height: 8px; background: #6fae3a; border: 1px solid #000"></i><i style="flex: 31; height: 8px; background: #2a2d34; border: 1px solid #000"></i>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px">
+      <div style="width: 92px; height: 92px; border-radius: 46px; background: #2a2d34; border: 3px solid #ecebe4; display: flex; align-items: center; justify-content: center; font-family: Nunito, sans-serif; font-weight: 900; font-size: 52px">10</div>
+      <svg width="200" height="34" viewBox="0 0 200 34" aria-hidden="true"><path d="M100 0 L46 34 M100 0 L154 34" stroke="#ecebe4" stroke-width="4"></path></svg>
+      <div style="display: flex; gap: 40px">
+        <div style="width: 92px; height: 92px; border-radius: 46px; background: #2a2d34; border: 3px solid #ecebe4; display: flex; align-items: center; justify-content: center; font-family: Nunito, sans-serif; font-weight: 900; font-size: 52px">7</div>
+        <div style="width: 92px; height: 92px; border-radius: 46px; background: #f4ecd8; border: 3px dashed #f2c14e; box-sizing: border-box" aria-label="要写的数"></div>
+      </div>
+    </div>
+    <div style="font-size: 14px; color: #b8bac3">空着的圆里是几？写在右边</div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 8px">
+    <a href="PlaceResult.dc.html" aria-label="手写板（原型：点一下看摸底结果）" style="flex-grow: 1; display: block; background-color: #f4ecd8; background-image: linear-gradient(#e3d7b9 1px, transparent 1px); background-size: 100% 48px; border: 3px solid #000; border-radius: 10px"></a>
+    <div style="display: flex; gap: 10px; align-items: center">
+      <span style="font-size: 12px; color: #9a9ca6; flex-grow: 1">原型：点手写板看结果</span>
+      <a href="PlaceRun.dc.html" style="min-width: 96px; height: 56px; display: flex; align-items: center; justify-content: center; background: #2a2d34; border: 3px solid #000; font-size: 17px; font-weight: 900">擦掉</a>
+      <a href="PlaceRun.dc.html" style="min-width: 96px; height: 56px; display: flex; align-items: center; justify-content: center; background: #2a2d34; border: 3px solid #000; font-size: 17px; font-weight: 900">不会</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

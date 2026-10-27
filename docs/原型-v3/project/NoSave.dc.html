@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>首页 · 存不了进度</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 12px 60px 16px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+  <a href="Parent.dc.html" style="display: flex; align-items: center; gap: 10px; min-height: 44px; box-sizing: border-box; padding: 8px 14px; background: #f2c14e; color: #1b1d22; border: 2px solid #000; font-size: 15px; font-weight: 700">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1b1d22" stroke-width="2.4" aria-hidden="true"><path d="M12 3 L22 20 H2 Z"></path><path d="M12 10v4M12 17v.5"></path></svg>
+    <span style="flex-grow: 1">这个浏览器暂时存不了进度，练习照常（给家长看：点这里看原因）</span>
+  </a>
+  <div style="display: flex; align-items: center; gap: 10px; height: 44px">
+    <img src="/_blob/a1d9ed587aabb05fe35c37e75b35eed5" alt="" style="width: 36px; height: 36px; image-rendering: pixelated">
+    <img src="/_blob/cc91cf6c51a92872f1ab6f1be1276f17" alt="空空数学岛" style="height: 22px; image-rendering: pixelated">
+  </div>
+  <div style="flex-grow: 1; display: flex; gap: 20px; min-height: 0">
+    <div style="width: 290px; display: flex; flex-direction: column; justify-content: center; gap: 14px">
+      <div style="font-size: 26px; font-weight: 900">空空，今天练 10 分钟</div>
+      <a href="Bond.dc.html" style="height: 84px; display: flex; align-items: center; justify-content: center; background: #6fae3a; color: #10140c; border: 3px solid #000; box-shadow: 0 5px 0 #000; font-size: 26px; font-weight: 900">开始今天的练习</a>
+    </div>
+    <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-content: center">
+      <div style="height: 96px; background: #2a2d34; border: 2px solid #000; padding: 12px; box-sizing: border-box"><b style="font-size: 18px">看数</b></div>
+      <div style="height: 96px; background: #2a2d34; border: 2px solid #000; padding: 12px; box-sizing: border-box"><b style="font-size: 18px">分合</b></div>
+      <div style="height: 96px; background: #2a2d34; border: 2px solid #000; padding: 12px; box-sizing: border-box"><b style="font-size: 18px">数位</b></div>
+      <div style="height: 96px; background: #2a2d34; border: 2px solid #000; padding: 12px; box-sizing: border-box"><b style="font-size: 18px">比大小</b></div>
+      <div style="height: 96px; background: #2a2d34; border: 2px solid #000; padding: 12px; box-sizing: border-box"><b style="font-size: 18px">数线</b></div>
+      <div style="height: 96px; background: #2a2d34; border: 2px solid #000; padding: 12px; box-sizing: border-box"><b style="font-size: 18px">秒答地图</b></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

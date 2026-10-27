@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>结算 · 今日练习</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#ecebe4;text-decoration:none}a:hover{color:#ffffff}
+</style>
+</helmet>
+<div style="width: 932px; height: 430px; box-sizing: border-box; background: #1b1d22; color: #ecebe4; font-family: 'PingFang SC', system-ui, sans-serif; padding: 20px 60px; display: flex; gap: 28px; overflow: hidden">
+  <div style="width: 330px; display: flex; flex-direction: column; justify-content: center; gap: 16px">
+    <div style="font-size: 34px; font-weight: 900">今天练完啦！</div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <div style="background: #2a2d34; border: 2px solid #000; padding: 12px"><b style="font-family: Nunito, sans-serif; font-size: 36px; color: #7bd88f">10</b><div style="font-size: 13px; color: #b8bac3">分钟</div></div>
+      <div style="background: #2a2d34; border: 2px solid #000; padding: 12px"><b style="font-family: Nunito, sans-serif; font-size: 36px; color: #fff3b0">6</b><div style="font-size: 13px; color: #b8bac3">格点亮了</div></div>
+      <div style="background: #2a2d34; border: 2px solid #000; padding: 12px"><b style="font-family: Nunito, sans-serif; font-size: 36px">3</b><div style="font-size: 13px; color: #b8bac3">道错题过关</div></div>
+      <div style="background: #2a2d34; border: 2px solid #000; padding: 12px"><b style="font-family: Nunito, sans-serif; font-size: 36px">58</b><div style="font-size: 13px; color: #b8bac3">道题</div></div>
+    </div>
+  </div>
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center">
+    <div style="font-size: 16px; font-weight: 700">今天点亮的</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px">
+      <span style="background: #fff3b0; color: #1b1d22; border: 2px solid #000; padding: 6px 10px; font-size: 15px; font-weight: 700">看数 · 13</span>
+      <span style="background: #fff3b0; color: #1b1d22; border: 2px solid #000; padding: 6px 10px; font-size: 15px; font-weight: 700">看数 · 16</span>
+      <span style="background: #f6a5a0; color: #1b1d22; border: 2px solid #000; padding: 6px 10px; font-size: 15px; font-weight: 700">分合 · 7 = 3 + 4</span>
+      <span style="background: #f6a5a0; color: #1b1d22; border: 2px solid #000; padding: 6px 10px; font-size: 15px; font-weight: 700">分合 · 8 = 5 + 3</span>
+      <span style="background: #b3261e; color: #ffffff; border: 2px solid #000; padding: 6px 10px; font-size: 15px; font-weight: 700">秒答 · 9 + 6</span>
+      <span style="background: #fff3b0; color: #1b1d22; border: 2px solid #000; padding: 6px 10px; font-size: 15px; font-weight: 700">数线 · 0 到 10</span>
+    </div>
+    <div style="font-size: 14px; color: #b8bac3">新进错题本 2 道，明天再来</div>
+    <div style="display: flex; gap: 12px; margin-top: 10px">
+      <a href="HomeDone.dc.html" style="flex-grow: 1; height: 72px; display: flex; align-items: center; justify-content: center; background: #f2c14e; color: #1b1d22; border: 3px solid #000; box-shadow: 0 5px 0 #000; font-size: 22px; font-weight: 900">去贴 1 颗珠子</a>
+    </div>
+    <a href="HomeDone.dc.html" style="align-self: flex-start; height: 44px; display: flex; align-items: center; padding: 0 12px; font-size: 15px; color: #b8bac3">回到岛上</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":932,"height":430}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
