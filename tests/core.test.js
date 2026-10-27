@@ -65,9 +65,9 @@ const lvCount = S => [0, 1, 2, 3].map(lv => Object.values(S.cards).filter(c => c
 const NOW = Date.parse('2026-10-25T10:00:00');
 
 test('存储键：正式 / 预览 / 测试 分开，笔迹测试键独立', () => {
-  assert.deepEqual(C.keysFor({}), {prog: 'speedmap.v2', ink: 'speedmap.ink'});
-  assert.deepEqual(C.keysFor({preview: true}), {prog: 'speedmap.v2.preview', ink: 'speedmap.ink'});
-  assert.deepEqual(C.keysFor({test: true}), {prog: 'speedmap.v2.test', ink: 'speedmap.ink.test'});
+  assert.deepEqual(C.keysFor({}), {prog: 'speedmap.v2', ink: 'speedmap.ink', good: 'speedmap.v2.good', broken: 'speedmap.v2.broken'});
+  assert.deepEqual(C.keysFor({preview: true}), {prog: 'speedmap.v2.preview', ink: 'speedmap.ink', good: 'speedmap.v2.preview.good', broken: 'speedmap.v2.preview.broken'});
+  assert.deepEqual(C.keysFor({test: true}), {prog: 'speedmap.v2.test', ink: 'speedmap.ink.test', good: 'speedmap.v2.test.good', broken: 'speedmap.v2.test.broken'});
 });
 
 test('①预览期：v1 有新进度，下次打开预览就能看到', () => {
@@ -79,7 +79,7 @@ test('①预览期：v1 有新进度，下次打开预览就能看到', () => {
   assert.equal(S.cards['3+4'].lv, 2);
 });
 
-test('②预览中练习、加错题：v1 一个字节都不变，错题本留在预览键', () => {
+test('②预览中练习、加错题：v1 一个字节都不变，错题本留在预览键；预览里练出的进步按格子取高保留（v3 说明书 6.2）', () => {
   const raw = v1With({'3+4': {lv: 1, d: ['2026-10-24'], seen: 1}});
   const st = memStore({'speedmap.v1': raw});
   const S = C.loadState(st, {preview: true}, NOW);
@@ -89,7 +89,7 @@ test('②预览中练习、加错题：v1 一个字节都不变，错题本留�
   assert.equal(st.getItem('speedmap.v1'), raw);
   const again = C.loadState(st, {preview: true}, NOW);
   assert.ok(again.mistakes['5+2']);           // 错题本在预览里保留
-  assert.equal(again.cards['3+4'].lv, 1);     // 地图仍以 v1 为准
+  assert.equal(again.cards['3+4'].lv, 2);     // 预览里升的淡红不被 v1 的淡黄冲掉
 });
 
 test('③正式首启：从 v1 迁移，颜色数一致，记迁移标记并立即写入 v2', () => {
@@ -103,12 +103,12 @@ test('③正式首启：从 v1 迁移，颜色数一致，记迁移标记并立�
   assert.ok(st.getItem('speedmap.v2'));
 });
 
-test('④⑤迁移只发生一次：之后 v1 再被改也不影响 v2', () => {
+test('④⑤迁移标记只记一次；之后旧 v1 页写进去的进步每次启动都按格子取高合进来（v3 说明书 6.2）', () => {
   const st = memStore({'speedmap.v1': v1With({'3+4': {lv: 1, d: [], seen: 1}})});
   C.loadState(st, {}, NOW);
   st.setItem('speedmap.v1', v1With({'3+4': {lv: 3, d: [], seen: 9}}));
   const S = C.loadState(st, {}, NOW + 1000);
-  assert.equal(S.cards['3+4'].lv, 1);
+  assert.equal(S.cards['3+4'].lv, 3);
   assert.equal(S.migratedFromV1At, NOW);
 });
 
@@ -320,4 +320,12 @@ test('mergeProgress：Boss 取并集、每日记录合并；合并两次结果�
   assert.deepEqual(M.log['2026-11-01'].ups.sort(), ['3+4', '5-1']);
   assert.equal(M.log['2026-11-01'].n, 5);
   assert.deepEqual(C.mergeProgress(M, B), M);
+});
+
+test('G6 mergeCards 同色同次数时和参数顺序无关：升级日期逐位取较晚的', () => {
+  const a = {lv: 2, seen: 4, d: ['2026-11-01', '2026-11-03'], last: '2026-11-03T08:00:00.000Z'};
+  const b = {lv: 2, seen: 4, d: ['2026-11-01', '2026-11-04'], last: '2026-11-04T08:00:00.000Z'};
+  const x = C.mergeCards({k: a}, {k: b}).k, y = C.mergeCards({k: b}, {k: a}).k;
+  assert.deepEqual(x, y);
+  assert.deepEqual(x.d, ['2026-11-01', '2026-11-04']);
 });

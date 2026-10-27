@@ -450,3 +450,136 @@ test('R3-N3 秒答卡缺 d 字段：不报错，能照常升级', () => {
   const m = C.mergeCards({'5-1': {lv: 1}}, {});
   assert.deepEqual(m['5-1'].d.length, 1);
 });
+
+// ---------- 门 6 开工：第 3 轮审查 C 节"改坏也不红"的规则补真测试（每条都做过反向验证） ----------
+// 只让 id 这一格可能到期：其余格子都标成今天刚练过
+const onlyThis = (S, id, day) => K.SKILLS.forEach(s => s.items.forEach(it => { if (it.id !== id) E.prog(S, it.id).lastDay = day; }));
+const allRed = S => K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, d: [D(-60), D(-55), D(-50)], seen: 9, lastDay: D(-50)})));
+
+test('G6-1 题型：最近 8 次里错 2 次（6/8）不升，错 1 次（7/8）才升', () => {
+  const S = C.blank(), id = 'cmp:t:100';
+  [ok, bad, ok, ok, bad, ok, ok, ok].forEach(r => E.record(S, id, r, D(0)));
+  assert.equal(E.lv(S, id), 0, '6/8 不升');
+  E.record(S, id, ok, D(0));                                            // 最近 8 次：bad ok ok bad ok ok ok ok = 6/8
+  assert.equal(E.lv(S, id), 0, '还是 6/8');
+  E.record(S, id, ok, D(0));                                            // 最近 8 次：7/8
+  assert.equal(E.lv(S, id), 1);
+});
+
+test('G6-2 维持复习：间隔一档一档走 7 → 14 → 30 → 60 天；答错回到 7 天', () => {
+  const S = C.blank(); S.placedAt = 1; allRed(S);
+  const id = 'look:tf:7';
+  const inFluency = day => { onlyThis(S, id, day); return play(S, day, () => ok).qs.some(x => x.inst.id === id && x.seg === 'fluency'); };
+  E.prog(S, id).lastDay = D(-7);
+  assert.equal(inFluency(D(0)), true, '满 7 天到期');
+  [[13, false], [14, true], [43, false], [44, true], [103, false], [104, true]].forEach(([d, want]) => assert.equal(inFluency(D(d)), want, '第 ' + d + ' 天'));
+  assert.equal(E.prog(S, id).keep, 4);
+  // 答错：档位回到 0，7 天后再出
+  onlyThis(S, id, D(170)); E.prog(S, id).lastDay = D(110);   // 60 天档到期
+  play(S, D(170), x => (x.inst.id === id ? bad : ok));
+  assert.equal(E.prog(S, id).keep, 0);
+  Object.keys(S.mistakes).forEach(k => delete S.mistakes[k]);          // 只看维持复习，不看错题本
+  assert.equal(inFluency(D(176)), false);
+  assert.equal(inFluency(D(177)), true);
+});
+
+test('G6-3 关掉重开：复习段的截止时间不重新给 5 分钟', () => {
+  const S = C.blank(); S.placedAt = 1; allRed(S);
+  K.SKILLS.slice(0, 4).forEach(s => s.items.forEach(it => { E.prog(S, it.id).lastDay = D(-1); E.addMistake(S, K.make(it.id, seeded(1)), D(-1)); }));
+  const s = E.session(S, D(0), {rnd: seeded(1)});
+  for (let k = 0; k < 4; k++) { const x = s.next(); assert.equal(x.seg, 'review'); s.answer({ok: true, fast: true, secs: 30}); }
+  const end = S.daily.reviewEnd;
+  assert.equal(end, 300);
+  const s2 = E.session(S, D(0), {rnd: seeded(2)});
+  let x;
+  while ((x = s2.next()) && x.seg === 'review') s2.answer({ok: true, fast: true, secs: 30});
+  assert.equal(S.daily.reviewEnd, end, '重开不重新给 5 分钟');
+  assert.equal(S.daily.sec, end, '到 5 分钟就离开复习段（还有到期错题也一样）');
+  assert.ok(E.dueMistakes(S, D(0)).length > 0);
+});
+
+// 跑一次今日练习，记下每题出现时今天已练了多少秒
+function trace(S, day, answerFn) {
+  const s = E.session(S, day, {rnd: seeded(3)}), out = [];
+  for (let x = s.next(), g = 0; x && g < 500; x = s.next(), g++) if (x.kind === 'q') { out.push({seg: x.seg, at: s.elapsed}); s.answer(answerFn(x)); }
+  return out;
+}
+test('G6-4 有余力再学新的：合格率 < 80% 时学新的段一结束就停；≥ 80% 接着学新的', () => {
+  const lo = rich(), a = trace(lo, D(0), x => (x.seg === 'new' ? bad : ok));   // 学新的全错（灰的不进错题本）
+  assert.equal(lo.daily.done, true);
+  assert.ok(!a.some(q => q.seg === 'new' && q.at >= lo.daily.newEnd), '合格率低：不再学新的');
+  const hi = rich(), b = trace(hi, D(0), () => ok);
+  assert.ok(b.some(q => q.seg === 'new' && q.at >= hi.daily.newEnd), '合格率高：学新的段之后接着学新的');
+});
+
+test('G6-5 学新的段最多 3 分钟（+ 一题的余量）', () => {
+  const S = C.blank(); S.placedAt = 1;
+  const a = play(S, D(0), x => (x.seg === 'new' ? bad : ok));
+  assert.ok(a.s.elapsed >= 170 && a.s.elapsed <= 180 + 6 + 5, '实际 ' + a.s.elapsed);
+});
+
+test('G6-6 有余力再学新的前提是没有到期错题；复习段没做完的错题在最后接着复习（第 5 步）', () => {
+  const S = C.blank(); S.placedAt = 1;
+  const red = ['look1', 'look2', 'look3'].flatMap(sid => K.BY[sid].items.map(it => it.id));
+  red.forEach(id => Object.assign(E.prog(S, id), {lv: 3, d: [D(-60), D(-55), D(-50)], seen: 9, lastDay: D(-1)}));
+  red.slice(0, 13).forEach(id => E.addMistake(S, K.make(id), D(-1)));     // 13 道到期；复习段每题 30 秒，做 10 道剩 3 道
+  const qs = trace(S, D(0), x => ({ok: true, fast: true, secs: x.seg === 'review' ? 30 : 6}));
+  const after = qs.filter(q => q.at >= S.daily.newEnd);                  // 学新的段（3 分钟）结束以后
+  assert.ok(after.length > 0 && after[0].seg === 'review', '有到期错题时先接着复习，不先学新的：' + after.map(q => q.seg[0]).join(''));
+  assert.equal(E.dueMistakes(S, D(0)).length, 0, '剩下的错题都复习完了');
+});
+
+// 熟练段"≥ 5 天没练的先出"：熟练段本来就按最久没练排序（到期升级的格子），学习中的格子都是 3 天内刚升的，
+// 不会 ≥ 5 天没练——这条规则在熟练段和排序等价，改掉它结果不变，所以不单独测（防冷落在学新的段有测试）。
+
+// ---------- 门 6 新增入口 ----------
+test('G6-7 hasMore：今天还能排出题才显示「再练一会」；都练完了不显示', () => {
+  const S = C.blank(); S.placedAt = 1; allRed(S);
+  K.SKILLS.forEach(s => s.items.forEach(it => { E.prog(S, it.id).lastDay = D(0); }));
+  play(S, D(0), () => ok);
+  assert.equal(S.daily.done, true);
+  assert.equal(E.hasMore(S, D(0)), false);
+  const T = rich();
+  play(T, D(0), () => ({ok: true, fast: true, secs: 20}));               // 时间先用完，内容还有
+  assert.equal(T.daily.done, true);
+  assert.equal(E.hasMore(T, D(0)), true);
+  const before = JSON.stringify(T);
+  E.hasMore(T, D(0));
+  assert.equal(JSON.stringify(T), before, 'hasMore 不改存档');
+});
+
+test('G6-8 addTime：笔迹校准的时间计入当天 10 分钟和用时统计', () => {
+  const S = C.blank(); S.placedAt = 1;
+  E.addTime(S, D(0), 120);
+  assert.equal(S.stats[D(0)].sec, 120);
+  assert.equal(E.session(S, D(0), {rnd: seeded(1)}).elapsed, 120);
+});
+
+test('G6-9 错题本「复习这一组」：只出这一组的到期错题，出完就停；秒答按级别分组', () => {
+  const S = C.blank(); S.placedAt = 1;
+  ['look:tf:3', 'look:tf:4'].forEach(id => { E.record(S, id, ok, D(-3)); E.addMistake(S, K.make(id), D(-1)); });
+  E.record(S, 'bond:7=3+_', ok, D(-3)); E.addMistake(S, K.make('bond:7=3+_'), D(-1));
+  E.addMistake(S, {id: '3+4', q: {a: 3, op: '+', b: 4}, ans: 7}, D(-1));
+  E.addMistake(S, {id: '9+4', q: {a: 9, op: '+', b: 4}, ans: 13}, D(-1));
+  const ids = g => { const f = E.review(S, D(0), g), out = []; for (let x = f.next(); x; x = f.next()) if (x.kind === 'q') { out.push(x.inst.id); f.answer(ok); } return out; };
+  assert.deepEqual(ids('look').sort(), ['look:tf:3', 'look:tf:4']);
+  assert.deepEqual(ids('speed:L1'), ['3+4']);
+  assert.deepEqual(ids('speed:L2'), ['9+4']);
+  assert.deepEqual(ids('look'), [], '复习过的明天才再来');
+});
+
+test('G6-10 摸底一次探测的 3 题不放回抽取：卡类技能 3 题是 3 张不同的卡', () => {
+  for (let seed = 1; seed < 30; seed++) {
+    const S = C.blank(), p = E.placement(S, D(0), {rnd: seeded(seed)}), ids = [];
+    for (let k = 0; k < 3; k++) { const x = p.next(); ids.push(x.inst.id); p.answer({ok: true, secs: 5}); }
+    assert.equal(new Set(ids).size, 3, '种子 ' + seed + '：' + ids.join());
+  }
+});
+
+test('G6-11 上次练习日期也看 v1 的 last：旧 v1 页昨天练过的深红卡，今天不当维持复习再出', () => {
+  const S = C.blank(); S.placedAt = 1; allRed(S);
+  K.SKILLS.forEach(s => s.items.forEach(it => { E.prog(S, it.id).lastDay = D(0); }));
+  const c = S.cards['3+4']; delete c.lastDay; c.d = [D(-60), D(-55), D(-50)];
+  c.last = new Date(D(-1) + 'T15:00').toISOString();                    // 旧 v1 页只更新 last
+  assert.ok(!play(S, D(0), () => ok).qs.some(x => x.inst.id === '3+4'));
+});

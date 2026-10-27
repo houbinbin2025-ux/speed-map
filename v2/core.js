@@ -208,31 +208,95 @@
     return arr;
   }
 
-  // ---------- 存储：只存在这台设备的浏览器里 ----------
-  // 预览期（地址在 /v2/ 下）：地图每次从 v1 只读复制，错题本等写进预览键；上线期：从 v1 迁移一次后不再读 v1
-  const V1 = 'speedmap.v1';
-  const keysFor = ctx => ctx.test ? {prog: 'speedmap.v2.test', ink: 'speedmap.ink.test'}
-    : {prog: ctx.preview ? 'speedmap.v2.preview' : 'speedmap.v2', ink: 'speedmap.ink'};
+  // ---------- 存储：只存在这台设备的浏览器里（v3 说明书 6.1–6.3） ----------
+  // 秒答进度在 v1 / 预览 / 正式三处按格子取高合并；正式期每次保存把秒答部分原样写回 v1（回滚不丢）
+  // 每天第一次读档成功后留一份 …good；主存档读不了 → 原文另存 …broken，有 good 就用 good，另存失败 → 只读，绝不自动覆盖原主存档
+  const V1 = 'speedmap.v1', LIVE_KEY = 'speedmap.v2', PREVIEW_KEY = 'speedmap.v2.preview';
+  const keysFor = ctx => {
+    const prog = ctx.test ? 'speedmap.v2.test' : ctx.preview ? PREVIEW_KEY : LIVE_KEY;
+    return {prog, ink: ctx.test ? 'speedmap.ink.test' : 'speedmap.ink', good: prog + '.good', broken: prog + '.broken'};
+  };
   const parse = s => { try { return JSON.parse(s || 'null'); } catch (e) { return null; } };
+  const valid = o => !!o && typeof o === 'object' && typeof o.cards === 'object' && o.cards !== null;
   const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; return S; };
-  function loadState(store, ctx, now) {
-    const k = keysFor(ctx).prog, own = parse(store.getItem(k));
-    if (ctx.test) return own && own.cards ? upgrade(own) : blank();
-    const v1 = parse(store.getItem(V1));
-    if (ctx.preview) {
-      const S = upgrade(own && own.cards ? own : {});
-      if (v1 && v1.cards) Object.assign(S, {cards: v1.cards, boss: v1.boss || {}, log: v1.log || {}, level: v1.level || 0});
-      return S;
+  const trySet = (store, k, v) => { try { store.setItem(k, v); return true; } catch (e) { return false; } };
+  const TRANSIENT = ['readOnly', 'stopped', 'goodReset'];
+  const litOf = S => [S.cards, S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0);
+  const GOOD_DROP = 10;
+  // 上线首启从预览带过来时，不认识的编号丢掉（known：页面传入技能图谱的判断）
+  function dropUnknown(S, known) {
+    Object.keys(S.cards).forEach(id => { if (!BYID[id]) delete S.cards[id]; });
+    if (known && S.skills) Object.keys(S.skills).forEach(id => { if (!known(id)) delete S.skills[id]; });
+  }
+  // 每天写一次好存档；点亮格子比现有 good 少 GOOD_DROP 个以上不覆盖（家长清空 / 整份替换后重置基准）
+  function writeGood(store, k, S, now) {
+    const g = parse(store.getItem(k.good));
+    if (!S.goodReset && valid(g) && dayOf(g.goodAt || 0) === dayOf(now)) return 'skip';
+    if (!S.goodReset && valid(g) && litOf(S) < litOf(g) - GOOD_DROP) return 'kept';
+    return trySet(store, k.good, JSON.stringify(Object.assign(clean(S), {goodAt: now}))) ? 'written' : 'fail';
+  }
+  const clean = S => { const o = Object.assign({}, S); TRANSIENT.forEach(f => delete o[f]); return o; };
+  // 返回 {S, notes, restoredAt}；notes：broken 主存档读不了 / restored 用 good 恢复 / readOnly 只读 / previewBroken / goodKept / goodFail / superseded
+  function load(store, ctx, now) {
+    const k = keysFor(ctx), notes = [];
+    let own = null, restoredAt = null, brokenMain = false, readOnly = false;
+    const raw = store.getItem(k.prog);
+    if (raw !== null) {
+      const o = parse(raw);
+      if (valid(o)) own = o;
+      else {
+        brokenMain = true; notes.push('broken');
+        if (!trySet(store, k.broken, raw)) { readOnly = true; notes.push('readOnly'); }
+        const g = parse(store.getItem(k.good));
+        if (valid(g)) { own = g; restoredAt = g.goodAt || g.savedAt || null; notes.push('restored'); }
+      }
     }
-    if (own && own.cards) return upgrade(own);
-    const S = upgrade(v1 && v1.cards ? v1 : {});
-    if (v1 && v1.cards) { S.migratedFromV1At = now; saveState(store, ctx, S, now); }
-    return S;
+    let S;
+    const v1 = ctx.test ? null : parse(store.getItem(V1)), v1ok = valid(v1) ? v1 : null;
+    if (ctx.test) S = upgrade(own || {});
+    else if (own || ctx.preview) { S = upgrade(own || {}); if (v1ok) S = mergeProgress(S, v1ok); }
+    else {                                                     // 正式版首启（或主存档坏了又没有 good）：从预览和 v1 带过来
+      const pr = store.getItem(PREVIEW_KEY), p = pr === null ? null : parse(pr);
+      if (pr !== null && !valid(p)) { trySet(store, PREVIEW_KEY + '.broken', pr); notes.push('previewBroken'); }
+      if (valid(p)) { S = upgrade(p); dropUnknown(S, ctx.known); if (v1ok) S = mergeProgress(S, v1ok); }
+      else S = upgrade(v1ok || {});
+      if (v1ok || valid(p)) S.migratedFromV1At = S.migratedFromV1At || now;
+    }
+    S.cards = mergeCards(S.cards, {});                         // 坏数据兜底：每张卡补齐字段
+    if (readOnly) S.readOnly = true;
+    if (superseded(store, ctx)) { S.stopped = true; notes.push('superseded'); }
+    if (!S.readOnly && !S.stopped) {
+      if (!ctx.test && !ctx.preview && !own && !brokenMain && (S.migratedFromV1At === now)) saveState(store, ctx, S, now);
+      else if (!brokenMain) { const w = writeGood(store, k, S, now); if (w === 'kept') notes.push('goodKept'); if (w === 'fail') notes.push('goodFail'); }
+    }
+    return {S, notes, restoredAt};
   }
+  const loadState = (store, ctx, now) => load(store, ctx, now).S;
+  // 返回是否存进去了（只读 / 已停写 / 主键写入报错 → false）；备份键写失败不算存不了
   function saveState(store, ctx, S, now) {
+    if (S.readOnly || S.stopped) return false;
     S.savedAt = now;
-    store.setItem(keysFor(ctx).prog, JSON.stringify(S));
+    if (!trySet(store, keysFor(ctx).prog, JSON.stringify(clean(S)))) return false;
+    if (!ctx.test && !ctx.preview) {                           // 正式期：秒答部分按 v1 的格式原样写回
+      const v1 = parse(store.getItem(V1));
+      trySet(store, V1, JSON.stringify(Object.assign({}, valid(v1) ? v1 : {}, {v: 1, savedAt: now, cards: S.cards, boss: S.boss, log: S.log, level: S.level})));
+    }
+    writeGood(store, keysFor(ctx), S, now);
+    delete S.goodReset;
+    return true;
   }
+  // 正式版已上线：预览页停止写入（12f）
+  const superseded = (store, ctx) => !!ctx.preview && !ctx.test && store.getItem(LIVE_KEY) !== null;
+  // 回滚用的 v1 启动时做的那一行合并：把 speedmap.v2 的秒答部分按格子取高合进来
+  function rollbackV1(store) {
+    const v1 = parse(store.getItem(V1)), v2 = parse(store.getItem(LIVE_KEY));
+    const base = Object.assign({v: 1, savedAt: 0, cards: {}, boss: {}, log: {}, level: 0}, valid(v1) ? v1 : {});
+    return valid(v2) ? Object.assign(mergeProgress(base, v2), {v: 1}) : base;
+  }
+  // 家长「清空」：只留设置；好存档基准跟着重置
+  const resetProgress = S => Object.assign(blank(), {oral: S.oral, testDays: S.testDays, settings: S.settings, goodReset: true});
+  const dropBroken = (store, ctx) => { try { store.removeItem(keysFor(ctx).broken); } catch (e) {} };
+
   // ---------- 秒答进度按格子取高合并（v1 / 预览 / 正式三处）：只升不降，所以取高永远安全 ----------
   const maxStr = (x, y) => ((x || '') > (y || '') ? x : y);
   // 坏数据兜底：缺 d / seen 时补上（缺的升级日期按很久以前算，不挡升级）
@@ -249,6 +313,7 @@
     const hi = x.lv !== y.lv ? (x.lv > y.lv ? x : y) : ((x.seen || 0) >= (y.seen || 0) ? x : y);
     const lo = hi === x ? y : x;
     const out = Object.assign({}, lo, hi, {d: (hi.d || []).slice(), seen: Math.max(x.seen || 0, y.seen || 0), intro: !!(x.intro || y.intro)});
+    if (x.lv === y.lv) out.d = out.d.map((v, i) => maxStr(x.d[i], y.d[i]));   // 同色：升级日期逐位取较晚的（保守，且和参数顺序无关）
     out.last = maxStr(x.last, y.last);
     const lastDay = maxStr(x.lastDay, y.lastDay); if (lastDay) out.lastDay = lastDay; else delete out.lastDay;
     const kx = x.lastDay || '', ky = y.lastDay || '', kSrc = kx >= ky ? x : y;   // 维持复习档位跟着最近练过的那份
@@ -277,18 +342,32 @@
     return M;
   }
 
-  const exportText = S => JSON.stringify(S);
+  const exportText = S => JSON.stringify(clean(S));
+  // 「整份替换（会覆盖）」：好存档基准跟着重置
   function importText(text) {
     const v = parse(text);
-    if (!v || typeof v.cards !== 'object' || v.cards === null) throw new Error('不是有效的备份');
-    return upgrade(v);
+    if (!valid(v)) throw new Error('不是有效的备份');
+    return Object.assign(upgrade(v), {goodReset: true});
+  }
+  // 「导入进度」：按格子取高合并，旧备份不会把新进度退回去；错题、摸底记录取并集
+  function importMerge(S, text) {
+    const v = parse(text);
+    if (!valid(v)) throw new Error('不是有效的备份');
+    const M = upgrade(mergeProgress(S, v));
+    M.skills = mergeCards(S.skills || {}, v.skills || {});
+    M.mistakes = Object.assign({}, v.mistakes || {}, S.mistakes || {});
+    M.known = Object.assign({}, v.known || {}, S.known || {});
+    M.demoSeen = Object.assign({}, v.demoSeen || {}, S.demoSeen || {});
+    M.placedAt = S.placedAt || v.placedAt;
+    if (!M.placedAt) delete M.placedAt;
+    return M;
   }
 
   return {
     LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, loadState, saveState, exportText, importText, mergeCards, mergeProgress, fixCard,
+    keysFor, load, loadState, saveState, superseded, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
   };

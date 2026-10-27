@@ -26,8 +26,13 @@
   }
   const peek = (S, id) => (skillOf(id).speed ? S.cards[id] : (S.skills || {})[id]) || {lv: 0, d: [], seen: 0};
   const lv = (S, id) => peek(S, id).lv;
-  // 上次练习日期：v1 迁来的格子没有 lastDay，按最后一次升级那天算
-  const lastSeen = p => p.lastDay || (p.lv > 0 && p.d ? p.d[p.lv - 1] || '' : '');
+  // 上次练习日期：取 lastDay、v1 的 last（旧 v1 页练过只更新它）、最后一次升级日期三者最晚的
+  const lastSeen = p => {
+    let l = p.lastDay || '';
+    const up = p.lv > 0 && p.d ? p.d[p.lv - 1] || '' : ''; if (up > l) l = up;
+    if (p.last) { const t = new Date(p.last); if (!isNaN(t)) { const v = C.dayOf(t.getTime()); if (v > l) l = v; } }
+    return l;
+  };
   const needFast = (S, id) => { const s = skillOf(id); return s.timedFrom !== null && lv(S, id) >= s.timedFrom; };
   const learned = (S, sid) => K.BY[sid].items.every(it => lv(S, it.id) >= 1);
   const ready = (S, sid) => K.BY[sid].pre.every(p => learned(S, p));
@@ -107,6 +112,8 @@
     if (!S.daily || S.daily.day !== day) S.daily = {day, sec: 0, done: false, budget: BUDGET, fresh: [], asked: {}, tally: {n: 0, pass: 0}};
     return S.daily;
   };
+  // 笔迹校准等练习以外的时间：计入当天 10 分钟和用时统计
+  function addTime(S, day, sec) { daily(S, day).sec += sec; stat(S, day).sec += sec; }
 
   // 一题作答之后的共同处理：升级、错题、维持复习档位、统计
   function settle(S, x, res, day, onTime) {
@@ -257,15 +264,24 @@
     return api;
   }
 
+  // 「今天练完啦」以后还能不能排出题：决定显示不显示「再练一会」（在副本上试排，不改存档）
+  function hasMore(S, day, extra) {
+    const T = JSON.parse(JSON.stringify(S));
+    return !!session(T, day, {extra: extra || 300}).next();
+  }
+
+  // 技能组：look / bond / place / cmp / line；秒答按级别 speed:L1…L4；也可以直接给技能编号
+  const inGroup = (s, g) => s.group === g || s.id === g || (s.speed && g === 'speed:L' + (s.L + 1));
   // ---------- 自由加练：技能组地图「练这个」，12 题；规则同今日练习，计入用时统计，不计入今日 10 分钟 ----------
+  // opts.mistOnly：错题本「复习这一组」，只出这一组的到期错题，出完就停
   function free(S, day, group, opts) {
     opts = opts || {};
-    const r = opts.rnd || Math.random, n = opts.n || FREE_N;
+    const r = opts.rnd || Math.random, n = opts.n || (opts.mistOnly ? Infinity : FREE_N);
     S.demoSeen = S.demoSeen || {}; S.known = S.known || {};
-    const skills = K.SKILLS.filter(s => s.group === group || s.id === group), inSet = id => skills.includes(skillOf(id));
+    const skills = K.SKILLS.filter(s => inGroup(s, group)), inSet = id => skills.includes(skillOf(id));
     const asked = {}, recent = [], pick = picker(S, asked, recent);
     const mist = dueMistakes(S, day, inSet).map(m => ({inst: instOfMistake(m), mkey: m.key, seg: 'review'}));
-    const items = skills.flatMap(s => s.items.map(it => ({it, s})));
+    const items = opts.mistOnly ? [] : skills.flatMap(s => s.items.map(it => ({it, s})));
     const order = items.slice().sort((a, b) => (ready(S, b.s.id) - ready(S, a.s.id)) || (lv(S, a.it.id) - lv(S, b.it.id)) || lastSeen(peek(S, a.it.id)).localeCompare(lastSeen(peek(S, b.it.id))));
     const queue = mist.concat(spreadOut(order.map(({it}) => Array.from({length: REP[kindOf(it.id)]}, () => ({inst: K.make(it.id, r), seg: lv(S, it.id) === 0 ? 'new' : 'fluency'})))));
     let cur = null, count = 0;
@@ -313,8 +329,12 @@
         if (st.lo > st.hi) { finishGroup(); continue; }
         const m = st.first ? st.hi : (st.lo + st.hi) >> 1;
         st.first = false;
-        const items = c[m].items, qs = [];
-        for (let k = 0; k < PROBE; k++) qs.push(K.make(items[Math.floor(r() * items.length)].id, r));
+        // 3 题不放回抽：卡多的技能抽 3 张不同的卡；只有一个题型时同一题型出 3 次（每次数字不同）
+        const items = c[m].items, bag = items.slice(), qs = [];
+        for (let k = 0; k < PROBE; k++) {
+          if (!bag.length) bag.push(...items);
+          qs.push(K.make(bag.splice(Math.floor(r() * bag.length), 1)[0].id, r));
+        }
         return {m, sid: c[m].id, qs, ans: []};
       }
       return null;
@@ -348,5 +368,7 @@
   }
 
   return {BUDGET, REVIEW_MAX, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
-    prog, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow};
+    prog, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
+    hasMore, addTime, inGroup, lastSeen, GROUPS,
+    review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
 });
