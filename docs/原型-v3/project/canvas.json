@@ -1,49 +1,412 @@
-{"v": 3, "createdOnFiles": {"v": 1, "at": "2026-10-28T21:30:00+08:00"}, "title": "KongMath v3 原型 · 今日练习", "launch": {"view": "canvas"}, "pages": [],
-"boards": {
-"Main.dc.html": {"x": 0, "y": 0, "w": 932, "h": 430, "title": "1 首页 · 每天", "is_interactive": true},
-"HomeDone.dc.html": {"x": 1012, "y": 0, "w": 932, "h": 430, "title": "1b 首页 · 今天练完啦", "is_interactive": true},
-"HomeFirst.dc.html": {"x": 2024, "y": 0, "w": 932, "h": 430, "title": "1c 首页 · 第一次", "is_interactive": true},
-"PlaceIntro.dc.html": {"x": 3036, "y": 0, "w": 932, "h": 430, "title": "2 摸底 · 开始", "is_interactive": true},
-"PlaceRun.dc.html": {"x": 4048, "y": 0, "w": 932, "h": 430, "title": "2a 摸底中", "is_interactive": true},
-"PlaceResult.dc.html": {"x": 5060, "y": 0, "w": 932, "h": 430, "title": "2b 摸底结果", "is_interactive": true},
-"Demo.dc.html": {"x": 0, "y": 800, "w": 932, "h": 430, "title": "3a 学一学 · 示范卡", "is_interactive": true},
-"LookFlash.dc.html": {"x": 1012, "y": 800, "w": 932, "h": 430, "title": "3b 看数 · 闪现中", "is_interactive": true},
-"LookWrite.dc.html": {"x": 2024, "y": 800, "w": 932, "h": 430, "title": "3c 看数 · 写答案", "is_interactive": true},
-"Bond.dc.html": {"x": 3036, "y": 800, "w": 932, "h": 430, "title": "3d 分合图", "is_interactive": true},
-"BondEq.dc.html": {"x": 4048, "y": 800, "w": 932, "h": 430, "title": "3e 缺数算式 · 过十准备", "is_interactive": true},
-"Place.dc.html": {"x": 5060, "y": 800, "w": 932, "h": 430, "title": "3f 数位 · 几个十几个一", "is_interactive": true},
-"CmpPick.dc.html": {"x": 6072, "y": 800, "w": 932, "h": 430, "title": "3g 比大小 · 点大的", "is_interactive": true},
-"CmpNear.dc.html": {"x": 7084, "y": 800, "w": 932, "h": 430, "title": "3h 比大小 · 前后数", "is_interactive": true},
-"Line.dc.html": {"x": 8096, "y": 800, "w": 932, "h": 430, "title": "3i 数线 · 插旗子", "is_interactive": true},
-"OkLit.dc.html": {"x": 0, "y": 1600, "w": 932, "h": 430, "title": "4a 答对 · 点亮了", "is_interactive": true},
-"OkSlow.dc.html": {"x": 1012, "y": 1600, "w": 932, "h": 430, "title": "4b 对但慢", "is_interactive": true},
-"WrongLook.dc.html": {"x": 2024, "y": 1600, "w": 932, "h": 430, "title": "4c 答错 · 看数图解", "is_interactive": true},
-"WrongBond.dc.html": {"x": 3036, "y": 1600, "w": 932, "h": 430, "title": "4d 答错 · 分合图解", "is_interactive": true},
-"WrongPlace.dc.html": {"x": 4048, "y": 1600, "w": 932, "h": 430, "title": "4e 答错 · 数位图解", "is_interactive": true},
-"WrongCmp.dc.html": {"x": 5060, "y": 1600, "w": 932, "h": 430, "title": "4f 答错 · 比大小图解", "is_interactive": true},
-"LineOk.dc.html": {"x": 6072, "y": 1600, "w": 932, "h": 430, "title": "4g 数线 · 很接近", "is_interactive": true},
-"LineNo.dc.html": {"x": 7084, "y": 1600, "w": 932, "h": 430, "title": "4h 数线 · 再往右一点", "is_interactive": true},
-"Calm.dc.html": {"x": 8096, "y": 1600, "w": 932, "h": 430, "title": "5 防乱点提示", "is_interactive": true},
-"Summary.dc.html": {"x": 0, "y": 2400, "w": 932, "h": 430, "title": "6 结算 · 今日练习", "is_interactive": true},
-"FreeSummary.dc.html": {"x": 1012, "y": 2400, "w": 932, "h": 430, "title": "6b 结算 · 自由加练", "is_interactive": true},
-"SkillMap.dc.html": {"x": 2024, "y": 2400, "w": 932, "h": 430, "title": "7 技能组地图（5 组可切换）", "is_interactive": true},
-"SpeedMap.dc.html": {"x": 3036, "y": 2400, "w": 932, "h": 430, "title": "8 秒答地图（v2 + 回到岛上）", "is_interactive": true},
-"Mistakes.dc.html": {"x": 4048, "y": 2400, "w": 932, "h": 430, "title": "9 错题本", "is_interactive": true},
-"Parent.dc.html": {"x": 5060, "y": 2400, "w": 932, "h": 430, "title": "10 家长区", "is_interactive": true},
-"Pause.dc.html": {"x": 0, "y": 3200, "w": 932, "h": 430, "title": "12a 暂停（回来了）", "is_interactive": true},
-"OtherTab.dc.html": {"x": 1012, "y": 3200, "w": 932, "h": 430, "title": "12b 另一个页面也开着", "is_interactive": true},
-"Crash.dc.html": {"x": 2024, "y": 3200, "w": 932, "h": 430, "title": "12c 出错兜底", "is_interactive": true},
-"NoSave.dc.html": {"x": 3036, "y": 3200, "w": 932, "h": 430, "title": "12d 首页 · 存不了进度", "is_interactive": true},
-"ReadOnly.dc.html": {"x": 4048, "y": 3200, "w": 932, "h": 430, "title": "12e 练习 · 只读运行", "is_interactive": true},
-"NewVersion.dc.html": {"x": 5060, "y": 3200, "w": 932, "h": 430, "title": "12f 新版已上线（旧页面）", "is_interactive": true}
-},
-"order": ["Main.dc.html", "HomeDone.dc.html", "HomeFirst.dc.html", "PlaceIntro.dc.html", "PlaceRun.dc.html", "PlaceResult.dc.html", "Demo.dc.html", "LookFlash.dc.html", "LookWrite.dc.html", "Bond.dc.html", "BondEq.dc.html", "Place.dc.html", "CmpPick.dc.html", "CmpNear.dc.html", "Line.dc.html", "OkLit.dc.html", "OkSlow.dc.html", "WrongLook.dc.html", "WrongBond.dc.html", "WrongPlace.dc.html", "WrongCmp.dc.html", "LineOk.dc.html", "LineNo.dc.html", "Calm.dc.html", "Summary.dc.html", "FreeSummary.dc.html", "SkillMap.dc.html", "SpeedMap.dc.html", "Mistakes.dc.html", "Parent.dc.html", "Pause.dc.html", "OtherTab.dc.html", "Crash.dc.html", "NoSave.dc.html", "ReadOnly.dc.html", "NewVersion.dc.html"],
-"notes": {
-"t1": {"x": 0, "y": -300, "text": "首页 · 第一次 · 摸底", "kind": "title1", "maxW": 5992},
-"t2": {"x": 0, "y": 500, "text": "今日练习 · 每种题", "kind": "title1", "maxW": 9028},
-"t3": {"x": 0, "y": 1300, "text": "反馈 · 答错时的图解", "kind": "title1", "maxW": 9028},
-"t4": {"x": 0, "y": 2100, "text": "结算 · 地图 · 错题本 · 家长区", "kind": "title1", "maxW": 5992},
-"t5": {"x": 0, "y": 2900, "text": "意外情况", "kind": "title1", "maxW": 5992},
-"s1": {"x": 6200, "y": 0, "w": 420, "text": "沿用 v2 原型、本版不变的页：笔迹校准、识别确认「你写的是？」、答错描一遍、竖屏提示。见 v2 画布 claude.ai/artifact/W5bVHZEsWyWFLy4iu6ME54", "fill": "gray"}
-},
-"designSystems": []}
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-10-28T21:30:00+08:00"
+ },
+ "title": "KongMath v3 原型 · 今日练习",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 932,
+   "h": 430,
+   "title": "1 首页 · 每天",
+   "is_interactive": true
+  },
+  "HomeDone.dc.html": {
+   "x": 1012,
+   "y": 0,
+   "w": 932,
+   "h": 430,
+   "title": "1b 首页 · 今天练完啦",
+   "is_interactive": true
+  },
+  "HomeFirst.dc.html": {
+   "x": 2024,
+   "y": 0,
+   "w": 932,
+   "h": 430,
+   "title": "1c 首页 · 第一次",
+   "is_interactive": true
+  },
+  "PlaceIntro.dc.html": {
+   "x": 3036,
+   "y": 0,
+   "w": 932,
+   "h": 430,
+   "title": "2 摸底 · 开始",
+   "is_interactive": true
+  },
+  "PlaceRun.dc.html": {
+   "x": 4048,
+   "y": 0,
+   "w": 932,
+   "h": 430,
+   "title": "2a 摸底中",
+   "is_interactive": true
+  },
+  "PlaceResult.dc.html": {
+   "x": 5060,
+   "y": 0,
+   "w": 932,
+   "h": 430,
+   "title": "2b 摸底结果",
+   "is_interactive": true
+  },
+  "Demo.dc.html": {
+   "x": 0,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3a 学一学 · 示范卡",
+   "is_interactive": true
+  },
+  "LookFlash.dc.html": {
+   "x": 1012,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3b 看数 · 闪现中",
+   "is_interactive": true
+  },
+  "LookWrite.dc.html": {
+   "x": 2024,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3c 看数 · 写答案",
+   "is_interactive": true
+  },
+  "Bond.dc.html": {
+   "x": 3036,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3d 分合图",
+   "is_interactive": true
+  },
+  "BondEq.dc.html": {
+   "x": 4048,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3e 缺数算式 · 过十准备",
+   "is_interactive": true
+  },
+  "Place.dc.html": {
+   "x": 5060,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3f 数位 · 几个十几个一",
+   "is_interactive": true
+  },
+  "CmpPick.dc.html": {
+   "x": 6072,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3g 比大小 · 点大的",
+   "is_interactive": true
+  },
+  "CmpNear.dc.html": {
+   "x": 7084,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3h 比大小 · 前后数",
+   "is_interactive": true
+  },
+  "Line.dc.html": {
+   "x": 8096,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3i 数线 · 插旗子",
+   "is_interactive": true
+  },
+  "OkLit.dc.html": {
+   "x": 0,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4a 答对 · 点亮了",
+   "is_interactive": true
+  },
+  "OkSlow.dc.html": {
+   "x": 1012,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4b 对但慢",
+   "is_interactive": true
+  },
+  "WrongLook.dc.html": {
+   "x": 2024,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4c 答错 · 看数图解",
+   "is_interactive": true
+  },
+  "WrongBond.dc.html": {
+   "x": 3036,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4d 答错 · 分合图解",
+   "is_interactive": true
+  },
+  "WrongPlace.dc.html": {
+   "x": 4048,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4e 答错 · 数位图解",
+   "is_interactive": true
+  },
+  "WrongCmp.dc.html": {
+   "x": 5060,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4f 答错 · 比大小图解",
+   "is_interactive": true
+  },
+  "LineOk.dc.html": {
+   "x": 6072,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4g 数线 · 很接近",
+   "is_interactive": true
+  },
+  "LineNo.dc.html": {
+   "x": 7084,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4h 数线 · 再往右",
+   "is_interactive": true
+  },
+  "Calm.dc.html": {
+   "x": 8096,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "5 防乱点提示",
+   "is_interactive": true
+  },
+  "Summary.dc.html": {
+   "x": 0,
+   "y": 2400,
+   "w": 932,
+   "h": 430,
+   "title": "6 结算 · 今日练习",
+   "is_interactive": true
+  },
+  "FreeSummary.dc.html": {
+   "x": 1012,
+   "y": 2400,
+   "w": 932,
+   "h": 430,
+   "title": "6b 结算 · 自由加练",
+   "is_interactive": true
+  },
+  "SkillMap.dc.html": {
+   "x": 2024,
+   "y": 2400,
+   "w": 932,
+   "h": 430,
+   "title": "7 技能组地图（5 组可切换）",
+   "is_interactive": true
+  },
+  "SpeedMap.dc.html": {
+   "x": 3036,
+   "y": 2400,
+   "w": 932,
+   "h": 430,
+   "title": "8 秒答地图（v2 + 回到岛上）",
+   "is_interactive": true
+  },
+  "Mistakes.dc.html": {
+   "x": 4048,
+   "y": 2400,
+   "w": 932,
+   "h": 430,
+   "title": "9 错题本",
+   "is_interactive": true
+  },
+  "Parent.dc.html": {
+   "x": 5060,
+   "y": 2400,
+   "w": 932,
+   "h": 430,
+   "title": "10 家长区",
+   "is_interactive": true
+  },
+  "Pause.dc.html": {
+   "x": 0,
+   "y": 3200,
+   "w": 932,
+   "h": 430,
+   "title": "12a 暂停（回来了）",
+   "is_interactive": true
+  },
+  "OtherTab.dc.html": {
+   "x": 1012,
+   "y": 3200,
+   "w": 932,
+   "h": 430,
+   "title": "12b 另一个页面也开着",
+   "is_interactive": true
+  },
+  "Crash.dc.html": {
+   "x": 2024,
+   "y": 3200,
+   "w": 932,
+   "h": 430,
+   "title": "12c 出错兜底",
+   "is_interactive": true
+  },
+  "NoSave.dc.html": {
+   "x": 3036,
+   "y": 3200,
+   "w": 932,
+   "h": 430,
+   "title": "12d 首页 · 存不了进度",
+   "is_interactive": true
+  },
+  "ReadOnly.dc.html": {
+   "x": 4048,
+   "y": 3200,
+   "w": 932,
+   "h": 430,
+   "title": "12e 练习 · 只读运行",
+   "is_interactive": true
+  },
+  "NewVersion.dc.html": {
+   "x": 5060,
+   "y": 3200,
+   "w": 932,
+   "h": 430,
+   "title": "12f 新版已上线（旧页面）",
+   "is_interactive": true
+  },
+  "WrongBridge.dc.html": {
+   "x": 9108,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4i 答错 · 过十准备图解",
+   "is_interactive": true
+  },
+  "WrongNear.dc.html": {
+   "x": 10120,
+   "y": 1600,
+   "w": 932,
+   "h": 430,
+   "title": "4j 答错 · 前后数图解",
+   "is_interactive": true
+  },
+  "DemoPlace.dc.html": {
+   "x": 9108,
+   "y": 800,
+   "w": 932,
+   "h": 430,
+   "title": "3j 学一学 · 数位示范卡",
+   "is_interactive": true
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "HomeDone.dc.html",
+  "HomeFirst.dc.html",
+  "PlaceIntro.dc.html",
+  "PlaceRun.dc.html",
+  "PlaceResult.dc.html",
+  "Demo.dc.html",
+  "LookFlash.dc.html",
+  "LookWrite.dc.html",
+  "Bond.dc.html",
+  "BondEq.dc.html",
+  "Place.dc.html",
+  "CmpPick.dc.html",
+  "CmpNear.dc.html",
+  "Line.dc.html",
+  "DemoPlace.dc.html",
+  "OkLit.dc.html",
+  "OkSlow.dc.html",
+  "WrongLook.dc.html",
+  "WrongBond.dc.html",
+  "WrongPlace.dc.html",
+  "WrongCmp.dc.html",
+  "LineOk.dc.html",
+  "LineNo.dc.html",
+  "Calm.dc.html",
+  "WrongBridge.dc.html",
+  "WrongNear.dc.html",
+  "Summary.dc.html",
+  "FreeSummary.dc.html",
+  "SkillMap.dc.html",
+  "SpeedMap.dc.html",
+  "Mistakes.dc.html",
+  "Parent.dc.html",
+  "Pause.dc.html",
+  "OtherTab.dc.html",
+  "Crash.dc.html",
+  "NoSave.dc.html",
+  "ReadOnly.dc.html",
+  "NewVersion.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": -300,
+   "text": "首页 · 第一次 · 摸底",
+   "kind": "title1",
+   "maxW": 5992
+  },
+  "t2": {
+   "x": 0,
+   "y": 500,
+   "text": "今日练习 · 每种题",
+   "kind": "title1",
+   "maxW": 9028
+  },
+  "t3": {
+   "x": 0,
+   "y": 1300,
+   "text": "反馈 · 答错时的图解",
+   "kind": "title1",
+   "maxW": 11052
+  },
+  "t4": {
+   "x": 0,
+   "y": 2100,
+   "text": "结算 · 地图 · 错题本 · 家长区",
+   "kind": "title1",
+   "maxW": 5992
+  },
+  "t5": {
+   "x": 0,
+   "y": 2900,
+   "text": "意外情况",
+   "kind": "title1",
+   "maxW": 5992
+  },
+  "s1": {
+   "x": 6200,
+   "y": 0,
+   "w": 420,
+   "text": "沿用 v2 原型、本版不变的页：笔迹校准、识别确认「你写的是？」、答错描一遍、竖屏提示。见 v2 画布 claude.ai/artifact/W5bVHZEsWyWFLy4iu6ME54",
+   "fill": "gray"
+  }
+ },
+ "designSystems": []
+}
