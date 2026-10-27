@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js');
 const DAYS = +(process.argv[2] || 120), SEEDS = +(process.argv[3] || 8), BACKUP = process.argv[4];
-const SEC = {understand: 8, speed: 5};                       // 每题用时（含反馈）；门 5 空空实测后回填
+const SEC = process.env.SEC ? {understand: +process.env.SEC.split(",")[0], speed: +process.env.SEC.split(",")[1]} : {understand: 8, speed: 5};                       // 每题用时（含反馈）；门 5 空空实测后回填
 
 const day0 = '2026-11-02', D = n => C.addDays(day0, n);
 const mkRnd = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -14,15 +14,17 @@ function start() {
   if (BACKUP) return C.importText(fs.readFileSync(BACKUP, 'utf8'));
   const S = C.blank();
   C.UNITS.forEach((u, i) => {
-    if (u.L === 0) S.cards[u.id] = {lv: 3, intro: true, d: [D(-40), D(-35), D(-30)], seen: 9, last: '', lastDay: D(-3)};
-    if (u.L === 1 && i % 2) S.cards[u.id] = {lv: 1, intro: true, d: [D(-2)], seen: 3, last: '', lastDay: D(-2)};
+    if (u.L === 0) S.cards[u.id] = {lv: 3, intro: true, d: [D(-40), D(-35), D(-30)], seen: 9, last: ''};   // v1 存档格式：没有 lastDay
+    if (u.L === 1 && i % 2) S.cards[u.id] = {lv: 1, intro: true, d: [D(-2)], seen: 3, last: ''};
   });
   return S;
 }
 
 // 孩子：每个技能练得越多越准；隔得越久越容易忘（每天 ×0.98）；计时题另有"够快"的概率
-function child(p0, pmax, rnd) {
+function child(p0, pmax, rnd, S) {
+  // 已经练过的技能按已有颜色给"练过多少题"：全部深红 ≈ 练熟，有亮的 ≈ 练了一些
   const n = {}, last = {};
+  K.SKILLS.forEach(sk => { const lvs = sk.items.map(it => E.lv(S, it.id)); if (lvs.every(v => v === 3)) n[sk.id] = 60; else if (lvs.some(v => v > 0)) n[sk.id] = 15; });
   return {
     answer(S, inst, day) {
       const sid = K.ITEM[inst.id].skill, k = n[sid] || 0, gap = last[sid] ? C.dayDiff(last[sid], day) : 0;
@@ -36,7 +38,7 @@ function child(p0, pmax, rnd) {
 }
 
 function run(p0, pmax, seed) {
-  const S = start(), rnd = mkRnd(seed), kid = child(p0, pmax, rnd);
+  const S = start(), rnd = mkRnd(seed), kid = child(p0, pmax, rnd, S);
   const r2 = mkRnd(seed + 1); C._setRnd((lo, hi) => lo + Math.floor(r2() * (hi - lo + 1)));   // 秒答题型出题也用固定种子，结果可复现
   const pl = E.placement(S, D(0), {rnd});                    // 第一次：摸底
   for (let x = pl.next(); x; x = pl.next()) pl.answer(kid.answer(S, x.inst, D(0)));
@@ -51,6 +53,11 @@ function run(p0, pmax, seed) {
     }
     mins.push(s.elapsed / 60);
     const st = S.stats[day] || {over: 0}; overMax = Math.max(overMax, st.over); if (st.over > 0) overDays++;
+    if (process.env.TRACE && seed === 1000 + 7919 && p0 === +process.env.TRACE) {               // 调试：逐日看第 1 个种子
+      const due = E.dueMistakes(S, day), by = {};
+      due.forEach(m => { const g = K.ITEM[m.uid].skill; by[g] = (by[g] || 0) + 1; });
+      console.log(t, '用时', s.elapsed, '剩余到期', st.over, '跳过学新', S.daily.skipNew, JSON.stringify(by));
+    }
     K.understand.forEach(sk => {
       if (lastSeen[sk.id] !== undefined && sk.items.some(it => E.lv(S, it.id) < 3)) gapMax = Math.max(gapMax, t - lastSeen[sk.id]);
     });
@@ -63,8 +70,9 @@ function run(p0, pmax, seed) {
 }
 
 const kids = [['强', 0.85, 0.98], ['一般', 0.7, 0.92], ['弱', 0.55, 0.85]];
+const HIGHER_BETTER = ['medMin', 'speedRed'];
 const fmt = (xs, k) => {
-  const v = xs.map(x => x[k] === null ? Infinity : x[k]).sort((a, b) => a - b);
+  const v = xs.map(x => x[k] === null ? Infinity : x[k]).sort((a, b) => HIGHER_BETTER.includes(k) ? b - a : a - b);
   const show = n => n === Infinity ? '未达成' : Number.isInteger(n) ? n : n.toFixed(1);
   return `${show(v[v.length >> 1])}（最差 ${show(v[v.length - 1])}）`;
 };

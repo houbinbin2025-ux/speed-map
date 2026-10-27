@@ -56,13 +56,14 @@
   skill({id: 'cmp4', group: 'cmp', name: '前后数', kind: 'type8', timedFrom: 1, pre: ['cmp3'],
     items: [['p1', 1], ['m1', -1], ['p10', 10], ['m10', -10]].map(([k, d]) => type('cmp:t:' + k, near(d)))});
   skill({id: 'line3', group: 'line', name: '0—100 整十', kind: 'type8', input: 'line', pre: ['line2', 'cmp3'], items: [type('line:t:100t', r => line(r, 100, 10))]});
-  skill({id: 'line4', group: 'line', name: '0—100 任意', kind: 'type8', input: 'line', pre: ['line3'], items: [type('line:t:100', r => line(r, 100, 1))]});
+  skill({id: 'line4', group: 'line', name: '0—100 任意', kind: 'type8', input: 'line', pre: ['line3'], items: [type('line:t:100', r => line(r, 100, 1, true))]});
 
   function pair(r, lo, hi) { const a = rint(r, lo, hi); let b; do b = rint(r, lo, hi); while (b === a); return {q: {a, b}, ans: Math.max(a, b)}; }
   function swap(r) { let t, o; do { t = rint(r, 1, 9); o = rint(r, 1, 9); } while (t === o); const a = t * 10 + o, b = o * 10 + t; return r() < 0.5 ? {q: {a, b}, ans: Math.max(a, b)} : {q: {a: b, b: a}, ans: Math.max(a, b)}; }
-  function line(r, max, step) { const k = rint(r, 1, max / step - 1); return {q: {max, target: k * step}, ans: k * step}; }
+  // any：0—100 任意整数那一组（目标碰巧是整十也按这一组的误差判）
+  function line(r, max, step, any) { const k = rint(r, 1, max / step - 1), q = {max, target: k * step}; if (any) q.any = true; return {q, ans: k * step}; }
   const LINE_TOL = {10: 0.5, 20: 1, 100: 5, '100a': 10};
-  const tolOf = (q, settings) => { const key = q.max === 100 && q.target % 10 ? '100a' : q.max; return (settings && settings.lineTol && settings.lineTol[key]) || LINE_TOL[key]; };
+  const tolOf = (q, settings) => { const key = q.any ? '100a' : q.max; return (settings && settings.lineTol && settings.lineTol[key]) || LINE_TOL[key]; };
 
   // ---------- 秒答地图接进图谱：L1 / L2 每个世界一个技能（卡），L3 / L4 加法、减法各一个技能（同一天合格 5 次） ----------
   const speedPre = (L, w) => {

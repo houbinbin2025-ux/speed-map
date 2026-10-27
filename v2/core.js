@@ -233,6 +233,41 @@
     S.savedAt = now;
     store.setItem(keysFor(ctx).prog, JSON.stringify(S));
   }
+  // ---------- 秒答进度按格子取高合并（v1 / 预览 / 正式三处）：只升不降，所以取高永远安全 ----------
+  const maxStr = (x, y) => ((x || '') > (y || '') ? x : y);
+  function mergeCard(x, y) {
+    if (!x) return Object.assign({}, y); if (!y) return Object.assign({}, x);
+    const hi = x.lv !== y.lv ? (x.lv > y.lv ? x : y) : ((x.seen || 0) >= (y.seen || 0) ? x : y);
+    const lo = hi === x ? y : x;
+    const out = Object.assign({}, lo, hi, {d: (hi.d || []).slice(), seen: Math.max(x.seen || 0, y.seen || 0), intro: !!(x.intro || y.intro)});
+    out.last = maxStr(x.last, y.last);
+    const lastDay = maxStr(x.lastDay, y.lastDay); if (lastDay) out.lastDay = lastDay; else delete out.lastDay;
+    const kx = x.lastDay || '', ky = y.lastDay || '', kSrc = kx >= ky ? x : y;   // 维持复习档位跟着最近练过的那份
+    if (kSrc.keep !== undefined) { out.keep = kSrc.keep; out.keepDay = kSrc.keepDay; } else { delete out.keep; delete out.keepDay; }
+    if (x.fday || y.fday) {                                                     // 题型"当天合格次数"
+      if (x.fday === y.fday) { out.fday = x.fday; out.fn = Math.max(x.fn || 0, y.fn || 0); }
+      else { const f = maxStr(x.fday, y.fday) === x.fday ? x : y; out.fday = f.fday; out.fn = f.fn; }
+    }
+    return out;
+  }
+  function mergeCards(a, b) {
+    const out = {};
+    new Set(Object.keys(a || {}).concat(Object.keys(b || {}))).forEach(id => { out[id] = mergeCard((a || {})[id], (b || {})[id]); });
+    return Object.fromEntries(Object.keys(out).sort().map(k => [k, out[k]]));
+  }
+  // 只合并秒答部分（cards / boss / log），其余字段取第一份
+  function mergeProgress(A, B) {
+    const M = Object.assign({}, A, {cards: mergeCards(A.cards, B.cards), boss: Object.assign({}, B.boss, A.boss)});
+    const log = {};
+    new Set(Object.keys(A.log || {}).concat(Object.keys(B.log || {}))).forEach(day => {
+      const x = (A.log || {})[day] || {ups: [], n: 0}, y = (B.log || {})[day] || {ups: [], n: 0};
+      log[day] = {ups: [...new Set((x.ups || []).concat(y.ups || []))].sort(), n: Math.max(x.n || 0, y.n || 0)};
+    });
+    M.log = Object.fromEntries(Object.keys(log).sort().map(k => [k, log[k]]));
+    M.boss = Object.fromEntries(Object.keys(M.boss).sort().map(k => [k, M.boss[k]]));
+    return M;
+  }
+
   const exportText = S => JSON.stringify(S);
   function importText(text) {
     const v = parse(text);
@@ -244,7 +279,7 @@
     LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, loadState, saveState, exportText, importText,
+    keysFor, loadState, saveState, exportText, importText, mergeCards, mergeProgress,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
   };

@@ -290,3 +290,34 @@ test('到期早的错题优先进这一批', () => {
   const deck2 = C.buildDaily(S, pool, T0, {rnd: seq(2), series: 'mix', L: 1});
   assert.deepEqual(deck2.filter(p => p.mkey).map(p => p.mkey).sort(), pool.slice(2, 6).map(u => u.id).sort());
 });
+
+// ---------- v3：秒答进度在 v1 / 预览 / 正式三处按格子取高合并（只升不降，所以取高永远安全） ----------
+test('mergeCards：每张卡取颜色高的；同色取练得多的；v3 才有的字段不被 v1 冲掉', () => {
+  const a = {'3+4': {lv: 2, d: ['2026-11-01', '2026-11-02'], seen: 5, last: '2026-11-02T08:00:00.000Z', lastDay: '2026-11-02', keep: 1},
+    '5-1': {lv: 1, d: ['2026-11-01'], seen: 2, last: ''}, 'L3:add1c': {lv: 0, d: [], seen: 4, fday: '2026-11-03', fn: 3}};
+  const b = {'3+4': {lv: 2, d: ['2026-11-01', '2026-11-04'], seen: 9, last: '2026-11-05T08:00:00.000Z'},
+    '5-1': {lv: 3, d: ['2026-10-01', '2026-10-02', '2026-10-06'], seen: 9, last: ''}, '6+1': {lv: 1, d: ['2026-11-01'], seen: 1, last: ''},
+    'L3:add1c': {lv: 0, d: [], seen: 2, fday: '2026-11-03', fn: 4}};
+  const m = C.mergeCards(a, b);
+  assert.equal(m['5-1'].lv, 3);
+  assert.deepEqual(m['5-1'].d, b['5-1'].d);
+  assert.equal(m['6+1'].lv, 1);
+  assert.equal(m['3+4'].seen, 9);
+  assert.equal(m['3+4'].lastDay, '2026-11-02');
+  assert.equal(m['3+4'].keep, 1);
+  assert.equal(m['3+4'].last, '2026-11-05T08:00:00.000Z');
+  assert.equal(m['L3:add1c'].fn, 4);
+  assert.deepEqual(C.mergeCards(b, a), m, '和顺序无关');
+  assert.equal(a['5-1'].lv, 1, '不改原对象');
+});
+
+test('mergeProgress：Boss 取并集、每日记录合并；合并两次结果不变', () => {
+  const A = Object.assign(C.blank(), {cards: {'3+4': {lv: 1, d: ['2026-11-01'], seen: 1, last: ''}}, boss: {'0': true}, log: {'2026-11-01': {ups: ['3+4'], n: 3}}});
+  const B = Object.assign(C.blank(), {cards: {'3+4': {lv: 2, d: ['2026-11-01', '2026-11-02'], seen: 3, last: ''}}, boss: {'L2:0': true}, log: {'2026-11-01': {ups: ['5-1'], n: 5}}});
+  const M = C.mergeProgress(A, B);
+  assert.equal(M.cards['3+4'].lv, 2);
+  assert.deepEqual(Object.keys(M.boss).sort(), ['0', 'L2:0']);
+  assert.deepEqual(M.log['2026-11-01'].ups.sort(), ['3+4', '5-1']);
+  assert.equal(M.log['2026-11-01'].n, 5);
+  assert.deepEqual(C.mergeProgress(M, B), M);
+});

@@ -65,7 +65,7 @@ test('数线合格误差：小于误差算对，等于或超过不算（x.5 不�
   const it = K.ITEM['line:t:10'], q = {q: {max: 10, target: 7}, ans: 7};
   assert.equal(K.judge(it, q, 7.49).ok, true);
   assert.equal(K.judge(it, q, 7.5).ok, false);
-  const it2 = K.ITEM['line:t:100'], q2 = {q: {max: 100, target: 47}, ans: 47};
+  const it2 = K.ITEM['line:t:100'], q2 = {q: {max: 100, target: 47, any: true}, ans: 47};
   assert.equal(K.judge(it2, q2, 56.9).ok, true);
   assert.equal(K.judge(it2, q2, 57).ok, false);
   assert.equal(K.judge(it2, q2, 57, {lineTol: {'100a': 12}}).ok, true); // 家长区可调
