@@ -204,7 +204,11 @@ test('统计：每天用时、题数、新点亮数、练完后剩下的到期�
   const S = C.blank(); S.placedAt = 1;
   const {s} = play(S, D(0), () => ok);
   const st = S.stats[D(0)];
-  assert.ok(st.sec === s.elapsed && st.n > 0 && st.ups > 0 && st.over === 0);
+  assert.ok(st.sec === s.elapsed && st.n > 0 && st.ups > 0 && st.over === 0 && st.gap === 0);
+  const S2 = C.blank(); Object.assign(E.prog(S2, 'look:dice:1'), {seen: 1, lv: 1, lastDay: D(-5)});
+  assert.equal(E.gapNow(S2, D(0)), 5);                                  // 开始学了 5 天没练
+  K.BY.look1.items.forEach(it => Object.assign(E.prog(S2, it.id), {seen: 1, lv: 3, lastDay: D(-9)}));
+  assert.equal(E.gapNow(S2, D(0)), 0);                                  // 全部深红的不算"在学"
   for (let d = 1; d <= 410; d++) S.stats[D(d)] = {sec: 1, n: 1, ups: 0, over: 0};
   E.trimStats(S);
   assert.equal(Object.keys(S.stats).length, 400);

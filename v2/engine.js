@@ -72,6 +72,17 @@
   const instOfMistake = m => m.src ? K.make(m.uid, null, {q: m.q, ans: m.ans}) : {id: m.uid, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans};
 
   // ---------- 统计（意图卡的指标） ----------
+  // 护栏 3：已开始、还没全部深红的理解技能里，最久没练的那个隔了几天
+  function gapNow(S, day) {
+    let g = 0;
+    K.understand.forEach(s => {
+      const ps = s.items.map(it => peek(S, it.id));
+      if (!ps.some(p => p.seen > 0) || ps.every(p => p.lv === 3)) return;
+      const last = ps.map(p => p.lastDay || '').sort().pop();
+      if (last) g = Math.max(g, C.dayDiff(last, day));
+    });
+    return g;
+  }
   function stat(S, day) { S.stats = S.stats || {}; return (S.stats[day] = S.stats[day] || {sec: 0, n: 0, ups: 0, over: 0}); }
   function trimStats(S) { const ks = Object.keys(S.stats || {}).sort(); ks.slice(0, Math.max(0, ks.length - STATS_DAYS)).forEach(k => delete S.stats[k]); }
 
@@ -181,6 +192,7 @@
         elapsed += res.secs || 0; S.daily.sec = elapsed;
         const st = stat(S, day); st.sec = elapsed; st.n++; if (out.up) st.ups++;
         st.over = dueMistakes(S, day).length;
+        st.gap = gapNow(S, day);
         if (elapsed >= budget) S.daily.done = true;
         cur = null;
         return out;
@@ -244,5 +256,5 @@
   }
 
   return {BUDGET, REVIEW_MAX, NEW_SEC, BACKLOG, KEEP, REP, MAXPER,
-    prog, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, placement, trimStats, stat};
+    prog, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, placement, trimStats, stat, gapNow};
 });

@@ -37,6 +37,7 @@ function child(p0, pmax, rnd) {
 
 function run(p0, pmax, seed) {
   const S = start(), rnd = mkRnd(seed), kid = child(p0, pmax, rnd);
+  const r2 = mkRnd(seed + 1); C._setRnd((lo, hi) => lo + Math.floor(r2() * (hi - lo + 1)));   // 秒答题型出题也用固定种子，结果可复现
   const pl = E.placement(S, D(0), {rnd});                    // 第一次：摸底
   for (let x = pl.next(); x; x = pl.next()) pl.answer(kid.answer(S, x.inst, D(0)));
   const lastSeen = {}, mins = [];
