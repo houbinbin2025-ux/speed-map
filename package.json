@@ -1,5 +1,5 @@
 {
-  "name": "speed-map",
+  "name": "kongmath",
   "private": true,
   "scripts": {
     "test": "node --test tests/"

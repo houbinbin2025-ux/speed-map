@@ -1,4 +1,4 @@
-// 秒答地图 v2 · 手写数字识别（无 DOM、不联网）
+// 空空数学岛 · 手写数字识别（无 DOM、不联网）
 // 做法：用空空自己的笔迹做模板，$P 点云匹配（不管笔顺、笔画数），多位数按左右位置分组
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();

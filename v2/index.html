@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>秒答地图</title>
+<title>空空数学岛</title>
 <style>
 /* 布局：iPhone 横屏一屏工具。首页 = 左边三个练习 + 错题本，右边地图；练习页 = 左题右手写板 */
 :root{
@@ -140,7 +140,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     <button data-t="w1y">第 1 世界淡黄</button><button data-t="w1d">第 1 世界深红</button><button data-t="mist">造 3 道到期错题</button><button data-t="unsure">下一题演示识别确认</button><button data-t="reset">清空测试数据</button>
   </div>
   <div class="top">
-    <h1>秒答地图</h1>
+    <h1>空空数学岛</h1>
     <div style="display:flex;gap:6px" id="levels"></div>
     <span style="flex:1"></span>
     <span class="badge-pre" id="preBadge" hidden>预览版 · 不计入正式进度</span>
@@ -298,9 +298,9 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core.js / ink.js 必须同时把 v= 加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v2:16f7be0b0a8e -->
-<script src="core.js?v=2"></script>
-<script src="ink.js?v=2"></script>
+<!-- 改了 core.js / ink.js 必须同时把 v= 加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v3:c94b76de2526 -->
+<script src="core.js?v=3"></script>
+<script src="ink.js?v=3"></script>
 <script>
 window.addEventListener('error', function (e) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#8a2f27;color:#fff;padding:12px 16px;font:14px sans-serif;z-index:99'; d.textContent = '页面出错了，请截图发给维护的人：' + (e.message || e); document.body.appendChild(d); });
 (() => {

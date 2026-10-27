@@ -1,4 +1,4 @@
-// 秒答地图 v2 · 纯逻辑（无 DOM）：题库、升级、限时、错题本、配题、存储迁移
+// 空空数学岛 · 秒答地图板块 v2 · 纯逻辑（无 DOM）：题库、升级、限时、错题本、配题、存储迁移
 // 浏览器里挂到 window.SM，node 里 require 后直接测
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
