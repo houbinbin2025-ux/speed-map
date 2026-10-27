@@ -19,9 +19,10 @@
 
   // ---------- 格子状态：秒答存在 S.cards（和 v1 / v2 同一个地方），理解技能存在 S.skills ----------
   function prog(S, id) {
-    if (skillOf(id).speed) return C.cs(S, id);
-    S.skills = S.skills || {};
-    return (S.skills[id] = S.skills[id] || {lv: 0, d: [], seen: 0, lastDay: '', win: []});
+    let p;
+    if (skillOf(id).speed) p = C.cs(S, id);
+    else { S.skills = S.skills || {}; p = (S.skills[id] = S.skills[id] || {lv: 0, d: [], seen: 0, lastDay: '', win: []}); }
+    return C.fixCard(p);
   }
   const peek = (S, id) => (skillOf(id).speed ? S.cards[id] : (S.skills || {})[id]) || {lv: 0, d: [], seen: 0};
   const lv = (S, id) => peek(S, id).lv;
@@ -109,6 +110,7 @@
 
   // 一题作答之后的共同处理：升级、错题、维持复习档位、统计
   function settle(S, x, res, day, onTime) {
+    if (x.afterDemo) S.demoSeen[x.afterDemo] = true;
     const id = x.inst.id, gray = lv(S, id) === 0, p = prog(S, id);
     const out = record(S, id, res, day);
     if (x.keep) {
@@ -233,8 +235,8 @@
           if (!x) { queue = []; continue; }
           const sid = K.ITEM[x.inst.id].skill;
           if (x.seg === 'new' && !S.demoSeen[sid] && !S.known[sid]) {
-            S.demoSeen[sid] = true; Dy.sec += DEMO_SEC; stat(S, day).sec += DEMO_SEC;
-            pending.push(Object.assign({kind: 'q'}, x));
+            Dy.sec += DEMO_SEC; stat(S, day).sec += DEMO_SEC;
+            pending.push(Object.assign({kind: 'q', afterDemo: sid}, x));      // 孩子答了示范卡后面那题，才算看过
             cur = {kind: 'demo', skill: sid}; return cur;
           }
           cur = Object.assign({kind: 'q'}, x); return cur;
@@ -276,8 +278,8 @@
         if (!x) return null;
         const sid = K.ITEM[x.inst.id].skill;
         if (lv(S, x.inst.id) === 0 && !S.demoSeen[sid] && !S.known[sid]) {
-          S.demoSeen[sid] = true; stat(S, day).sec += DEMO_SEC;
-          pending.push(Object.assign({kind: 'q'}, x)); cur = {kind: 'demo', skill: sid}; return cur;
+          stat(S, day).sec += DEMO_SEC;
+          pending.push(Object.assign({kind: 'q', afterDemo: sid}, x)); cur = {kind: 'demo', skill: sid}; return cur;
         }
         cur = Object.assign({kind: 'q'}, x); return cur;
       },

@@ -420,3 +420,33 @@ test('防冷落：开始学了、5 天没练的技能，今天"学新的"排在�
   assert.ok(first.includes('look4'), first.join());
   Object.values(S.skills).forEach(p => { if (p.lastDay === D(-6)) p.lastDay = D(-1); });
 });
+
+// ---------- 第 3 轮审查（v3R3-R3）补的测试 ----------
+test('R3 关掉重开：每题出了几次接着算（一张卡一天最多 2 次，跨重开也算）', () => {
+  const S = rich(), cnt = {};
+  for (let open = 0; open < 30 && !(S.daily && S.daily.done); open++) {
+    const s = E.session(S, D(0), {rnd: seeded(open + 1)});
+    for (let k = 0; k < 3; k++) { const x = s.next(); if (!x) break; if (x.kind === 'q') { cnt[x.inst.id] = (cnt[x.inst.id] || 0) + 1; s.answer(x.inst.ans % 3 ? ok : bad); } }
+  }
+  Object.entries(cnt).forEach(([id, c]) => assert.ok(c <= (K.isType(id) ? 6 : 2), id + ' 出了 ' + c + ' 次'));
+});
+
+test('R3-N2 示范卡出现后孩子没答题就走了：下次还放示范卡', () => {
+  const S = C.blank(); S.placedAt = 1;
+  const s = E.session(S, D(0), {rnd: seeded(1)});
+  const x = s.next();
+  assert.equal(x.kind, 'demo');
+  const s2 = E.session(S, D(0), {rnd: seeded(1)});           // 切走 / 页面被回收
+  assert.equal(s2.next().kind, 'demo');
+  const q = s2.next(); s2.answer(ok);
+  assert.equal(S.demoSeen[q.inst ? K.ITEM[q.inst.id].skill : x.skill], true);
+});
+
+test('R3-N3 秒答卡缺 d 字段：不报错，能照常升级', () => {
+  const S = C.blank();
+  S.cards['3+4'] = {lv: 2, seen: 5};                          // 坏数据：没有 d
+  assert.doesNotThrow(() => E.record(S, '3+4', ok, D(0)));
+  assert.equal(E.lv(S, '3+4'), 3);
+  const m = C.mergeCards({'5-1': {lv: 1}}, {});
+  assert.deepEqual(m['5-1'].d.length, 1);
+});

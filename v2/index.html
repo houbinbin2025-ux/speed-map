@@ -298,9 +298,9 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core.js / ink.js 必须同时把 v= 加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v4:37e517d5c7a8 -->
-<script src="core.js?v=4"></script>
-<script src="ink.js?v=4"></script>
+<!-- 改了 core.js / ink.js 必须同时把 v= 加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v5:0d8d91d631d0 -->
+<script src="core.js?v=5"></script>
+<script src="ink.js?v=5"></script>
 <script>
 window.addEventListener('error', function (e) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#8a2f27;color:#fff;padding:12px 16px;font:14px sans-serif;z-index:99'; d.textContent = '页面出错了，请截图发给维护的人：' + (e.message || e); document.body.appendChild(d); });
 (() => {

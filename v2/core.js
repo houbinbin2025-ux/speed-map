@@ -235,8 +235,17 @@
   }
   // ---------- 秒答进度按格子取高合并（v1 / 预览 / 正式三处）：只升不降，所以取高永远安全 ----------
   const maxStr = (x, y) => ((x || '') > (y || '') ? x : y);
+  // 坏数据兜底：缺 d / seen 时补上（缺的升级日期按很久以前算，不挡升级）
+  function fixCard(p) {
+    if (!Array.isArray(p.d)) p.d = [];
+    for (let i = 0; i < Math.min(p.lv || 0, 3); i++) if (!p.d[i]) p.d[i] = '2000-01-01';
+    if (typeof p.seen !== 'number') p.seen = 0;
+    if (typeof p.lv !== 'number') p.lv = 0;
+    return p;
+  }
   function mergeCard(x, y) {
-    if (!x) return Object.assign({}, y); if (!y) return Object.assign({}, x);
+    x = x && fixCard(Object.assign({}, x)); y = y && fixCard(Object.assign({}, y));
+    if (!x) return y; if (!y) return x;
     const hi = x.lv !== y.lv ? (x.lv > y.lv ? x : y) : ((x.seen || 0) >= (y.seen || 0) ? x : y);
     const lo = hi === x ? y : x;
     const out = Object.assign({}, lo, hi, {d: (hi.d || []).slice(), seen: Math.max(x.seen || 0, y.seen || 0), intro: !!(x.intro || y.intro)});
@@ -279,7 +288,7 @@
     LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, loadState, saveState, exportText, importText, mergeCards, mergeProgress,
+    keysFor, loadState, saveState, exportText, importText, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
   };
