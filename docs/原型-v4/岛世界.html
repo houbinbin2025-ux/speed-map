@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>空空岛 · 原型 v4</title>
+<style>
+:root{
+  --cave:#1b1d22; --ink:#ecebe4; --mute:#b9b7ad; --paper:#f4ecd8; --paper-line:#e3d7b9;
+  --grass:#3d7524; --go:#6fae3a; --go-ink:#10140c; --dirt:#7a5230; --dirt-dk:#5a3a20;
+  --lv0:#3a3e47; --lv1:#fff3b0; --lv2:#f6a5a0; --lv3:#b3261e;
+  --ok:#7bd88f; --warn:#f2c14e; --bad:#ffb4a8; --counter:#6ea8fe;
+  --plank:#c08a52; --plank-dk:#8a5a2c; --sky:#8fc8ff;
+  --f:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --f-num:"SF Pro Rounded",ui-rounded,-apple-system,"PingFang SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%;overflow:hidden;background:var(--sky);color:var(--ink);font-family:var(--f);overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.screen{position:fixed;inset:0;transition:opacity .25s ease}
+.screen.off{opacity:0;pointer-events:none}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+
+/* ---------- 岛世界 ---------- */
+#vp{position:absolute;inset:0;overflow:hidden;touch-action:none;cursor:grab}
+#vp.drag{cursor:grabbing}
+#sky{position:absolute;inset:0;width:100%;height:100%}
+.layer{position:absolute;left:0;top:0;will-change:transform;transform-origin:0 0}
+#Lmain{transition:none}
+#Lmain.zoom{transition:transform .38s cubic-bezier(.4,0,.7,.2),opacity .38s}
+.sign{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0;pointer-events:none}
+.sign .board{background:var(--plank);border:3px solid #000;box-shadow:inset 0 -4px 0 var(--plank-dk);padding:4px 9px 6px;min-width:104px;text-align:center;color:#2a1a0a}
+.sign .nm{font-size:15px;font-weight:900;white-space:nowrap;letter-spacing:1px}
+.sign .row{display:flex;gap:2px;justify-content:center;margin-top:4px}
+.sign .row i{width:9px;height:9px;border:2px solid #000;background:var(--lv0)}
+.sign .row i.l1{background:var(--lv1)}.sign .row i.l2{background:var(--lv2)}.sign .row i.l3{background:var(--lv3)}
+.sign .row i.pulse{animation:pulse .9s ease 3}
+.sign .ct{font-size:11px;font-weight:700;margin-top:2px;color:#3a2410}
+.sign .post{width:6px;height:16px;background:var(--plank-dk);border:2px solid #000;border-top:0}
+.sign.today .board{outline:4px solid var(--warn);outline-offset:0}
+.sign .flag{position:absolute;top:-24px;background:var(--warn);color:#2a1a00;border:2px solid #000;font-size:12px;font-weight:900;padding:1px 7px;white-space:nowrap;animation:bob 1.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+@keyframes pulse{50%{transform:scale(1.5)}}
+#hero,#dog{position:absolute;pointer-events:none}
+#hero canvas,#dog canvas{width:100%;height:100%}
+#hero{animation:idle 1.6s steps(2) infinite}
+#hero.walk{animation:none}
+@keyframes idle{50%{transform:translateY(-2px)}}
+
+/* HUD：固定在屏幕上，不跟着岛动 */
+.hud{position:absolute;z-index:5}
+.chip{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;font-weight:900;font-size:16px}
+#brand{left:max(12px,env(safe-area-inset-left));top:10px;padding:0 12px 0 6px}
+#brand img{width:30px;height:30px;image-rendering:pixelated}
+#topR{right:max(12px,env(safe-area-inset-right));top:10px;display:flex;gap:10px}
+#btnChest .ico{width:24px;height:20px}
+#btnChest .n{background:var(--lv3);color:#fff;border:2px solid #000;min-width:24px;height:24px;border-radius:12px;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+#gear{width:44px;justify-content:center;padding:0;font-size:20px}
+#mini{left:max(12px,env(safe-area-inset-left));bottom:12px;display:flex;gap:4px;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;padding:5px}
+#mini button{width:48px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--mute);border:2px solid transparent}
+#mini button i{width:16px;height:12px;border:2px solid #000;display:block}
+#mini button.on{border-color:var(--warn);color:var(--ink)}
+#mini button.today::after{content:"";position:absolute;margin:-30px 0 0 30px;width:8px;height:8px;background:var(--warn);border:2px solid #000}
+#start{right:max(12px,env(safe-area-inset-right));bottom:12px;width:270px;height:86px;background:var(--go);color:var(--go-ink);border:3px solid #000;box-shadow:0 6px 0 #000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:transform .08s}
+#start:active,.gobtn:active{transform:translateY(4px);box-shadow:0 2px 0 #000}
+#start b{font-size:25px;font-weight:900;letter-spacing:1px}
+#start span{font-size:13px;font-weight:700;opacity:.8}
+/* 地方卡片：点一个地方，从下面滑上来 */
+#hint{left:50%;top:50%;transform:translate(-50%,-50%);background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;padding:10px 18px;font-size:18px;font-weight:900;pointer-events:none;animation:sway 1.4s ease-in-out infinite;transition:opacity .3s}
+#hint.gone{opacity:0}
+@keyframes sway{50%{transform:translate(calc(-50% + 14px),-50%)}}
+.say{position:absolute;z-index:4;background:#fff;color:#1b1d22;border:3px solid #000;padding:6px 12px;font-size:16px;font-weight:900;white-space:nowrap;pointer-events:none;opacity:0;transform:translate(-50%,6px);transition:opacity .2s,transform .2s}
+.say.on{opacity:1;transform:translate(-50%,0)}
+#hero.jump{animation:jump .5s ease}
+@keyframes jump{30%{transform:translateY(-14px)}60%{transform:none}80%{transform:translateY(-5px)}}
+#sheet{position:absolute;z-index:6;left:50%;bottom:0;width:min(560px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:14px 16px 16px}
+#sheet.open{transform:translate(-50%,0)}
+#sheet h2{font-size:22px;font-weight:900;display:flex;align-items:center;gap:10px}
+#sheet h2 small{font-size:13px;color:var(--mute);font-weight:700}
+#sheet .x{position:absolute;right:8px;top:8px;width:44px;height:44px;font-size:22px;color:var(--mute)}
+#skills{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+#skills span{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:2px solid #000;background:#2a2d34;font-size:14px;font-weight:700}
+#skills span i{width:14px;height:14px;border:2px solid #000;background:var(--lv0)}
+#skills span i.l1{background:var(--lv1)}#skills span i.l2{background:var(--lv2)}#skills span i.l3{background:var(--lv3)}
+.gobtn{height:56px;padding:0 22px;background:var(--go);color:var(--go-ink);border:3px solid #000;box-shadow:0 5px 0 #000;font-size:19px;font-weight:900}
+.gobtn.alt{background:#2a2d34;color:var(--ink)}
+.btns{display:flex;gap:10px}
+#fade{position:fixed;inset:0;background:var(--cave);opacity:0;pointer-events:none;z-index:50;transition:opacity .22s}
+#fade.on{opacity:1}
+
+/* ---------- 练习页（在岛上） ---------- */
+#play{display:flex;flex-direction:column;gap:10px;padding:10px max(14px,env(safe-area-inset-right)) 12px max(14px,env(safe-area-inset-left))}
+#playBg,#sumBg{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.ptop{display:flex;align-items:center;gap:12px;height:50px}
+.quit{height:46px;padding:0 14px;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;font-weight:900;font-size:15px}
+#track{flex:1;position:relative;height:46px}
+#track .rail{position:absolute;left:0;right:22px;bottom:6px;height:8px;background:repeating-linear-gradient(90deg,#6b4628 0 6px,transparent 6px 14px);border-top:3px solid #9a9da4;border-bottom:3px solid #9a9da4}
+#track .goal{position:absolute;right:0;bottom:2px;width:24px;height:40px}
+#cart{position:absolute;bottom:10px;left:0;width:46px;height:40px;transition:left .5s cubic-bezier(.3,1.4,.5,1)}
+#mined{display:flex;align-items:center;gap:8px;height:46px;padding:0 12px;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;font-weight:900;font-size:20px;font-family:var(--f-num)}
+#mined i{width:20px;height:20px;border:2px solid #000;background:var(--warn);display:block}
+#mined.bump{animation:bump .3s}
+@keyframes bump{40%{transform:scale(1.18)}}
+.pmain{flex:1;display:flex;gap:14px;min-height:0}
+.qcard{width:36%;max-width:340px;flex:none;background:var(--cave);border:3px solid #000;box-shadow:0 5px 0 #000;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.qtag{align-self:flex-start;background:#2a2d34;border:2px solid #000;padding:3px 10px;font-size:14px;font-weight:700}
+.qfig{flex:1;display:flex;align-items:center;justify-content:center}
+.tfs{display:flex;gap:8px}
+.tf{display:grid;grid-template-columns:repeat(5,26px);gap:3px;background:#000;border:3px solid #000}
+.tf i{height:26px;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.tf i b{width:19px;height:19px;border-radius:50%;background:var(--counter)}
+.qnote{font-size:14px;color:var(--mute)}
+.demo{display:flex;gap:8px}
+.demo button{flex:1;height:40px;border:2px dashed var(--mute);font-size:13px;color:var(--mute)}
+.pr{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pad{flex:1;position:relative;background:var(--paper);background-image:linear-gradient(var(--paper-line) 1px,transparent 1px);background-size:100% 48px;border:3px solid #000;box-shadow:0 5px 0 #000;border-radius:10px}
+.pad .hint{position:absolute;left:16px;top:12px;color:#b3a681;font-size:15px}
+.pad .ans{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-size:150px;font-weight:900;color:#2a2d34;opacity:0;transition:opacity .15s}
+.pad.ok .ans{opacity:1;color:#2f7d43}
+.pbtns{display:flex;gap:10px;justify-content:flex-end}
+.pbtns button{height:50px;padding:0 22px;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;font-weight:900;font-size:17px}
+.fly{position:fixed;z-index:30;width:30px;height:30px;border:3px solid #000;pointer-events:none}
+.okpop{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:34px;font-weight:900;color:var(--ok);text-shadow:0 3px 0 #000;pointer-events:none;opacity:0}
+.okpop.go{animation:okpop .6s ease}
+@keyframes okpop{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-80%)}}
+
+/* ---------- 结算 ---------- */
+#sum{display:flex;align-items:center;justify-content:center}
+.scard{background:var(--cave);border:3px solid #000;box-shadow:0 6px 0 #000;padding:18px 22px;width:min(620px,92vw);display:flex;gap:22px;align-items:center}
+.scard h2{font-size:28px;font-weight:900}
+.scard p{color:var(--mute);font-size:15px;margin:6px 0 14px}
+.sumL{display:flex;flex-direction:column;align-items:center;gap:10px}
+.sumHero{display:flex;align-items:flex-end;gap:8px;height:96px}
+#sumHero{width:48px;height:90px;animation:jump 1s ease infinite}#sumDog{width:50px;height:30px;animation:jump 1s ease .25s infinite}
+#bag{width:190px;flex:none;display:grid;grid-template-columns:repeat(5,34px);gap:4px;align-content:end;min-height:76px}
+#bag i{width:34px;height:34px;border:3px solid #000;display:block;opacity:0;transform:translateY(-60px)}
+#bag i.in{animation:drop .42s cubic-bezier(.3,1.5,.6,1) forwards}
+@keyframes drop{to{opacity:1;transform:none}}
+.lit{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;margin-bottom:14px}
+.lit i{width:18px;height:18px;border:2px solid #000;background:var(--lv1)}
+.tag{position:fixed;left:50%;bottom:4px;transform:translateX(-50%);font-size:11px;color:#1b1d22;opacity:.55;z-index:60;pointer-events:none}
+@media (max-width:760px){#mini button{width:38px;font-size:10px}#start{width:220px}#start b{font-size:21px}#hint{font-size:15px}}
+@media (max-height:400px){#start{height:74px}.chip{height:40px}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- 岛世界首页 -->
+<section id="world" class="screen">
+  <div id="vp">
+    <canvas id="sky" class="px"></canvas>
+    <div class="layer" id="Lfar"><canvas id="far" class="px"></canvas></div>
+    <div class="layer" id="Lmain"><canvas id="main" class="px"></canvas><div id="props"></div><div id="dog"><canvas class="px"></canvas></div><div id="hero"><canvas class="px"></canvas></div></div>
+  </div>
+  <div class="hud chip" id="brand"><img src="../../v2/mark.svg" alt="">空空数学岛</div>
+  <div class="hud" id="topR">
+    <button class="chip" id="btnChest"><canvas class="ico px" id="chestIco" width="12" height="10"></canvas>错题宝箱<span class="n">3</span></button>
+    <button class="chip" id="gear" aria-label="家长">⚙︎</button>
+  </div>
+  <div class="hud" id="mini"></div>
+  <div class="hud" id="hint">◀ 拖一拖，看看整座岛 ▶</div>
+  <div id="say" class="say"></div>
+  <button class="hud" id="start"><b>开始今天的探险</b><span id="startSub">还剩 5 分钟 · 先去分合矿洞</span></button>
+  <div id="sheet">
+    <button class="x" id="sheetX" aria-label="关上">✕</button>
+    <h2><span id="shName"></span><small id="shCt"></small></h2>
+    <div id="skills"></div>
+    <div class="btns"><button class="gobtn" id="shGo">练这一块</button><button class="gobtn alt" id="shMist">这里的错题</button></div>
+  </div>
+</section>
+
+<!-- 练习页 -->
+<section id="play" class="screen off">
+  <canvas id="playBg" class="px"></canvas>
+  <div class="ptop">
+    <button class="quit" id="quit">长按结束</button>
+    <div id="track"><div class="rail"></div><canvas class="goal px" id="goal" width="6" height="10"></canvas><canvas id="cart" class="px" width="12" height="10"></canvas></div>
+    <div id="mined"><i id="minedIco"></i><span id="minedN">0</span></div>
+  </div>
+  <div class="pmain">
+    <div class="qcard" id="qcard">
+      <span class="qtag">看数 · 两个十格框</span>
+      <div class="qfig"><div class="tfs" id="tfs"></div></div>
+      <div class="qnote">有几个？写在右边</div>
+      <div class="demo"><button id="dOk">原型：答对</button><button id="dBad">原型：答错</button></div>
+    </div>
+    <div class="pr">
+      <div class="pad" id="pad"><span class="hint">写在这里</span><span class="ans" id="ans">14</span><span class="okpop" id="okpop">对啦！</span></div>
+      <div class="pbtns"><button>擦掉</button><button>不会</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- 结算 -->
+<section id="sum" class="screen off">
+  <canvas id="sumBg" class="px"></canvas>
+  <div class="scard">
+    <div class="sumL"><div class="sumHero"><canvas class="px" id="sumHero"></canvas><canvas class="px" id="sumDog"></canvas></div><div id="bag"></div></div>
+    <div>
+      <h2 id="sumT">今天挖到 0 块</h2>
+      <p>练了 10 分钟 · 明天再来，矿洞会长出新的矿石</p>
+      <div class="lit"><i></i>分合 · 5 以内分合 亮成淡黄了</div>
+      <button class="gobtn" id="home">回到岛上</button>
+    </div>
+  </div>
+</section>
+<div id="fade"></div>
+<div class="tag">原型 v4 · 假数据 · 左右拖动岛</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+// ---------- 假数据（原型用；实施时换成真实进度） ----------
+const ZONES = [
+  {id: 'home', x: 52, name: '空空的家', short: '家', icon: '#c08a52'},
+  {id: 'look', x: 180, name: '看数草原', short: '看数', icon: '#6fae3a', lv: [3,3,2,2,2,1,1,1,1,0], ct: '亮了 24 · 共 31 格'},
+  {id: 'bond', x: 322, name: '分合矿洞', short: '分合', icon: '#9a9da4', lv: [2,1,1,1,0,0,0,0], ct: '亮了 15 · 共 54 格', today: true},
+  {id: 'place', x: 462, name: '数位村庄', short: '数位', icon: '#f2c14e', lv: [1,0], ct: '亮了 1 · 共 2 格'},
+  {id: 'cmp', x: 592, sx: 572, name: '比大小双塔', short: '比大小', icon: '#b3261e', lv: [1,1,0], ct: '亮了 3 · 共 8 格'},
+  {id: 'line', x: 722, name: '数线铁轨', short: '数线', icon: '#6ea8fe', lv: [1,0], ct: '亮了 1 · 共 4 格'},
+  {id: 'speed', x: 850, sx: 806, name: '秒答高塔', short: '秒答', icon: '#5a3a20', lv: [0,0,0,0], ct: '共 224 格 · 还没开始'},
+];
+const SKILLS = {look: ['骰子', '乱点', '十格框', '两个十格框', '闪一下'], bond: ['5 以内分合', '10 以内分合', '凑十', '过十准备'], place: ['十和几'], cmp: ['两个数', '差 1 的数'], line: ['0–10 插旗', '0–20 插旗'], speed: ['10 以内', '20 以内', '50 以内', '100 以内']};
+const WW = 896, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
+let P = 4;                              // 1 个像素点 = 几个屏幕点
+
+// ---------- 像素画工具 ----------
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(7);
+const pick = a => a[Math.floor(R() * a.length)];
+function sprite(ctx, rows, pal, ox, oy) { rows.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) { ctx.fillStyle = pal[ch]; ctx.fillRect(ox + x, oy + y, 1, 1); } })); }
+const TEX = {
+  grass: ['#6fae3a', '#62a033', '#7dbb44'], dirt: ['#7a5230', '#6b4628', '#86593a'], stone: ['#8a8d94', '#7c7f86', '#979aa1'],
+  plank: ['#c08a52', '#b27d48'], log: ['#6b4628', '#5a3a20'], leaf: ['#3d7524', '#4f8a2e', '#2f5e1c'], brick: ['#9a9da4', '#878a91'],
+};
+function tile(ctx, tx, ty, kind) {
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    let c;
+    if (kind === 'grassTop') c = y < 2 ? pick(TEX.grass) : y === 2 && R() < .5 ? TEX.grass[1] : pick(TEX.dirt);
+    else if (kind === 'ore') c = (x > 1 && x < 4 && y > 1 && y < 4) || (x > 4 && x < 7 && y > 4 && y < 7) ? ctx._ore : pick(TEX.stone);
+    else if (kind === 'plank') c = y % 4 === 3 ? '#8a5a2c' : TEX.plank[(x + (y >> 2) * 3) % 7 === 0 ? 1 : 0];
+    else if (kind === 'brick') c = y % 4 === 3 || (x + (y >> 2) * 4) % 8 === 0 ? '#6c6f76' : pick(TEX.brick);
+    else if (kind === 'log') c = x % 3 === 0 ? TEX.log[1] : TEX.log[0];
+    else c = pick(TEX[kind]);
+    ctx.fillStyle = c; ctx.fillRect(tx + x, ty + y, 1, 1);
+  }
+}
+// 地面高度：每 8 个像素一列
+const COLS = WW / 8, GT = new Array(COLS).fill(72);
+[[36, 64], [37, 56], [38, 48], [39, 40], [40, 40], [41, 40], [42, 40], [43, 48], [44, 56]].forEach(([c, y]) => { GT[c] = y; });
+for (let c = 101; c < 110; c++) GT[c] = 64;
+const surf = x => GT[Math.max(0, Math.min(COLS - 1, Math.floor(x / 8)))];
+
+function drawMain(cv) {
+  cv.width = WW; cv.height = WH; const g = cv.getContext('2d');
+  for (let c = 0; c < COLS; c++) {
+    const edge = Math.min(c, COLS - 1 - c), depth = Math.min(6, 1 + Math.floor(edge * 0.7)) + (edge > 8 ? 2 : 0);
+    const t = GT[c], bottom = Math.min(WH + 8, 72 + depth * 8 + (R() < .4 ? 8 : 0));
+    for (let y = t, r = 0; y < bottom; y += 8, r++) {
+      const caveMouth = c >= 39 && c <= 41 && y >= 48 && y < 72;
+      if (caveMouth) { g.fillStyle = '#1b1d22'; g.fillRect(c * 8, y, 8, 8); continue; }
+      if (r === 0) tile(g, c * 8, y, 'grassTop');
+      else if (r < 3 && y < 88) tile(g, c * 8, y, 'dirt');
+      else if (R() < .1) { g._ore = pick(['#f2c14e', '#6ea8fe', '#2b2b2b', '#f6a5a0']); tile(g, c * 8, y, 'ore'); }
+      else tile(g, c * 8, y, y >= bottom - 8 && edge < 8 ? 'dirt' : 'stone');
+    }
+  }
+  // 洞口边框和火把（分合矿洞）
+  g.fillStyle = '#000'; g.fillRect(311, 47, 1, 25); g.fillRect(336, 47, 1, 25); g.fillRect(311, 47, 26, 1);
+  [[302, 58], [342, 58]].forEach(([x, y]) => { g.fillStyle = '#6b4628'; g.fillRect(x, y + 2, 2, 8); g.fillStyle = '#f2c14e'; g.fillRect(x, y, 2, 2); g.fillStyle = '#fff3b0'; g.fillRect(x, y, 1, 1); });
+  // 矿车在洞口
+  cart(g, 318, 62);
+  // 空空的家
+  for (let y = 48; y < 72; y += 8) for (let x = 32; x < 72; x += 8) tile(g, x, y, x === 32 || x === 64 ? 'log' : 'plank');
+  for (let i = 0; i < 4; i++) { g.fillStyle = i % 2 ? '#8a5a2c' : '#6b4628'; g.fillRect(28 + i * 4, 44 - i * 4, 48 - i * 8, 4); }
+  g.fillStyle = '#4a2f1b'; g.fillRect(48, 58, 8, 14); g.fillStyle = '#f2c14e'; g.fillRect(54, 64, 1, 1);
+  g.fillStyle = '#000'; g.fillRect(35, 53, 9, 9); g.fillStyle = '#bfe3ff'; g.fillRect(36, 54, 7, 7); g.fillStyle = '#000'; g.fillRect(39, 54, 1, 7); g.fillRect(36, 57, 7, 1);
+  // 看数草原：树、花、骰子方块
+  [[140, 4], [214, 5], [250, 4]].forEach(([x, h]) => tree(g, x, 72, h));
+  for (let x = 100; x < 280; x += 7) if (R() < .5) { g.fillStyle = pick(['#f6a5a0', '#fff3b0', '#ecebe4']); g.fillRect(x, 70, 1, 1); g.fillStyle = '#3d7524'; g.fillRect(x, 71, 1, 1); }
+  dice(g, 172, 56);
+  // 数位村庄：3 根十条 + 4 块一 = 34，旁边一间小屋
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 10; k++) block(g, 440 + r * 6, 68 - k * 4, '#6fae3a');
+  for (let k = 0; k < 4; k++) block(g, 462 + (k % 2) * 5, 68 - Math.floor(k / 2) * 4, '#f2c14e');
+  for (let y = 56; y < 72; y += 8) for (let x = 480; x < 504; x += 8) tile(g, x, y, 'plank');
+  g.fillStyle = '#b3261e'; g.fillRect(478, 52, 28, 4); g.fillStyle = '#8a1c16'; g.fillRect(482, 48, 20, 4);
+  g.fillStyle = '#4a2f1b'; g.fillRect(488, 62, 6, 10);
+  // 比大小双塔
+  for (let y = 48; y < 72; y += 8) tile(g, 568, y, 'brick');
+  for (let y = 32; y < 72; y += 8) for (let x = 600; x < 616; x += 8) tile(g, x, y, 'brick');
+  g.fillStyle = '#6b4628'; g.fillRect(607, 18, 1, 14); g.fillStyle = '#f2c14e'; g.fillRect(608, 18, 7, 5);
+  // 数线铁轨：从 680 到 770，枕木 + 两条轨
+  for (let x = 676; x < 776; x += 4) { g.fillStyle = '#6b4628'; g.fillRect(x, 70, 3, 2); }
+  g.fillStyle = '#9a9da4'; g.fillRect(676, 69, 100, 1);
+  for (let i = 0; i <= 10; i++) { const x = 680 + i * 9; g.fillStyle = i % 5 ? '#ecebe4' : '#f2c14e'; g.fillRect(x, i % 5 ? 64 : 60, 1, i % 5 ? 5 : 9); }
+  cart(g, 712, 61);
+  // 秒答高塔
+  for (let y = 32; y < 64; y += 8) for (let x = 832; x < 872; x += 8) tile(g, x, y, 'brick');
+  for (let x = 832; x < 872; x += 8) tile(g, x, 24, 'brick');
+  g.fillStyle = '#8ec8ff'; for (let x = 836; x < 872; x += 8) g.fillRect(x, 24, 4, 3);
+  g.fillStyle = '#1b1d22'; g.fillRect(846, 48, 12, 16); g.fillStyle = '#000'; g.fillRect(845, 47, 14, 1);
+  g.fillStyle = '#6b4628'; g.fillRect(851, 8, 1, 16); g.fillStyle = '#b3261e'; g.fillRect(852, 8, 9, 6); g.fillStyle = '#ecebe4'; g.fillRect(855, 10, 2, 2);
+  tree(g, 886, 64, 3);
+}
+function tree(g, x, base, h) {
+  for (let i = 0; i < h; i++) { g.fillStyle = i % 2 ? '#5a3a20' : '#6b4628'; g.fillRect(x, base - (i + 1) * 4, 4, 4); }
+  const ty = base - h * 4 - 8;
+  for (let yy = 0; yy < 12; yy += 4) for (let xx = -8; xx < 12; xx += 4) { if ((yy === 0 && (xx < -4 || xx > 4))) continue; tileSmall(g, x + xx, ty - 4 + yy, TEX.leaf); }
+}
+function tileSmall(g, x, y, tex) { for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) { g.fillStyle = pick(tex); g.fillRect(x + a, y + b, 1, 1); } }
+function block(g, x, y, c) { g.fillStyle = '#000'; g.fillRect(x, y, 5, 4); g.fillStyle = c; g.fillRect(x, y, 4, 3); }
+function dice(g, x, y) { g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 18, 17); g.fillStyle = '#f4ecd8'; g.fillRect(x, y, 16, 15); g.fillStyle = '#6ea8fe'; [[3, 3], [11, 3], [7, 7], [3, 11], [11, 11]].forEach(([a, b]) => g.fillRect(x + a, y + b, 2, 2)); }
+function cart(g, x, y) { sprite(g, ['k..........k', 'kGGGGGGGGGGk', 'kGgGGGGGGgGk', 'kGGGGGGGGGGk', '.kkkkkkkkkk.', '..kk....kk..', '..kk....kk..'], {k: '#2b2b2b', G: '#8a8d94', g: '#f2c14e'}, x, y); }
+
+function drawFar(cv, w) {
+  cv.width = w; cv.height = WH; const g = cv.getContext('2d');
+  const RR = rng(3);
+  for (let i = 0; i < w / 60; i++) { // 远处的小浮空岛
+    const x = Math.floor(RR() * w), y = 30 + Math.floor(RR() * 40), s = 6 + Math.floor(RR() * 10);
+    g.fillStyle = '#8fb3cf'; for (let k = 0; k < s; k++) g.fillRect(x + Math.floor(k * 0.9), y + 3 + k, Math.max(2, s * 2 - Math.floor(k * 1.8)), 1);
+    g.fillStyle = '#93c27a'; g.fillRect(x, y, s * 2, 2); g.fillStyle = '#7fae69'; g.fillRect(x, y + 2, s * 2, 1);
+    if (s > 10) { g.fillStyle = '#6f9a5c'; g.fillRect(x + 4, y - 4, 3, 4); g.fillRect(x + 3, y - 6, 5, 2); }
+  }
+  for (let i = 0; i < w / 45; i++) { // 方块云
+    const x = Math.floor(RR() * w), y = 4 + Math.floor(RR() * 24), n = 3 + Math.floor(RR() * 4);
+    g.fillStyle = '#f2f6fb'; g.fillRect(x, y, n * 6, 4); g.fillRect(x + 4, y - 3, n * 6 - 8, 3);
+    g.fillStyle = '#dbe7f3'; g.fillRect(x, y + 4, n * 6, 1);
+  }
+}
+function drawSky(cv) {
+  cv.width = 1; cv.height = WH; const g = cv.getContext('2d');
+  ['#79bdf9', '#86c4fb', '#93cbfc', '#a1d2fd', '#afd9fe', '#bde0ff'].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 19, 1, 19); });
+}
+const HERO = {
+  pal: {H: '#4a2f1b', S: '#f1c27d', E: '#1b1d22', M: '#c0705a', G: '#6fae3a', g: '#4f8a2e', B: '#3b5bdb', K: '#2b2b2b'},
+  a: ['..HHHH..', '.HHHHHH.', '.HSSSSH.', '.SESSES.', '.SSSSSS.', '..SMMS..', '.GGGGGG.', 'gGGGGGGg', 'gGGGGGGg', 'gGGGGGGg', 'SGGGGGGS', '.BBBBBB.', '.BB..BB.', '.BB..BB.', '.KK..KK.'],
+  b: ['..HHHH..', '.HHHHHH.', '.HSSSSH.', '.SESSES.', '.SSSSSS.', '..SMMS..', '.GGGGGG.', 'gGGGGGGg', 'gGGGGGGg', 'gGGGGGGg', 'SGGGGGGS', '.BBBBBB.', '..BBBB..', '.BB..BB.', 'KK....KK'],
+};
+const DOG = {pal: {B: '#e0a15a', D: '#8a5a2a', E: '#1b1d22', N: '#2b2b2b'}, a: ['.......DD.', '.......BBB', 'D.BBBBBBEN', '.BBBBBBBB.', '.BBBBBBB..', '.B.B..B.B.'], b: ['.......DD.', '.......BBB', '.DBBBBBBEN', '.BBBBBBBB.', '.BBBBBBB..', 'B..B.B..B.']};
+function drawSprite(cv, S, f, flip) { const rows = S[f]; cv.width = rows[0].length; cv.height = rows.length; const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.save(); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); } sprite(g, rows, S.pal, 0, 0); g.restore(); }
+
+// ---------- 布局 ----------
+const main = $('main'), far = $('far');
+drawSky($('sky')); drawMain(main); drawFar(far, Math.ceil(WW * 0.45 + 400));
+sprite($('chestIco').getContext('2d'), ['.kkkkkkkkkk.', 'kPPPPPPPPPPk', 'kPpppppppppk', 'kkkkkGGkkkkk', 'kPPPPGGPPPPk', 'kPPPPPPPPPPk', 'kPpppppppppk', 'kPPPPPPPPPPk', 'kkkkkkkkkkkk', '............'], {k: '#000', P: '#c08a52', p: '#8a5a2c', G: '#f2c14e'}, 0, 0);
+sprite($('cart').getContext('2d'), ['..HHHH......', '.HSSSSH.....', '.SESSES.....', 'kGGGGGGGGGGk', 'kGgGGGGGGgGk', 'kGGGGGGGGGGk', '.kkkkkkkkkk.', '..kk....kk..', '..kk....kk..', '............'], {k: '#2b2b2b', G: '#8a8d94', g: '#f2c14e', H: '#4a2f1b', S: '#f1c27d', E: '#1b1d22'}, 0, 0);
+sprite($('goal').getContext('2d'), ['k.....', 'kRRRR.', 'kRRRRR', 'kRRRR.', 'k.....', 'k.....', 'k.....', 'k.....', 'k.....', 'k.....'], {k: '#2b2b2b', R: '#b3261e'}, 0, 0);
+let camX = 0, maxX = 0, hero = {x: ZONES.find(z => z.today).x - 26, flip: false}, signs = {};
+
+function layout() {
+  P = innerHeight / WH;
+  const W = WW * P;
+  main.style.width = W + 'px'; main.style.height = innerHeight + 'px';
+  far.style.width = far.width * P + 'px'; far.style.height = innerHeight + 'px';
+  maxX = Math.max(0, W - innerWidth);
+  $('props').innerHTML = '';
+  ZONES.forEach(z => {
+    if (!z.lv) return;
+    const s = document.createElement('div'); s.className = 'sign' + (z.today ? ' today' : '');
+    s.style.left = (z.sx || z.x) * P + 'px'; s.style.top = Math.max(56, 15 * P) + 'px';
+    s.innerHTML = (z.today ? '<span class="flag">今天先来这里</span>' : '') + `<div class="board"><div class="nm">${z.name}</div><div class="row">${z.lv.map(l => `<i class="l${l}"></i>`).join('')}</div><div class="ct">${z.ct}</div></div><div class="post"></div>`;
+    $('props').appendChild(s); signs[z.id] = s;
+  });
+  placeHero(); setCam(camX);
+}
+function placeHero() {
+  const h = $('hero'), d = $('dog');
+  h.style.width = 8 * P + 'px'; h.style.height = 15 * P + 'px'; h.style.left = hero.x * P + 'px'; h.style.top = (surf(hero.x + 4) - 15) * P + 'px';
+  const dx = hero.x + (hero.flip ? 12 : -14);
+  d.style.width = 10 * P + 'px'; d.style.height = 6 * P + 'px'; d.style.left = dx * P + 'px'; d.style.top = (surf(dx + 5) - 6) * P + 'px';
+}
+function frameSprites(f) { drawSprite($('hero').firstChild, HERO, f, hero.flip); drawSprite($('dog').firstChild, DOG, f, hero.flip); }
+
+// ---------- 镜头：拖动、惯性、回弹 ----------
+const clampSoft = x => x < 0 ? x * 0.35 : x > maxX ? maxX + (x - maxX) * 0.35 : x;
+function setCam(x) {
+  camX = x;
+  $('Lmain').style.transform = `translate3d(${-camX}px,0,0)`;
+  $('Lfar').style.transform = `translate3d(${-camX * 0.45}px,0,0)`;
+  const mid = (camX + innerWidth / 2) / P;
+  let best = ZONES[0]; ZONES.forEach(z => { if (Math.abs(z.x - mid) < Math.abs(best.x - mid)) best = z; });
+  if (best.id !== onZone) { onZone = best.id; document.querySelectorAll('#mini button').forEach(b => b.classList.toggle('on', b.dataset.z === best.id)); }
+  if (hintOn && Math.abs(camX - cam0) > 60) { hintOn = false; $('hint').classList.add('gone'); }
+}
+let onZone = null, hintOn = false, cam0 = 0;
+let anim = null;
+function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = null; $('say').classList.remove('on'); }
+function glide(v) {
+  stopAnim(); let last = performance.now();
+  const step = now => {
+    const dt = Math.min(32, now - last); last = now;
+    let x = camX + v * dt; v *= Math.pow(0.94, dt / 16);
+    if (x < 0 || x > maxX) { const tgt = x < 0 ? 0 : maxX; v *= 0.6; x += (tgt - x) * Math.min(1, dt / 90); }
+    setCam(x); perf(now);
+    if (Math.abs(v) > 0.02 || camX < -0.5 || camX > maxX + 0.5) anim = requestAnimationFrame(step); else { setCam(Math.max(0, Math.min(maxX, camX))); anim = null; }
+  };
+  anim = requestAnimationFrame(step);
+}
+function panTo(tx, ms = 480, done) {
+  stopAnim(); tx = Math.max(0, Math.min(maxX, tx)); const from = camX, t0 = performance.now();
+  const step = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); setCam(from + (tx - from) * e); perf(now); if (k < 1) anim = requestAnimationFrame(step); else { anim = null; done && done(); } };
+  anim = requestAnimationFrame(step);
+}
+const centerOf = z => z.x * P - innerWidth / 2;
+let drag = null;
+const vp = $('vp');
+vp.addEventListener('pointerdown', e => { stopAnim(); vp.setPointerCapture(e.pointerId); drag = {x0: e.clientX, cam0: camX, t0: performance.now(), moved: 0, s: [[performance.now(), e.clientX]]}; vp.classList.add('drag'); });
+vp.addEventListener('pointermove', e => {
+  if (!drag) return; const dx = e.clientX - drag.x0; drag.moved = Math.max(drag.moved, Math.abs(dx));
+  setCam(clampSoft(drag.cam0 - dx)); perf(performance.now());
+  drag.s.push([performance.now(), e.clientX]); if (drag.s.length > 6) drag.s.shift();
+});
+vp.addEventListener('pointerup', e => {
+  if (!drag) return; vp.classList.remove('drag');
+  const d = drag; drag = null;
+  if (d.moved < 8 && performance.now() - d.t0 < 400) { tapWorld(e.clientX, e.clientY); if (camX < 0 || camX > maxX) glide(0); return; }
+  const a = d.s[0], b = d.s[d.s.length - 1], v = b[0] - a[0] > 0 ? -(b[1] - a[1]) / (b[0] - a[0]) : 0;
+  glide(Math.max(-4, Math.min(4, v)));
+});
+vp.addEventListener('pointercancel', () => { drag = null; vp.classList.remove('drag'); glide(0); });
+vp.addEventListener('wheel', e => { e.preventDefault(); stopAnim(); setCam(Math.max(0, Math.min(maxX, camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY)))); }, {passive: false});
+
+function zoneAt(artX) { let best = null; ZONES.forEach(z => { if (Math.abs(z.x - artX) < 62 && (!best || Math.abs(z.x - artX) < Math.abs(best.x - artX))) best = z; }); return best; }
+function tapWorld(cx, cy) {
+  if ($('sheet').classList.contains('open')) { closeSheet(); return; }
+  const ax = (camX + cx) / P, ay = cy / P;
+  if (ax > hero.x - 3 && ax < hero.x + 11 && ay > surf(hero.x + 4) - 18) { heroSay('今天去分合矿洞挖矿吧！'); return; }
+  const z = zoneAt(ax); if (z) focusZone(z);
+}
+function heroSay(t) {
+  const h = $('hero'); h.classList.remove('jump'); void h.offsetWidth; h.classList.add('jump');
+  const s = $('say'); s.textContent = t; s.style.left = (hero.x + 4) * P - camX + 'px'; s.style.top = (surf(hero.x + 4) - 15) * P - 46 + 'px';
+  s.classList.add('on'); clearTimeout(heroSay.t); heroSay.t = setTimeout(() => s.classList.remove('on'), 1800);
+}
+let cur = null;
+function focusZone(z) {
+  cur = z; panTo(centerOf(z));
+  if (!z.lv) { closeSheet(); return; }
+  $('shName').textContent = z.name; $('shCt').textContent = z.ct;
+  $('skills').innerHTML = (SKILLS[z.id] || []).map((n, i) => `<span><i class="l${z.lv[i] || 0}"></i>${n}</span>`).join('');
+  $('sheet').classList.add('open'); $('start').style.visibility = 'hidden'; $('mini').style.visibility = 'hidden';
+}
+function closeSheet() { $('sheet').classList.remove('open'); $('start').style.visibility = ''; $('mini').style.visibility = ''; }
+$('sheetX').addEventListener('click', closeSheet);
+
+// 小地图
+$('mini').innerHTML = ZONES.map(z => `<button data-z="${z.id}" class="${z.today ? 'today' : ''}"><i style="background:${z.icon}"></i><span>${z.short}</span></button>`).join('');
+$('mini').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const z = ZONES.find(q => q.id === b.dataset.z); closeSheet(); panTo(centerOf(z)); });
+
+// ---------- 走过去 → 进练习 ----------
+function walkTo(tx, done) {
+  const h = $('hero'); h.classList.add('walk'); hero.flip = tx < hero.x;
+  const from = hero.x, dist = Math.abs(tx - from), ms = Math.min(900, 200 + dist * 4), t0 = performance.now(); let f = 0, lastF = 0;
+  const step = now => { const k = Math.min(1, (now - t0) / ms); hero.x = from + (tx - from) * k; placeHero(); if (now - lastF > 110) { f ^= 1; lastF = now; frameSprites(f ? 'b' : 'a'); } if (k < 1) requestAnimationFrame(step); else { frameSprites('a'); h.classList.remove('walk'); done && done(); } };
+  requestAnimationFrame(step);
+}
+function go(z) {
+  closeSheet();
+  panTo(centerOf(z), 420, () => walkTo(z.x - 20, () => {
+    const L = $('Lmain'); L.classList.add('zoom');
+    const ox = (z.x * P - camX); L.style.transformOrigin = `${z.x * P}px ${innerHeight * .6}px`;
+    L.style.transform = `translate3d(${-camX}px,0,0) scale(1.35)`;
+    $('fade').classList.add('on');
+    setTimeout(() => { L.classList.remove('zoom'); L.style.transformOrigin = '0 0'; setCam(camX); startPlay(z); $('fade').classList.remove('on'); }, 260);
+  }));
+}
+$('start').addEventListener('click', () => go(ZONES.find(z => z.today)));
+$('shGo').addEventListener('click', () => cur && go(cur));
+function show(id) { ['world', 'play', 'sum'].forEach(k => $(k).classList.toggle('off', k !== id)); }
+
+// ---------- 练习页 ----------
+const ORE = ['#f2c14e', '#6ea8fe', '#7bd88f', '#f6a5a0'];
+let mined = 0, asked = 0;
+function sceneBg(cv, z) { // 背景 = 岛上这一块地方的像素画
+  const w = Math.round(innerWidth / P), sx = Math.max(0, Math.min(WW - w, Math.round(z.x - w / 2)));
+  cv.width = w; cv.height = WH; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.drawImage($('sky'), 0, 0, w, WH); g.drawImage(far, Math.round(sx * .45), 0, w, WH, 0, 0, w, WH); g.drawImage(main, sx, 0, w, WH, 0, 0, w, WH);
+}
+function startPlay(z) {
+  sceneBg($('playBg'), z); mined = 0; asked = 0; $('minedN').textContent = 0; $('cart').style.left = '0px';
+  $('tfs').innerHTML = [10, 4].map(n => `<div class="tf">${Array.from({length: 10}, (_, i) => `<i>${i < n ? '<b></b>' : ''}</i>`).join('')}</div>`).join('');
+  show('play');
+  const q = $('qcard'), fig = q.querySelector('.qfig'); fig.style.zoom = ''; const k = (q.clientWidth - 34) / fig.firstElementChild.offsetWidth; if (k < 1) fig.style.zoom = k.toFixed(3);
+}
+function answer(ok) {
+  asked++; const pad = $('pad');
+  if (ok) {
+    pad.classList.add('ok'); const pop = $('okpop'); pop.classList.remove('go'); void pop.offsetWidth; pop.classList.add('go');
+    const c = ORE[mined % ORE.length], from = pad.getBoundingClientRect(), to = $('minedIco').getBoundingClientRect();
+    const f = document.createElement('i'); f.className = 'fly'; f.style.background = c; document.body.appendChild(f);
+    const x0 = from.left + from.width / 2 - 15, y0 = from.top + from.height / 2 - 15, x1 = to.left - 5, y1 = to.top - 5;
+    f.animate([{transform: `translate(${x0}px,${y0}px) scale(1.4) rotate(0)`}, {transform: `translate(${(x0 + x1) / 2}px,${Math.min(y0, y1) - 60}px) scale(1.1) rotate(160deg)`}, {transform: `translate(${x1}px,${y1}px) scale(.8) rotate(360deg)`}], {duration: 560, easing: 'cubic-bezier(.4,.1,.6,1)'}).onfinish = () => {
+      f.remove(); mined++; $('minedN').textContent = mined; $('minedIco').style.background = c; const m = $('mined'); m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump');
+    };
+    setTimeout(() => pad.classList.remove('ok'), 700);
+  }
+  const tr = $('track'), w = tr.clientWidth - 70; $('cart').style.left = Math.min(w, w * asked / 12) + 'px';
+  if (asked >= 12) setTimeout(endPlay, 800);
+}
+$('dOk').addEventListener('click', () => answer(true));
+$('dBad').addEventListener('click', () => answer(false));
+$('quit').addEventListener('click', endPlay);
+
+// ---------- 结算 ----------
+function endPlay() {
+  sceneBg($('sumBg'), cur || ZONES.find(z => z.today));
+  const n = Math.max(mined, 1); $('sumT').textContent = `今天挖到 ${mined} 块`;
+  $('bag').innerHTML = Array.from({length: mined}, (_, i) => `<i style="background:${ORE[i % ORE.length]}"></i>`).join('');
+  drawSprite($('sumHero'), HERO, 'a'); drawSprite($('sumDog'), DOG, 'b');
+  show('sum');
+  [...$('bag').children].forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 70));
+}
+$('home').addEventListener('click', () => {
+  show('world'); const z = ZONES.find(q => q.id === 'bond'); z.lv[1] = Math.max(z.lv[1], 1);
+  const sq = signs.bond.querySelectorAll('.row i')[0]; sq.className = 'l2 pulse';
+});
+
+// ---------- 帧时间记录（验收用） ----------
+const FR = []; let lastT = 0;
+function perf(now) { if (lastT && now - lastT < 200) FR.push(now - lastT); lastT = now; if (FR.length > 2000) FR.shift(); }
+window.__v4 = {FR, get camX() { return camX; }, get maxX() { return maxX; }, ZONES, focusZone, go, answer};
+
+addEventListener('resize', () => { layout(); });
+frameSprites('a'); layout(); setCam(Math.max(0, Math.min(maxX, centerOf(ZONES.find(z => z.today)) - innerWidth * 0.1))); cam0 = camX; hintOn = true; setTimeout(() => { hintOn = false; $('hint').classList.add('gone'); }, 4000);
+// 待机：小人偶尔眨眼换帧，小狗摇尾巴
+setInterval(() => { if (!$('hero').classList.contains('walk')) { frameSprites('b'); setTimeout(() => frameSprites('a'), 160); } }, 2600);
+</script>
+</body>
+</html>
