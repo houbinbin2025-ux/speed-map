@@ -222,7 +222,7 @@
     if (s.speed) return C.label(C.BYID[id]);
     if (it.gen) return TYPE_LABEL[id] || s.name;
     const q = it.q;
-    if (s.group === 'look') return String(q.n);
+    if (s.group === 'look') return {dice: '骰子', scat: '乱点', tf: '十格框', tf2: '两个十格框'}[q.layout] + ' ' + q.n;
     return `${q.n} = ${q.a} + ${q.n - q.a}`;
   }
   // 错题本里一道题的样子（秒答 = 算式；理解题 = 题目本身，空着的写 □）

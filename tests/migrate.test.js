@@ -181,3 +181,26 @@ test('M 存不了进度：主存档写入报错 → saveState 返回 false；备
   const i2 = C.load(st2, LIVE, NOW);
   assert.equal(C.saveState(st2, LIVE, i2.S, NOW), true);
 });
+
+test('R6-1 正式期 v3 页一直开着、旧 v1 页又练了几题：v3 收到 v1 的变化先按格子取高合进来，保存后 v1 的进步还在', () => {
+  const st = memStore({'speedmap.v1': v1With({'3+4': Y('2026-11-01')})});
+  const S = C.loadState(st, LIVE, NOW);
+  const v1 = JSON.parse(st.getItem('speedmap.v1')); v1.cards['9+9'] = R('2026-11-10'); st.setItem('speedmap.v1', JSON.stringify(v1));   // 旧 v1 页练的
+  C.mergeV1(st, LIVE, S);
+  S.cards['5+2'] = Y('2026-11-10');
+  C.saveState(st, LIVE, S, NOW + 1000);
+  assert.equal(JSON.parse(st.getItem('speedmap.v1')).cards['9+9'].lv, 2);
+  assert.equal(S.cards['9+9'].lv, 2);
+  const P = C.loadState(memStore({'speedmap.v1': v1With({'1+1': R('2026-11-05')})}), PRE, NOW);
+  assert.equal(C.mergeV1(memStore({'speedmap.v1': v1With({'2+2': Y('2026-11-05')})}), PRE, P), false, '预览期启动时已合并，不在这里合');
+});
+
+test('R6-2 只读状态下家长清空：仍是只读，不覆盖那份没备份成功的原主存档', () => {
+  const good = JSON.stringify({v: 2, cards: {'3+4': R('2026-11-05')}, boss: {}, log: {}, level: 0, mistakes: {}, goodAt: NOW - DAY});
+  const st = memStore({'speedmap.v2': '{坏', 'speedmap.v2.good': good, 'speedmap.v1': v1With({})}, {full: k => k.endsWith('.broken')});
+  const info = C.load(st, LIVE, NOW);
+  const E = C.resetProgress(info.S);
+  assert.equal(E.readOnly, true);
+  assert.equal(C.saveState(st, LIVE, E, NOW), false);
+  assert.equal(st.getItem('speedmap.v2'), '{坏');
+});

@@ -294,7 +294,17 @@
     return valid(v2) ? Object.assign(mergeProgress(base, v2), {v: 1}) : base;
   }
   // 家长「清空」：只留设置；好存档基准跟着重置
-  const resetProgress = S => Object.assign(blank(), {oral: S.oral, testDays: S.testDays, settings: S.settings, goodReset: true});
+  // 只读（读不了的存档没备份成功）时清空也保持只读：不覆盖那份原主存档
+  const resetProgress = S => Object.assign(blank(), {oral: S.oral, testDays: S.testDays, settings: S.settings, goodReset: true}, S.readOnly ? {readOnly: true} : {});
+  // 正式期页面一直开着时，旧 v1 页写进去的秒答进步：收到变化 / 回到前台时按格子取高合进来（预览期启动时已合并）
+  function mergeV1(store, ctx, S) {
+    if (ctx.test || ctx.preview) return false;
+    const v1 = parse(store.getItem(V1));
+    if (!valid(v1)) return false;
+    const M = mergeProgress(S, v1);
+    S.cards = M.cards; S.boss = M.boss; S.log = M.log;
+    return true;
+  }
   const dropBroken = (store, ctx) => { try { store.removeItem(keysFor(ctx).broken); } catch (e) {} };
 
   // ---------- 秒答进度按格子取高合并（v1 / 预览 / 正式三处）：只升不降，所以取高永远安全 ----------
@@ -367,7 +377,7 @@
     LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, load, loadState, saveState, superseded, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
+    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
   };

@@ -562,7 +562,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v10:ae713561700f -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v11:3f17a5ea7c10 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -572,11 +572,11 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="core.js?v=10"></script>
-<script src="ink.js?v=10"></script>
-<script src="skills.js?v=10"></script>
-<script src="engine.js?v=10"></script>
-<script src="render.js?v=10"></script>
+<script src="core.js?v=11"></script>
+<script src="ink.js?v=11"></script>
+<script src="skills.js?v=11"></script>
+<script src="engine.js?v=11"></script>
+<script src="render.js?v=11"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -596,9 +596,10 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   let S = LOAD.S, canSave = true, frozen = false;
   const today = () => C.dayOf(Date.now(), TEST ? (S.testDays || 0) : 0);
   const save = () => {
-    if (frozen) return;
+    if (frozen) return false;
     const ok = C.saveState(store, CTX, S, Date.now());
     if (!ok && !S.readOnly && !S.stopped && canSave) { canSave = false; banners(); }
+    return ok;
   };
   const loadInk = () => { try { return Object.assign(I.blankStore(), JSON.parse(store.getItem(KEYS.ink) || 'null') || {}); } catch (e) { return I.blankStore(); } };
   let INKS = loadInk();
@@ -1044,7 +1045,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
 
   // ---------- 3 练习：今日练习 / 摸底 / 自由加练 / 复习这一组（都由 engine.js 排题） ----------
   // 计时：每题从出题到下一题的真实时间（含反馈，单题最多 60 秒，暂停不算）；"快不快"另用写字用时判
-  const SEC_CAP = 60, OK_MS = 800, BAD_MS = 3000, PICK_FAST = 2000, LINE_WAIT = 1200;
+  const SEC_CAP = 60, OK_MS = 800, BAD_MS = 3000, PLACE_MS = 500, PICK_FAST = 2000, LINE_WAIT = 1200;
   let Q = null, qForceUnsure = false;
   const qPad = Pad($('qPad'), () => qSchedule());
   qPad.onDown = () => { if (!Q) return; clearTimeout(Q.submitT); if (Q.phase === 'q') $('qFootNote').textContent = ''; if (Q.phase === 'trace') { Q.phase = 'traced'; clearTimeout(Q.nextT); Q.nextT = setTimeout(nextQ, 600); } };
@@ -1215,7 +1216,8 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     if (!Q || (Q.phase !== 'q' && Q.phase !== 'confirm')) return;
     Q.phase = 'a'; qPad.enabled = false; timers();
     const x = Q.x, inst = x.inst;
-    const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000 + (r.ok ? OK_MS : BAD_MS) / 1000) * 10) / 10;
+    const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? OK_MS : BAD_MS;
+    const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked}) || {pass: r.ok, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1224,7 +1226,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     $('qClear').hidden = true; $('qDunno').hidden = true; $('qPeek').hidden = true; $('qOralWrong').hidden = true; $('qOralNext').hidden = true;
     if (Q.kind === 'place') {                             // 摸底不讲题：对错都直接下一题
       $('qFootNote').textContent = '';
-      Q.nextT = setTimeout(nextQ, 500); return;
+      Q.nextT = setTimeout(nextQ, PLACE_MS); return;
     }
     const v = Q.v;
     if (r.ok) {
@@ -1297,7 +1299,8 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     const q = Q; Q = null; save();
     if (q.kind === 'place') return showPlaceResult(q, quit);
     if (!q.n) return goIsland();
-    const full = q.kind === 'today' && S.daily && S.daily.done && S.daily.sec >= S.daily.budget;
+    const full = q.kind === 'today' && S.daily && S.daily.done && S.daily.sec >= 600 && !S.daily.pearl;   // 一天只贴 1 颗珠子（「再练一会」不再提示）
+    if (full) { S.daily.pearl = true; save(); }
     const mins = Math.max(1, Math.round((q.kind === 'today' ? S.daily.sec : q.secs) / 60));
     const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
     const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
@@ -1343,7 +1346,9 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
         <button class="gobig" id="prGo" style="width:280px;height:72px;font-size:24px">${left ? '开始练习' : '回到岛上'}</button>
       </div>`;
     show('placeResult');
-    $('prGo').addEventListener('click', () => (left ? startQ('today') : goIsland()));
+    const toHome = !left || replacing; replacing = false;
+    $('prGo').textContent = toHome ? '回到岛上' : '开始练习';
+    $('prGo').addEventListener('click', () => (toHome ? goIsland() : startQ('today')));
   }
 
   // ---------- 7 技能组地图 ----------
@@ -1432,7 +1437,8 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   $('parBack').addEventListener('click', goIsland);
   $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
   $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }, () => { renderParent(); show('parent'); }));
-  $('btnReplace').addEventListener('click', () => { delete S.placedAt; delete S.placement; save(); show('placeIntro'); });
+  let replacing = false;   // 家长区「重新摸底」：结果页 → 首页（说明书 §5）
+  $('btnReplace').addEventListener('click', () => { delete S.placedAt; delete S.placement; save(); replacing = true; show('placeIntro'); });
   let ioKind = null;
   function openIO(kind) {
     ioKind = kind; $('ioPanel').hidden = false; $('ioMsg').textContent = '';
@@ -1460,9 +1466,10 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
         INKS = Object.assign(I.blankStore(), v); saveInk();
       } else {
-        const keep = S.testDays;
+        const keep = S.testDays, ro = S.readOnly;
         S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
-        S.testDays = keep; S.settings = S.settings || {}; save();
+        S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true;
+        if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
       }
       $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
@@ -1488,12 +1495,13 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pauseQ();
-    else { checkSuperseded(); askResume(); }
+    else { C.mergeV1(store, CTX, S); checkSuperseded(); askResume(); }
   });
   window.matchMedia('(orientation: portrait) and (max-width: 700px)').addEventListener('change', () => { if (portrait() && !S.oral) pauseQ(); else askResume(); });
   // 12b 另一个页面写了同一份进度或笔迹：这一页停下，不互相覆盖
   window.addEventListener('storage', e => {
     if (e.key === 'speedmap.v2' && CTX.preview) return checkSuperseded();
+    if (e.key === 'speedmap.v1') { C.mergeV1(store, CTX, S); return; }
     if (e.key !== KEYS.prog && e.key !== KEYS.ink) return;
     frozen = true; pauseQ(); $('ovPause').hidden = true; $('ovTab').hidden = false;
   });
