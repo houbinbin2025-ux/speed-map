@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>空空数学岛</title>
+<link rel="icon" href="mark.svg" type="image/svg+xml">
 <style>
+
 /* 布局：iPhone 横屏一屏工具。首页 = 左边三个练习 + 错题本，右边地图；练习页 = 左题右手写板 */
 :root{
   color-scheme: dark;
@@ -128,42 +130,272 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
 /* 竖屏提示：手写模式下手机竖着拿时盖住全屏 */
 #rotate{position:fixed;inset:0;z-index:50;background:var(--cave);display:none;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;padding:32px}
 @media (orientation: portrait) and (max-width: 700px){ body.write #rotate{display:flex} }
+
+/* ---------- v3：岛首页、今日练习、技能组地图、错题本、异常页 ---------- */
+:root{--counter:#6ea8fe;--counter2:#cfd3dc;--go:#6fae3a;--go-ink:#10140c}
+.gobig{background:var(--go);color:var(--go-ink);border:3px solid #000;box-shadow:0 5px 0 #000;font-weight:900}
+.gobig[disabled]{background:var(--stone);color:#6b6e78;box-shadow:none;cursor:default}
+.banner{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 12px;background:var(--warn);color:#1b1d22;border:2px solid #000;font-size:14px;font-weight:700}
+.brand{display:flex;align-items:center;gap:10px;height:44px}
+.brand img{width:36px;height:36px;image-rendering:pixelated}
+.brand b{font-size:20px;font-weight:900;letter-spacing:1px}
+#island{flex-direction:column;gap:10px}
+.isl{flex:1;display:flex;gap:20px;min-height:0}
+.isl .lead{width:290px;flex:none;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.isl .lead h2{margin:0;font-size:26px;font-weight:900;line-height:1.3}
+.startbtn{height:84px;font-size:26px;letter-spacing:1px}
+.tiles{flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:center}
+.tile{height:118px;background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:8px;text-align:left;align-items:stretch;justify-content:flex-start}
+.tile .th{display:flex;justify-content:space-between;align-items:center}
+.tile .th b{font-size:18px;white-space:nowrap}.tile .th span{font-size:12px;color:var(--dim)}.tile .th span.today{color:var(--ok)}
+.lvbar{display:flex;height:14px;border:2px solid #000;background:var(--lv0)}
+.lvbar i{display:block;height:100%}
+.tile .tn{font-size:12px;color:var(--dim)}
+.corner{position:relative;height:44px;display:flex;align-items:center;padding:0 14px;background:var(--stone);border:2px solid #000;font-size:15px;font-weight:700}
+.corner .dotn{position:absolute;top:-8px;right:-8px;min-width:22px;height:22px;border-radius:11px;background:var(--warn);color:#1b1d22;border:2px solid #000;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 4px}
+/* 今日练习 */
+#qplay{gap:16px}
+#qplay .ql{width:330px;flex:none;display:flex;flex-direction:column;gap:10px;min-height:0}
+#qplay.wide .ql{width:auto;flex:1}
+#qplay.wide .qr{display:none}
+#qplay.wide .qbody{flex:none}
+.qr{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+.qtop{display:flex;align-items:center;gap:10px}
+.tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
+.qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:14px;font-weight:700}
+.qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
+.qnote{font-size:14px;color:var(--mute)}
+.qfoot{display:flex;gap:10px;align-items:center;min-height:56px}
+.okbig{font-size:30px;font-weight:900;color:var(--ok)}.okbig.plain{color:var(--ink)}
+.eq{font-family:var(--f-num);font-weight:900;font-size:48px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.box{flex:none;display:inline-block;width:56px;height:62px;border:4px dashed var(--warn)}
+.say2{font-size:28px;font-weight:900;line-height:1.5;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.say2 .num{font-family:var(--f-num);font-size:56px}
+.ansv{color:var(--ok)}
+.dot{display:block;width:28px;height:28px;border-radius:50%;background:var(--counter)}
+.dot.on2{background:var(--counter2)}
+.dot.moved{outline:3px solid var(--warn);outline-offset:2px}
+.dot.gone{background:transparent;border:3px dashed var(--warn)}
+.tf{display:grid;grid-template-columns:repeat(5,40px);gap:3px;background:#000;border:3px solid #000;width:max-content}
+.tf .cell{height:40px;background:var(--paper);display:flex;align-items:center;justify-content:center}
+.tfs{display:flex;gap:12px;align-items:flex-end}
+.dice{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:4px;padding:10px;background:var(--paper);border:3px solid #000;border-radius:14px;width:max-content}
+.dice i{display:flex;align-items:center;justify-content:center}
+.dice .dot,.scat .dot{width:34px;height:34px}
+.scat{position:relative;width:200px;height:170px;background:var(--paper);border:3px solid #000;border-radius:12px}
+.scat b{position:absolute;transform:translate(-50%,-50%)}
+.look.hide>*{visibility:hidden}
+.bondfig{display:flex;flex-direction:column;align-items:center;width:max-content}
+.circ{width:60px;height:60px;border-radius:50%;border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-weight:900;font-size:34px}
+.circ.big{width:76px;height:76px;font-size:42px}
+.circ.blank{border:4px dashed var(--warn)}
+.legs{width:150px;height:26px}.legs path{stroke:var(--ink);stroke-width:3;fill:none}
+.parts{display:flex;gap:30px}
+.rods{display:flex;gap:16px;align-items:flex-end}
+.rodset{display:flex;gap:8px}
+.rod{display:block;width:18px;height:198px;background:var(--go);border:2px solid #000;border-radius:3px}
+.ones{display:grid;grid-template-columns:repeat(5,18px);gap:2px}
+.one{display:block;width:18px;height:18px;background:var(--warn);border:2px solid #000}
+.col10{display:flex;flex-direction:column;gap:2px}
+.explain{display:flex;flex-direction:column;gap:10px}
+.explain .why{font-size:20px;font-weight:900}
+.cap{display:flex;gap:16px;font-size:14px;color:var(--mute)}
+.cards2{display:flex;gap:16px}
+.cards2 b{min-width:110px;height:76px;display:flex;align-items:center;justify-content:center;background:var(--stone);border:3px solid #000;font-family:var(--f-num);font-size:48px;color:var(--dim)}
+.cards2 b.win{border-color:var(--ok);color:var(--ok)}
+.mline{position:relative;height:96px;margin:0 18px;min-width:260px}
+.mline .mbar{position:absolute;left:0;right:0;top:56px;height:4px;background:var(--ink)}
+.mline .tick{position:absolute;top:50px;width:3px;height:16px;background:var(--ink);transform:translateX(-50%)}
+.mline .mk{position:absolute;top:18px;transform:translateX(-50%);font-family:var(--f-num);font-size:24px;color:var(--mute)}
+.mline .mk.win{color:var(--ok)}.mline .mk.from{color:var(--counter)}
+.mline .end{position:absolute;top:70px;font-family:var(--f-num);font-weight:900;font-size:16px;color:var(--mute);transform:translateX(-50%)}
+.mline .end.l{left:0}.mline .end.r{left:100%}
+.mline .arc{position:absolute;top:10px;height:44px}.mline .arc path{stroke:var(--ok);stroke-width:3;fill:none}
+.pickgrid{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;min-height:0}
+.pickcard{display:flex;align-items:center;justify-content:center;background:var(--stone);border:4px solid #000;box-shadow:0 6px 0 #000;font-family:var(--f-num);font-weight:900;font-size:130px;line-height:1;min-height:150px}
+.pickcard.lock{opacity:.55}
+.pickcard.right{border-color:var(--ok);color:var(--ok)}.pickcard.wrong{color:var(--dim)}
+.linebox{flex:1;position:relative;margin:0 24px;touch-action:none;min-height:180px}
+.linebox .ln{position:absolute;left:0;right:0;top:118px;height:8px;background:var(--ink)}
+.linebox .cap0,.linebox .cap1,.linebox .capm{position:absolute;top:104px;width:6px;height:36px;background:var(--ink);transform:translateX(-50%)}
+.linebox .lab{position:absolute;top:146px;transform:translateX(-50%);font-family:var(--f-num);font-weight:900;font-size:30px}
+.flag{position:absolute;top:34px;width:46px;height:90px;pointer-events:none}
+.flag.me path.f{fill:var(--counter)}.flag.ok path.f{fill:var(--ok)}
+.flag path.p{stroke:var(--ink);stroke-width:4}.flag.ok path.p{stroke:var(--ok)}
+.gap-arrow{position:absolute;top:92px;height:22px}.gap-arrow path{stroke:var(--ok);stroke-width:3;fill:none}
+.calm{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:30;background:var(--stone);border:3px solid #000;box-shadow:0 6px 0 #000;padding:18px 26px;font-size:24px;font-weight:900}
+/* 示范卡 */
+#demo{flex-direction:column;gap:12px}
+.demo{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
+.dhead{display:flex;align-items:baseline;gap:12px}
+.learn{background:var(--warn);color:#1b1d22;border:2px solid #000;padding:4px 10px;font-size:15px;font-weight:900}
+.dtitle{font-size:22px;font-weight:900}
+.dbody{flex:1;display:flex;align-items:center;justify-content:space-around;gap:10px;background:var(--stone);border:2px solid #000;padding:0 16px;min-height:0;overflow:hidden}
+.dstep{display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;animation:dshow .45s ease-out forwards}
+.dstep.st1{animation-delay:.1s}.dstep.st2{animation-delay:1.2s}.dstep.st3{animation-delay:2.3s}
+.dcap{font-size:14px;color:var(--mute);white-space:nowrap}
+.arr{width:40px;height:24px;flex:none}.arr path{stroke:var(--ink);stroke-width:3;fill:none}
+.row{display:flex;gap:8px}.row .gap{width:18px}
+.dfoot{font-size:15px;color:var(--mute)}
+@keyframes dshow{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.demo .tf{grid-template-columns:repeat(5,30px)}.demo .tf .cell{height:30px}.demo .dot{width:22px;height:22px}
+.demo .rod{height:150px;width:14px}.demo .one{width:14px;height:14px}.demo .ones{grid-template-columns:repeat(5,14px)}
+.demo .mline{min-width:200px}
+.ackrow{display:flex;align-items:center;gap:16px}
+#ack{width:240px;height:64px;font-size:22px}
+#ack .fillbar{position:absolute}
+.ackwrap{position:relative;overflow:hidden}
+/* 结算 / 地图 / 错题本 / 家长区（v3） */
+.sumgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sumgrid div{background:var(--stone);border:2px solid #000;padding:10px 12px}
+.sumgrid b{font-family:var(--f-num);font-size:34px;display:block}
+.chip2{display:inline-block;border:2px solid #000;padding:5px 10px;font-size:15px;font-weight:700;margin:0 6px 6px 0}
+.tabs{display:flex;gap:8px;align-items:center}
+.tab{min-height:44px;padding:0 14px;font-size:15px;font-weight:900;color:var(--mute)}
+.tab.on{background:var(--ink);color:var(--cave)}
+.srows{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
+.srow{display:flex;align-items:center;gap:12px;background:var(--stone);border:2px solid #000;padding:5px 12px;flex:none}
+.srow .sn{width:120px;flex:none;font-size:15px;font-weight:700}
+.cells{display:flex;flex-wrap:wrap;gap:3px;flex:1}
+.cl{width:18px;height:18px;border:2px solid #000}
+.ty{min-width:120px;height:30px;border:2px solid #000;padding:2px 8px;display:flex;align-items:center;font-size:12px;white-space:nowrap}
+.mgroups{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start}
+.mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
+.mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:16px}.mg .mh span{flex:1}
+.mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
+.ovl{position:fixed;inset:0;z-index:40;background:rgba(27,29,34,.97);display:flex;align-items:center;justify-content:center;padding:20px}
+.ovl .card{width:520px;max-width:100%;padding:24px 28px;background:var(--stone);border:4px solid #000;box-shadow:0 6px 0 #000;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.ovl .card h3{margin:0;font-size:28px;font-weight:900}
+.ovl .card .gobig{width:280px;height:72px;font-size:22px}
+.ovl .card .small{font-size:12px;color:var(--dim);word-break:break-all}
+.kv{font-size:13px;line-height:1.7}
+.pgrid .panel{overflow:visible}
+.seg{display:flex;gap:6px}.seg button{min-height:40px;padding:0 10px;font-size:13px}.seg button.on{background:var(--ink);color:var(--cave)}
 </style>
 </head>
 <body class="write">
 
-<!-- 1 首页 -->
-<div class="scr" id="home">
+<!-- 1 首页 · 岛 -->
+<div class="scr" id="island">
+  <div class="banner" id="bnWarn" hidden></div>
   <div class="testbar" id="testBar" hidden>
     <b style="color:var(--warn)">测试模式（数据和正式进度分开）</b><span id="testDay"></span>
     <button data-t="day+1">日期 +1 天</button><button data-t="day+3">+3 天</button><button data-t="day0">回到今天</button>
-    <button data-t="w1y">第 1 世界淡黄</button><button data-t="w1d">第 1 世界深红</button><button data-t="mist">造 3 道到期错题</button><button data-t="unsure">下一题演示识别确认</button><button data-t="reset">清空测试数据</button>
+    <button data-t="w1y">秒答第 1 世界淡黄</button><button data-t="w1d">秒答第 1 世界深红</button><button data-t="mist">造 3 道到期错题</button><button data-t="unsure">下一题演示识别确认</button><button data-t="reset">清空测试数据</button>
   </div>
   <div class="top">
-    <h1>空空数学岛</h1>
+    <div class="brand"><img src="mark.svg" alt=""><b>空空数学岛</b></div>
+    <span class="badge-pre" id="preBadge" hidden>预览版</span>
+    <span style="flex:1"></span>
+    <span class="muted" id="backupHint" style="white-space:nowrap"></span>
+    <button class="corner" id="btnMist">错题本<span class="dotn num" id="mistDot" hidden></span></button>
+    <button class="gear" id="gear" aria-label="家长区（长按 2 秒）"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8bac3" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg><i></i></button>
+  </div>
+  <div class="isl">
+    <div class="lead">
+      <h2 id="leadTitle">空空，今天练 10 分钟</h2>
+      <div class="muted" style="font-size:15px;line-height:1.5" id="leadSub"></div>
+      <button class="gobig startbtn" id="btnStart">开始今天的练习</button>
+      <button class="btn" id="btnMore" hidden style="min-height:48px;color:var(--mute)">再练一会（5 分钟）</button>
+      <div class="muted" id="leadFoot">练满 10 分钟去贴 1 颗珠子</div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </div>
+</div>
+
+<!-- 2 摸底 · 开始说明 / 结果 -->
+<div class="scr" id="placeIntro" hidden style="flex-direction:column;gap:14px">
+  <div class="top"><button class="btn" id="piBack">返回</button><span style="flex:1"></span></div>
+  <div style="flex:1;display:flex;align-items:center;gap:40px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:30px;font-weight:900">看看你已经会什么</div>
+      <div style="font-size:17px;color:var(--mute);line-height:1.7">会的就做出来，会的格子马上点亮。<br>不会的点「不会」，没关系，以后会教你。</div>
+      <div class="muted">大约 3–5 分钟，最多 40 题</div>
+    </div>
+    <button class="gobig" id="piGo" style="width:280px;height:84px;font-size:26px">开始</button>
+  </div>
+</div>
+<div class="scr" id="placeResult" hidden style="flex-direction:column;gap:16px"></div>
+
+<!-- 3 练习（今日练习 / 摸底 / 自由加练 / 复习这一组） -->
+<div class="scr" id="qplay" hidden>
+  <div class="ql">
+    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div></div>
+    <div class="banner" id="qWarn" hidden></div>
+    <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
+    <div class="qtag" id="qTag"></div>
+    <div class="qbody" id="qBody"></div>
+    <div id="qWide" hidden style="flex:1;display:flex;flex-direction:column;gap:10px;min-height:0"></div>
+    <div class="qnote" id="qNote"></div>
+  </div>
+  <div class="qr">
+    <div class="padwrap" id="qPad">
+      <div class="ghost" id="qGhost" hidden></div>
+      <canvas></canvas>
+      <div class="padtip" id="qPadTip" style="top:10px" hidden>照着描一遍</div>
+      <div class="check" id="qCheck" hidden><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M7 17l7 7 13-14" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+      <div class="confirm" id="qConfirm" hidden>
+        <div style="font-size:20px;font-weight:900;display:flex;align-items:center;gap:6px">你写的是 <span class="num" style="font-size:34px" id="qcShown"></span> ？</div>
+        <div class="muted" style="font-size:15px">虚线这一位是哪个？</div>
+        <div style="display:flex;gap:14px"><button class="cand" id="qcA"></button><button class="cand" id="qcB"></button></div>
+        <button class="btn" id="qcRewrite" style="min-height:48px;border-color:var(--stone-hi)">都不是，我重写</button>
+      </div>
+    </div>
+    <div class="oraltap" id="qOral" hidden>说出答案后，点这里看答案</div>
+    <div class="qfoot">
+      <span class="muted" id="qFootNote" style="flex:1"></span>
+      <button class="btn" id="qPeek" hidden style="min-height:56px">再看一次</button>
+      <button class="big" id="qOralWrong" hidden>答错了</button>
+      <button class="big go" id="qOralNext" hidden>下一题</button>
+      <button class="big" id="qClear">擦掉</button>
+      <button class="big" id="qDunno">不会</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3a 学一学 · 示范卡 -->
+<div class="scr" id="demo" hidden>
+  <div class="qtop"><button class="btn hold-btn" id="dQuit">长按结束<i></i></button><div class="tbar" id="dBar"><i></i></div></div>
+  <div id="demoBox" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
+  <div class="ackrow"><span style="flex:1"></span><button class="gobig" id="ack" disabled>我知道了</button></div>
+</div>
+
+<!-- 6 结算（v3：今日练习 / 自由加练 / 复习这一组） -->
+<div class="scr" id="qsum" hidden></div>
+
+<!-- 7 技能组地图 -->
+<div class="scr" id="skillmap" hidden style="flex-direction:column;gap:10px">
+  <div class="tabs"><button class="btn" id="smBack">回到岛上</button><span id="smTabs" class="tabs"></span></div>
+  <div style="display:flex;align-items:center;gap:14px"><div style="font-size:20px;font-weight:900" id="smRule"></div><span style="flex:1"></span><button class="gobig" id="smGo" style="height:56px;padding:0 26px;font-size:20px">练这个</button></div>
+  <div class="srows" id="smRows"></div>
+</div>
+
+<!-- 8 秒答地图（v2 原首页，全部功能保留） -->
+<div class="scr" id="home" hidden>
+  <div class="top">
+    <button class="btn" id="spBack">回到岛上</button>
+    <h1>秒答地图</h1>
     <div style="display:flex;gap:6px" id="levels"></div>
     <span style="flex:1"></span>
-    <span class="badge-pre" id="preBadge" hidden>预览版 · 不计入正式进度</span>
-    <span class="muted" id="backupHint" style="white-space:nowrap"></span>
-    <button class="gear" id="gear" aria-label="家长区（长按 2 秒）"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8bac3" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg><i></i></button>
+    <span class="muted" id="l2tip" style="white-space:nowrap"></span>
   </div>
   <div style="display:flex;gap:14px;flex:1;min-height:0">
     <div class="col" style="width:250px;flex:none">
       <button class="mbtn go" data-series="add"><b>加法练习</b><span>只出加法</span></button>
       <button class="mbtn go" data-series="sub"><b>减法练习</b><span>只出减法</span></button>
       <button class="mbtn go" data-series="mix"><b>加减混合</b><span>加法减法一起出</span></button>
-      <button class="mistbtn" id="btnMist">错题本<span class="dot num" id="mistDot" hidden></span></button>
+      <button class="mistbtn" id="spMist">错题本<span class="dot num" id="spMistDot" hidden></span></button>
       <div class="muted" id="hint" hidden></div>
+      <div class="muted" style="font-size:12px">这里随便挑着练，每天的练习在岛上</div>
     </div>
     <div class="col" style="flex:1">
       <div class="chips" id="stats"></div>
       <div class="map" id="map"></div>
     </div>
   </div>
-  <div class="muted" id="sync" hidden></div>
 </div>
 
-<!-- 2 笔迹校准 -->
+<!-- 笔迹校准 -->
 <div class="scr" id="calib" hidden>
   <div class="col qcol">
     <div class="pbar"><button class="btn" id="calBack">返回</button><span class="muted">第一次用手写，先认识一下你的字</span></div>
@@ -181,7 +413,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   </div>
 </div>
 
-<!-- 3–6 练习 -->
+<!-- 秒答地图的练习（v2 原样） -->
 <div class="scr" id="play" hidden>
   <div class="col qcol">
     <div class="pbar">
@@ -227,37 +459,47 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   </div>
 </div>
 
-<!-- 7 结算 -->
+<!-- 秒答地图练习的结算（v2 原样） -->
 <div class="scr" id="summary" hidden></div>
 
-<!-- 8 错题本 -->
+<!-- 9 错题本（按技能组） -->
 <div class="scr" id="mist" hidden style="flex-direction:column;gap:10px">
   <div class="top">
-    <button class="btn" id="mistBack">返回地图</button>
-    <h1>错题本</h1><span class="muted" id="mistLevel"></span>
+    <button class="btn" id="mistBack">回到岛上</button>
+    <h1>错题本</h1>
     <span style="flex:1"></span>
     <span style="font-size:16px">今天要复习 <b class="num" style="font-size:22px;color:var(--warn)" id="mistN">0</b> 道</span>
-    <button class="btn go big" id="mistGo" style="min-width:150px">现在复习</button>
   </div>
-  <div class="muted">写错的题会隔 1、2、4、7、15 天回来，每次都写对，就过 1 关；过完 5 关就算真的会了。平时练习也会自动带上它们。</div>
-  <div class="grid3">
-    <div class="panel"><div class="ptitle" id="mDueT"></div><div id="mDue" style="display:flex;flex-direction:column;gap:8px"></div></div>
-    <div class="panel"><div class="ptitle" id="mDoingT"></div><div id="mDoing" style="display:flex;flex-direction:column;gap:8px"></div></div>
-    <div class="panel"><div class="ptitle" id="mDoneT"></div><div class="ups" id="mDone"></div></div>
-  </div>
+  <div class="muted">写错的题会隔 1、2、4、7、15 天回来，每次都做对就过 1 次复习；过完 5 次就算真的会了。每天的练习会自动带上它们。</div>
+  <div class="mgroups" id="mGroups"></div>
 </div>
 
-<!-- 9 家长区 -->
+<!-- 10 家长区 -->
 <div class="scr" id="parent" hidden style="flex-direction:column;gap:10px">
   <div class="top"><button class="btn" id="parBack">返回</button><h1>家长区</h1><span class="muted">首页右上角齿轮长按 2 秒进入</span></div>
-  <div class="grid3">
+  <div class="warnbox" id="parNote" hidden></div>
+  <div class="pgrid" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start">
+    <div class="panel">
+      <div class="ptitle">这周练得怎么样</div>
+      <div class="kv" id="weekly"></div>
+      <button class="btn" id="btnReplace">重新摸底</button>
+    </div>
     <div class="panel">
       <div class="ptitle">进度备份</div>
       <div class="warnbox" id="bkInfo"></div>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
-      <button class="btn" id="btnImport">导入进度</button>
-      <div class="muted" id="previewNote" hidden style="font-size:12px;color:var(--warn)">预览版的地图每次都读正式版进度，所以这里不能导入或清空</div>
-      <div class="muted" style="font-size:12px;line-height:1.5">进度只存在这部手机的 Safari 里。请一直用 Safari 打开，不要改成「添加到主屏幕」，否则会看不到进度。</div>
+      <button class="btn" id="btnImport">导入进度（只会变多，不会变少）</button>
+      <details><summary class="muted" style="min-height:44px;display:flex;align-items:center">更多</summary>
+        <button class="btn danger" id="btnImportAll" style="width:100%">整份替换（会覆盖）</button>
+      </details>
+      <div class="muted" style="font-size:12px;line-height:1.5">进度只存在这部手机的 Safari 里。请一直用 Safari 打开，不要改成「添加到主屏幕」，也不要在无痕模式下用，否则会看不到进度。</div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">练习设置</div>
+      <div class="kv">看数图案闪现</div><div class="seg" id="segFlash"></div>
+      <div class="kv">数线合格范围</div><div class="seg" id="segTol"></div>
+      <div class="kv" id="lineErr"></div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">口答模式：家长陪着时用，孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
     </div>
     <div class="panel">
       <div class="ptitle">手写</div>
@@ -267,25 +509,47 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
       <div class="muted" style="font-size:12px">换手机或换打开方式时用</div>
     </div>
     <div class="panel">
-      <div class="ptitle">口答模式</div>
-      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">家长陪着时用：孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
+      <div class="ptitle">存储</div>
+      <div class="kv" id="storeInfo"></div>
+      <button class="btn" id="btnBrokenOut" hidden>导出读不了的存档</button>
+      <button class="btn danger" id="btnBrokenDel" hidden>删掉它，腾出空间</button>
+    </div>
+    <div class="panel">
       <div class="ptitle">清空进度</div>
       <button class="btn danger" id="btnReset">清空进度</button>
       <button class="btn danger" id="btnResetYes" hidden>确认清空（不能恢复）</button>
       <span class="msg" id="resetMsg"></span>
       <div class="muted" style="font-size:12px">测试快进日期：网址后加 #test，数据与正式进度分开</div>
+      <div class="kv" id="flashLog" hidden></div>
     </div>
   </div>
   <div class="panel" id="ioPanel" hidden style="flex:none">
     <div id="ioTitle" style="font-weight:900"></div>
     <textarea id="ioText" aria-label="备份内容"></textarea>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn" id="ioCopy">复制</button><button class="btn" id="ioApply" hidden>确认导入（会覆盖当前内容）</button><button class="btn" id="ioClose">关闭</button><span class="msg" id="ioMsg"></span>
+      <button class="btn" id="ioCopy">复制</button><button class="btn" id="ioApply" hidden>确认导入</button><button class="btn" id="ioClose">关闭</button><span class="msg" id="ioMsg"></span>
     </div>
   </div>
 </div>
 
-<!-- 10 竖屏提示 -->
+<!-- 12 异常 -->
+<div class="ovl" id="ovPause" hidden><div class="card">
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f2c14e" stroke-width="2" aria-hidden="true"><rect x="6" y="5" width="4" height="14"></rect><rect x="14" y="5" width="4" height="14"></rect></svg>
+  <h3>休息好了吗？</h3><div class="muted" style="font-size:15px">计时停住了，回来接着练</div>
+  <button class="gobig" id="pauseGo">继续</button></div></div>
+<div class="ovl" id="ovTab" hidden><div class="card">
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f2c14e" stroke-width="2" aria-hidden="true"><rect x="3" y="6" width="12" height="12"></rect><rect x="9" y="3" width="12" height="12"></rect></svg>
+  <h3>另一个页面也开着</h3><div class="muted" style="font-size:15px;line-height:1.6">这一页先停一下，免得两个页面把进度弄乱。<br>请先把另一个页面关掉，再点下面的按钮</div>
+  <button class="gobig" id="tabGo">在这里继续</button><div class="small">点了会读取最新的进度，回到首页</div></div></div>
+<div class="ovl" id="ovCrash" hidden style="z-index:60"><div class="card">
+  <h3>哎呀，卡住了</h3><div class="muted" style="font-size:15px">做过的题都存好了</div>
+  <button class="gobig" id="crashGo">重新打开</button><div class="small" id="crashMsg"></div></div></div>
+<div class="ovl" id="ovNew" hidden><div class="card">
+  <h3>新版已经上线了</h3><div class="muted" style="font-size:15px">这个旧页面不再保存进度</div>
+  <a class="gobig" id="newGo" href="../" style="width:280px;height:72px;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none">去新版</a></div></div>
+<div class="calm" id="calm" hidden>慢一点，看清楚再点</div>
+
+<!-- 竖屏提示 -->
 <div id="rotate">
   <svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="把手机从竖着转成横着">
     <rect x="70" y="30" width="60" height="110" rx="10" fill="none" stroke="#9a9ca6" stroke-width="5" stroke-dasharray="8 6"></rect>
@@ -298,36 +562,66 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core.js / ink.js 必须同时把 v= 加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v6:006869306e66 -->
-<script src="core.js?v=6"></script>
-<script src="ink.js?v=6"></script>
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v10:ae713561700f -->
 <script>
-window.addEventListener('error', function (e) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:#8a2f27;color:#fff;padding:12px 16px;font:14px sans-serif;z-index:99'; d.textContent = '页面出错了，请截图发给维护的人：' + (e.message || e); document.body.appendChild(d); });
+// 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
+(function () {
+  var shown = false;
+  function crash(msg) { if (shown) return; shown = true; if (window.__crash) window.__crash(msg); else { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;z-index:99;background:#1b1d22;color:#ecebe4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:18px sans-serif'; d.innerHTML = '<b style="font-size:28px">哎呀，卡住了</b><button onclick="location.reload()" style="font-size:20px;padding:14px 30px">重新打开</button><small style="color:#9a9ca6"></small>'; d.lastChild.textContent = msg; document.body.appendChild(d); } }
+  window.addEventListener('error', function (e) { crash(e.message || String(e)); });
+  window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
+})();
+</script>
+<script src="core.js?v=10"></script>
+<script src="ink.js?v=10"></script>
+<script src="skills.js?v=10"></script>
+<script src="engine.js?v=10"></script>
+<script src="render.js?v=10"></script>
+<script>
 (() => {
-  const C = window.SM, I = window.INK, $ = id => document.getElementById(id);
+  const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
   // ---------- 环境：预览（/v2/ 下）/ 测试（#test）/ 正式 ----------
   const TEST = location.hash === '#test';
   const PREVIEW = /\/v2\//.test(location.pathname);
-  const CTX = {test: TEST, preview: PREVIEW && !TEST};
+  const CTX = {test: TEST, preview: PREVIEW && !TEST, known: id => !!K.ITEM[id]};
   window.addEventListener('hashchange', () => location.reload());
   const KEYS = C.keysFor(CTX);
-  let canSave = true;
+  // 写入报错交给 core 判断（存不了 / 只读）；读不到当没有
   const store = {
     getItem: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
-    setItem: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { canSave = false; } },
+    setItem: (k, v) => { localStorage.setItem(k, v); },
+    removeItem: k => { try { localStorage.removeItem(k); } catch (e) {} },
   };
-  let S = C.loadState(store, CTX, Date.now());
+  const LOAD = C.load(store, CTX, Date.now());
+  let S = LOAD.S, canSave = true, frozen = false;
   const today = () => C.dayOf(Date.now(), TEST ? (S.testDays || 0) : 0);
-  const save = () => C.saveState(store, CTX, S, Date.now());
+  const save = () => {
+    if (frozen) return;
+    const ok = C.saveState(store, CTX, S, Date.now());
+    if (!ok && !S.readOnly && !S.stopped && canSave) { canSave = false; banners(); }
+  };
   const loadInk = () => { try { return Object.assign(I.blankStore(), JSON.parse(store.getItem(KEYS.ink) || 'null') || {}); } catch (e) { return I.blankStore(); } };
   let INKS = loadInk();
-  const saveInk = () => store.setItem(KEYS.ink, JSON.stringify(INKS));
+  const saveInk = () => { if (!frozen && !S.readOnly && !S.stopped) try { store.setItem(KEYS.ink, JSON.stringify(INKS)); } catch (e) {} };
   const calibrated = () => INKS.done === true;
-  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  let persisted = null;
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist().then(v => { persisted = v; }).catch(() => {}); } catch (e) {}
+  S.settings = S.settings || {};
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const show = (id) => { ['home', 'calib', 'play', 'summary', 'mist', 'parent'].forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent'];
+  let cur = 'island';
+  const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
+  const goIsland = () => { renderIsland(); show('island'); };
+  // 手写模式第一次练习前先校准
+  const begin = (fn, back) => { if (!S.oral && !calibrated()) startCal(fn, back); else fn(); };
+
+  // ---------- 提示条：存不了进度 / 只读运行 ----------
+  function banners() {
+    const msg = S.readOnly ? '这次练习存不下来，请家长看一下' : !canSave ? '这个浏览器暂时存不了进度，练习照常 · 家长：关掉页面前先在家长区导出备份' : '';
+    ['bnWarn', 'qWarn'].forEach(id => { $(id).hidden = !msg; $(id).textContent = msg ? '⚠ ' + msg : ''; });
+  }
 
   // ---------- 长按：结束练习 1 秒、家长区 2 秒 ----------
   function longPress(el, ms, onDone, onShort) {
@@ -339,7 +633,59 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     el.addEventListener('contextmenu', e => e.preventDefault());
   }
 
-  // ---------- 首页 ----------
+  // ---------- 1 首页 · 岛 ----------
+  const LV = ['var(--lv3)', 'var(--lv2)', 'var(--lv1)', 'var(--lv0)'];
+  const lvBar = c => `<div class="lvbar">${[[3, c[3]], [2, c[2]], [1, c[1]], [0, c[0]]].filter(x => x[1]).map(([l, n]) => `<i style="flex:${n};background:${LV[3 - l]}"></i>`).join('')}</div>`;
+  const dueAll = () => E.dueMistakes(S, today()).length;
+  const isDone = () => !!(S.daily && S.daily.day === today() && S.daily.done);
+  const practicedToday = g => R.itemsOf(g).some(it => { const p = (K.BY[it.skill].speed ? S.cards : S.skills || {})[it.id]; return p && p.lastDay === today(); });
+  function renderIsland() {
+    const t = today(), d = dueAll(), first = !S.placedAt && !S.placement, done = isDone();
+    $('mistDot').hidden = !d; $('mistDot').textContent = d;
+    $('preBadge').hidden = !CTX.preview;
+    const hasProg = C.litOf(S) > 0, days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+    $('backupHint').textContent = hasProg && days === null ? '还没备份过' : days !== null && days > 7 ? `${days} 天没备份` : '';
+    $('btnMore').hidden = true; $('btnStart').hidden = false; $('btnStart').disabled = false;
+    if (first) {
+      $('leadTitle').textContent = '空空，欢迎来到数学岛';
+      $('leadSub').textContent = '先看看你已经会什么，大约 5 分钟';
+      $('btnStart').textContent = '开始'; $('leadFoot').textContent = '会的格子马上点亮';
+    } else if (S.placement) {
+      $('leadTitle').textContent = '接着看看你会什么';
+      $('leadSub').textContent = '上次还没测完，从刚才那里接着来';
+      $('btnStart').textContent = '接着来'; $('leadFoot').textContent = '';
+    } else if (done) {
+      const st = (S.stats || {})[t] || {sec: 0, ups: 0};
+      $('leadTitle').textContent = '今天练完啦！';
+      $('leadSub').innerHTML = `练了 <b class="num" style="font-size:22px;color:var(--ok)">${Math.max(1, Math.round((S.daily.sec || 0) / 60))}</b> 分钟 · 点亮 <b class="num" style="font-size:22px;color:var(--lv1)">${st.ups || 0}</b> 格`;
+      $('btnStart').hidden = true; $('leadFoot').textContent = '明天再来';
+      $('btnMore').hidden = !E.hasMore(S, t);
+    } else {
+      const left = S.daily && S.daily.day === t ? Math.max(1, Math.ceil((S.daily.budget - S.daily.sec) / 60)) : 10;
+      $('leadTitle').textContent = left < 10 ? `空空，今天还剩 ${left} 分钟` : '空空，今天练 10 分钟';
+      $('leadSub').textContent = (d ? `复习 ${d} 道错题，` : '') + '学一点新的，再练练快的';
+      $('btnStart').textContent = left < 10 ? '接着练' : '开始今天的练习'; $('leadFoot').textContent = '练满 10 分钟去贴 1 颗珠子';
+    }
+    $('tiles').innerHTML = R.GROUPS.map(g => {
+      const st = R.groupStat(S, g.id), started = R.itemsOf(g.id).some(it => (K.BY[it.skill].speed ? cs(it.id).seen : ((S.skills || {})[it.id] || {}).seen) > 0) || st.lit > 0;
+      const tag = done && practicedToday(g.id) ? '<span class="today">今天 ✓</span>' : `<span>${started ? '在学' : '还没开始'}</span>`;
+      return `<button class="tile" data-g="${g.id}"><div class="th"><b>${g.name}</b>${tag}</div>${lvBar(st.counts)}<div class="tn">${st.lit ? `亮了 ${st.lit} · ` : ''}共 ${st.total} 格</div></button>`;
+    }).join('');
+    banners();
+    if (TEST) showTestDay();
+  }
+  $('tiles').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; if (b.dataset.g === 'speed') { renderSpeed(); show('home'); } else openSkillMap(b.dataset.g); });
+  $('btnStart').addEventListener('click', () => {
+    if (!S.placedAt && !S.placement) { show('placeIntro'); return; }
+    begin(() => startQ(S.placement ? 'place' : 'today'));
+  });
+  $('btnMore').addEventListener('click', () => begin(() => startQ('today', {extra: 300})));
+  $('btnMist').addEventListener('click', () => openMist());
+  longPress($('gear'), 2000, () => { renderParent(); show('parent'); });
+  $('piBack').addEventListener('click', goIsland);
+  $('piGo').addEventListener('click', () => begin(() => startQ('place'), () => show('placeIntro')));
+
+  // ---------- 8 秒答地图（v2 原首页，全部功能保留） ----------
   const worldDone = (L, w) => C.worldUnits(L, w).every(u => cs(u.id).lv === 3);
   const bossKey = (L, w) => L === 0 ? String(w) : C.LEVELS[L].key + ':' + w; // 级别 1 沿用旧编号
   const blockHtml = (u, extra) => {
@@ -349,7 +695,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     return `<div class="${cls} tb"><strong>${u.short}</strong><span>${u.name}</span>${prog}</div>`;
   };
   const dueCount = () => C.dueMistakes(S, today(), curL()).length;
-  function renderHome() {
+  function renderSpeed() {
     const L = curL(), LV = C.LEVELS[L], units = C.unitsOf(L), t = today();
     $('levels').innerHTML = C.LEVELS.map((x, i) => `<button class="lvtab${i === L ? ' on' : ''}" data-level="${i}">${x.name}</button>`).join('');
     const n = [0, 0, 0, 0]; units.forEach(u => n[cs(u.id).lv]++);
@@ -358,10 +704,8 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     const fresh = !units.some(u => cs(u.id).seen > 0);
     $('hint').hidden = !fresh;
     $('hint').textContent = `第一次练「${LV.name}」：点「加法练习」，从第一个世界开始，会的当场点亮。`;
-    const d = dueCount(); $('mistDot').hidden = !d; $('mistDot').textContent = d;
-    $('preBadge').hidden = !CTX.preview;
-    const hasProg = Object.keys(S.cards).length > 0, days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
-    $('backupHint').textContent = !canSave ? '这个浏览器存不了进度' : hasProg && days === null ? '还没备份过' : days !== null && days > 7 ? `${days} 天没备份` : '';
+    const d = dueCount(); $('spMistDot').hidden = !d; $('spMistDot').textContent = d;
+    $('l2tip').textContent = L === 1 && !E.learned(S, 'bond5') ? '每天的练习里，学会「过十准备」以后才出这一级后面的世界' : '';
     const todayUp = new Set((S.log[t] || {}).ups || []);
     const allDone = LV.worlds.every((w, i) => worldDone(L, i));
     $('map').innerHTML = LV.worlds.map((w, wi) => {
@@ -379,12 +723,10 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     if (s) begin(() => startScan(+s.dataset.scan));
     else if (b && !b.disabled) begin(() => startBoss(b.dataset.boss));
   });
-  $('levels').addEventListener('click', e => { const b = e.target.closest('[data-level]'); if (!b) return; S.level = +b.dataset.level; save(); renderHome(); });
+  $('levels').addEventListener('click', e => { const b = e.target.closest('[data-level]'); if (!b) return; S.level = +b.dataset.level; save(); renderSpeed(); });
   document.querySelectorAll('[data-series]').forEach(b => b.addEventListener('click', () => begin(() => startDaily(b.dataset.series))));
-  $('btnMist').addEventListener('click', () => { renderMist(); show('mist'); });
-  longPress($('gear'), 2000, () => { renderParent(); show('parent'); });
-  // 手写模式第一次练习前先校准
-  const begin = fn => { if (!S.oral && !calibrated()) startCalib(fn); else fn(); };
+  $('spMist').addEventListener('click', () => openMist('speed:L' + (curL() + 1)));
+  $('spBack').addEventListener('click', goIsland);
 
   // ---------- 手写板 ----------
   function Pad(wrap, onPenUp) {
@@ -421,9 +763,9 @@ window.addEventListener('error', function (e) { var d = document.createElement('
   let CAL = null;
   const calPad = Pad($('calPad'), () => { clearTimeout(CAL && CAL.timer); CAL.timer = setTimeout(acceptCal, 900); });
   calPad.onDown = () => { CAL && clearTimeout(CAL.timer); };
-  function startCal(then) {
+  function startCal(then, back) {
     INKS = Object.assign(I.blankStore(), {samples: []}); // 重新校准：从头来
-    CAL = {d: 0, k: 0, then, timer: null, speeds: []};
+    CAL = {d: 0, k: 0, then, timer: null, speeds: [], t0: Date.now(), back};
     show('calib'); calPad.fit(); calPad.clear(); drawCal();
   }
   const startCalib = startCal;
@@ -442,13 +784,14 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     if (++CAL.k >= REPS) { CAL.k = 0; CAL.d++; }
     if (CAL.d > 9) {
       INKS.speed = I.medianSpeed(CAL.speeds); INKS.samples = CAL.speeds; INKS.done = true; saveInk();
-      const then = CAL.then; CAL = null; then ? then() : (renderHome(), show('home'));
+      E.addTime(S, today(), Math.min(600, Math.round((Date.now() - CAL.t0) / 1000))); save();   // 校准时间计入当天 10 分钟
+      const then = CAL.then; CAL = null; then ? then() : goIsland();
       return;
     }
     drawCal();
   }
   $('calClear').addEventListener('click', () => { clearTimeout(CAL && CAL.timer); calPad.clear(); });
-  $('calBack').addEventListener('click', () => { if (CAL) clearTimeout(CAL.timer); CAL = null; INKS = loadInk(); renderHome(); show('home'); });
+  $('calBack').addEventListener('click', () => { if (CAL) clearTimeout(CAL.timer); const back = CAL && CAL.back; CAL = null; INKS = loadInk(); back ? back() : goIsland(); });
 
   // ---------- 练习流程 ----------
   let P = null, timerId = null, forceUnsure = false;
@@ -500,11 +843,6 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     else { pool = C.worldUnits(L, +key); n = 20; title = 'Boss 关 · ' + LV.worlds[+key].name; bk = bossKey(L, +key); }
     const deck = []; while (deck.length < n) deck.push(...C.shuffle(pool.slice()));
     start('boss', title, deck.slice(0, n).map(u => ({id: u.id})), {bossKey: bk});
-  }
-  function startReview() {
-    const list = C.dueMistakes(S, today(), curL());
-    if (!list.length) return;
-    start('review', '错题复习', C.shuffle(list.slice()).map(m => ({id: m.uid, mkey: m.key, fixed: {a: m.a, b: m.b, ans: m.ans}})));
   }
   // 题目字号：默认大字，放不下左栏就按比例缩小（真机 Safari 左右有安全区，左栏比电脑上窄）
   function fitQ() {
@@ -669,7 +1007,7 @@ window.addEventListener('error', function (e) { var d = document.createElement('
     clearInterval(timerId); clearTimeout(P.submitT); clearTimeout(P.nextT);
     try { P.lock && P.lock.release(); } catch (e) {}
     const done = P.results.filter(Boolean);
-    const goHome = () => { P = null; renderHome(); show('home'); };
+    const goHome = () => { P = null; renderSpeed(); show('home'); };
     if (!done.length) return goHome();
     const fast = done.filter(r => r.fast).length, wrong = done.filter(r => r.wrong).length, slow = done.length - fast - wrong;
     const mins = Math.max(1, Math.round((Date.now() - P.startAt) / 60000));
@@ -700,57 +1038,420 @@ window.addEventListener('error', function (e) { var d = document.createElement('
       </div>`;
     show('summary');
     $('sumHome').addEventListener('click', goHome);
-    $('sumMist').addEventListener('click', () => { P = null; renderMist(); show('mist'); });
+    $('sumMist').addEventListener('click', () => { const L = P.L; P = null; openMist('speed:L' + (L + 1)); });
   }
 
-  // ---------- 8 错题本（当前级别） ----------
-  const mq = m => `${m.a} ${m.op === '+' ? '+' : '−'} ${m.b}`;
+
+  // ---------- 3 练习：今日练习 / 摸底 / 自由加练 / 复习这一组（都由 engine.js 排题） ----------
+  // 计时：每题从出题到下一题的真实时间（含反馈，单题最多 60 秒，暂停不算）；"快不快"另用写字用时判
+  const SEC_CAP = 60, OK_MS = 800, BAD_MS = 3000, PICK_FAST = 2000, LINE_WAIT = 1200;
+  let Q = null, qForceUnsure = false;
+  const qPad = Pad($('qPad'), () => qSchedule());
+  qPad.onDown = () => { if (!Q) return; clearTimeout(Q.submitT); if (Q.phase === 'q') $('qFootNote').textContent = ''; if (Q.phase === 'trace') { Q.phase = 'traced'; clearTimeout(Q.nextT); Q.nextT = setTimeout(nextQ, 600); } };
+  const flashMs = () => S.settings.flashMs || 1500;
+  const timers = () => { if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
+  function startQ(kind, opts) {
+    const day = today();
+    const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : E.placement(S, day);
+    Q = {kind, opts: opts || {}, sess, day, ups: [], passed: 0, n: 0, wrong: 0, secs: 0, picks: [], pickDelay: 0, mist0: Object.keys(S.mistakes).length,
+      before: kind === 'place' ? Object.fromEntries(R.GROUPS.map(g => [g.id, R.groupStat(S, g.id).lit])) : null};
+    try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => Q && (Q.lock = l)).catch(() => {}); } catch (e) {}
+    clearInterval(Q.tick); Q.tick = setInterval(qBar, 500);
+    nextQ();
+  }
+  function nextQ() {
+    if (!Q) return;
+    timers();
+    const x = Q.sess.next();
+    save();
+    if (!x) return finishQ(false);
+    Q.x = x; Q.redo = false;
+    if (x.kind === 'demo') return showDemo(x.skill);
+    showQuestion(x);
+  }
+  // 顶部时间进度条：今日练习 / 摸底按今天的 10 分钟；自由加练、复习这一组按题数
+  function qBar() {
+    if (!Q) return;
+    const run = Q.phase === 'q' && !Q.paused ? (performance.now() - Q.shownAt) / 1000 : 0;
+    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? Q.n / 12 : 0;
+    [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
+  }
+  function showQuestion(x) {
+    const inst = x.inst, v = R.question(inst);
+    Object.assign(Q, {v, phase: 'q', peeked: false, oralWrong: false, wasLv: E.lv(S, inst.id), shownAt: performance.now(), t0: performance.now(), val: null});
+    show('qplay');
+    const wide = v.input !== 'write';
+    $('qplay').classList.toggle('wide', wide);
+    $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : v.tag;
+    $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : v.note || '';
+    $('qBody').innerHTML = v.html; $('qBody').hidden = false;
+    $('qWide').hidden = !wide; $('qWide').innerHTML = '';
+    $('qPeek').hidden = !v.flash; $('qPeek').disabled = false;
+    ['qGhost', 'qPadTip', 'qCheck', 'qConfirm', 'qOralWrong', 'qOralNext'].forEach(id => { $(id).hidden = true; });
+    $('qPad').classList.remove('good');
+    $('qFootNote').textContent = ''; $('qClear').hidden = !!S.oral; $('qDunno').hidden = false;
+    $('qPad').hidden = !!S.oral; $('qOral').hidden = !S.oral; $('qOral').textContent = '说出答案后，点这里看答案';
+    if (v.input === 'write') { qPad.fit(); qPad.clear(); qPad.enabled = !S.oral; }
+    if (v.input === 'pick') showPick(v);
+    if (v.input === 'line') showLine(v);
+    if (v.flash) flashLook();
+    // 画面刷新后再校准起点；已经落笔就不再挪
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (Q && Q.x === x && Q.phase === 'q' && !qPad.strokes().length && v.input === 'write') Q.t0 = performance.now(); }));
+    qBar();
+  }
+  // 看数：图案闪现 flashMs 后消失，用 requestAnimationFrame 记真实显示时长；「再看一次」再闪一遍，这题不点亮
+  const FLASHLOG = [];
+  function flashLook() {
+    const el = $('qBody').querySelector('.look'); if (!el) return;
+    el.classList.remove('hide');
+    let t0 = null;
+    const step = ts => {
+      if (!Q || !el.isConnected) return;
+      if (t0 === null) t0 = ts;
+      if (ts - t0 >= flashMs() - 8) { el.classList.add('hide'); FLASHLOG.push(Math.round(ts - t0)); FLASHLOG.splice(0, FLASHLOG.length - 10); return; }
+      Q.raf = requestAnimationFrame(step);
+    };
+    Q.raf = requestAnimationFrame(step);
+  }
+  $('qPeek').addEventListener('click', () => { if (!Q || Q.phase !== 'q') return; Q.peeked = true; flashLook(); });
+
+  // 手写：停笔 0.9 秒（位数不够 1.5 秒）自动提交；识别没把握才问那一位
+  function qSchedule() {
+    if (!Q || Q.phase !== 'q' || Q.v.input !== 'write') return;
+    clearTimeout(Q.submitT);
+    const groups = I.groupStrokes(qPad.strokes()).length;
+    Q.submitT = setTimeout(qSubmit, groups < C.digits(Q.x.inst.ans) ? 1500 : 900);
+  }
+  function qSubmit() {
+    if (!Q || Q.phase !== 'q') return;
+    const strokes = qPad.strokes(); if (!strokes.length) return;
+    Q.ms = Math.max(0, qPad.lastUp - Q.t0);
+    const res = I.recognize(strokes, INKS);
+    if (res.text === null) { qPad.clear(); $('qFootNote').textContent = '没看清，再写一次'; return; }
+    const rv = I.resolveWith(res, Q.x.inst.ans);
+    Object.assign(Q, {rec: res, picked: rv.picked, unsure: rv.unsure, byAnswer: rv.byAnswer});
+    if (TEST && qForceUnsure && res.digits[0].cands.length > 1) { qForceUnsure = false; Q.unsure = [0]; Q.byAnswer = []; }
+    INKS.stats = (INKS.stats || []).concat(Q.unsure.length || Q.byAnswer.length ? 0 : 1).slice(-100); saveInk();
+    if (Q.unsure.length) return qAsk();
+    qDecide(false);
+  }
+  function qAsk() {
+    Q.phase = 'confirm'; qPad.enabled = false;
+    const i = Q.unsure[0], d = Q.rec.digits[i];
+    $('qcShown').innerHTML = Q.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
+    $('qcA').textContent = d.cands[0].d; $('qcB').textContent = d.cands[1].d;
+    $('qConfirm').hidden = false;
+  }
+  const qPickCand = v => { if (!Q || Q.phase !== 'confirm') return; Q.picked[Q.unsure.shift()] = v; $('qConfirm').hidden = true; if (Q.unsure.length) return qAsk(); qDecide(true); };
+  $('qcA').addEventListener('click', () => qPickCand($('qcA').textContent));
+  $('qcB').addEventListener('click', () => qPickCand($('qcB').textContent));
+  $('qcRewrite').addEventListener('click', () => { if (!Q || Q.phase !== 'confirm') return; $('qConfirm').hidden = true; Q.phase = 'q'; qPad.clear(); qPad.enabled = true; });
+  // 限时：秒答沿用 v2；理解题 = 3 秒 + 写一个数字的用时 × 答案位数（口答 3 秒）
+  const qLimit = inst => { const u = C.BYID[inst.id]; return u ? C.fastLimit(u, inst.ans, mode(), INKS.speed) : S.oral ? 3000 : 3000 + (INKS.speed || 1000) * C.digits(inst.ans); };
+  function qDecide(viaConfirm) {
+    const inst = Q.x.inst, text = Q.picked.join(''), right = text === String(inst.ans);
+    if (right && !viaConfirm) { Q.rec.digits.forEach((d, k) => { if (!Q.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }); saveInk(); }
+    resolve({ok: right, fast: right && !viaConfirm && Q.ms <= qLimit(inst), typed: text});
+  }
+  $('qClear').addEventListener('click', () => { if (Q && Q.phase === 'q') { clearTimeout(Q.submitT); qPad.clear(); } });
+  $('qDunno').addEventListener('click', () => { if (!Q || Q.phase !== 'q') return; clearTimeout(Q.submitT); resolve({ok: false, dunno: true}); });
+  // 口答（家长陪着）：说出答案 → 点一下看答案 → 家长判
+  $('qOral').addEventListener('click', () => {
+    if (!Q || Q.phase !== 'q' || !S.oral || Q.v.input !== 'write') return;
+    Q.ms = performance.now() - Q.t0; Q.phase = 'oral';
+    $('qOral').textContent = '答案是 ' + Q.x.inst.ans; $('qOralWrong').hidden = false; $('qOralNext').hidden = false; $('qOralWrong').textContent = '答错了'; $('qDunno').hidden = true;
+  });
+  $('qOralWrong').addEventListener('click', () => { if (!Q || Q.phase !== 'oral') return; Q.oralWrong = !Q.oralWrong; $('qOralWrong').textContent = Q.oralWrong ? '其实答对了' : '答错了'; });
+  $('qOralNext').addEventListener('click', () => { if (!Q || Q.phase !== 'oral') return; Q.phase = 'q'; resolve({ok: !Q.oralWrong, fast: !Q.oralWrong && Q.ms <= qLimit(Q.x.inst)}); });
+
+  // 比大小 · 点选：两张大卡片直接点大的；乱点后数字出现 1 秒才能点，2 秒限时从能点那一刻算
+  function showPick(v) {
+    $('qWide').innerHTML = `<div class="pickgrid">${v.pick.map(n => `<button class="pickcard${Q.pickDelay ? ' lock' : ''}" data-n="${n}" aria-label="${n}">${n}</button>`).join('')}</div>`;
+    Q.pickOpen = !Q.pickDelay;
+    const open = () => { if (!Q) return; Q.pickOpen = true; Q.t0 = performance.now(); $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.remove('lock')); };
+    if (Q.pickDelay) Q.pickT = setTimeout(open, Q.pickDelay);
+  }
+  $('qWide').addEventListener('click', e => {
+    const b = e.target.closest('.pickcard'); if (!b || !Q || Q.phase !== 'q' || !Q.pickOpen) return;
+    const n = +b.dataset.n, ms = performance.now() - Q.t0, ok = n === Q.x.inst.ans;
+    Q.pickedN = n; Q.picks.push({ok, ms});
+    const last5 = Q.picks.slice(-5), last3 = Q.picks.slice(-3);
+    if (!Q.pickDelay && ((last5.length >= 5 && last5.filter(p => !p.ok).length >= 3) || (last3.length >= 3 && last3.every(p => p.ms < 400)))) {
+      Q.pickDelay = 1000; $('calm').hidden = false; setTimeout(() => { $('calm').hidden = true; }, 2000);
+    }
+    resolve({ok, fast: ok && ms <= PICK_FAST});
+  });
+
+  // 数线：手指在线上下 60 点内按下出现蓝旗（画在手指上方），可拖动，抬手停 1.2 秒自动提交；屏幕左右边缘 20 点内不接收
+  const flagSvg = cls => `<svg class="flag ${cls}" viewBox="0 0 46 90" aria-hidden="true"><path class="f" d="M4 4 L42 16 L4 30 Z" stroke="#000" stroke-width="2"></path><path class="p" d="M4 4 L4 88"></path></svg>`;
+  function showLine(v) {
+    const L = v.line, mid = L.mid ? `<i class="capm" style="left:50%"></i><span class="lab" style="left:50%">${L.mid}</span>` : '';
+    $('qWide').innerHTML = `<div class="linebox" id="lineBox"><i class="ln"></i><i class="cap0" style="left:0"></i><i class="cap1" style="left:100%"></i>${mid}<span class="lab" style="left:0">0</span><span class="lab" style="left:100%">${L.max}</span><div id="myFlag" hidden style="position:absolute;top:0;left:0;width:0">${flagSvg('me')}</div></div>`;
+    const box = $('lineBox'), flag = $('myFlag');
+    let active = null;
+    const at = e => { const r = box.getBoundingClientRect(); const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); return {f, v: f * L.max}; };
+    const put = e => { const p = at(e); Q.val = p.v; flag.hidden = false; flag.style.left = (p.f * 100) + '%'; };
+    box.addEventListener('pointerdown', e => {
+      if (!Q || Q.phase !== 'q') return;
+      if (e.clientX < 20 || e.clientX > window.innerWidth - 20) return;
+      const r = box.getBoundingClientRect(), lineY = r.top + 122;
+      if (Math.abs(e.clientY - lineY) > 60) return;
+      e.preventDefault(); active = e.pointerId; try { box.setPointerCapture(e.pointerId); } catch (err) {}
+      clearTimeout(Q.lineT); put(e);
+    });
+    box.addEventListener('pointermove', e => { if (e.pointerId === active && Q && Q.phase === 'q') put(e); });
+    const up = e => { if (e.pointerId !== active || !Q) return; active = null; clearTimeout(Q.lineT); Q.lineT = setTimeout(() => { if (Q && Q.phase === 'q' && Q.val !== null) submitLine(); }, LINE_WAIT); };
+    box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+  }
+  function submitLine() {
+    const inst = Q.x.inst, j = K.judge(K.ITEM[inst.id], inst, Q.val, S.settings);
+    const key = inst.q.any ? '100a' : String(inst.q.max);
+    S.lineErr = S.lineErr || {}; S.lineErr[key] = (S.lineErr[key] || []).concat(Math.round(j.err * 10) / 10).slice(-20);
+    resolve({ok: j.ok});
+  }
+
+  // ---------- 4 反馈：答对 0.8 秒自动下一题；答错图解，描一笔或 3 秒（点选、数线 3 秒） ----------
+  function resolve(r) {
+    if (!Q || (Q.phase !== 'q' && Q.phase !== 'confirm')) return;
+    Q.phase = 'a'; qPad.enabled = false; timers();
+    const x = Q.x, inst = x.inst;
+    const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000 + (r.ok ? OK_MS : BAD_MS) / 1000) * 10) / 10;
+    const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked}) || {pass: r.ok, up: false};
+    Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++;
+    if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
+    if (x.seg === 'review' && out.pass) Q.passed++;
+    save();
+    $('qClear').hidden = true; $('qDunno').hidden = true; $('qPeek').hidden = true; $('qOralWrong').hidden = true; $('qOralNext').hidden = true;
+    if (Q.kind === 'place') {                             // 摸底不讲题：对错都直接下一题
+      $('qFootNote').textContent = '';
+      Q.nextT = setTimeout(nextQ, 500); return;
+    }
+    const v = Q.v;
+    if (r.ok) {
+      const w = R.okWords(inst, out, Q.wasLv);
+      if (v.input === 'line') drawTarget(true);
+      $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
+      if (v.input === 'pick') $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.add(+b.dataset.n === inst.ans ? 'right' : 'wrong'));
+      if (v.input === 'write' && !S.oral) { $('qPad').classList.add('good'); $('qCheck').hidden = false; }
+      $('qNote').textContent = '';
+      Q.nextT = setTimeout(nextQ, OK_MS); return;
+    }
+    // 答错：图解 +「记住它，下次再来」
+    $('qNote').textContent = '记住它，下次再来';
+    if (v.input === 'line') {
+      drawTarget(false);
+      $('qBody').innerHTML = `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
+      Q.nextT = setTimeout(nextQ, BAD_MS); return;
+    }
+    if (v.input === 'pick') { $('qBody').innerHTML = ''; $('qWide').innerHTML = R.explain(inst); Q.nextT = setTimeout(nextQ, BAD_MS); return; }
+    $('qBody').innerHTML = R.explain(inst);
+    if (S.oral) { Q.nextT = setTimeout(nextQ, BAD_MS); return; }
+    // 手写题：照着描一遍（描一笔就继续，或 3 秒后自动下一题）
+    qPad.clear();
+    const g = $('qGhost'); g.textContent = inst.ans; g.style.fontSize = Math.min($('qPad').clientHeight * 0.75, $('qPad').clientWidth / (String(inst.ans).length * 0.8)) + 'px'; g.hidden = false;
+    $('qPadTip').hidden = false; $('qFootNote').innerHTML = '描一笔就继续 · 或 3 秒后自动下一题<span class="bar"><i></i></span>';
+    Q.phase = 'trace'; qPad.enabled = true;
+    requestAnimationFrame(() => { const b = $('qFootNote').querySelector('.bar'); b && b.classList.add('run'); });
+    Q.nextT = setTimeout(nextQ, BAD_MS);
+  }
+  // 答对后左边显示完整的题（看数 → 数字）
+  function answerLine(inst) {
+    const s = K.BY[K.ITEM[inst.id].skill], q = inst.q;
+    if (s.speed) return `${q.a} ${q.op === '+' ? '+' : '−'} ${q.b} = <span class="ansv">${inst.ans}</span>`;
+    return `<span class="ansv">${inst.ans}</span>`;
+  }
+  // 数线：正确位置插绿旗，蓝旗到绿旗画箭头
+  function drawTarget(ok) {
+    const box = $('lineBox'); if (!box) return;
+    const L = Q.v.line, fT = L.target / L.max, fV = Math.min(1, Math.max(0, Q.val / L.max));
+    const g = document.createElement('div');
+    g.style.cssText = `position:absolute;top:0;left:${fT * 100}%;width:0`; g.innerHTML = flagSvg('ok');
+    box.appendChild(g);
+    const lab = document.createElement('span'); lab.className = 'lab'; lab.style.cssText = `left:${fT * 100}%;color:var(--ok)`; lab.textContent = L.target; box.appendChild(lab);
+    if (!ok) {
+      const a = document.createElement('div'), lo = Math.min(fT, fV), hi = Math.max(fT, fV), right = fT > fV;
+      a.innerHTML = `<svg class="gap-arrow" style="left:${lo * 100 + 1}%;width:${Math.max(1, (hi - lo) * 100 - 2)}%" viewBox="0 0 200 22" preserveAspectRatio="none" aria-hidden="true"><path d="${right ? 'M2 11 H190 M180 3 L192 11 L180 19' : 'M198 11 H10 M20 3 L8 11 L20 19'}" vector-effect="non-scaling-stroke"></path></svg>`;
+      box.appendChild(a.firstChild);
+    }
+  }
+  longPress($('qQuit'), 1000, () => finishQ(true), () => { $('qQuitHint').hidden = false; clearTimeout(window._qh); window._qh = setTimeout(() => { $('qQuitHint').hidden = true; }, 1500); });
+
+  // ---------- 3a 学一学 · 示范卡：动画播完（约 3 秒）「我知道了」才能点 ----------
+  function showDemo(skill) {
+    Q.phase = 'demo'; show('demo');
+    $('demoBox').innerHTML = R.demo(skill);
+    $('ack').disabled = true;
+    Q.ackT = setTimeout(() => { $('ack').disabled = false; }, 3000);
+    qBar();
+  }
+  $('ack').addEventListener('click', () => { if (Q && Q.phase === 'demo' && !$('ack').disabled) nextQ(); });
+  longPress($('dQuit'), 1000, () => finishQ(true));
+
+  // ---------- 6 结算 / 2b 摸底结果 ----------
+  const lvColor = id => ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][E.lv(S, id) || 0];
+  const chip = id => `<span class="chip2" style="background:${lvColor(id)};color:${E.lv(S, id) === 3 ? '#fff' : '#1b1d22'}">${R.GNAME[K.BY[K.ITEM[id].skill].group] === '秒答地图' ? '秒答' : R.GNAME[K.BY[K.ITEM[id].skill].group]} · ${R.label(id)}</span>`;
+  function finishQ(quit) {
+    if (!Q) return;
+    timers(); clearInterval(Q.tick);
+    try { Q.lock && Q.lock.release(); } catch (e) {}
+    const q = Q; Q = null; save();
+    if (q.kind === 'place') return showPlaceResult(q, quit);
+    if (!q.n) return goIsland();
+    const full = q.kind === 'today' && S.daily && S.daily.done && S.daily.sec >= S.daily.budget;
+    const mins = Math.max(1, Math.round((q.kind === 'today' ? S.daily.sec : q.secs) / 60));
+    const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
+    const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
+    $('qsum').innerHTML = `
+      <div class="col" style="width:330px;flex:none;justify-content:center;gap:16px">
+        <div style="font-size:34px;font-weight:900">${title}</div>
+        <div class="sumgrid">
+          <div><b style="color:var(--ok)">${mins}</b><span class="muted">分钟</span></div>
+          <div><b style="color:var(--lv1)">${q.ups.length}</b><span class="muted">格点亮了</span></div>
+          <div><b>${q.passed}</b><span class="muted">道错题过关</span></div>
+          <div><b>${q.n}</b><span class="muted">道题</span></div>
+        </div>
+      </div>
+      <div class="col" style="flex:1;justify-content:center;gap:12px;overflow-y:auto">
+        <div style="font-size:16px;font-weight:700">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
+        <div>${q.ups.slice(0, 16).map(chip).join('')}</div>
+        ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
+        ${full ? '<div style="font-size:15px;color:var(--warn);font-weight:700">练满 10 分钟了，去墙上贴 1 颗珠子</div>' : ''}
+        <div style="display:flex;gap:12px;margin-top:6px">
+          ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
+          <button class="gobig" id="qsHome" style="flex:2;height:72px;font-size:22px">${full ? '贴好珠子，回到岛上' : '回到岛上'}</button>
+        </div>
+      </div>`;
+    show('qsum');
+    $('qsHome').addEventListener('click', goIsland);
+    if (q.kind === 'free') $('qsAgain').addEventListener('click', () => begin(() => startQ('free', q.opts)));
+  }
+  function showPlaceResult(q, quit) {
+    const lit = R.GROUPS.filter(g => g.id !== 'speed').map(g => ({g, now: R.groupStat(S, g.id), was: q.before[g.id]}));
+    const total = lit.reduce((n, x) => n + x.now.lit - x.was, 0), left = Math.max(0, Math.ceil(((S.daily.budget || 600) - S.daily.sec) / 60));
+    $('placeResult').innerHTML = `
+      <div style="display:flex;align-items:baseline;gap:16px"><div style="font-size:30px;font-weight:900">${total ? '你已经会了这些！' : '我们从头开始学'}</div>
+        <div style="font-size:16px;color:var(--mute)">点亮了 <b class="num" style="font-size:26px;color:var(--lv1)">${total}</b> 格</div></div>
+      <div style="flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;min-height:0">
+        ${lit.map(({g, now, was}) => {
+          const n = now.lit - was, known = K.understand.filter(s => s.group === g.id && S.known && S.known[s.id]).map(s => s.name);
+          return `<div class="panel" style="gap:10px"><b style="font-size:17px">${g.name}</b><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">${'<i class="cl" style="background:var(--lv1)"></i>'.repeat(Math.min(n, 12))}<span class="muted" style="font-size:12px">${n ? `亮了 ${n} 格 · ` : ''}共 ${now.total} 格</span></div>
+            <span style="font-size:13px;color:${known.length ? 'var(--ok)' : 'var(--mute)'}">${known.length ? known.join('、') + ' 会了' : '以后会教你'}</span></div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="flex:1;font-size:15px;color:var(--mute)">${quit && S.placement ? '还没测完，下次接着看 · ' : ''}${left ? `还有 ${left} 分钟，接着练今天的` : '今天的时间用完啦'}</span>
+        <button class="gobig" id="prGo" style="width:280px;height:72px;font-size:24px">${left ? '开始练习' : '回到岛上'}</button>
+      </div>`;
+    show('placeResult');
+    $('prGo').addEventListener('click', () => (left ? startQ('today') : goIsland()));
+  }
+
+  // ---------- 7 技能组地图 ----------
+  let smGroup = 'look';
+  function openSkillMap(g) { smGroup = g; renderSkillMap(); show('skillmap'); }
+  function renderSkillMap() {
+    $('smTabs').innerHTML = R.GROUPS.filter(g => g.id !== 'speed').map(g => `<button class="tab${g.id === smGroup ? ' on' : ''}" data-g="${g.id}">${g.name}</button>`).join('');
+    $('smRule').textContent = R.GROUPS.find(g => g.id === smGroup).rule;
+    const INK = ['#b8bac3', '#1b1d22', '#1b1d22', '#ffffff'];
+    $('smRows').innerHTML = K.understand.filter(s => s.group === smGroup).map(s => `<div class="srow"><div class="sn">${s.name}</div><div class="cells">${s.items.map(it => {
+      const l = E.lv(S, it.id) || 0, bg = ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][l];
+      if (!it.gen) return `<i class="cl" style="background:${bg}" title="${R.label(it.id)}"></i>`;
+      const w = ((S.skills || {})[it.id] || {}).win || [];
+      return `<span class="ty" style="background:${bg};color:${INK[l]}">${R.label(it.id)}${w.length ? ` · 最近 ${w.length} 次对了 ${w.reduce((a, b) => a + b, 0)} 次` : ''}</span>`;
+    }).join('')}</div></div>`).join('');
+  }
+  $('smTabs').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (b) { smGroup = b.dataset.g; renderSkillMap(); } });
+  $('smBack').addEventListener('click', goIsland);
+  $('smGo').addEventListener('click', () => begin(() => startQ('free', {group: smGroup}), () => openSkillMap(smGroup)));
+
+  // ---------- 9 错题本（按技能组；秒答按级别） ----------
+  const MGROUPS = R.GROUPS.filter(g => g.id !== 'speed').map(g => ({id: g.id, name: g.name, has: m => m.src === g.id}))
+    .concat(C.LEVELS.map((LV, L) => ({id: 'speed:L' + (L + 1), name: '秒答 · ' + LV.name, has: m => !m.src && m.L === L})));
+  let mistFocus = null;
+  function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
   function renderMist() {
-    const t = today(), L = curL(), g = C.mistakeGroups(S, t);
-    const of = list => list.filter(m => m.L === L);
-    const due = of(g.due), doing = of(g.doing), done = of(g.done);
-    $('mistLevel').textContent = C.LEVELS[L].name;
-    $('mistN').textContent = due.length; $('mistGo').disabled = !due.length; $('mistGo').style.opacity = due.length ? 1 : .45;
-    $('mDueT').textContent = `今天要复习 · ${due.length}`; $('mDoingT').textContent = `过关中 · ${doing.length}`; $('mDoneT').textContent = `已经会了 · ${done.length}`;
-    $('mDue').innerHTML = due.map(m => `<div class="mrow"><span class="num">${mq(m)}</span><span style="font-size:13px;color:var(--warn)">${m.passes ? `第 ${m.passes + 1} 关` : (C.dayDiff(m.added, t) <= 1 ? '昨天写错' : '第 1 关')}</span></div>`).join('') || '<div class="muted">今天没有要复习的</div>';
-    const dots = n => `<span class="dots5">${[0, 1, 2, 3, 4].map(i => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
-    const when = d => { const n = C.dayDiff(t, d); return n === 1 ? '明天' : `${n} 天后`; };
-    $('mDoing').innerHTML = doing.sort((x, y) => x.due.localeCompare(y.due)).map(m => `<div class="mrow"><span class="num" style="font-size:18px">${mq(m)}</span>${dots(m.passes)}<span class="muted" style="font-size:12px;white-space:nowrap">${when(m.due)}</span></div>`).join('') || '<div class="muted">还没有</div>';
-    $('mDone').innerHTML = done.map(m => `<span class="b l3">${mq(m).replace(/ /g, '')}</span>`).join('') || '<div class="muted">还没有</div>';
+    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid]);
+    const due = m => m.due !== null && m.due <= t;
+    $('mistN').textContent = all.filter(due).length;
+    const order = MGROUPS.slice().sort((a, b) => (b.id === mistFocus) - (a.id === mistFocus));
+    $('mGroups').innerHTML = order.map(g => {
+      const ms = all.filter(g.has), d = ms.filter(due), doing = ms.filter(m => m.due !== null && m.due > t), done = ms.filter(m => m.due === null);
+      if (!ms.length && g.id !== mistFocus) return '';
+      return `<div class="mg"><div class="mh"><b>${g.name}</b><span class="muted">今天 ${d.length} · 复习中 ${doing.length} · 会了 ${done.length}</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${d.slice(0, 6).map(m => `<span class="mq">${R.mistLabel(m)}</span>`).join('') || '<span class="muted">今天没有要复习的</span>'}</div>
+        <button class="btn" data-rv="${g.id}" ${d.length ? '' : 'disabled style="opacity:.45"'}>复习这一组</button></div>`;
+    }).join('') || '<div class="muted">还没有错题</div>';
   }
-  $('mistBack').addEventListener('click', () => { renderHome(); show('home'); });
-  $('mistGo').addEventListener('click', () => begin(startReview));
+  $('mGroups').addEventListener('click', e => { const b = e.target.closest('[data-rv]'); if (b && !b.disabled) begin(() => startQ('review', {group: b.dataset.rv}), () => openMist(b.dataset.rv)); });
+  $('mistBack').addEventListener('click', goIsland);
 
-  // ---------- 9 家长区 ----------
+  // ---------- 10 家长区 ----------
+  const fmtDay = ms => { const d = new Date(ms); return `${d.getMonth() + 1} 月 ${d.getDate()} 日`; };
+  const kb = k => { const v = store.getItem(k); return v === null ? '—' : (v.length / 1024).toFixed(1) + ' KB'; };
   function renderParent() {
+    const t = today(), st = S.stats || {};
+    // 周报：最近 7 天
+    const last7 = Array.from({length: 7}, (_, i) => st[C.addDays(t, -i)]).filter(Boolean).filter(x => x.sec > 0);
+    const mins = last7.map(x => x.sec / 60).sort((a, b) => a - b), med = mins.length ? mins[Math.floor((mins.length - 1) / 2)] : 0;
+    const placed = S.placedAt ? C.dayOf(S.placedAt) : null, practiced = Object.keys(st).filter(d => st[d].sec > 0 && (!placed || d >= placed)).length;
+    const red = K.understand.filter(s => s.items.every(it => E.lv(S, it.id) === 3)).length;
+    $('weekly').innerHTML = `最近 7 天练了 ${last7.length} 天 · 每天中位 ${med.toFixed(0)} 分钟<br>新点亮 ${last7.reduce((n, x) => n + (x.ups || 0), 0)} 格<br>练完后剩下的错题：最多 ${last7.reduce((n, x) => Math.max(n, x.over || 0), 0)} 道<br>最久没练的技能：${E.gapNow(S, t)} 天<br>19 个理解技能里，已牢固 ${red} 个${placed ? ` · 摸底后练了 ${practiced} 天` : ''}`;
     const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
     $('bkInfo').innerHTML = days === null ? '还没备份过<br>建议每周备份一次' : `上次备份是 <b>${days} 天前</b>（${C.dayOf(S.lastBackup)}）<br>建议每周备份一次`;
-    const n = Object.values(INKS.t || {}).map(a => a.length), st = INKS.stats || [];
-    $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${st.length ? `<br>最近 ${st.length} 次不用确认就认出 ${st.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
+    // 设置
+    $('segFlash').innerHTML = [[1000, '1 秒'], [1500, '1.5 秒'], [2500, '2.5 秒']].map(([v, l]) => `<button class="${flashMs() === v ? 'on' : ''}" data-flash="${v}">${l}</button>`).join('');
+    const loose = !!S.settings.lineTol;
+    $('segTol').innerHTML = `<button class="${loose ? '' : 'on'}" data-tol="0">标准</button><button class="${loose ? 'on' : ''}" data-tol="1">宽松（1.5 倍）</button>`;
+    const errs = Object.entries(S.lineErr || {}).map(([k, a]) => `${k === '100a' ? '0—100 任意' : '0—' + k}：最近 ${a.length} 题平均差 ${(a.reduce((x, y) => x + y, 0) / a.length).toFixed(1)}`);
+    $('lineErr').innerHTML = errs.length ? errs.join('<br>') : '数线还没练过';
     $('oralBox').checked = !!S.oral;
-    // 预览期地图每次都从正式版读，导入和清空对地图无效 → 预览期不提供，免得以为生效了
-    ['btnImport', 'btnReset'].forEach(id => { $(id).hidden = CTX.preview; });
-    $('previewNote').hidden = !CTX.preview;
+    const n = Object.values(INKS.t || {}).map(a => a.length), ist = INKS.stats || [];
+    $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${ist.length ? `<br>最近 ${ist.length} 次不用确认就认出 ${ist.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
+    // 存储
+    const broken = store.getItem(KEYS.broken);
+    $('storeInfo').innerHTML = `进度 ${kb(KEYS.prog)} · 每日备份 ${kb(KEYS.good)} · 笔迹 ${kb(KEYS.ink)}${broken !== null ? ` · 读不了的存档 ${kb(KEYS.broken)}` : ''}<br>长期保存：${persisted === true ? '已获准' : persisted === false ? '没获准（Safari 7 天不打开可能清掉，记得备份）' : '查询中'}${!canSave ? '<br><b style="color:var(--warn)">现在存不了进度：可能是空间满了或者隐私设置，请先导出备份</b>' : ''}`;
+    $('btnBrokenOut').hidden = broken === null; $('btnBrokenDel').hidden = true;
+    // 读档时发生的事
+    const notes = [];
+    if (LOAD.notes.includes('restored')) notes.push(`存档读不了，已恢复到 ${fmtDay(LOAD.restoredAt)} 开始练习时的样子，之后的练习没有了`);
+    else if (LOAD.notes.includes('broken')) notes.push('存档读不了，已从头开始（读不了的存档另存了一份，可以导出给维护的人看）');
+    if (LOAD.notes.includes('readOnly')) notes.push('备份空间也满了，这次练习存不下来：请先导出读不了的存档，再删掉它，然后刷新页面');
+    if (LOAD.notes.includes('goodKept')) notes.push('今天的进度比之前少了很多，每日备份没有被覆盖。如果是你主动清空的，可以忽略');
+    if (LOAD.notes.includes('previewBroken')) notes.push('预览版的存档读不了，只带过来了秒答地图的进度');
+    $('parNote').hidden = !notes.length; $('parNote').innerHTML = notes.join('<br>');
+    $('btnReset').hidden = CTX.preview;   // 预览期每次都按格子取高读正式版，清空对秒答无效 → 不提供
     $('btnResetYes').hidden = true; $('btnReset').textContent = '清空进度'; $('resetMsg').textContent = ''; $('ioPanel').hidden = true;
+    $('flashLog').hidden = !TEST; $('flashLog').textContent = '最近 10 次闪现实际毫秒：' + (FLASHLOG.join('、') || '还没有');
   }
-  $('parBack').addEventListener('click', () => { renderHome(); show('home'); });
+  $('segFlash').addEventListener('click', e => { const b = e.target.closest('[data-flash]'); if (!b) return; S.settings.flashMs = +b.dataset.flash; save(); renderParent(); });
+  $('segTol').addEventListener('click', e => {
+    const b = e.target.closest('[data-tol]'); if (!b) return;
+    if (b.dataset.tol === '1') S.settings.lineTol = Object.fromEntries(Object.entries(K.LINE_TOL).map(([k, v]) => [k, v * 1.5])); else delete S.settings.lineTol;
+    save(); renderParent();
+  });
+  $('parBack').addEventListener('click', goIsland);
   $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
-  $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }));
+  $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }, () => { renderParent(); show('parent'); }));
+  $('btnReplace').addEventListener('click', () => { delete S.placedAt; delete S.placement; save(); show('placeIntro'); });
   let ioKind = null;
   function openIO(kind) {
     ioKind = kind; $('ioPanel').hidden = false; $('ioMsg').textContent = '';
-    const out = kind === 'out' || kind === 'inkout';
-    $('ioTitle').textContent = out ? '把下面这段文字复制下来，存到备忘录里' : '把之前导出的文字粘贴到下面';
-    $('ioText').value = kind === 'out' ? C.exportText(S) : kind === 'inkout' ? JSON.stringify(INKS) : '';
+    const out = kind === 'out' || kind === 'inkout' || kind === 'broken';
+    $('ioTitle').textContent = out ? '把下面这段文字复制下来，存到备忘录里' : kind === 'all' ? '把之前导出的文字粘贴到下面（会整份替换现在的进度）' : '把之前导出的文字粘贴到下面';
+    $('ioText').value = kind === 'out' ? C.exportText(S) : kind === 'inkout' ? JSON.stringify(INKS) : kind === 'broken' ? (store.getItem(KEYS.broken) || '') : '';
     $('ioCopy').hidden = !out; $('ioApply').hidden = out;
+    $('ioApply').textContent = kind === 'all' ? '确认替换（会覆盖）' : '确认导入';
   }
   $('btnExport').addEventListener('click', () => openIO('out'));
   $('btnImport').addEventListener('click', () => openIO('in'));
+  $('btnImportAll').addEventListener('click', () => openIO('all'));
   $('btnInkOut').addEventListener('click', () => openIO('inkout'));
   $('btnInkIn').addEventListener('click', () => openIO('inkin'));
+  $('btnBrokenOut').addEventListener('click', () => { openIO('broken'); $('btnBrokenDel').hidden = false; });
+  $('btnBrokenDel').addEventListener('click', () => { C.dropBroken(store, CTX); location.reload(); });
   $('ioClose').addEventListener('click', () => { $('ioPanel').hidden = true; });
   $('ioCopy').addEventListener('click', () => {
-    const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } };
+    const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } if (ioKind === 'broken') $('btnBrokenDel').hidden = false; };
     navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; });
   });
   $('ioApply').addEventListener('click', () => {
@@ -758,12 +1459,64 @@ window.addEventListener('error', function (e) { var d = document.createElement('
       if (ioKind === 'inkin') {
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
         INKS = Object.assign(I.blankStore(), v); saveInk();
-      } else { const keep = S.testDays; S = C.importText($('ioText').value); S.testDays = keep; save(); }
+      } else {
+        const keep = S.testDays;
+        S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
+        S.testDays = keep; S.settings = S.settings || {}; save();
+      }
       $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
-  $('btnResetYes').addEventListener('click', () => { const keep = {oral: S.oral, testDays: S.testDays}; S = Object.assign(C.blank(), keep); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
+  $('btnResetYes').addEventListener('click', () => { S = C.resetProgress(S); S.settings = S.settings || {}; save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
+
+  // ---------- 12 异常 ----------
+  // 12a 暂停：切后台 / 来电 / 锁屏 / 竖过来。还没作答的题不记录，继续后原题重出（看数重新闪）；已判完的，继续后出下一题
+  function pauseQ() {
+    if (!Q || Q.paused || !['qplay', 'demo'].includes(cur)) return;
+    Q.paused = true; Q.redo = ['q', 'confirm', 'oral'].includes(Q.phase); Q.wasDemo = Q.phase === 'demo';
+    timers();
+  }
+  const portrait = () => window.matchMedia('(orientation: portrait) and (max-width: 700px)').matches;
+  function askResume() { if (Q && Q.paused && !document.hidden && !(portrait() && !S.oral)) $('ovPause').hidden = false; }
+  $('pauseGo').addEventListener('click', () => {
+    $('ovPause').hidden = true; if (!Q) return;
+    Q.paused = false;
+    if (Q.wasDemo) showDemo(Q.x.skill);
+    else if (Q.redo) showQuestion(Q.x);
+    else nextQ();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pauseQ();
+    else { checkSuperseded(); askResume(); }
+  });
+  window.matchMedia('(orientation: portrait) and (max-width: 700px)').addEventListener('change', () => { if (portrait() && !S.oral) pauseQ(); else askResume(); });
+  // 12b 另一个页面写了同一份进度或笔迹：这一页停下，不互相覆盖
+  window.addEventListener('storage', e => {
+    if (e.key === 'speedmap.v2' && CTX.preview) return checkSuperseded();
+    if (e.key !== KEYS.prog && e.key !== KEYS.ink) return;
+    frozen = true; pauseQ(); $('ovPause').hidden = true; $('ovTab').hidden = false;
+  });
+  $('tabGo').addEventListener('click', () => location.reload());
+  // 12f 正式版已上线：旧预览页停止写入
+  function checkSuperseded() { if (C.superseded(store, CTX)) { S.stopped = true; frozen = true; pauseQ(); $('ovNew').hidden = false; } }
+  // 12c 出错兜底
+  window.__crash = msg => { $('crashMsg').textContent = '给家长看：' + msg; $('ovCrash').hidden = false; };
+  $('crashGo').addEventListener('click', () => location.reload());
+
+  // 返回手势（"哨兵"写法）：第一次点按钮时压一条带标记的记录；右滑触发 popstate → 按当前页处理 → 再压回去
+  if (history.state && history.state.km) window.__armed = true;
+  document.addEventListener('pointerdown', () => { if (window.__armed) return; window.__armed = true; try { history.pushState({km: 1}, ''); } catch (e) {} }, true);
+  window.addEventListener('popstate', () => {
+    try { history.pushState({km: 1}, ''); } catch (e) {}
+    if (!$('ovPause').hidden || !$('ovTab').hidden || !$('ovNew').hidden || !$('ovCrash').hidden) return;
+    if (cur === 'qplay' || cur === 'demo') { $('qQuitHint').hidden = false; setTimeout(() => { $('qQuitHint').hidden = true; }, 1500); return; }
+    if (cur === 'play') { $('quitHint').hidden = false; setTimeout(() => { $('quitHint').hidden = true; }, 1500); return; }
+    if (cur === 'calib') return $('calBack').click();
+    if (cur === 'summary') return (renderSpeed(), show('home'));
+    if (cur === 'island' || cur === 'placeResult') return;
+    goIsland();
+  });
 
   // ---------- 测试模式（#test） ----------
   function showTestDay() { $('testDay').textContent = `模拟日期 ${today()}`; }
@@ -778,14 +1531,15 @@ window.addEventListener('error', function (e) { var d = document.createElement('
       else if (t === 'day0') S.testDays = 0;
       else if (t === 'w1y') setLv(w1, 1);
       else if (t === 'w1d') setLv(w1, 3);
-      else if (t === 'unsure') { forceUnsure = true; b.textContent = '已开启：下一题会问'; return; }
+      else if (t === 'unsure') { forceUnsure = true; qForceUnsure = true; b.textContent = '已开启：下一题会问'; return; }
       else if (t === 'mist') C.unitsOf(curL()).slice(0, 3).forEach(u => C.addMistake(S, C.inst({id: u.id}), C.addDays(today(), -1)));
-      else if (t === 'reset') { const keep = S.level; S = C.blank(); S.level = keep; }
-      save(); renderHome();
+      else if (t === 'reset') { const keep = S.level; S = C.blank(); S.level = keep; S.settings = {}; }
+      save(); renderIsland();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get INK() { return INKS; }, CTX, pad: playPad}; // 调试用
-  renderHome(); show('home');
+  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, CTX, E, K, R, LOAD, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
+  goIsland();
 })();
 </script>
 </body>

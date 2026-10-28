@@ -583,3 +583,13 @@ test('G6-11 上次练习日期也看 v1 的 last：旧 v1 页昨天练过的深�
   c.last = new Date(D(-1) + 'T15:00').toISOString();                    // 旧 v1 页只更新 last
   assert.ok(!play(S, D(0), () => ok).qs.some(x => x.inst.id === '3+4'));
 });
+
+test('G6-12 摸底判为"会"的技能不占"一天最多开始 3 个新技能"的名额：摸底后第一天全对的孩子练到 7 分钟以上（改前不到 2 分钟）', () => {
+  const S = C.blank(); S.placedAt = 1;
+  S.known = {look1: true, look2: true, look3: true, look4: true, bond1: true, bond2: true, cmp1: true};
+  const {s, qs} = play(S, D(0), () => ok);
+  const fresh = [...new Set(qs.filter(x => x.seg === 'new').map(x => K.ITEM[x.inst.id].skill))].filter(id => !S.known[id] && !K.BY[id].speed);
+  assert.ok(S.daily.fresh.every(id => !S.known[id]), '会的技能不记进今天新开始的');
+  assert.ok(fresh.length <= 3, fresh.join());
+  assert.ok(s.elapsed >= 400, '实际 ' + s.elapsed);
+});

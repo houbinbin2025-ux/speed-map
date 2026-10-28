@@ -179,7 +179,8 @@
       for (const s of u.slice(1).concat(sp.slice(1))) { if (front.length >= FRONT) break; front.push(s); }
       const chosen = [];
       for (const s of front.slice(0, FRONT)) {
-        if (!started(s.id) && !Dy.fresh.includes(s.id)) { if (Dy.fresh.length >= NEW_PER_DAY) continue; Dy.fresh.push(s.id); }
+        // 摸底判为"会"的技能不占"一天最多开始 3 个新技能"的名额（照常从灰开始学，通常一次就过）
+        if (!started(s.id) && !S.known[s.id] && !Dy.fresh.includes(s.id)) { if (Dy.fresh.length >= NEW_PER_DAY) continue; Dy.fresh.push(s.id); }
         chosen.push(s);
       }
       return chosen;
