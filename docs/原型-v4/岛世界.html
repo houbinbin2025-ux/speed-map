@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="../../v2/mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../v2/app-icon-180.png">
+<meta name="apple-mobile-web-app-title" content="空空数学岛">
 <title>空空岛 · 原型 v4</title>
 <style>
 :root{
@@ -74,15 +77,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .say.on{opacity:1;transform:translate(-50%,0)}
 #hero.jump{animation:jump .5s ease}
 @keyframes jump{30%{transform:translateY(-14px)}60%{transform:none}80%{transform:translateY(-5px)}}
-#sheet{position:absolute;z-index:6;left:50%;bottom:0;width:min(560px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:14px 16px 16px}
-#sheet.open{transform:translate(-50%,0)}
-#sheet h2{font-size:22px;font-weight:900;display:flex;align-items:center;gap:10px}
-#sheet h2 small{font-size:13px;color:var(--mute);font-weight:700}
-#sheet .x{position:absolute;right:8px;top:8px;width:44px;height:44px;font-size:22px;color:var(--mute)}
+#sheet,#box{position:absolute;z-index:6;left:50%;bottom:0;width:min(560px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:14px 16px 16px}
+#sheet.open,#box.open{transform:translate(-50%,0)}
+#sheet h2,#box h2{font-size:22px;font-weight:900;display:flex;align-items:center;gap:10px}
+#sheet h2 small,#box h2 small{font-size:13px;color:var(--mute);font-weight:700}
+#sheet .x,#box .x{position:absolute;right:8px;top:8px;width:44px;height:44px;font-size:22px;color:var(--mute)}
 #skills{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
-#skills span{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:2px solid #000;background:#2a2d34;font-size:14px;font-weight:700}
-#skills span i{width:14px;height:14px;border:2px solid #000;background:var(--lv0)}
-#skills span i.l1{background:var(--lv1)}#skills span i.l2{background:var(--lv2)}#skills span i.l3{background:var(--lv3)}
+#skills button{display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:2px solid #000;background:#2a2d34;font-size:14px;font-weight:700}
+#skills button i{width:14px;height:14px;border:2px solid #000;background:var(--lv0)}
+#skills button i.l1{background:var(--lv1)}#skills button i.l2{background:var(--lv2)}#skills button i.l3{background:var(--lv3)}
+#boxList{display:flex;flex-direction:column;gap:6px;margin:10px 0 12px}
+#boxList div{display:flex;align-items:center;gap:10px;min-height:38px;padding:4px 12px;border:2px solid #000;background:#2a2d34;font-size:16px;font-weight:700}
+#boxList div small{margin-left:auto;font-size:13px;color:var(--mute)}
+#boxList p{color:var(--mute);font-size:15px;margin:4px 0}
+#toast{position:fixed;left:50%;top:64px;z-index:40;transform:translate(-50%,-8px);background:#fff;color:#1b1d22;border:3px solid #000;padding:6px 14px;font-size:16px;font-weight:900;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.hold{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;background-image:linear-gradient(var(--warn),var(--warn));background-repeat:no-repeat;background-size:0 100%}
+.hold.down{background-size:100% 100%;transition:background-size 1s linear}
+#gear.hold.down{transition-duration:2s}
 .gobtn{height:56px;padding:0 22px;background:var(--go);color:var(--go-ink);border:3px solid #000;box-shadow:0 5px 0 #000;font-size:19px;font-weight:900}
 .gobtn.alt{background:#2a2d34;color:var(--ink)}
 .btns{display:flex;gap:10px}
@@ -115,9 +127,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .demo button{flex:1;height:40px;border:2px dashed var(--mute);font-size:13px;color:var(--mute)}
 .pr{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .pad{flex:1;position:relative;background:var(--paper);background-image:linear-gradient(var(--paper-line) 1px,transparent 1px);background-size:100% 48px;border:3px solid #000;box-shadow:0 5px 0 #000;border-radius:10px}
-.pad .hint{position:absolute;left:16px;top:12px;color:#b3a681;font-size:15px}
-.pad .ans{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-size:150px;font-weight:900;color:#2a2d34;opacity:0;transition:opacity .15s}
+#ink{position:absolute;inset:0;width:100%;height:100%;touch-action:none;border-radius:8px}
+.pad .hint{pointer-events:none;position:absolute;left:16px;top:12px;color:#b3a681;font-size:15px}
+.pad .ans{pointer-events:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-size:150px;font-weight:900;color:#2a2d34;opacity:0;transition:opacity .15s}
 .pad.ok .ans{opacity:1;color:#2f7d43}
+.pad.show .ans{opacity:1;color:#8a8d94}
 .pbtns{display:flex;gap:10px;justify-content:flex-end}
 .pbtns button{height:50px;padding:0 22px;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;font-weight:900;font-size:17px}
 .fly{position:fixed;z-index:30;width:30px;height:30px;border:3px solid #000;pointer-events:none}
@@ -157,12 +171,18 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div class="hud chip" id="brand"><img src="../../v2/mark.svg" alt="">空空数学岛</div>
   <div class="hud" id="topR">
     <button class="chip" id="btnChest"><canvas class="ico px" id="chestIco" width="12" height="10"></canvas>错题宝箱<span class="n">3</span></button>
-    <button class="chip" id="gear" aria-label="家长">⚙︎</button>
+    <button class="chip hold" id="gear" aria-label="家长">⚙︎</button>
   </div>
   <div class="hud" id="mini"></div>
   <div class="hud" id="hint">◀ 拖一拖，看看整座岛 ▶</div>
   <div id="say" class="say"></div>
   <button class="hud" id="start"><b>开始今天的探险</b><span id="startSub">还剩 5 分钟 · 先去分合矿洞</span></button>
+  <div id="box">
+    <button class="x" id="boxX" aria-label="关上">✕</button>
+    <h2><span id="boxName"></span><small id="boxCt"></small></h2>
+    <div id="boxList"></div>
+    <div class="btns"><button class="gobtn" id="boxGo">复习这些题</button></div>
+  </div>
   <div id="sheet">
     <button class="x" id="sheetX" aria-label="关上">✕</button>
     <h2><span id="shName"></span><small id="shCt"></small></h2>
@@ -175,7 +195,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <section id="play" class="screen off">
   <canvas id="playBg" class="px"></canvas>
   <div class="ptop">
-    <button class="quit" id="quit">长按结束</button>
+    <button class="quit hold" id="quit">长按结束</button>
     <div id="track"><div class="rail"></div><canvas class="goal px" id="goal" width="6" height="10"></canvas><canvas id="cart" class="px" width="12" height="10"></canvas></div>
     <div id="mined"><i id="minedIco"></i><span id="minedN">0</span></div>
   </div>
@@ -187,8 +207,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="demo"><button id="dOk">原型：答对</button><button id="dBad">原型：答错</button></div>
     </div>
     <div class="pr">
-      <div class="pad" id="pad"><span class="hint">写在这里</span><span class="ans" id="ans">14</span><span class="okpop" id="okpop">对啦！</span></div>
-      <div class="pbtns"><button>擦掉</button><button>不会</button></div>
+      <div class="pad" id="pad"><canvas id="ink"></canvas><span class="hint">写在这里</span><span class="ans" id="ans">14</span><span class="okpop" id="okpop">对啦！</span></div>
+      <div class="pbtns"><button id="erase">擦掉</button><button id="dunno">不会</button></div>
     </div>
   </div>
 </section>
@@ -207,7 +227,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   </div>
 </section>
 <div id="fade"></div>
-<div class="tag">原型 v4 · 假数据 · 左右拖动岛</div>
+<div id="toast"></div>
+<div class="tag">原型 v4 · 假数据 · 写完自动算对</div>
 
 <script>
 'use strict';
@@ -415,7 +436,7 @@ vp.addEventListener('pointermove', e => {
 vp.addEventListener('pointerup', e => {
   if (!drag) return; vp.classList.remove('drag');
   const d = drag; drag = null;
-  if (d.moved < 8 && performance.now() - d.t0 < 400) { tapWorld(e.clientX, e.clientY); if (camX < 0 || camX > maxX) glide(0); return; }
+  if (d.moved < 14 && performance.now() - d.t0 < 700) { tapWorld(e.clientX, e.clientY); if (camX < 0 || camX > maxX) glide(0); return; }
   const a = d.s[0], b = d.s[d.s.length - 1], v = b[0] - a[0] > 0 ? -(b[1] - a[1]) / (b[0] - a[0]) : 0;
   glide(Math.max(-4, Math.min(4, v)));
 });
@@ -424,7 +445,7 @@ vp.addEventListener('wheel', e => { e.preventDefault(); stopAnim(); setCam(Math.
 
 function zoneAt(artX) { let best = null; ZONES.forEach(z => { if (Math.abs(z.x - artX) < 62 && (!best || Math.abs(z.x - artX) < Math.abs(best.x - artX))) best = z; }); return best; }
 function tapWorld(cx, cy) {
-  if ($('sheet').classList.contains('open')) { closeSheet(); return; }
+  if ($('sheet').classList.contains('open') || $('box').classList.contains('open')) { closeSheet(); closeBox(); return; }
   const ax = (camX + cx) / P, ay = cy / P;
   if (ax > hero.x - 3 && ax < hero.x + 11 && ay > surf(hero.x + 4) - 18) { heroSay('今天去分合矿洞挖矿吧！'); return; }
   const z = zoneAt(ax); if (z) focusZone(z);
@@ -437,13 +458,46 @@ function heroSay(t) {
 let cur = null;
 function focusZone(z) {
   cur = z; panTo(centerOf(z));
-  if (!z.lv) { closeSheet(); return; }
+  if (!z.lv) { closeSheet(); toast(z.id === 'home' ? '空空的家' : z.name); return; }
   $('shName').textContent = z.name; $('shCt').textContent = z.ct;
-  $('skills').innerHTML = (SKILLS[z.id] || []).map((n, i) => `<span><i class="l${z.lv[i] || 0}"></i>${n}</span>`).join('');
+  $('skills').innerHTML = (SKILLS[z.id] || []).map((n, i) => `<button><i class="l${z.lv[i] || 0}"></i>${n}</button>`).join('');
   $('sheet').classList.add('open'); $('start').style.visibility = 'hidden'; $('mini').style.visibility = 'hidden';
 }
 function closeSheet() { $('sheet').classList.remove('open'); $('start').style.visibility = ''; $('mini').style.visibility = ''; }
 $('sheetX').addEventListener('click', closeSheet);
+$('skills').addEventListener('click', e => { if (e.target.closest('button') && cur) go(cur); });
+function toast(t) { const s = $('toast'); s.textContent = t; s.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => s.classList.remove('on'), 1600); }
+
+// 错题宝箱 / 这里的错题（假数据）
+const MIST = [{z: 'bond', q: '7 和几凑成 10', d: '昨天'}, {z: 'bond', q: '13 − 5', d: '2 天前'}, {z: 'look', q: '两个十格框 · 14', d: '3 天前'}];
+let boxZone = null;
+function openBox(z) {
+  closeSheet(); const list = z ? MIST.filter(m => m.z === z.id) : MIST; boxZone = list.length ? ZONES.find(q => q.id === list[0].z) : null;
+  $('boxName').textContent = z ? z.name + ' · 错题' : '错题宝箱'; $('boxCt').textContent = list.length + ' 题';
+  $('boxList').innerHTML = list.length ? list.map(m => `<div>${m.q}<small>${m.d}</small></div>`).join('') : '<p>这里还没有错题</p>';
+  $('boxGo').style.display = list.length ? '' : 'none';
+  $('box').classList.add('open'); $('start').style.visibility = 'hidden'; $('mini').style.visibility = 'hidden';
+}
+function closeBox() { $('box').classList.remove('open'); $('start').style.visibility = ''; $('mini').style.visibility = ''; }
+$('btnChest').addEventListener('click', () => openBox(null));
+$('shMist').addEventListener('click', () => cur && openBox(cur));
+$('boxX').addEventListener('click', closeBox);
+$('boxGo').addEventListener('click', () => { closeBox(); if (boxZone) go(boxZone); });
+
+// 按住才生效的按钮（结束练习 1 秒、家长区 2 秒）；只点一下给提示
+function holdBtn(el, ms, tip, fn) {
+  let t = null, fired = false;
+  const up = () => { clearTimeout(t); t = null; el.classList.remove('down'); };
+  el.addEventListener('pointerdown', e => { fired = false; el.classList.add('down'); t = setTimeout(() => { fired = true; up(); fn(); }, ms); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => el.addEventListener(k, up));
+  el.addEventListener('click', () => { if (!fired) toast(tip); });
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
+holdBtn($('gear'), 2000, '家长区：按住 2 秒', () => {
+  closeSheet(); $('boxName').textContent = '家长区'; $('boxCt').textContent = '原型';
+  $('boxList').innerHTML = '<p>正式版这里是：本周练习天数和时长、备份进度、设置。</p>'; $('boxGo').style.display = 'none';
+  $('box').classList.add('open'); $('start').style.visibility = 'hidden'; $('mini').style.visibility = 'hidden';
+});
 
 // 小地图
 $('mini').innerHTML = ZONES.map(z => `<button data-z="${z.id}" class="${z.today ? 'today' : ''}"><i style="background:${z.icon}"></i><span>${z.short}</span></button>`).join('');
@@ -481,7 +535,7 @@ function sceneBg(cv, z) { // 背景 = 岛上这一块地方的像素画
 function startPlay(z) {
   sceneBg($('playBg'), z); mined = 0; asked = 0; $('minedN').textContent = 0; $('cart').style.left = '0px';
   $('tfs').innerHTML = [10, 4].map(n => `<div class="tf">${Array.from({length: 10}, (_, i) => `<i>${i < n ? '<b></b>' : ''}</i>`).join('')}</div>`).join('');
-  show('play');
+  show('play'); inkSize(); inkClear();
   const q = $('qcard'), fig = q.querySelector('.qfig'); fig.style.zoom = ''; const k = (q.clientWidth - 34) / fig.firstElementChild.offsetWidth; if (k < 1) fig.style.zoom = k.toFixed(3);
 }
 function answer(ok) {
@@ -501,7 +555,17 @@ function answer(ok) {
 }
 $('dOk').addEventListener('click', () => answer(true));
 $('dBad').addEventListener('click', () => answer(false));
-$('quit').addEventListener('click', endPlay);
+holdBtn($('quit'), 1000, '按住 1 秒结束', endPlay);
+
+// 写字板：真的能写；写完停 0.9 秒算交卷（原型里一律算对，正式版用 v2 的手写识别）
+const ink = $('ink'), ig = ink.getContext('2d'); let pen = null, strokes = 0, inkT = null;
+function inkSize() { const r = ink.getBoundingClientRect(), d = devicePixelRatio || 1; ink.width = r.width * d; ink.height = r.height * d; ig.setTransform(d, 0, 0, d, 0, 0); ig.lineWidth = 9; ig.lineCap = ig.lineJoin = 'round'; ig.strokeStyle = '#2a2d34'; }
+function inkClear() { ig.clearRect(0, 0, ink.width, ink.height); strokes = 0; clearTimeout(inkT); $('pad').querySelector('.hint').style.opacity = ''; }
+ink.addEventListener('pointerdown', e => { clearTimeout(inkT); ink.setPointerCapture(e.pointerId); const r = ink.getBoundingClientRect(); pen = [e.clientX - r.left, e.clientY - r.top]; ig.beginPath(); ig.moveTo(...pen); ig.lineTo(pen[0] + .1, pen[1]); ig.stroke(); $('pad').querySelector('.hint').style.opacity = 0; });
+ink.addEventListener('pointermove', e => { if (!pen) return; const r = ink.getBoundingClientRect(), q = [e.clientX - r.left, e.clientY - r.top]; ig.beginPath(); ig.moveTo(...pen); ig.lineTo(...q); ig.stroke(); pen = q; });
+['pointerup', 'pointercancel'].forEach(k => ink.addEventListener(k, () => { if (!pen) return; pen = null; strokes++; clearTimeout(inkT); inkT = setTimeout(() => { inkClear(); answer(true); }, 900); }));
+$('erase').addEventListener('click', inkClear);
+$('dunno').addEventListener('click', () => { inkClear(); const p = $('pad'); p.classList.add('show'); setTimeout(() => { p.classList.remove('show'); answer(false); }, 1200); });
 
 // ---------- 结算 ----------
 function endPlay() {
