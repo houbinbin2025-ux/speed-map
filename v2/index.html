@@ -179,6 +179,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
 .tf{display:grid;grid-template-columns:repeat(5,40px);gap:3px;background:#000;border:3px solid #000;width:max-content}
 .tf .cell{height:40px;background:var(--paper);display:flex;align-items:center;justify-content:center}
 .tfs{display:flex;gap:12px;align-items:flex-end}
+#qplay .ql .tfs{gap:10px}#qplay .ql .tfs .tf{grid-template-columns:repeat(5,27px)}#qplay .ql .tfs .tf .cell{height:27px}#qplay .ql .tfs .dot{width:20px;height:20px}
 .dice{display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:4px;padding:10px;background:var(--paper);border:3px solid #000;border-radius:14px;width:max-content}
 .dice i{display:flex;align-items:center;justify-content:center}
 .dice .dot,.scat .dot{width:34px;height:34px}
@@ -1077,6 +1078,15 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? Q.n / 12 : 0;
     [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
   }
+  // 题面区兜底：内容比左栏宽 / 高就整体缩小，不钻到写字板下面
+  function fitBody() {
+    const b = $('qBody'); b.style.zoom = '';
+    if (b.hidden || !b.clientWidth) return;
+    const k = Math.min(1, b.clientWidth / b.scrollWidth, b.clientHeight / b.scrollHeight);
+    if (k < 0.99) b.style.zoom = Math.max(0.5, k).toFixed(3);
+  }
+  new MutationObserver(fitBody).observe($('qBody'), {childList: true});
+  addEventListener('resize', fitBody);
   function showQuestion(x) {
     const inst = x.inst, v = R.question(inst);
     Object.assign(Q, {v, phase: 'q', peeked: false, oralWrong: false, wasLv: E.lv(S, inst.id), shownAt: performance.now(), t0: performance.now(), val: null});
@@ -1545,7 +1555,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
       save(); renderIsland();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, CTX, E, K, R, LOAD, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();
