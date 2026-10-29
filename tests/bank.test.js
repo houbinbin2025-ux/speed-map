@@ -182,7 +182,8 @@ test('发牌进度跟着存档走：发到一半关掉重开（存档序列化�
   });
   C.useDecks({});
 });
-test('比大小答错图解：两个数挨得近时，标签不叠在一起（只画那几个十，太近就把小的标到上一层）', () => {
+test('比大小、前后数答错图解：两个数挨得近时，标签不叠在一起（只画那几个十，太近就把左边的标到上一层）', () => {
+  [[35, -1], [39, 1], [47, 10]].forEach(([n, d]) => { const h = R.explain({id: d === 1 ? 'cmp:t:p1' : d === -1 ? 'cmp:t:m1' : 'cmp:t:p10', q: {n, d}, ans: n + d}); if (Math.abs(d) === 1) assert.ok(/mk [a-z]* ?up|mk up|class="mk from up"|class="mk win up"/.test(h), `${n}${d > 0 ? '+' : ''}${d} 两个数没错开`); });
   [[21, 17], [44, 45], [12, 13], [98, 89], [3, 4]].forEach(([a, b]) => {
     const h = R.explain({id: a > 20 || b > 20 ? 'cmp:t:100' : a > 10 || b > 10 ? 'cmp:t:20' : 'cmp:t:10', q: {a, b}, ans: Math.max(a, b)});
     const ends = [...h.matchAll(/class="end [lr]">(\d+)</g)].map(m => +m[1]), lo = Math.min(a, b), hi = Math.max(a, b);
@@ -194,10 +195,10 @@ test('比大小答错图解：两个数挨得近时，标签不叠在一起（�
 test('示范卡用固定例题：前面出过什么题都不影响', () => {
   const a = R.demo('cmp3'); for (let i = 0; i < 7; i++) K.make('cmp:t:100', Math.random); assert.strictEqual(R.demo('cmp3'), a);
 });
-test('页面按 bank → core → ink → skills → engine → render 的顺序加载；没有题库时 core 明确报错', () => {
+test('页面按 bank → core → ink → skills → engine → render → world 的顺序加载；没有题库时 core 明确报错', () => {
   const html = require('fs').readFileSync(require('path').join(__dirname, '../v2/index.html'), 'utf8');
   const order = [...html.matchAll(/<script src="([a-z]+)\.js\?v=\d+"><\/script>/g)].map(m => m[1]);
-  assert.deepStrictEqual(order, ['bank', 'core', 'ink', 'skills', 'engine', 'render']);
+  assert.deepStrictEqual(order, ['bank', 'core', 'ink', 'skills', 'engine', 'render', 'world']);
   const src = require('fs').readFileSync(require('path').join(__dirname, '../v2/core.js'), 'utf8'), sandbox = {};
   assert.throws(() => new Function('self', 'module', src)(sandbox, undefined), /题库 bank\.js 没有加载/);
 });

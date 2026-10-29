@@ -15,10 +15,11 @@ with sync_playwright() as p:
     t0 = time.time(); pg.reload(); pg.wait_for_selector('#btnStart:visible'); load_ms = (time.time() - t0) * 1000
     nav = pg.evaluate("(() => { const n = performance.getEntriesByType('navigation')[0]; return Math.round(n.domInteractive); })()")
     # 页面切换：点技能组 → 地图出现；点回到岛上 → 首页出现（页面里计时）
-    sw = pg.evaluate("""async () => { const out = []; for (const [a, b] of [['.tile[data-g=\"bond\"]', 'skillmap'], ['#smBack', 'island'], ['#btnMist', 'mist'], ['#mistBack', 'island']]) {
+    pg.click('.w-mini button[data-z="bond"]'); pg.wait_for_timeout(600)   # 先点开分合矿洞的卡片
+    sw = pg.evaluate("""async () => { const out = []; for (const [a, b] of [['#zMap', 'skillmap'], ['#smBack', 'island'], ['#btnMist', 'mist'], ['#mistBack', 'island']]) {
         const t = performance.now(); document.querySelector(a).click(); await new Promise(r => requestAnimationFrame(() => r())); if (document.getElementById(b).hidden) out.push('没切过去 ' + b); out.push(Math.round(performance.now() - t)); } return out; }""")
     # 判题：比大小点选，从点下到反馈出来
-    pg.click('.tile[data-g="cmp"]'); pg.click('#smGo'); pg.wait_for_timeout(300)
+    pg.click('.w-mini button[data-z="cmp"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.wait_for_timeout(2400)
     if pg.evaluate("!document.getElementById('demo').hidden"):
         pg.wait_for_timeout(3200); pg.click('#ack'); pg.wait_for_timeout(200)
     j = pg.evaluate("""async () => { const Q = window.__sm.Q; const v = Q.v; if (v.input !== 'pick') return 'not pick ' + v.input;
@@ -42,5 +43,5 @@ with sync_playwright() as p:
     pg.screenshot(path=str(out / 'g3-newversion.png'))
     nv = pg.evaluate("!document.getElementById('ovNew').hidden"); pre = pg.evaluate("localStorage.getItem('speedmap.v2.preview')")
     b.close()
-size = sum((root / 'v2' / f).stat().st_size for f in ['index.html', 'bank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'mark.svg'])
+size = sum((root / 'v2' / f).stat().st_size for f in ['index.html', 'bank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'world.js', 'mark.svg'])
 print(json.dumps({'打开到可点击_毫秒': round(load_ms), 'domInteractive_毫秒': nav, '页面切换_毫秒': sw, '点选判题到反馈_毫秒': j, '存不了进度提示条': nosave, '新版提示': nv, '预览键被写入': pre is not None, '页面总大小_KB': round(size / 1024, 1), '错误': errs[:5]}, ensure_ascii=False, indent=1))

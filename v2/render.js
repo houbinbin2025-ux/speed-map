@@ -153,8 +153,7 @@
         const lo = Math.min(q.a, q.b), hi = Math.max(q.a, q.b);
         // 两位数：只画这两个数所在的那几个十（例：17 和 21 → 10—30），挨得近也分得开；还是太近（< 14%）就把小的那个数标到上面一层
         const [L0, L1] = hi <= 10 ? [0, 10] : hi <= 20 ? [0, 20] : [Math.floor(lo / 10) * 10, Math.floor(hi / 10) * 10 + 10];
-        const near = (hi - lo) / (L1 - L0) < 0.14;
-        return pack(`<div class="cards2"><b class="${q.a === hi ? 'win' : ''}">${q.a}</b><b class="${q.b === hi ? 'win' : ''}">${q.b}</b></div>${miniLine(L0, L1, [[lo, near ? 'up' : ''], [hi, 'win']])}`, `${hi} 在 ${lo} 的右边，${hi} 大`);
+        return pack(`<div class="cards2"><b class="${q.a === hi ? 'win' : ''}">${q.a}</b><b class="${q.b === hi ? 'win' : ''}">${q.b}</b></div>${miniLine(L0, L1, [[lo, ''], [hi, 'win']])}`, `${hi} 在 ${lo} 的右边，${hi} 大`);
       }
       const from = q.n, to = q.n + q.d, big = Math.abs(q.d) === 10;
       const lo = big ? Math.floor(Math.min(from, to) / 10) * 10 : Math.min(from, to) - 4, hi = big ? lo + 20 : Math.max(from, to) + 4;
@@ -169,7 +168,8 @@
     const step = hi - lo <= 20 ? 1 : 10, ticks = [];
     for (let v = lo; v <= hi; v += step) ticks.push(`<i class="tick" style="left:${pos(v)}%"></i>`);
     const arc = jump && marks.length === 2 ? `<svg class="arc" style="left:${Math.min(pos(marks[0][0]), pos(marks[1][0]))}%;width:${Math.abs(pos(marks[1][0]) - pos(marks[0][0]))}%" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="M1 29 Q50 -8 99 29" vector-effect="non-scaling-stroke"></path></svg>` : '';
-    return `<div class="mline"><i class="mbar"></i>${ticks.join('')}${arc}${marks.map(([v, c]) => `<b class="mk ${c}" style="left:${pos(v)}%">${v}</b>`).join('')}<span class="end l">${lo}</span><span class="end r">${hi}</span></div>`;
+    const close = marks.length === 2 && Math.abs(marks[0][0] - marks[1][0]) / (hi - lo) < 0.14, left = close ? Math.min(marks[0][0], marks[1][0]) : null;
+    return `<div class="mline"><i class="mbar"></i>${ticks.join('')}${arc}${marks.map(([v, c]) => `<b class="${['mk', c, v === left ? 'up' : ''].filter(Boolean).join(' ')}" style="left:${pos(v)}%">${v}</b>`).join('')}<span class="end l">${lo}</span><span class="end r">${hi}</span></div>`;
   }
   // 数线答错的那句话：差一个合格范围以内说"一点"
   function lineHint(target, given, tol) {

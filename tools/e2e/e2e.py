@@ -77,14 +77,14 @@ with sync_playwright() as p:
     pg.click('#qsHome'); pg.wait_for_timeout(300); shot(pg, '09-island-after')
     # 技能组地图 5 个
     for g in ['look', 'bond', 'place', 'cmp', 'line']:
-        pg.click(f'.tile[data-g="{g}"]'); pg.wait_for_timeout(150); shot(pg, f'10-map-{g}'); pg.click('#smBack')
-    pg.click('.tile[data-g="speed"]'); pg.wait_for_timeout(200); shot(pg, '11-speedmap'); pg.click('#spBack')
+        pg.click(f'.w-mini button[data-z="{g}"]'); pg.wait_for_timeout(600); pg.click('#zMap'); pg.wait_for_timeout(150); shot(pg, f'10-map-{g}'); pg.click('#smBack')
+    pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.wait_for_timeout(200); shot(pg, '11-speedmap'); pg.click('#spBack')
     pg.click('#btnMist'); pg.wait_for_timeout(200); shot(pg, '12-mist'); pg.click('#mistBack')
     bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
     shot(pg, '13-parent'); pg.click('#parBack')
     # 异常：暂停（切后台）、另一个页面、出错兜底
     pg.click('#btnStart') if vis(pg, 'btnStart') else pg.click('#btnMore') if vis(pg, 'btnMore') else None
-    pg.wait_for_timeout(500)
+    pg.wait_for_timeout(2200)   # 小人先走过去再进练习
     pg.evaluate("Object.defineProperty(document, 'hidden', {configurable: true, get: () => true}); document.dispatchEvent(new Event('visibilitychange'))")
     pg.evaluate("Object.defineProperty(document, 'hidden', {configurable: true, get: () => false}); document.dispatchEvent(new Event('visibilitychange'))")
     pg.wait_for_timeout(200); shot(pg, '14-pause')

@@ -1,6 +1,6 @@
-// 改了 v2/ 下任何一个脚本以后跑：node tools/bump-version.js → 6 个 ?v= 一起加 1，指纹改成新的（npm test 会检查）
+// 改了 v2/ 下任何一个脚本以后跑：node tools/bump-version.js → 7 个 ?v= 一起加 1，指纹改成新的（npm test 会检查）
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
-const dir = path.join(__dirname, '../v2'), FILES = ['bank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js'];
+const dir = path.join(__dirname, '../v2'), FILES = ['bank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'world.js'];
 const file = path.join(dir, 'index.html');
 let html = fs.readFileSync(file, 'utf8');
 const fp = crypto.createHash('sha256').update(FILES.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('')).digest('hex').slice(0, 12);

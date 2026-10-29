@@ -81,7 +81,7 @@ with sync_playwright() as p:
     pg.on('console', lambda m: m.type == 'error' and errs.append('console ' + m.text))
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(300)
     shot(pg, 'a1-island')
-    pg.click('#btnStart'); pg.wait_for_timeout(300); shot(pg, 'a2-calib')
+    pg.click('#btnStart'); pg.wait_for_timeout(2200); shot(pg, 'a2-calib')   # 小人先走到今天的地方（约 1.5 秒）再进
     for d in range(10):
         for r in range(3):
             draw(pg, '#calPad', str(d)); pg.wait_for_timeout(1050)
@@ -110,7 +110,7 @@ with sync_playwright() as p:
     bb = pg.locator(btn).bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up(); pg.wait_for_timeout(300)
     shot(pg, 'c3-qsum'); pg.click('#qsHome'); pg.wait_for_timeout(200)
     # 自由加练：比大小
-    pg.click('.tile[data-g="cmp"]'); pg.click('#smGo'); pg.wait_for_timeout(300)
+    pg.click('.w-mini button[data-z="cmp"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.wait_for_timeout(2400)   # 点比大小双塔 → 练这一块（小人走过去）
     k2, r2 = run(pg, 14, 'd', wrong_every=3)
     pg.wait_for_timeout(500); shot(pg, 'd9-freesum'); print('自由加练', k2, r2, cur(pg))
     if cur(pg) == 'qsum': pg.click('#qsHome')
@@ -119,7 +119,7 @@ with sync_playwright() as p:
     bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
     shot(pg, 'e1-parent'); pg.click('#parBack')
     # v2 秒答练习照常能用
-    pg.click('.tile[data-g="speed"]'); pg.click('[data-series="add"]'); pg.wait_for_timeout(400)
+    pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.click('[data-series="add"]'); pg.wait_for_timeout(400)
     for i in range(3):
         q = pg.evaluate("window.__sm.P && window.__sm.P.deck[window.__sm.P.i]")
         draw(pg, '#pad', str(q['ans'])); pg.wait_for_timeout(2200)
