@@ -683,7 +683,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v24:09b3c8f55a13 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v28:26fb93e6bc03 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -693,13 +693,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=24"></script>
-<script src="core.js?v=24"></script>
-<script src="ink.js?v=24"></script>
-<script src="skills.js?v=24"></script>
-<script src="engine.js?v=24"></script>
-<script src="render.js?v=24"></script>
-<script src="world.js?v=24"></script>
+<script src="bank.js?v=28"></script>
+<script src="core.js?v=28"></script>
+<script src="ink.js?v=28"></script>
+<script src="skills.js?v=28"></script>
+<script src="engine.js?v=28"></script>
+<script src="render.js?v=28"></script>
+<script src="world.js?v=28"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1212,7 +1212,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function startQ(kind, opts) {
     const day = today();
     const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : E.placement(S, day);
-    Q = {kind, opts: opts || {}, sess, day, ups: [], passed: 0, n: 0, wrong: 0, secs: 0, picks: [], pickDelay: 0, mist0: Object.keys(S.mistakes).length,
+    Q = {kind, opts: opts || {}, sess, day, ups: [], passed: 0, n: 0, retries: 0, wrong: 0, secs: 0, picks: [], pickDelay: 0, mist0: Object.keys(S.mistakes).length,
       before: kind === 'place' ? Object.fromEntries(R.GROUPS.map(g => [g.id, R.groupStat(S, g.id).lit])) : null};
     try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => Q && (Q.lock = l)).catch(() => {}); } catch (e) {}
     clearInterval(Q.tick); Q.tick = setInterval(qBar, 500);
@@ -1234,7 +1234,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function qBar() {
     if (!Q) return;
     const run = Q.phase === 'q' && !Q.paused ? (performance.now() - Q.shownAt) / 1000 : 0;
-    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? Q.n / 12 : 0;
+    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? (Q.n - Q.retries) / 12 : 0;   // 自由加练：12 题，当场再来一次不算
     [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
   }
   // 题面区兜底：内容比左栏宽 / 高就整体缩小，不钻到写字板下面
@@ -1252,7 +1252,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     show('qplay');
     const wide = v.input !== 'write';
     $('qplay').classList.toggle('wide', wide);
-    $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : v.tag;
+    $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : Q.x.retry ? v.tag + ' · 再来一次' : v.tag;
     $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : v.note || '';
     $('qBody').innerHTML = v.html; $('qBody').hidden = false;
     $('qWide').hidden = !wide; $('qWide').innerHTML = '';
@@ -1388,7 +1388,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? OK_MS : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked}) || {pass: r.ok, up: false};
-    Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++;
+    Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
     if (x.seg === 'review' && out.pass) Q.passed++;
     save();
@@ -1399,7 +1399,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     }
     const v = Q.v;
     if (r.ok) {
-      const w = R.okWords(inst, out, Q.wasLv), q0 = Q, n0 = Q.ore++;
+      const w0 = R.okWords(inst, out, Q.wasLv), w = x.retry ? {big: w0.big, small: '明天再考你一次'} : w0, q0 = Q, n0 = Q.ore++;
       WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
       if (v.input === 'line') drawTarget(true);
       $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
@@ -1409,7 +1409,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       Q.nextT = setTimeout(nextQ, OK_MS); return;
     }
     // 答错：先说清楚错在哪（你写的 / 点的是几），再图解；写错的题进错题宝箱，明天再来
-    const inBox = Object.values(S.mistakes || {}).some(m => m.uid === inst.id && m.due !== null && m.due > today());
+    const inBox = Object.values(S.mistakes || {}).some(m => m.uid === inst.id && m.due !== null && m.due > Q.day);   // 用这次练习的日子：练到过了午夜也不写错
     $('qNote').textContent = inBox ? '已放进错题宝箱，明天再来' : '记住它，下次再来';
     const bad = r.dunno ? '<div class="badline">没关系，记住它</div>'
       : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${r.typed}</s></div>`

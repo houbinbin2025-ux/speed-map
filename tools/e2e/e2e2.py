@@ -111,7 +111,7 @@ with sync_playwright() as p:
     shot(pg, 'c3-qsum'); pg.click('#qsHome'); pg.wait_for_timeout(200)
     # 自由加练：比大小
     pg.click('.w-mini button[data-z="cmp"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.wait_for_timeout(2400)   # 点比大小双塔 → 练这一块（小人走过去）
-    k2, r2 = run(pg, 14, 'd', wrong_every=3)
+    k2, r2 = run(pg, 20, 'd', wrong_every=3)   # 12 题 + 写错的当场再来一次（10-29 起）
     pg.wait_for_timeout(500); shot(pg, 'd9-freesum'); print('自由加练', k2, r2, cur(pg))
     if cur(pg) == 'qsum': pg.click('#qsHome')
     # 家长区

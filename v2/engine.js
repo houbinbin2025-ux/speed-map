@@ -146,6 +146,33 @@
       return i < 0 ? null : list.splice(i, 1)[0];
     };
   }
+  // 当场再来一次（连续再学习）：写错的题隔 RETRY_GAP 题原题（同样的数）再出一次；错题明天照样回来。
+  // 只有原来还是灰格的卡，再来一次做对才照常记合格（= 当天第二次机会，能点亮淡黄 = 第 1 天达标）；
+  // 已点亮的格子、题型（同样的数）再来一次只算练习（按「再看一次」处理），不升级、不进 8 次窗口——淡红 / 深红必须是隔天真的还会。
+  // 不计入「今天做得好就多学新的」的合格率。算这题今天出过的次数（卡 2、题型 6），出满了不再来；一题一天只再来一次。
+  // 防扎堆：最多连着出 RUN_MAX 道再来一次就先出别的；题出完了的收尾只出离原题至少隔 1 题的、最多 TAIL_MAX 道，其余留给明天的错题宝箱
+  const RETRY_GAP = 3, TAIL_MAX = 3, RUN_MAX = 2;
+  function retrier(S, once, room) {
+    const wait = []; let n = 0, tail = 0, run = 0;
+    return {
+      answered(x, res) {
+        n++; run = x.retry ? run + 1 : 0;
+        if (!res.ok && !x.retry && !once[x.inst.id] && room(x.inst.id)) {
+          once[x.inst.id] = 1;
+          wait.push({at: n + RETRY_GAP, x: {kind: 'q', inst: x.inst, seg: x.seg, retry: true, credit: kindOf(x.inst.id) === 'card' && lv(S, x.inst.id) === 0}});
+        }
+      },
+      due(atEnd) {
+        for (let i = wait.length - 1; i >= 0; i--) if (!room(wait[i].x.inst.id)) wait.splice(i, 1);   // 已经正常出满了：不再来
+        if (atEnd ? tail >= TAIL_MAX : run >= RUN_MAX) return null;
+        const i = wait.findIndex(w => w.at <= n || (atEnd && n - (w.at - RETRY_GAP) >= 1));
+        if (i < 0) return null;
+        if (atEnd) tail++;
+        return wait.splice(i, 1)[0].x;
+      },
+    };
+  }
+  const asRetry = (x, res) => (x.retry && !x.credit ? Object.assign({}, res, {peeked: true}) : res);
   // 题型被选中出好几题，和别的题交错：按轮次铺开
   function spreadOut(lists) {
     const out = [];
@@ -164,6 +191,7 @@
     if (opts.extra && Dy.done) { Dy.budget = Dy.sec + opts.extra; Dy.done = false; Dy.seg = null; Dy.reviewEnd = null; }
     const recent = [], pick = picker(S, Dy.asked, recent), room = id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)];
     let cur = null, queue = [], pending = [];
+    const RT = retrier(S, Dy.retried = Dy.retried || {}, room);
     Dy.seg = Dy.seg || 'review';
     const started = sid => K.BY[sid].items.some(it => peek(S, it.id).seen > 0);
     // 学新的：同时最多 2 个技能（理解技能和秒答各占一个，缺一类时另一类补）；一天最多开始 3 个从没练过的技能
@@ -237,8 +265,10 @@
       get elapsed() { return Dy.sec; }, get done() { return Dy.done; }, get tally() { return Dy.tally; },
       next() {
         if (pending.length) { cur = pending.shift(); return cur; }
+        if (Dy.sec < Dy.budget) { const rt = RT.due(false); if (rt) { cur = rt; return cur; } }
         for (let guard = 0; guard < 6; guard++) {
-          if (Dy.sec >= Dy.budget || !advance()) { Dy.done = true; cur = null; return null; }
+          if (Dy.sec >= Dy.budget) { Dy.done = true; cur = null; return null; }
+          if (!advance()) { const rt = RT.due(true); if (rt) { cur = rt; return cur; } Dy.done = true; cur = null; return null; }
           const x = pick(queue);
           if (!x) { queue = []; continue; }
           const sid = K.ITEM[x.inst.id].skill;
@@ -255,9 +285,10 @@
       answer(res) {
         if (!cur || cur.kind !== 'q') return null;
         const x = cur; cur = null;
-        Dy.asked[x.inst.id] = (Dy.asked[x.inst.id] || 0) + 1; recent.push(K.ITEM[x.inst.id].skill);
-        const out = settle(S, x, res, day, sec => { Dy.sec += sec; });
-        if (!out.peeked) { Dy.tally.n++; if (out.pass) Dy.tally.pass++; }
+        Dy.asked[x.inst.id] = (Dy.asked[x.inst.id] || 0) + 1;
+        recent.push(K.ITEM[x.inst.id].skill); RT.answered(x, res);
+        const out = settle(S, x, asRetry(x, res), day, sec => { Dy.sec += sec; });
+        if (!out.peeked && !x.retry) { Dy.tally.n++; if (out.pass) Dy.tally.pass++; }
         if (Dy.sec >= Dy.budget) Dy.done = true;
         return out;
       },
@@ -286,13 +317,13 @@
     const order = items.slice().sort((a, b) => (ready(S, b.s.id) - ready(S, a.s.id)) || (lv(S, a.it.id) - lv(S, b.it.id)) || lastSeen(peek(S, a.it.id)).localeCompare(lastSeen(peek(S, b.it.id))));
     const queue = mist.concat(spreadOut(order.map(({it}) => Array.from({length: REP[kindOf(it.id)]}, () => ({inst: K.make(it.id, r), seg: lv(S, it.id) === 0 ? 'new' : 'fluency'})))));
     let cur = null, count = 0;
-    const pending = [];
+    const pending = [], room = id => (asked[id] || 0) < MAXPER[kindOf(id)], RT = retrier(S, {}, room);
     return {
       next() {
         if (pending.length) { cur = pending.shift(); return cur; }
-        if (count >= n) return null;
-        const x = pick(queue);
-        if (!x) return null;
+        const rt = RT.due(false); if (rt) { cur = rt; return cur; }
+        const x = count < n ? pick(queue) : null;
+        if (!x) { cur = RT.due(true); return cur; }        // 题出完了：收尾再来一次（见 retrier）
         const sid = K.ITEM[x.inst.id].skill;
         if (lv(S, x.inst.id) === 0 && !S.demoSeen[sid] && !S.known[sid]) {
           stat(S, day).sec += DEMO_SEC;
@@ -302,9 +333,11 @@
       },
       answer(res) {
         if (!cur || cur.kind !== 'q') return null;
-        const x = cur; cur = null; count++;
-        asked[x.inst.id] = (asked[x.inst.id] || 0) + 1; recent.push(K.ITEM[x.inst.id].skill);
-        return settle(S, x, res, day);
+        const x = cur; cur = null;
+        if (!x.retry) count++;
+        asked[x.inst.id] = (asked[x.inst.id] || 0) + 1;
+        recent.push(K.ITEM[x.inst.id].skill); RT.answered(x, res);
+        return settle(S, x, asRetry(x, res), day);
       },
     };
   }
