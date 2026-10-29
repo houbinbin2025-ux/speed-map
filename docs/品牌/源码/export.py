@@ -3,7 +3,10 @@ from playwright.sync_api import sync_playwright
 from PIL import Image
 D=sys.argv[1]
 jobs=[("mark.svg",[16,32,48,180,512,1024],None),("favicon-16.svg",[16],None),("favicon-32.svg",[32],None),("app-icon-180.svg",[180],None)]
-locks=[("lockup-dark.svg",688,176),("lockup-light.svg",688,176)]
+import re
+def wh(n):
+    t=open(f"{D}/{n}").read(300); return int(re.search(r'width="(\d+)"',t).group(1)), int(re.search(r'height="(\d+)"',t).group(1))
+locks=[(n,*wh(n)) for n in ("lockup-dark.svg","lockup-light.svg")]
 with sync_playwright() as p:
     b=p.chromium.launch(); pg=b.new_page()
     def shot(svg,w,h,out):
