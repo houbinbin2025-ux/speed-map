@@ -42,5 +42,5 @@ with sync_playwright() as p:
     pg.screenshot(path=str(out / 'g3-newversion.png'))
     nv = pg.evaluate("!document.getElementById('ovNew').hidden"); pre = pg.evaluate("localStorage.getItem('speedmap.v2.preview')")
     b.close()
-size = sum((root / 'v2' / f).stat().st_size for f in ['index.html', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'mark.svg'])
+size = sum((root / 'v2' / f).stat().st_size for f in ['index.html', 'bank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'mark.svg'])
 print(json.dumps({'打开到可点击_毫秒': round(load_ms), 'domInteractive_毫秒': nav, '页面切换_毫秒': sw, '点选判题到反馈_毫秒': j, '存不了进度提示条': nosave, '新版提示': nv, '预览键被写入': pre is not None, '页面总大小_KB': round(size / 1024, 1), '错误': errs[:5]}, ensure_ascii=False, indent=1))

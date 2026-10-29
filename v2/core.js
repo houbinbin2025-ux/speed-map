@@ -1,10 +1,32 @@
 // 空空数学岛 · 秒答地图板块 v2 · 纯逻辑（无 DOM）：题库、升级、限时、错题本、配题、存储迁移
 // 浏览器里挂到 window.SM，node 里 require 后直接测
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.SM = factory();
-})(typeof self !== 'undefined' ? self : this, function () {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./bank.js'));
+  else root.SM = factory(root.BANK);
+})(typeof self !== 'undefined' ? self : this, function (BANK) {
   'use strict';
+  if (!BANK || !BANK.speedCards) throw new Error('题库 bank.js 没有加载（要放在 core.js 前面）');
+  // 发牌：每个题型一副牌（题库池的下标），按种子洗好后一张张发，发完换新种子再洗；新一轮第一张不和上一轮最后一张一样
+  // 只记 {s 种子, i 发到第几张, n 张数, last 上一张, sw 首张要不要换}，页面把它放进存档（S.decks），重新打开接着发
+  let DECKS = {};
+  const PERM = new Map();
+  function perm(n, s) {
+    const k = n + ':' + s; if (PERM.has(k)) return PERM.get(k);
+    let x = s | 0; const r = () => { x = x + 0x6D2B79F5 | 0; let t = Math.imul(x ^ x >>> 15, 1 | x); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const p = Array.from({length: n}, (_, i) => i); for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+    PERM.set(k, p); return p;
+  }
+  function deal(key, n, r) {
+    let d = DECKS[key];
+    if (!d || d.n !== n || !(d.i < n)) {   // 题库改过（张数变了）或这一轮发完了 → 换新种子
+      const last = d && d.n === n ? d.last : -1;
+      d = DECKS[key] = {s: Math.floor(r() * 2147483647), i: 0, n, last};
+      d.sw = n > 1 && perm(n, d.s)[0] === last;
+    }
+    const p = perm(n, d.s), i = d.sw ? (d.i === 0 ? n - 1 : d.i === n - 1 ? 0 : d.i) : d.i;
+    d.i++; return (d.last = p[i]);
+  }
+  const useDecks = o => { DECKS = o && typeof o === 'object' ? o : {}; return DECKS; };
 
   // ---------- 日期 ----------
   const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -29,18 +51,8 @@
   ];
   const UNITS = []; // {id, L, w, op, fast, answerType, a,b,ans（卡）| gen,name,short（题型）}
   const card = (L, w, a, op, b, fast) => UNITS.push({id: a + op + b, L, w, a, op, b, ans: op === '+' ? a + b : a - b, fast, answerType: 'int'});
-  [[2,3,4,5],[6],[7],[8],[9],[10],null].forEach((nums, w) => {
-    const add = [], sub = [];
-    if (!nums) { [2,4,6,8,10].forEach(n => { add.push([n,0]); sub.push([n,0]); }); [1,3,5,7,9].forEach(n => { add.push([0,n]); sub.push([n,n]); }); }
-    else nums.forEach(n => { for (let a = 1; a < n; a++) { add.push([a,n-a]); sub.push([n,a]); } });
-    add.forEach(([a,b]) => card(0, w, a, '+', b, 2000)); sub.forEach(([a,b]) => card(0, w, a, '-', b, 2000));
-  });
-  for (let n = 1; n <= 9; n++) card(1, 0, 10, '+', n, 3000);
-  for (let n = 1; n <= 9; n++) card(1, 0, 10 + n, '-', n, 3000);
-  const addMax = (w, m) => { for (let a = 1; a <= 9; a++) for (let b = 1; b <= 9; b++) if (a + b >= 11 && Math.max(a, b) === m) card(1, w, a, '+', b, 3000); };
-  addMax(1, 9); addMax(2, 8); addMax(3, 7); addMax(3, 6);
-  const subBy = (w, b) => { for (let s = 11; s <= 18; s++) if (s - b <= 9 && s - b >= 1) card(1, w, s, '-', b, 3000); };
-  subBy(4, 9); subBy(5, 8); subBy(6, 7); subBy(6, 6); [5,4,3,2].forEach(b => subBy(7, b));
+  // L1 / L2 的卡来自题库（bank.js，顺序和编号与 v1 一致）
+  BANK.speedCards.forEach(c => card(c.L, c.w, c.a, c.op, c.b, c.fast));
   const TYPES = [
     {k:'add10', op:'+', name:'整十加整十', short:'30+20', fast:3000, ok:(a,b)=>a%10===0&&b%10===0&&a>=10&&b>=10},
     {k:'add1n', op:'+', name:'两位数加一位数 · 不进位', short:'23+4', fast:3000, ok:(a,b)=>a>=11&&a%10>0&&b<=9&&a%10+b<=9},
@@ -58,15 +70,8 @@
   [2, 3].forEach(L => {
     const R = LEVELS[L].R;
     TYPES.forEach(t => UNITS.push({id: LEVELS[L].key + ':' + t.k, L, w: t.op === '+' ? 0 : 1, op: t.op, name: t.name, short: t.short, fast: t.fast, answerType: 'int',
-      gen: () => {
-        for (let i = 0; i < 20000; i++) {
-          const a = rnd(1, R), b = rnd(1, R), ans = t.op === '+' ? a + b : a - b;
-          if (ans < 0 || ans > R || !t.ok(a, b)) continue;
-          if (R === 100 && Math.max(a, b, ans) <= 50) continue; // 100 以内至少有一个数大于 50
-          return {a, b, ans};
-        }
-        return {a: 20, b: 10, ans: t.op === '+' ? 30 : 10};
-      }}));
+      // 从题库池里抽一道（池子由 tools/build-bank.js 按 ok 规则挑出，测试会逐题复查）
+      gen: () => { const key = LEVELS[L].key + ':' + t.k, p = BANK.speedPools[key].pool, [a, b] = p[deal(key, p.length, () => (rnd(0, 1e6 - 1)) / 1e6)]; return {a, b, ans: t.op === '+' ? a + b : a - b}; }}));
   });
   const BYID = Object.fromEntries(UNITS.map(u => [u.id, u]));
   const unitsOf = L => UNITS.filter(u => u.L === L);
@@ -374,11 +379,12 @@
   }
 
   return {
-    LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, worldUnits, inst, show, label,
+    LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
     keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
+    _resetDecks: () => { DECKS = {}; }, useDecks,
   };
 });

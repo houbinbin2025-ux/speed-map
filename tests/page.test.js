@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '../v2/index.html'), 'utf8');
-const FILES = ['core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js'];
+const FILES = ['bank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js'];
 const MODS = {C: require('../v2/core.js'), I: require('../v2/ink.js'), K: require('../v2/skills.js'), E: require('../v2/engine.js'), R: require('../v2/render.js')};
 
 test('页面用到的 C. / I. / K. / E. / R. 函数在模块里都有（防止页面调了不存在的函数，一点就报错）', () => {

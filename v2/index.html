@@ -210,7 +210,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
 .mline .mbar{position:absolute;left:0;right:0;top:56px;height:4px;background:var(--ink)}
 .mline .tick{position:absolute;top:50px;width:3px;height:16px;background:var(--ink);transform:translateX(-50%)}
 .mline .mk{position:absolute;top:18px;transform:translateX(-50%);font-family:var(--f-num);font-size:24px;color:var(--mute)}
-.mline .mk.win{color:var(--ok)}.mline .mk.from{color:var(--counter)}
+.mline .mk.win{color:var(--ok)}.mline .mk.from{color:var(--counter)}.mline .mk.up{top:-12px}
 .mline .end{position:absolute;top:70px;font-family:var(--f-num);font-weight:900;font-size:16px;color:var(--mute);transform:translateX(-50%)}
 .mline .end.l{left:0}.mline .end.r{left:100%}
 .mline .arc{position:absolute;top:10px;height:44px}.mline .arc path{stroke:var(--ok);stroke-width:3;fill:none}
@@ -273,6 +273,20 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
 .ovl .card .small{font-size:12px;color:var(--dim);word-break:break-all}
 .kv{font-size:13px;line-height:1.7}
 .pgrid .panel{overflow:visible}
+/* 家长区 · 题库 */
+.bkrow{background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:none}
+.bkrow .bh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.bkrow .bh b{font-size:16px}
+.bkrow .bk{font-size:13px;line-height:1.6;color:var(--mute)}.bkrow .bk em{font-style:normal;color:var(--ink)}
+.bkset{display:flex;flex-direction:column;gap:4px}.bkset .bt{font-size:13px;font-weight:700}
+.bqs{display:flex;flex-wrap:wrap;gap:4px}
+.bq{min-height:44px;min-width:44px;padding:0 9px;border:2px solid #000;background:var(--stone-hi);font-family:var(--f-num);font-weight:700;font-size:14px;position:relative}
+.bq.l1{background:var(--lv1);color:#1b1d22}.bq.l2{background:var(--lv2);color:#1b1d22}.bq.l3{background:var(--lv3);color:#fff}
+.bq.m::after{content:"";position:absolute;right:2px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--bad);border:1px solid #000}
+#ovQ .card{width:760px;align-items:stretch;text-align:left;gap:10px;max-height:94vh;overflow-y:auto}
+#ovQ .qpg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#ovQ .qpg>div{background:var(--cave);border:2px solid #000;padding:10px;min-height:150px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+#ovQ .qpg .muted{font-size:12px}
+#ovQ .qpb{zoom:.72;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}
 .seg{display:flex;gap:6px}.seg button{min-height:40px;padding:0 10px;font-size:13px}.seg button.on{background:var(--ink);color:var(--cave)}
 </style>
 </head>
@@ -483,6 +497,11 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div class="warnbox" id="parNote" hidden></div>
   <div class="pgrid" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start">
     <div class="panel">
+      <div class="ptitle">题库</div>
+      <div class="kv" id="bankInfo"></div>
+      <div class="seg" id="bankGo" style="flex-wrap:wrap"></div>
+    </div>
+    <div class="panel">
       <div class="ptitle">这周练得怎么样</div>
       <div class="kv" id="weekly"></div>
       <button class="btn" id="btnReplace">重新摸底</button>
@@ -535,6 +554,16 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   </div>
 </div>
 
+<!-- 11 家长区 · 题库 -->
+<div class="scr" id="bankv" hidden style="flex-direction:column;gap:10px">
+  <div class="top"><button class="btn" id="bankBack">返回</button><h1>题库</h1><div class="tabs" id="bankTabs" style="flex-wrap:wrap"></div></div>
+  <div class="srows" id="bankList"></div>
+</div>
+<div class="ovl" id="ovQ" hidden><div class="card">
+  <div class="top"><b id="qpTag" style="flex:1;font-size:17px"></b><span id="qpAns" class="muted"></span><button class="btn" id="qpX">关闭</button></div>
+  <div class="qpg"><div><span class="muted">孩子看到的题</span><div class="qpb" id="qpQ"></div></div><div><span class="muted">答错时看到的</span><div class="qpb" id="qpE"></div></div></div>
+</div></div>
+
 <!-- 12 异常 -->
 <div class="ovl" id="ovPause" hidden><div class="card">
   <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#f2c14e" stroke-width="2" aria-hidden="true"><rect x="6" y="5" width="4" height="14"></rect><rect x="14" y="5" width="4" height="14"></rect></svg>
@@ -565,7 +594,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v11:3f17a5ea7c10 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v15:327d93e16afb -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -575,11 +604,12 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="core.js?v=11"></script>
-<script src="ink.js?v=11"></script>
-<script src="skills.js?v=11"></script>
-<script src="engine.js?v=11"></script>
-<script src="render.js?v=11"></script>
+<script src="bank.js?v=15"></script>
+<script src="core.js?v=15"></script>
+<script src="ink.js?v=15"></script>
+<script src="skills.js?v=15"></script>
+<script src="engine.js?v=15"></script>
+<script src="render.js?v=15"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -597,6 +627,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   };
   const LOAD = C.load(store, CTX, Date.now());
   let S = LOAD.S, canSave = true, frozen = false;
+  S.decks = C.useDecks(S.decks);   // 题库发牌进度跟着存档走：重新打开接着发同一轮，不重复
   const today = () => C.dayOf(Date.now(), TEST ? (S.testDays || 0) : 0);
   const save = () => {
     if (frozen) return false;
@@ -614,7 +645,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent'];
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); show('island'); };
@@ -1438,6 +1469,8 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     $('parNote').hidden = !notes.length; $('parNote').innerHTML = notes.join('<br>');
     $('btnReset').hidden = CTX.preview;   // 预览期每次都按格子取高读正式版，清空对秒答无效 → 不提供
     $('btnResetYes').hidden = true; $('btnReset').textContent = '清空进度'; $('resetMsg').textContent = ''; $('ioPanel').hidden = true;
+    $('bankInfo').innerHTML = `共 ${bankTotal()} 道题：每个技能学什么、怎样算学会、全部题目和孩子看到的题面`;
+    $('bankGo').innerHTML = R.GROUPS.map(g => `<button data-bg="${g.id}">${g.name}</button>`).join('');
     $('flashLog').hidden = !TEST; $('flashLog').textContent = '最近 10 次闪现实际毫秒：' + (FLASHLOG.join('、') || '还没有');
   }
   $('segFlash').addEventListener('click', e => { const b = e.target.closest('[data-flash]'); if (!b) return; S.settings.flashMs = +b.dataset.flash; save(); renderParent(); });
@@ -1447,6 +1480,80 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     save(); renderParent();
   });
   $('parBack').addEventListener('click', goIsland);
+
+  // ---------- 11 家长区 · 题库（只看不改；题目来自 bank.js） ----------
+  const BK = window.BANK;
+  const speedTextKey = s => 'speedL' + (s.L + 1);
+  // 一个格子（卡或题型）在题库里的全部题：[{id, q, ans, tag}]
+  function bankItems(it) {
+    const s = K.BY[it.skill];
+    if (!it.gen) return [{id: it.id, q: it.q, ans: it.ans}];
+    if (s.speed) { const u = C.BYID[it.id]; return BK.speedPools[it.id].pool.map(([a, b]) => ({id: it.id, q: {a, op: u.op, b}, ans: u.op === '+' ? a + b : a - b})); }
+    return BK.pools[it.id].map(x => ({id: it.id, q: x.q, ans: x.ans, tag: x.tag}));
+  }
+  const bankTotal = () => K.SKILLS.reduce((n, s) => n + s.items.reduce((m, it) => m + bankItems(it).length, 0), 0);
+  function ruleText(s) {
+    const fast = s.timedFrom === 0 ? '，每次都要又对又快' : s.timedFrom === 1 ? '，淡黄以后要又对又快' : '';
+    if (s.kind === 'day5') return `每个题型：同一天答对 5 次升一级${fast}`;
+    const card = '每道题：答对变淡黄 → 另一天再对变淡红 → 隔 3 天以上再对变深红';
+    const type = '每个题型：最近 8 次答对 7 次升一级（淡红要另一天，深红要再隔 3 天）';
+    const hasCard = s.items.some(it => !it.gen), hasType = s.items.some(it => it.gen);
+    return (hasCard && hasType ? card + '；「合起来是几」是题型，' + type.replace('每个题型：', '') : hasCard ? card : type) + fast;
+  }
+  const qText = inst => { const it = K.ITEM[inst.id], s = K.BY[it.skill]; return s.speed ? `${inst.q.a} ${inst.q.op === '+' ? '+' : '−'} ${inst.q.b}` : !it.gen ? R.label(inst.id) : R.mistLabel({src: 1, uid: inst.id, q: inst.q}); };
+  const isMist = inst => { const s = K.BY[K.ITEM[inst.id].skill]; return s.speed ? Object.values(S.mistakes || {}).some(m => !m.src && m.uid === inst.id && m.a === inst.q.a && m.b === inst.q.b && m.due !== null) : !!(S.mistakes[K.mkey(inst)] && S.mistakes[K.mkey(inst)].due !== null); };
+  const LVN = ['灰', '淡黄', '淡红', '深红'];
+  let bankTab = 'look', bankOpen = {}, BQ = [];
+  function renderBank() {
+
+    $('bankTabs').innerHTML = R.GROUPS.map(g => `<button class="tab${g.id === bankTab ? ' on' : ''}" data-bt="${g.id}">${g.name}</button>`).join('');
+    BQ = [];
+    const sw = c => `<i class="bq${c}" style="display:inline-block;min-height:14px;min-width:14px;height:14px;width:14px;padding:0;vertical-align:-2px"></i>`;
+    const legend = `<div class="muted" style="font-size:12px;line-height:1.8;flex:none">共 ${bankTotal()} 道题 · 理解 ${K.understand.length} 个技能 · 秒答 ${K.speed.length} 个 · 点一道题看孩子看到的样子<br>固定题按进度上色：${sw('')} 灰 没练会 ${sw(' l1')} 淡黄 第 1 天对 ${sw(' l2')} 淡红 另一天又对 ${sw(' l3')} 深红 隔 3 天还对 ${sw(' m')} 在错题本里（题型整体一个颜色，每道题只标红点）</div>`;
+    $('bankList').innerHTML = legend + K.SKILLS.filter(s => s.group === bankTab).map(s => {
+      const txt = BK.text[s.speed ? speedTextKey(s) : s.id] || ['', ''], n = s.items.reduce((m, it) => m + bankItems(it).length, 0);
+      const cardsN = s.items.filter(it => !it.gen).length, typesN = s.items.length - cardsN;
+      const lit = s.items.filter(it => E.lv(S, it.id) > 0).length;
+      const pre = s.pre.map(p => K.BY[p] ? `${K.BY[p].name}${E.learned(S, p) ? ' ✓' : (S.known || {})[p] ? '（摸底会，还没练）' : '（还没学会）'}` : p).join('、') || '无';
+      let body = '';
+      if (bankOpen[s.id]) {
+        const sets = [];
+        const cardIt = s.items.filter(it => !it.gen);
+        if (cardIt.length) sets.push({title: `${cardIt.length} 道固定题（颜色 = 空空现在的进度）`, list: cardIt.map(it => ({inst: bankItems(it)[0], lv: E.lv(S, it.id)}))});
+        s.items.filter(it => it.gen).forEach(it => {
+          const all = bankItems(it), p = E.peek(S, it.id), kind = E.kindOf(it.id), t0 = today();
+          const win = kind === 'day5' ? (p.fday === t0 ? `今天合格 ${p.fn || 0} / 5 次` : p.seen ? '今天还没合格' : '还没练过')
+            : p.win && p.win.length ? `最近 ${p.win.length} 次对 ${p.win.reduce((a, b) => a + b, 0)} 次` : p.seen ? '刚升级，重新数' : '还没练过';
+          const can = s.speed ? BK.speedPools[it.id].all : BK.meta.all[it.id];
+          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
+          const tags = [...new Set(all.map(x => x.tag || ''))];
+          tags.forEach(tg => sets.push({title: tg ? `${head} · ${tg}（${all.filter(x => (x.tag || '') === tg).length}）` : head, list: all.filter(x => (x.tag || '') === tg).map(inst => ({inst}))}));
+          // 不在题库里的旧错题（题库建好以前随机出的数），单列出来
+          const inBank = new Set(all.map(x => s.speed ? x.q.a + x.q.op + x.q.b : K.mkey(x)));
+          const out = Object.values(S.mistakes || {}).filter(m => m.uid === it.id && m.due !== null && !inBank.has(s.speed ? m.a + m.op + m.b : m.key))
+            .map(m => ({inst: s.speed ? {id: it.id, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans} : {id: it.id, q: m.q, ans: m.ans}}));
+          if (out.length) sets.push({title: `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 题库外的旧错题（${out.length}）`, list: out});
+        });
+        body = sets.map(st => `<div class="bkset"><div class="bt">${st.title}</div><div class="bqs">${st.list.map(o => { BQ.push(o.inst); return `<button class="bq${o.lv ? ' l' + o.lv : ''}${isMist(o.inst) ? ' m' : ''}" data-bq="${BQ.length - 1}">${qText(o.inst)}</button>`; }).join('')}</div></div>`).join('');
+      }
+      return `<div class="bkrow"><div class="bh"><b>${s.name}</b><span class="muted">${n} 道题${cardsN ? ` · ${cardsN} 道固定题` : ''}${typesN ? ` · ${typesN} 个题型` : ''} · 亮了 ${lit} / ${s.items.length} 格</span><span style="flex:1"></span><button class="btn" data-bo="${s.id}">${bankOpen[s.id] ? '收起' : '看题目'}</button></div>
+        <div class="bk"><em>学什么</em>：${txt[0]}<br><em>怎样算学会</em>：${ruleText(s)}<br><em>怎么教</em>：${txt[1]}<br><em>要先学会</em>：${pre}</div>${body}</div>`;
+    }).join('');
+  }
+  function openBank() { renderBank(); show('bankv'); $('bankList').scrollTop = 0; }
+  $('bankGo').addEventListener('click', e => { const b = e.target.closest('[data-bg]'); if (b) { bankTab = b.dataset.bg; openBank(); } });
+  $('bankBack').addEventListener('click', () => { renderParent(); show('parent'); });
+  $('bankTabs').addEventListener('click', e => { const b = e.target.closest('[data-bt]'); if (!b) return; bankTab = b.dataset.bt; renderBank(); $('bankList').scrollTop = 0; });
+  $('bankList').addEventListener('click', e => {
+    const o = e.target.closest('[data-bo]'); if (o) { bankOpen[o.dataset.bo] = !bankOpen[o.dataset.bo]; const y = $('bankList').scrollTop; renderBank(); $('bankList').scrollTop = y; return; }
+    const b = e.target.closest('[data-bq]'); if (!b) return;
+    const inst = BQ[+b.dataset.bq], q = R.question(inst);
+    $('qpTag').textContent = q.tag; $('qpAns').textContent = '答案：' + inst.ans;
+    $('qpQ').innerHTML = q.input === 'pick' ? `${q.html}<div style="display:flex;gap:16px;margin-top:10px">${q.pick.map(n => `<span class="mq" style="font-size:40px;padding:10px 26px">${n}</span>`).join('')}</div>`
+      : q.input === 'line' ? `${q.html}<div class="muted" style="font-size:16px;margin-top:8px">在 0—${q.line.max} 的线上插旗</div>` : q.html + (q.note ? `<div class="muted" style="font-size:16px;margin-top:8px">${q.note}</div>` : '');
+    $('qpE').innerHTML = R.explain(inst); $('ovQ').hidden = false;
+  });
+  $('qpX').addEventListener('click', () => { $('ovQ').hidden = true; });
   $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
   $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }, () => { renderParent(); show('parent'); }));
   let replacing = false;   // 家长区「重新摸底」：结果页 → 首页（说明书 §5）
@@ -1480,14 +1587,14 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
       } else {
         const keep = S.testDays, ro = S.readOnly;
         S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
-        S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true;
+        S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
         if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
       }
       $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
-  $('btnResetYes').addEventListener('click', () => { S = C.resetProgress(S); S.settings = S.settings || {}; save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
+  $('btnResetYes').addEventListener('click', () => { S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
 
   // ---------- 12 异常 ----------
   // 12a 暂停：切后台 / 来电 / 锁屏 / 竖过来。还没作答的题不记录，继续后原题重出（看数重新闪）；已判完的，继续后出下一题
@@ -1535,6 +1642,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
     if (cur === 'calib') return $('calBack').click();
     if (cur === 'summary') return (renderSpeed(), show('home'));
     if (cur === 'island' || cur === 'placeResult') return;
+    if (cur === 'bankv') { if (!$('ovQ').hidden) $('ovQ').hidden = true; else show('parent'); return; }
     goIsland();
   });
 
@@ -1553,7 +1661,7 @@ textarea{width:100%;min-height:70px;background:var(--cave);color:var(--ink);bord
       else if (t === 'w1d') setLv(w1, 3);
       else if (t === 'unsure') { forceUnsure = true; qForceUnsure = true; b.textContent = '已开启：下一题会问'; return; }
       else if (t === 'mist') C.unitsOf(curL()).slice(0, 3).forEach(u => C.addMistake(S, C.inst({id: u.id}), C.addDays(today(), -1)));
-      else if (t === 'reset') { const keep = S.level; S = C.blank(); S.level = keep; S.settings = {}; }
+      else if (t === 'reset') { const keep = S.level; S = C.blank(); S.level = keep; S.settings = {}; S.decks = C.useDecks({}); }
       save(); renderIsland();
     });
   }

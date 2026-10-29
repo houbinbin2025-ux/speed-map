@@ -1,9 +1,9 @@
 // 空空数学岛 · 技能图谱（纯逻辑，无 DOM）：理解数的 19 个技能 + 秒答地图各级，出题、显示、判题、前置关系
 // 浏览器里挂到 window.SKILLS（依赖 window.SM），node 里 require 后直接测
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'));
-  else root.SKILLS = factory(root.SM);
-})(typeof self !== 'undefined' ? self : this, function (C) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./bank.js'));
+  else root.SKILLS = factory(root.SM, root.BANK);
+})(typeof self !== 'undefined' ? self : this, function (C, B) {
   'use strict';
 
   const rint = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
@@ -15,53 +15,41 @@
     s.items.forEach(it => { it.skill = s.id; ITEM[it.id] = it; });
     SK.push(s); BY[s.id] = s; return s;
   }
-  const card = (id, q, ans) => ({id, q, ans});
-  const type = (id, gen) => ({id, gen});
+  // 题目都来自题库（bank.js）：卡 = 题库里这个技能的固定题；题型 = 从题库池里发牌（一轮发完再洗，同一轮不重复）
+  const cards = sid => B.cards[sid].map(c => ({id: c.id, q: c.q, ans: c.ans}));
+  const fromPool = id => r => { const p = B.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; };
+  const type = id => ({id, gen: fromPool(id)});
 
   // ---------- 看数（一眼看出有几个，不计时） ----------
-  const range = (a, b) => Array.from({length: b - a + 1}, (_, i) => a + i);
-  skill({id: 'look1', group: 'look', name: '骰子点', kind: 'card', items: range(1, 6).map(n => card('look:dice:' + n, {n, layout: 'dice'}, n))});
-  skill({id: 'look2', group: 'look', name: '乱点', kind: 'card', items: range(1, 5).map(n => card('look:scat:' + n, {n, layout: 'scat'}, n))});
-  skill({id: 'cmp1', group: 'cmp', name: '10 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', items: [type('cmp:t:10', r => pair(r, 1, 10))]});
-  skill({id: 'look3', group: 'look', name: '一个十格框', kind: 'card', pre: ['look1'], items: range(1, 10).map(n => card('look:tf:' + n, {n, layout: 'tf'}, n))});
+  skill({id: 'look1', group: 'look', name: '骰子点', kind: 'card', items: cards('look1')});
+  skill({id: 'look2', group: 'look', name: '乱点', kind: 'card', items: cards('look2')});
+  skill({id: 'cmp1', group: 'cmp', name: '10 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', items: [type('cmp:t:10')]});
+  skill({id: 'look3', group: 'look', name: '一个十格框', kind: 'card', pre: ['look1'], items: cards('look3')});
   // ---------- 分合（分合图：整体在上，两部分在下；先卡后题型） ----------
-  const bondCards = (lo, hi) => { const out = []; for (let n = lo; n <= hi; n++) for (let a = 1; a < n; a++) out.push(card(`bond:${n}=${a}+_`, {n, a, blank: 'part'}, n - a)); return out; };
-  const whole = (lo, hi) => r => { const n = rint(r, lo, hi), a = rint(r, 1, n - 1); return {q: {n, a, b: n - a, blank: 'whole'}, ans: n}; };
-  skill({id: 'bond1', group: 'bond', name: '5 以内分合', kind: 'card', timedFrom: 1, pre: ['look3'], items: bondCards(2, 5).concat([type('bond:t:whole5', whole(2, 5))])});
-  skill({id: 'look4', group: 'look', name: '两个十格框', kind: 'card', pre: ['look3'], items: range(11, 20).map(n => card('look:tf2:' + n, {n, layout: 'tf2'}, n))});
-  skill({id: 'bond2', group: 'bond', name: '6–9 分合', kind: 'card', timedFrom: 1, pre: ['bond1'], items: bondCards(6, 9).concat([type('bond:t:whole9', whole(6, 9))])});
-  skill({id: 'line1', group: 'line', name: '0—10 数线', kind: 'type8', input: 'line', pre: ['cmp1'], items: [type('line:t:10', r => line(r, 10, 1))]});
-  skill({id: 'bond3', group: 'bond', name: '凑十', kind: 'card', timedFrom: 1, pre: ['bond2'], items: range(1, 9).map(a => card(`bond:10=${a}+_`, {n: 10, a, blank: 'part'}, 10 - a))});
-  skill({id: 'cmp2', group: 'cmp', name: '20 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp1', 'look4'], items: [type('cmp:t:20', r => pair(r, 1, 20))]});
+  skill({id: 'bond1', group: 'bond', name: '5 以内分合', kind: 'card', timedFrom: 1, pre: ['look3'], items: cards('bond1').concat([type('bond:t:whole5')])});
+  skill({id: 'look4', group: 'look', name: '两个十格框', kind: 'card', pre: ['look3'], items: cards('look4')});
+  skill({id: 'bond2', group: 'bond', name: '6–9 分合', kind: 'card', timedFrom: 1, pre: ['bond1'], items: cards('bond2').concat([type('bond:t:whole9')])});
+  skill({id: 'line1', group: 'line', name: '0—10 数线', kind: 'type8', input: 'line', pre: ['cmp1'], items: [type('line:t:10')]});
+  skill({id: 'bond3', group: 'bond', name: '凑十', kind: 'card', timedFrom: 1, pre: ['bond2'], items: cards('bond3')});
+  skill({id: 'cmp2', group: 'cmp', name: '20 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp1', 'look4'], items: [type('cmp:t:20')]});
   // 缺数四种：□+a=b（答 b−a）、a+□=b（答 b−a）、□−a=b（答 a+b）、a−□=b（答 a−b）
-  const missing = form => r => {
-    if (form === 'addL' || form === 'addR') { const b = rint(r, 2, 10), a = rint(r, 1, b - 1); return {q: {form, a, b}, ans: b - a}; }
-    if (form === 'subL') { const a = rint(r, 1, 9), b = rint(r, 1, 10 - a); return {q: {form, a, b}, ans: a + b}; }
-    const a = rint(r, 2, 10), x = rint(r, 1, a - 1); return {q: {form, a, b: a - x}, ans: x};
-  };
   skill({id: 'bond4', group: 'bond', name: '缺数算式', kind: 'type8', timedFrom: 1, pre: ['bond3'],
-    items: ['addL', 'addR', 'subL', 'subR'].map(f => type('bond:t:' + f, missing(f)))});
+    items: ['addL', 'addR', 'subL', 'subR'].map(f => type('bond:t:' + f))});
   // 过十准备：k + a = 10 + □（和在 11–17）
-  const to10 = k => r => { const a = rint(r, 11 - k, Math.min(9, 17 - k)); return {q: {k, a}, ans: k + a - 10}; };
-  skill({id: 'bond5', group: 'bond', name: '过十准备', kind: 'type8', timedFrom: 1, pre: ['bond3', 'look4'], items: [9, 8, 7].map(k => type('bond:t:to10-' + k, to10(k)))});
-  skill({id: 'line2', group: 'line', name: '0—20 数线', kind: 'type8', input: 'line', pre: ['line1', 'cmp2'], items: [type('line:t:20', r => line(r, 20, 1))]});
+  skill({id: 'bond5', group: 'bond', name: '过十准备', kind: 'type8', timedFrom: 1, pre: ['bond3', 'look4'], items: [9, 8, 7].map(k => type('bond:t:to10-' + k))});
+  skill({id: 'line2', group: 'line', name: '0—20 数线', kind: 'type8', input: 'line', pre: ['line1', 'cmp2'], items: [type('line:t:20')]});
   // ---------- 数位（几个十和几个一） ----------
   skill({id: 'place1', group: 'place', name: '看十和一写数', kind: 'type8', pre: ['look4'],
-    items: [type('place:t:read', r => { const n = rint(r, 20, 99); return {q: {n, tens: Math.floor(n / 10), ones: n % 10}, ans: n}; })]});
+    items: [type('place:t:read')]});
   skill({id: 'place2', group: 'place', name: '几个十几个一', kind: 'type8', pre: ['place1'],
-    items: [type('place:t:split', r => { const n = rint(r, 11, 99), ask = r() < 0.5 ? 'tens' : 'ones'; return {q: {n, ask}, ans: ask === 'tens' ? Math.floor(n / 10) : n % 10}; })]});
+    items: [type('place:t:split')]});
   skill({id: 'cmp3', group: 'cmp', name: '两位数谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp2', 'place2'],
-    items: [type('cmp:t:100', r => pair(r, 10, 99)), type('cmp:t:swap', r => swap(r))]});
-  const near = (d) => r => { const n = d > 0 ? rint(r, 10, 99 - d) : rint(r, 10 - d, 99); return {q: {n, d}, ans: n + d}; };
+    items: [type('cmp:t:100'), type('cmp:t:swap')]});
   skill({id: 'cmp4', group: 'cmp', name: '前后数', kind: 'type8', timedFrom: 1, pre: ['cmp3'],
-    items: [['p1', 1], ['m1', -1], ['p10', 10], ['m10', -10]].map(([k, d]) => type('cmp:t:' + k, near(d)))});
-  skill({id: 'line3', group: 'line', name: '0—100 整十', kind: 'type8', input: 'line', pre: ['line2', 'cmp3'], items: [type('line:t:100t', r => line(r, 100, 10))]});
-  skill({id: 'line4', group: 'line', name: '0—100 任意', kind: 'type8', input: 'line', pre: ['line3'], items: [type('line:t:100', r => line(r, 100, 1, true))]});
+    items: ['p1', 'm1', 'p10', 'm10'].map(k => type('cmp:t:' + k))});
+  skill({id: 'line3', group: 'line', name: '0—100 整十', kind: 'type8', input: 'line', pre: ['line2', 'cmp3'], items: [type('line:t:100t')]});
+  skill({id: 'line4', group: 'line', name: '0—100 任意', kind: 'type8', input: 'line', pre: ['line3'], items: [type('line:t:100')]});
 
-  function pair(r, lo, hi) { const a = rint(r, lo, hi); let b; do b = rint(r, lo, hi); while (b === a); return {q: {a, b}, ans: Math.max(a, b)}; }
-  function swap(r) { let t, o; do { t = rint(r, 1, 9); o = rint(r, 1, 9); } while (t === o); const a = t * 10 + o, b = o * 10 + t; return r() < 0.5 ? {q: {a, b}, ans: Math.max(a, b)} : {q: {a: b, b: a}, ans: Math.max(a, b)}; }
-  // any：0—100 任意整数那一组（目标碰巧是整十也按这一组的误差判）
-  function line(r, max, step, any) { const k = rint(r, 1, max / step - 1), q = {max, target: k * step}; if (any) q.any = true; return {q, ans: k * step}; }
   const LINE_TOL = {10: 0.5, 20: 1, 100: 5, '100a': 10};
   const tolOf = (q, settings) => { const key = q.any ? '100a' : q.max; return (settings && settings.lineTol && settings.lineTol[key]) || LINE_TOL[key]; };
 
@@ -69,7 +57,7 @@
   const speedPre = (L, w) => {
     if (L === 0) return w === 5 ? ['bond3'] : w === 0 || w === 6 ? ['bond1'] : ['bond2'];
     if (L === 1) return w === 0 ? ['look4'] : ['bond5'];
-    if (L === 2) return ['place2'];
+    if (L === 2) return ['place2'].concat((w === 0 ? [1, 2, 3] : [4, 5, 6, 7]).map(k => 'speed:L2:' + k)); // 50 以内进位 / 退位要先会 20 以内的进位 / 退位（28+5 用到 8+5）
     return ['speed:L3:' + w];
   };
   C.LEVELS.forEach((LV, L) => {
@@ -100,6 +88,12 @@
   }
   // 错题编号：卡 = 卡编号；题型 = 编号 | 题目数据
   const mkey = inst => ITEM[inst.id].gen ? inst.id + '|' + JSON.stringify(inst.q) : inst.id;
+  // 固定例题（示范卡用，不受发牌影响）：卡 = 卡本身；题型 = 题库池第 1 道；秒答题型 = 池第 1 道
+  function example(itemId) {
+    const it = ITEM[itemId]; if (!it.gen) return {id: itemId, q: it.q, ans: it.ans};
+    const p = B.pools[itemId]; if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
+    const u = C.BYID[itemId], [a, b] = B.speedPools[itemId].pool[0]; return {id: itemId, q: {a, op: u.op, b}, ans: u.op === '+' ? a + b : a - b};
+  }
   const isType = itemId => !!ITEM[itemId].gen;
 
   // 前置关系检查（测试用）：所有前置都存在、没有环
@@ -109,6 +103,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {SKILLS: SK, BY, ITEM, judge, make, mkey, isType, topoOk, tolOf, LINE_TOL,
+  return {SKILLS: SK, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

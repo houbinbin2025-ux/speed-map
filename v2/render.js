@@ -91,11 +91,39 @@
     return `${q.a} − ${slot} = ${q.b}`;
   }
 
+  // ---------- 秒答答错时的一句讲解：进位先凑整十，退位先退到整十，两位数先算几个十（10 以内的口算不讲，前置分合已经教过） ----------
+  function stepAdd(x, y) { // x 加一位数 y
+    const k = 10 - x % 10;
+    if (x % 10 + y < 10) return x >= 10 ? `几个一：${x % 10} + ${y} = ${x % 10 + y}，是 ${x + y}` : '';
+    return y === k ? `${x} 和 ${y} 正好凑成 ${x + y}` : `${x} 先加 ${k} 凑成 ${x + k}，再加 ${y - k}，是 ${x + y}`;
+  }
+  function stepSub(x, y) { // x 减一位数 y
+    const k = x % 10;
+    if (x < 10) return `${x} − ${y} = ${x - y}`;
+    if (y <= k) return y === k ? `${x} 去掉 ${y} 个一，剩 ${x - y}` : `几个一：${k} − ${y} = ${k - y}，是 ${x - y}`;
+    if (x === 10) return `10 − ${y} = ${10 - y}`;
+    if (k === 0) return `${x} 拿出 1 个十：10 − ${y} = ${10 - y}，${x - 10} + ${10 - y} = ${x - y}`;
+    return `${x} 先减 ${k} 到 ${x - k}，再减 ${y - k}，是 ${x - y}`;
+  }
+  function speedWhy(a, op, b) {
+    if (op === '+') {
+      if (a < 10 && b < 10) return a + b >= 11 ? (a < b ? `从大的 ${b} 开始：` : '') + stepAdd(Math.max(a, b), Math.min(a, b)) : '';
+      if (a === 10 && b < 10) return `10 和 ${b} 是 ${a + b}`;
+      if (b % 10 === 0) return `${a} 加 ${b / 10} 个十，是 ${a + b}`;
+      if (b < 10) return stepAdd(a, b);
+      const m = a + b - b % 10; return `先加几个十：${a} + ${b - b % 10} = ${m}；再加 ${b % 10}：${stepAdd(m, b % 10)}`;
+    }
+    if (a <= 10) return '';
+    if (b % 10 === 0) return `${a} 减 ${b / 10} 个十，是 ${a - b}`;
+    if (b < 10) return stepSub(a, b);
+    const m = a - (b - b % 10); return `先减几个十：${a} − ${b - b % 10} = ${m}；再减 ${b % 10}：${stepSub(m, b % 10)}`;
+  }
+
   // ---------- 答错时的图解（左栏）：图 + 一句话；正确答案用 --ok 绿色 ----------
   function explain(inst) {
     const s = skillOf(inst.id), q = inst.q, a = inst.ans;
     const pack = (fig, line) => `<div class="explain">${fig}<div class="why">${line}</div></div>`;
-    if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, '');
+    if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
     if (s.group === 'look') {
       const five = q.layout === 'tf' && q.n > 5 ? `5 和 ${q.n - 5}，是 ${ans(q.n)}` : q.layout === 'tf2' ? `10 和 ${q.n - 10}，是 ${ans(q.n)}` : `一共是 ${ans(q.n)}`;
       return pack(`<div class="look">${pattern(q)}</div>`, five);
@@ -122,8 +150,11 @@
     }
     if (s.group === 'cmp') {
       if (s.input === 'pick') {
-        const max = Math.max(q.a, q.b) <= 10 ? 10 : Math.max(q.a, q.b) <= 20 ? 20 : 100, lo = Math.min(q.a, q.b), hi = Math.max(q.a, q.b);
-        return pack(`<div class="cards2"><b class="${q.a === hi ? 'win' : ''}">${q.a}</b><b class="${q.b === hi ? 'win' : ''}">${q.b}</b></div>${miniLine(0, max, [[lo, ''], [hi, 'win']])}`, `${hi} 在 ${lo} 的右边，${hi} 大`);
+        const lo = Math.min(q.a, q.b), hi = Math.max(q.a, q.b);
+        // 两位数：只画这两个数所在的那几个十（例：17 和 21 → 10—30），挨得近也分得开；还是太近（< 14%）就把小的那个数标到上面一层
+        const [L0, L1] = hi <= 10 ? [0, 10] : hi <= 20 ? [0, 20] : [Math.floor(lo / 10) * 10, Math.floor(hi / 10) * 10 + 10];
+        const near = (hi - lo) / (L1 - L0) < 0.14;
+        return pack(`<div class="cards2"><b class="${q.a === hi ? 'win' : ''}">${q.a}</b><b class="${q.b === hi ? 'win' : ''}">${q.b}</b></div>${miniLine(L0, L1, [[lo, near ? 'up' : ''], [hi, 'win']])}`, `${hi} 在 ${lo} 的右边，${hi} 大`);
       }
       const from = q.n, to = q.n + q.d, big = Math.abs(q.d) === 10;
       const lo = big ? Math.floor(Math.min(from, to) / 10) * 10 : Math.min(from, to) - 4, hi = big ? lo + 20 : Math.max(from, to) + 4;
@@ -162,13 +193,12 @@
   const arrow = '<svg class="arr" viewBox="0 0 40 24" aria-hidden="true"><path d="M2 12h32M26 4l8 8-8 8"></path></svg>';
   const step = (k, inner, cap) => `<div class="dstep st${k}">${inner}<span class="dcap">${cap}</span></div>`;
   // 示范用的题：数字固定（同一个技能每次一样），用固定种子出题
-  const fixedRnd = () => { let v = 4242; return () => (v = (v * 16807) % 2147483647) / 2147483647; };
   function demo(skillId) {
-    const s = K.BY[skillId], ex = K.make(s.items[0].id, fixedRnd()), q = ex.q;
+    const s = K.BY[skillId], ex = K.example(s.items[0].id), q = ex.q;
     let title, body, foot;
     if (s.speed) {
       title = '秒答：看到算式，马上写答案';
-      const it = s.items.find(x => !x.gen) || s.items[0], e = K.make(it.id, fixedRnd());
+      const it = s.items.find(x => !x.gen) || s.items[0], e = K.example(it.id);
       body = step(1, `<div class="eq num">${e.q.a} ${opSign(e.q.op)} ${e.q.b} =</div>`, '看到算式') + arrow + step(2, `<div class="eq num">${ans(e.ans)}</div>`, '马上写答案') + arrow + step(3, '<div class="say2">⚡</div>', '又对又快就点亮');
       foot = '不会就点「不会」，会告诉你答案';
     } else if (s.group === 'look') {
@@ -241,5 +271,5 @@
     return `数线 · ${q.target}`;
   }
 
-  return {GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
+  return {speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });

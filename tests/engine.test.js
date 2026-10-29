@@ -113,13 +113,16 @@ test('一次练习：时间到就停；同一张卡最多 2 次、同一题型�
     const n = {};
     qs.forEach(x => { n[x.inst.id] = (n[x.inst.id] || 0) + 1; });
     Object.entries(n).forEach(([id, c]) => assert.ok(c <= (K.isType(id) ? 6 : 2), id + ' 出了 ' + c + ' 次'));
+    // 连着第 4 题起算违规，除非这一段后面再也没有别的技能（= 只剩这一个可出，说明书允许）
+    // 10-29 改：原来按"整次练习用到 > 2 个技能"粗判，换题库后某天段尾只剩一个技能的长串被误判
     let run = 1, over = 0;
+    const sk = i => K.ITEM[qs[i].inst.id].skill;
     for (let i = 1; i < qs.length; i++) {
-      run = K.ITEM[qs[i].inst.id].skill === K.ITEM[qs[i - 1].inst.id].skill ? run + 1 : 1;
-      if (run > 3) over++;
+      run = sk(i) === sk(i - 1) ? run + 1 : 1;
+      const otherLater = qs.slice(i + 1).some((x, j) => x.seg === qs[i].seg && sk(i + 1 + j) !== sk(i));
+      if (run > 3 && otherLater) over++;
     }
-    const kinds = new Set(qs.map(x => K.ITEM[x.inst.id].skill)).size;
-    if (kinds > 2) assert.ok(over <= Math.max(3, Math.ceil(qs.length * 0.05)), `同一技能连续超过 3 题的有 ${over} 题（共 ${qs.length}）`);   // 只剩一个技能可出时才允许
+    assert.ok(over <= Math.max(3, Math.ceil(qs.length * 0.05)), `第 ${d} 天：还有别的技能可出时，同一技能连续超过 3 题的有 ${over} 题（共 ${qs.length}）`);
   }
 });
 
