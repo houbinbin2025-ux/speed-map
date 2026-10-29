@@ -143,10 +143,12 @@ test('三段顺序：到期错题先出（复习最多 5 分钟），然后学�
   assert.deepEqual(segs.filter(s => s !== 'review').slice(0, 2).join(), segs.includes('new') ? 'new,fluency' : 'fluency');
 });
 
-test('学新的时（还是灰色）答错不进错题本；学会以后再错才进', () => {
+test('10-29 Ben：学新的时（还是灰色）答错也进错题本，明天到期回来', () => {
   const S = C.blank(); S.placedAt = 1;
-  play(S, D(0), x => (x.seg === 'new' ? bad : ok));
-  assert.equal(E.dueMistakes(S, D(1)).length, 0);
+  const {qs} = play(S, D(0), x => (x.seg === 'new' ? bad : ok));
+  assert.ok(qs.some(x => x.seg === 'new'));
+  assert.equal(E.dueMistakes(S, D(0)).length, 0);
+  assert.ok(E.dueMistakes(S, D(1)).length > 0);
 });
 
 test('复习后还剩 > 10 道到期错题：当天不学新的', () => {

@@ -243,6 +243,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
 .qnote{font-size:14px;color:var(--mute)}
 .qfoot{display:flex;gap:10px;align-items:center;min-height:56px}
+.badline{font-size:22px;font-weight:900;color:var(--bad);flex:none}.badline s{font-size:28px;text-decoration-thickness:3px}
 .okbig{font-size:30px;font-weight:900;color:var(--ok)}.okbig.plain{color:var(--ink)}
 .eq{font-family:var(--f-num);font-weight:900;font-size:48px;white-space:nowrap;display:flex;align-items:center;gap:8px}
 .box{flex:none;display:inline-block;width:56px;height:62px;border:4px dashed var(--warn)}
@@ -341,6 +342,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:16px}.mg .mh span{flex:1}
 .mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
+.mq.later{opacity:.7;display:inline-flex;align-items:baseline;gap:6px}.mq.later i{font-style:normal;font-family:inherit;font-size:12px;font-weight:700;color:var(--dim)}
 .ovl{position:fixed;inset:0;z-index:40;background:rgba(27,29,34,.97);display:flex;align-items:center;justify-content:center;padding:20px}
 .ovl .card{width:520px;max-width:100%;padding:24px 28px;background:var(--stone);border:4px solid #000;box-shadow:0 6px 0 #000;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
 .ovl .card h3{margin:0;font-size:28px;font-weight:900}
@@ -681,7 +683,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v23:1eac6b934acf -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v24:09b3c8f55a13 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -691,13 +693,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=23"></script>
-<script src="core.js?v=23"></script>
-<script src="ink.js?v=23"></script>
-<script src="skills.js?v=23"></script>
-<script src="engine.js?v=23"></script>
-<script src="render.js?v=23"></script>
-<script src="world.js?v=23"></script>
+<script src="bank.js?v=24"></script>
+<script src="core.js?v=24"></script>
+<script src="ink.js?v=24"></script>
+<script src="skills.js?v=24"></script>
+<script src="engine.js?v=24"></script>
+<script src="render.js?v=24"></script>
+<script src="world.js?v=24"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1406,15 +1408,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       $('qNote').textContent = '';
       Q.nextT = setTimeout(nextQ, OK_MS); return;
     }
-    // 答错：图解 +「记住它，下次再来」
-    $('qNote').textContent = '记住它，下次再来';
+    // 答错：先说清楚错在哪（你写的 / 点的是几），再图解；写错的题进错题宝箱，明天再来
+    const inBox = Object.values(S.mistakes || {}).some(m => m.uid === inst.id && m.due !== null && m.due > today());
+    $('qNote').textContent = inBox ? '已放进错题宝箱，明天再来' : '记住它，下次再来';
+    const bad = r.dunno ? '<div class="badline">没关系，记住它</div>'
+      : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${r.typed}</s></div>`
+      : v.input === 'pick' && Q.pickedN != null ? `<div class="badline">✗ 你点的是 <s class="num">${Q.pickedN}</s></div>`
+      : v.input === 'line' ? '' : '<div class="badline">✗ 这题答错了</div>';
     if (v.input === 'line') {
       drawTarget(false);
       $('qBody').innerHTML = `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
       Q.nextT = setTimeout(nextQ, BAD_MS); return;
     }
-    if (v.input === 'pick') { $('qBody').innerHTML = ''; $('qWide').innerHTML = R.explain(inst); Q.nextT = setTimeout(nextQ, BAD_MS); return; }
-    $('qBody').innerHTML = R.explain(inst);
+    if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); Q.nextT = setTimeout(nextQ, BAD_MS); return; }
+    $('qBody').innerHTML = bad + R.explain(inst);
     if (S.oral) { Q.nextT = setTimeout(nextQ, BAD_MS); return; }
     // 手写题：照着描一遍（描一笔就继续，或 3 秒后自动下一题）
     qPad.clear();
@@ -1546,6 +1553,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // ---------- 9 错题本（按技能组；秒答按级别） ----------
   const MGROUPS = R.GROUPS.filter(g => g.id !== 'speed').map(g => ({id: g.id, name: g.name, has: m => m.src === g.id}))
     .concat(C.LEVELS.map((LV, L) => ({id: 'speed:L' + (L + 1), name: '秒答 · ' + LV.name, has: m => !m.src && m.L === L})));
+  const backOn = (due, t) => { const n = Math.round((new Date(due) - new Date(t)) / 864e5); return n <= 1 ? '明天' : n === 2 ? '后天' : n + ' 天后'; };
   let mistFocus = null;
   function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
   function renderMist() {
@@ -1558,6 +1566,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       if (!ms.length && g.id !== mistFocus) return '';
       return `<div class="mg"><div class="mh"><b>${g.name}</b><span class="muted">今天 ${d.length} · 复习中 ${doing.length} · 会了 ${done.length}</span></div>
         <div style="display:flex;flex-wrap:wrap;gap:4px">${d.slice(0, 6).map(m => `<span class="mq">${R.mistLabel(m)}</span>`).join('') || '<span class="muted">今天没有要复习的</span>'}</div>
+        ${doing.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">${doing.sort((a, b) => a.due.localeCompare(b.due)).slice(0, 8).map(m => `<span class="mq later">${R.mistLabel(m)}<i>${backOn(m.due, t)}</i></span>`).join('')}${doing.length > 8 ? `<span class="muted">还有 ${doing.length - 8} 道</span>` : ''}</div>` : ''}
         <button class="btn" data-rv="${g.id}" ${d.length ? '' : 'disabled style="opacity:.45"'}>复习这一组</button></div>`;
     }).join('') || '<div class="muted">还没有错题</div>';
   }

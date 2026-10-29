@@ -118,7 +118,7 @@
   // 一题作答之后的共同处理：升级、错题、维持复习档位、统计
   function settle(S, x, res, day, onTime) {
     if (x.afterDemo) S.demoSeen[x.afterDemo] = true;
-    const id = x.inst.id, gray = lv(S, id) === 0, p = prog(S, id);
+    const id = x.inst.id, p = prog(S, id);
     const out = record(S, id, res, day);
     if (x.keep) {
       if (out.pass && p.keepDay !== day) { p.keep = (p.keep || 0) + 1; p.keepDay = day; }
@@ -126,7 +126,7 @@
     }
     const m = x.mkey && S.mistakes[x.mkey];
     if (m && isDue(m, day)) C.reviewMistake(S, x.mkey, out.pass ? 'fast' : res.ok ? 'slow' : 'wrong', day);
-    else if (!res.ok && !(gray && x.seg === 'new')) addMistake(S, x.inst, day);   // 还在学（灰）时答错不进错题本
+    else if (!res.ok) addMistake(S, x.inst, day);   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉
     const st = stat(S, day); st.sec += res.secs || 0; st.n++; if (out.up) st.ups++;
     st.over = dueCount(S, day); st.gap = gapNow(S, day);
     if (onTime) onTime(res.secs || 0);
