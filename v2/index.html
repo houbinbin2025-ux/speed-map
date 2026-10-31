@@ -236,6 +236,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #qplay.wide .ql{width:auto;flex:1}
 #qplay.wide .qr{display:none}
 #qplay.wide .qbody{flex:none}
+#qplay .qbrow{display:contents}
+#qplay.wide .qbrow{display:flex;align-items:flex-start;gap:16px;flex:none}#qplay.wide .qbrow .qbody{flex:1;min-width:0}
+#qplay .qnextcol{display:none}#qplay.wide .qnextcol{display:flex;flex-direction:row-reverse;align-items:center;gap:12px;flex:none}
+#qplay .qnextcol>#qNext{min-width:160px}#qplay .qnextcol>.qnote{font-size:13px;text-align:right;width:8.6em}   /* 宽版答错：「已放进错题宝箱」和「继续」横排在讲解标题右边的空处，不加高这一行，不占下面数线和卡片的高度 */
 .qr{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
 .qtop{display:flex;align-items:center;gap:10px}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
@@ -273,6 +277,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .rods{display:flex;gap:16px;align-items:flex-end}
 .rodset{display:flex;gap:8px}
 .rod{display:block;width:18px;height:198px;background:var(--go);border:2px solid #000;border-radius:3px}
+#qplay .explain .rod{width:14px;height:138px}#qplay .explain .one{width:12px;height:12px}#qplay .explain .ones{grid-template-columns:repeat(5,12px)}   /* 答错讲解里按同一比例缩小（1 根 = 10 块 12px + 9 道 2px 缝），矮屏不叠字 */
 .ones{display:grid;grid-template-columns:repeat(5,18px);gap:2px}
 .one{display:block;width:18px;height:18px;background:var(--warn);border:2px solid #000}
 .col10{display:flex;flex-direction:column;gap:2px}
@@ -283,6 +288,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .cards2 b{min-width:110px;height:76px;display:flex;align-items:center;justify-content:center;background:var(--stone);border:3px solid #000;font-family:var(--f-num);font-size:48px;color:var(--dim)}
 .cards2 b.win{border-color:var(--ok);color:var(--ok)}
 .mline{position:relative;height:96px;margin:0 18px;min-width:260px}
+#qplay.wide #qWide .explain{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:16px}#qplay.wide #qWide .explain>.why{grid-column:1/-1}   /* 比大小答错（宽版）：数字卡和小数线并排，矮屏也放得下最后那句讲解 */
 .mline .mbar{position:absolute;left:0;right:0;top:56px;height:4px;background:var(--ink)}
 .mline .tick{position:absolute;top:50px;width:3px;height:16px;background:var(--ink);transform:translateX(-50%)}
 .mline .mk{position:absolute;top:18px;transform:translateX(-50%);font-family:var(--f-num);font-size:24px;color:var(--mute)}
@@ -427,7 +433,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     <div class="banner" id="qWarn" hidden></div>
     <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
     <div class="qtag" id="qTag"></div>
-    <div class="qbody" id="qBody"></div>
+    <div class="qbrow"><div class="qbody" id="qBody"></div><div class="qnextcol" id="qNextCol"></div></div>
     <div id="qWide" hidden style="flex:1;display:flex;flex-direction:column;gap:10px;min-height:0"></div>
     <div class="qnote" id="qNote"></div>
   </div>
@@ -452,6 +458,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <button class="big go" id="qOralNext" hidden>下一题</button>
       <button class="big" id="qClear">擦掉</button>
       <button class="big" id="qDunno">不会</button>
+      <button class="big go" id="qNext" hidden>继续</button>
     </div>
   </div>
 </div>
@@ -551,6 +558,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <span class="muted" id="footNote" style="flex:1"></span>
       <button class="big" id="btnClear">擦掉</button>
       <button class="big" id="btnDunno">不会</button>
+      <button class="big go" id="btnNext" hidden>继续</button>
     </div>
   </div>
   <div class="col pcol" id="oralCol" hidden>
@@ -1021,7 +1029,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const f = P.results.filter(r => r && r.fast).length;
     $('pCount').textContent = `第 ${P.i + 1} 题 · ⚡ ${P.word} ${f}`;
     $('pad').classList.remove('good'); $('check').hidden = true; $('ghost').hidden = true; $('padTip').hidden = true; $('confirm').hidden = true;
-    $('footNote').textContent = ''; $('btnClear').hidden = false; $('btnDunno').hidden = false;
+    $('footNote').textContent = ''; $('btnClear').hidden = false; $('btnDunno').hidden = false; $('btnNext').hidden = true;
     $('oralTap').hidden = false; $('oralFoot').hidden = true; $('oralTap').textContent = '说出答案后，点这里看答案';
     playPad.clear(); playPad.enabled = !S.oral;
     P.t0 = performance.now();
@@ -1095,16 +1103,17 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const why = P.dunno ? '没关系，记住它' : S.oral ? '已放进错题本，明天再来' : `你写的是 ${P.typed} · 已放进错题本，明天再来`;
     $('res').innerHTML = `<div class="say bad">这题再练一下</div><div class="muted" style="font-size:15px">${why}</div>`;
     if (S.oral) return;
-    // 答错：照着描一遍（描一笔或 3 秒自动下一题）；这一批连续第 2 道错题起不描
-    playPad.clear();
-    if (P.wrongRun >= 1) { $('footNote').textContent = '马上进入下一题…'; return later(1500); }
+    // 答错 / 不会：照着描一遍，点「继续」才下一题（Ben 10-31）；这一批连续第 2 道错题起不描
+    playPad.clear(); $('btnNext').hidden = false;
+    if (P.wrongRun >= 1) { $('footNote').textContent = ''; return; }
     const g = $('ghost'); g.textContent = c.ans; g.style.fontSize = Math.min($('pad').clientHeight * 0.75, $('pad').clientWidth / (String(c.ans).length * 0.8)) + 'px'; g.hidden = false;
-    $('padTip').hidden = false; $('footNote').innerHTML = '描一笔就继续 · 或 3 秒后自动下一题<span class="bar"><i></i></span>';
+    $('padTip').hidden = false; $('footNote').textContent = '描完点「继续」'; $('btnClear').hidden = false;
     P.phase = 'trace'; playPad.enabled = true;
-    requestAnimationFrame(() => { const b = $('footNote').querySelector('.bar'); b && b.classList.add('run'); });
-    P.nextT = setTimeout(commit, 3000);
   }
-  function nextAfterTrace() { if (!P || P.phase !== 'trace') return; P.phase = 'traced'; clearTimeout(P.nextT); P.nextT = setTimeout(commit, 600); }
+  function nextAfterTrace() { if (P && P.phase === 'trace') $('padTip').hidden = true; }
+  // 防连点：「继续」和下一题的「不会」「擦掉」「答错了」「下一题」在同一个位置，点「继续」后 0.5 秒内这些按钮不响应（右边「点这里看答案」是大块区域，不在按钮底下，不挡）（10-31 审查：连点两下会把下一题记成不会）
+  let tapGuard = 0; const guarded = () => performance.now() < tapGuard;
+  $('btnNext').addEventListener('click', () => { if (!P || !['a', 'trace'].includes(P.phase) || P.result !== 'wrong') return; tapGuard = performance.now() + 500; $('btnNext').hidden = true; commit(); });
   const later = ms => { P.nextT = setTimeout(commit, ms); };
   // 记录这一题，进下一题
   function commit() {
@@ -1136,8 +1145,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (P.i >= P.deck.length && !(P.kind === 'daily' && moreCards())) return finish(false);
     showQ();
   }
-  $('btnClear').addEventListener('click', () => { if (P && P.phase === 'q') { clearTimeout(P.submitT); playPad.clear(); } });
+  $('btnClear').addEventListener('click', () => { if (guarded()) return; if (P && ['q', 'trace'].includes(P.phase)) { clearTimeout(P.submitT); playPad.clear(); } });
   $('btnDunno').addEventListener('click', () => {
+    if (guarded()) return; 
     if (!P || P.phase !== 'q') return;
     clearTimeout(P.submitT); P.ms = performance.now() - P.t0; P.result = 'wrong'; P.dunno = true; P.typed = '';
     feedback();
@@ -1153,12 +1163,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('oralTap').hidden = true; $('oralFoot').hidden = false; $('btnOralWrong').textContent = '答错了';
   });
   $('btnOralWrong').addEventListener('click', () => {
+    if (guarded()) return; 
     if (!P || P.phase !== 'oral') return;
     const c = P.deck[P.i];
     if (P.result === 'wrong') { P.result = P.ms <= limitOf(c) ? 'fast' : 'slow'; $('btnOralWrong').textContent = '答错了'; $('res').innerHTML = '<div class="say">✓</div>'; }
     else { P.result = 'wrong'; $('btnOralWrong').textContent = '其实答对了'; $('res').innerHTML = '<div class="say bad">这题再练一下</div>'; }
   });
-  $('btnOralNext').addEventListener('click', () => { if (P && P.phase === 'oral') commit(); });
+  $('btnOralNext').addEventListener('click', () => { if (guarded()) return; if (P && P.phase === 'oral') commit(); });
   longPress($('btnQuit'), 1000, () => finish(true), () => { $('quitHint').hidden = false; clearTimeout(window._qh); window._qh = setTimeout(() => { $('quitHint').hidden = true; }, 1500); });
 
   // ---------- 7 结算 ----------
@@ -1206,7 +1217,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const SEC_CAP = 60, OK_MS = 800, BAD_MS = 3000, PLACE_MS = 500, PICK_FAST = 2000, LINE_WAIT = 1200;
   let Q = null, qForceUnsure = false;
   const qPad = Pad($('qPad'), () => qSchedule());
-  qPad.onDown = () => { if (!Q) return; clearTimeout(Q.submitT); if (Q.phase === 'q') $('qFootNote').textContent = ''; if (Q.phase === 'trace') { Q.phase = 'traced'; clearTimeout(Q.nextT); Q.nextT = setTimeout(nextQ, 600); } };
+  qPad.onDown = () => { if (!Q) return; clearTimeout(Q.submitT); if (Q.phase === 'q') $('qFootNote').textContent = ''; if (Q.phase === 'trace') $('qPadTip').hidden = true; };
   const flashMs = () => S.settings.flashMs || 1500;
   const timers = () => { if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
   function startQ(kind, opts) {
@@ -1254,10 +1265,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('qplay').classList.toggle('wide', wide);
     $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : Q.x.retry ? v.tag + ' · 再来一次' : v.tag;
     $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : v.note || '';
-    $('qBody').innerHTML = v.html; $('qBody').hidden = false;
+    $('qBody').innerHTML = v.html; $('qBody').hidden = false; $('qWide').after($('qNote'));   // 提示回到原位（宽版答错时挪到了「继续」下面）
     $('qWide').hidden = !wide; $('qWide').innerHTML = '';
     $('qPeek').hidden = !v.flash; $('qPeek').disabled = false;
-    ['qGhost', 'qPadTip', 'qCheck', 'qConfirm', 'qOralWrong', 'qOralNext'].forEach(id => { $(id).hidden = true; });
+    ['qGhost', 'qPadTip', 'qCheck', 'qConfirm', 'qOralWrong', 'qOralNext', 'qNext'].forEach(id => { $(id).hidden = true; });
     $('qPad').classList.remove('good');
     $('qFootNote').textContent = ''; $('qClear').hidden = !!S.oral; $('qDunno').hidden = false;
     $('qPad').hidden = !!S.oral; $('qOral').hidden = !S.oral; $('qOral').textContent = '说出答案后，点这里看答案';
@@ -1323,16 +1334,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (right && !viaConfirm) { Q.rec.digits.forEach((d, k) => { if (!Q.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }); saveInk(); }
     resolve({ok: right, fast: right && !viaConfirm && Q.ms <= qLimit(inst), typed: text});
   }
-  $('qClear').addEventListener('click', () => { if (Q && Q.phase === 'q') { clearTimeout(Q.submitT); qPad.clear(); } });
-  $('qDunno').addEventListener('click', () => { if (!Q || Q.phase !== 'q') return; clearTimeout(Q.submitT); resolve({ok: false, dunno: true}); });
+  $('qClear').addEventListener('click', () => { if (guarded()) return; if (Q && ['q', 'trace'].includes(Q.phase)) { clearTimeout(Q.submitT); qPad.clear(); } });
+  $('qDunno').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'q') return; clearTimeout(Q.submitT); resolve({ok: false, dunno: true}); });
   // 口答（家长陪着）：说出答案 → 点一下看答案 → 家长判
   $('qOral').addEventListener('click', () => {
     if (!Q || Q.phase !== 'q' || !S.oral || Q.v.input !== 'write') return;
     Q.ms = performance.now() - Q.t0; Q.phase = 'oral';
     $('qOral').textContent = '答案是 ' + Q.x.inst.ans; $('qOralWrong').hidden = false; $('qOralNext').hidden = false; $('qOralWrong').textContent = '答错了'; $('qDunno').hidden = true;
   });
-  $('qOralWrong').addEventListener('click', () => { if (!Q || Q.phase !== 'oral') return; Q.oralWrong = !Q.oralWrong; $('qOralWrong').textContent = Q.oralWrong ? '其实答对了' : '答错了'; });
-  $('qOralNext').addEventListener('click', () => { if (!Q || Q.phase !== 'oral') return; Q.phase = 'q'; resolve({ok: !Q.oralWrong, fast: !Q.oralWrong && Q.ms <= qLimit(Q.x.inst)}); });
+  $('qOralWrong').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.oralWrong = !Q.oralWrong; $('qOralWrong').textContent = Q.oralWrong ? '其实答对了' : '答错了'; });
+  $('qOralNext').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.phase = 'q'; resolve({ok: !Q.oralWrong, fast: !Q.oralWrong && Q.ms <= qLimit(Q.x.inst)}); });
 
   // 比大小 · 点选：两张大卡片直接点大的；乱点后数字出现 1 秒才能点，2 秒限时从能点那一刻算
   function showPick(v) {
@@ -1380,7 +1391,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     resolve({ok: j.ok});
   }
 
-  // ---------- 4 反馈：答对 0.8 秒自动下一题；答错图解，描一笔或 3 秒（点选、数线 3 秒） ----------
+  // ---------- 4 反馈：答对 0.8 秒自动下一题；答错 / 不会：图解停住，点「继续」才下一题（Ben 10-31） ----------
   function resolve(r) {
     if (!Q || (Q.phase !== 'q' && Q.phase !== 'confirm')) return;
     Q.phase = 'a'; qPad.enabled = false; timers();
@@ -1418,19 +1429,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (v.input === 'line') {
       drawTarget(false);
       $('qBody').innerHTML = `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
-      Q.nextT = setTimeout(nextQ, BAD_MS); return;
+      return waitNext();
     }
-    if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); Q.nextT = setTimeout(nextQ, BAD_MS); return; }
+    if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); return waitNext(); }
     $('qBody').innerHTML = bad + R.explain(inst);
-    if (S.oral) { Q.nextT = setTimeout(nextQ, BAD_MS); return; }
-    // 手写题：照着描一遍（描一笔就继续，或 3 秒后自动下一题）
+    if (S.oral) return waitNext();
+    // 手写题：照着描一遍，描完点「继续」
     qPad.clear();
     const g = $('qGhost'); g.textContent = inst.ans; g.style.fontSize = Math.min($('qPad').clientHeight * 0.75, $('qPad').clientWidth / (String(inst.ans).length * 0.8)) + 'px'; g.hidden = false;
-    $('qPadTip').hidden = false; $('qFootNote').innerHTML = '描一笔就继续 · 或 3 秒后自动下一题<span class="bar"><i></i></span>';
-    Q.phase = 'trace'; qPad.enabled = true;
-    requestAnimationFrame(() => { const b = $('qFootNote').querySelector('.bar'); b && b.classList.add('run'); });
-    Q.nextT = setTimeout(nextQ, BAD_MS);
+    $('qPadTip').hidden = false; $('qFootNote').textContent = '描完点「继续」'; $('qClear').hidden = false;
+    qPad.enabled = true; waitNext('trace');
   }
+  // 「继续」放在看得见的那一栏：点选、数线是宽版，右栏（写字板和底部按钮）整个收起，按钮挪到左栏讲解标题右边
+  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
+  $('qNext').addEventListener('click', () => { if (!Q || !['wait', 'trace'].includes(Q.phase)) return; tapGuard = performance.now() + 500; $('qNext').hidden = true; nextQ(); });
   // 答对后左边显示完整的题（看数 → 数字）
   function answerLine(inst) {
     const s = K.BY[K.ITEM[inst.id].skill], q = inst.q;

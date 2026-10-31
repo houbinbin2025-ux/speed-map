@@ -37,3 +37,31 @@ test('页面里的 id 都唯一；脚本里 $(\'xx\') 取的 id 页面里都有'
   const missing = [...new Set([...html.matchAll(/\$\('([A-Za-z0-9_]+)'\)/g)].map(m => m[1]))].filter(id => !ids.includes(id) && !dyn.has(id));
   assert.deepEqual(missing, []);
 });
+
+test('答错或点「不会」后讲解停住，点「继续」才进下一题（Ben 10-31：3 秒自动跳走来不及看）', () => {
+  // 理解题（qplay）：答错的几条分支不许再定时调 nextQ；页面有「继续」按钮，点了才调 nextQ
+  assert.doesNotMatch(html, /setTimeout\(nextQ, BAD_MS\)/, '答错后还在定时自动下一题');
+  assert.match(html, /<button class="big go" id="qNext" hidden>继续<\/button>/);
+  assert.match(html, /\$\('qNext'\)\.addEventListener\('click'/);
+  // 描一笔不再自动跳题
+  assert.doesNotMatch(html, /Q\.phase === 'trace'\) \{ Q\.phase = 'traced'; clearTimeout\(Q\.nextT\); Q\.nextT = setTimeout\(nextQ/);
+  // 秒答练习（play）同样：答错 / 不会后不定时 commit，点「继续」才记下一题
+  assert.doesNotMatch(html, /P\.nextT = setTimeout\(commit, 3000\)/);
+  assert.doesNotMatch(html, /return later\(1500\)/);
+  assert.match(html, /<button class="big go" id="btnNext" hidden>继续<\/button>/);
+  assert.match(html, /\$\('btnNext'\)\.addEventListener\('click'/);
+});
+
+test('点选、数线是宽版（右栏收起），答错时「继续」要挪到左栏，不能留在看不见的右栏（10-31 走查发现）', () => {
+  assert.match(html, /#qplay\.wide \.qr\{display:none\}/);
+  assert.match(html, /function waitNext\(phase\) \{[^\n]*classList\.contains\('wide'\)\) \$\('qNextCol'\)\.append\(btn/);
+  assert.match(html, /#qplay\.wide \.qnextcol\{display:flex/);
+});
+
+test('防连点：点「继续」后 0.5 秒内，下一题同一位置的「不会」「擦掉」和口答按钮不响应（10-31 审查阻断）', () => {
+  assert.match(html, /const guarded = \(\) => performance\.now\(\) < tapGuard;/);
+  assert.match(html, /\$\('qNext'\)\.addEventListener\('click', \(\) => \{[^\n]*tapGuard = performance\.now\(\) \+ 500/);
+  assert.match(html, /\$\('btnNext'\)\.addEventListener\('click', \(\) => \{[^\n]*tapGuard = performance\.now\(\) \+ 500/);
+  ['qDunno', 'qClear', 'btnDunno', 'btnClear', 'qOralNext', 'btnOralNext'].forEach(id =>
+    assert.match(html, new RegExp(`\\$\\('${id}'\\)\\.addEventListener\\('click', \\(\\) => \\{\\s*if \\(guarded\\(\\)\\) return;`), id + ' 没加防连点'));
+});

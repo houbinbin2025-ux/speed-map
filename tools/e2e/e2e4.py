@@ -2,6 +2,7 @@
 # 今日练习连写错 6 题（都是还在学的灰格）→ 每题左边有「✗ 你写的是 X」、提示已放进错题宝箱、错题数 +1；
 # 结算写「新进错题本 6 道」；错题宝箱里能看到这 6 道（标「明天」）
 # 10-29 加：写错的题隔 3 题原题「再来一次」（题签带「再来一次」，同样的数）；再来一次写错不重复进错题本
+# 10-31 加：答错后讲解停住，4 秒后还在原题、「继续」按钮可见；点「继续」才下一题
 # 用法：python3 tools/e2e/e2e4.py <项目根> <截图目录>
 import pathlib
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
@@ -36,7 +37,10 @@ with sync_playwright() as p:
         check('错题宝箱' in note, f'第 {k + 1} 题没提示放进错题宝箱：{note!r}')
         check(nm == len(firsts), f'第 {k + 1} 题后错题数 {nm}，应为 {len(firsts)}')
         shot(pg, f'w{k}' + ('-再来一次' if rt else '')); k += 0 if rt else 1
-        pg.wait_for_function("() => { const Q = window.__sm.Q; return !Q || Q.phase === 'q' || Q.phase === 'demo'; }", timeout=8000)
+        # 10-31 Ben：答错 / 不会后讲解停住，等孩子点「继续」；4 秒后还在这一题、「继续」看得见
+        pg.wait_for_timeout(4000)
+        check(qst(pg)['id'] == st['id'] and pg.is_visible('#qNext'), f'第 {k} 题答错后没停住等「继续」')
+        pg.wait_for_function("() => { ['qNext','btnNext'].forEach(i => { const b = document.getElementById(i); if (b && !b.hidden && b.offsetParent) b.click(); }); const Q = window.__sm.Q; return !Q || Q.phase === 'q' || Q.phase === 'demo'; }", timeout=8000)
     check(retries >= 1, '连错 6 题没有出现再来一次')
     btn = '#qQuit' if cur(pg) == 'qplay' else '#dQuit'
     bb = pg.locator(btn).bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up(); pg.wait_for_timeout(500)

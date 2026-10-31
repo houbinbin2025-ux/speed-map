@@ -63,6 +63,8 @@ def run(pg, n, tag, wrong_every=4):
             pg.wait_for_timeout(3300); shot(pg, f'{tag}-demo-done')
             pg.click('#ack'); pg.wait_for_timeout(200); continue
         st = qst(pg)
+        if c == 'qplay' and st and st['phase'] in ('wait', 'trace') and pg.is_visible('#qNext'):   # 10-31：答错讲解停住，孩子点「继续」
+            shot(pg, f'{tag}-wait-next'); pg.click('#qNext'); pg.wait_for_timeout(150); continue
         if c == 'qplay' and st and st['phase'] == 'q':
             shot(pg, f"{tag}-q-{st['group']}-{st['input']}")
             right = (k % wrong_every) != wrong_every - 1
@@ -92,7 +94,7 @@ with sync_playwright() as p:
     log = pg.evaluate("Object.entries(window.__sm.S.log || {}).map(([d, v]) => v.ups.length)")
     print('今日练习', k, '题', res, '识别统计', pg.evaluate("(window.__sm.INK.stats || []).reduce((a, b) => a + b, 0) + '/' + (window.__sm.INK.stats || []).length"))
     # 暂停：题还没答 → 切后台 → 回来 → 继续 → 原题重出
-    pg.wait_for_function("() => { const Q = window.__sm.Q; return Q && (Q.phase === 'q' || Q.phase === 'demo'); }", timeout=8000)
+    pg.wait_for_function("() => { ['qNext','btnNext'].forEach(i => { const b = document.getElementById(i); if (b && !b.hidden && b.offsetParent) b.click(); }); const Q = window.__sm.Q; return Q && (Q.phase === 'q' || Q.phase === 'demo'); }", timeout=8000)
     before = pg.evaluate("window.__sm.Q.x.inst ? window.__sm.Q.x.inst.id : 'demo'")
     pg.evaluate("Object.defineProperty(document, 'hidden', {configurable: true, get: () => true}); document.dispatchEvent(new Event('visibilitychange'))")
     pg.wait_for_timeout(800)
@@ -105,7 +107,7 @@ with sync_playwright() as p:
     pg.go_back(); pg.wait_for_timeout(300); shot(pg, 'c2-back')
     print('后退后还在练习页', cur(pg))
     # 长按结束 → 结算
-    pg.wait_for_function("() => { const Q = window.__sm.Q; return !Q || Q.phase === 'q' || Q.phase === 'demo'; }", timeout=8000)
+    pg.wait_for_function("() => { ['qNext','btnNext'].forEach(i => { const b = document.getElementById(i); if (b && !b.hidden && b.offsetParent) b.click(); }); const Q = window.__sm.Q; return !Q || Q.phase === 'q' || Q.phase === 'demo'; }", timeout=8000)
     btn = '#qQuit' if cur(pg) == 'qplay' else '#dQuit'
     bb = pg.locator(btn).bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up(); pg.wait_for_timeout(300)
     shot(pg, 'c3-qsum'); pg.click('#qsHome'); pg.wait_for_timeout(200)

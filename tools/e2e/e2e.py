@@ -59,6 +59,8 @@ with sync_playwright() as p:
         if st['cur'] == 'demo':
             shot(pg, '05-demo')
             pg.wait_for_function("() => !document.getElementById('ack').disabled", timeout=5000); pg.click('#ack'); pg.wait_for_timeout(150); continue
+        if st['cur'] == 'qplay' and st.get('phase') in ('wait', 'trace') and pg.is_visible('#qNext'):   # 10-31：答错讲解停住，孩子点「继续」
+            pg.click('#qNext'); pg.wait_for_timeout(600); continue   # 点「继续」后 0.5 秒内底栏按钮防连点
         if st['cur'] == 'qplay' and st.get('phase') == 'q':
             shot(pg, f"06-q-{st['group']}-{st['input']}")
             right = (n % 4) != 3
@@ -70,7 +72,7 @@ with sync_playwright() as p:
     print('今日练习答了', n, '题，今天已练', sec, '秒')
     # 长按结束 → 结算
     if state(pg)['cur'] != 'qsum':
-        pg.wait_for_function("() => { const Q = window.__sm.Q; return !Q || Q.phase === 'q' || Q.phase === 'demo'; }", timeout=6000)
+        pg.wait_for_function("() => { ['qNext','btnNext'].forEach(i => { const b = document.getElementById(i); if (b && !b.hidden && b.offsetParent) b.click(); }); const Q = window.__sm.Q; return !Q || Q.phase === 'q' || Q.phase === 'demo'; }", timeout=6000)
         btn = '#qQuit' if state(pg)['cur'] == 'qplay' else '#dQuit'
         bb = pg.locator(btn).bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up()
     pg.wait_for_timeout(300); shot(pg, '08-qsum')
