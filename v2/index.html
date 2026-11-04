@@ -434,7 +434,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #house .bkh h2{margin:0;flex:1;font-size:20px}
 #house .bkg{flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;align-content:start}
 #house .bkc{height:84px;background:#3a2d58;border:3px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px}
-#house .bkc canvas{height:52px;width:44px}
+#house .bkc canvas{height:50px;width:56px}
 #house .bkc small{font-size:12px;font-weight:800;white-space:nowrap}
 #house .bkc.gold{background:#5a3db0;box-shadow:inset 0 0 0 2px #e9c6ff}
 #house .bkc.home{outline:3px solid var(--warn);outline-offset:-3px}
@@ -773,7 +773,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v36:66c6f9babfa1 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v38:b414d18caf09 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -783,15 +783,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=36"></script>
-<script src="core.js?v=36"></script>
-<script src="ink.js?v=36"></script>
-<script src="skills.js?v=36"></script>
-<script src="engine.js?v=36"></script>
-<script src="render.js?v=36"></script>
-<script src="world.js?v=36"></script>
-<script src="home.js?v=36"></script>
-<script src="house.js?v=36"></script>
+<script src="bank.js?v=38"></script>
+<script src="core.js?v=38"></script>
+<script src="ink.js?v=38"></script>
+<script src="skills.js?v=38"></script>
+<script src="engine.js?v=38"></script>
+<script src="render.js?v=38"></script>
+<script src="world.js?v=38"></script>
+<script src="home.js?v=38"></script>
+<script src="house.js?v=38"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);

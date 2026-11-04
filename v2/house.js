@@ -54,7 +54,7 @@
   const A = root.ART, r = A.r, K = '#1b1d22';
   const T = {
     // 手绘像素：rows 从上到下，字符对应 pal；走路时上下动 1 格
-    px(g, c, x, y, f) { const b = f % 2, h = c.rows.length; c.rows.forEach((row, j) => [...row].forEach((ch, i) => { if (c.pal[ch]) r(g, c.pal[ch], x + i, y - h + j - b, 1, 1); })); },
+    px(g, c, x, y, f) { const b = f % 2, h = c.rows.length; c.rows.forEach((row, j) => [...row].forEach((ch, i) => { const col = ch === 'X' ? (b ? c.pal.X : null) : c.pal[ch]; if (col) r(g, col, x + i, y - h + j - b, 1, 1); })); },   // X = 一闪一闪的火花 / 灯
     quad(g, c, x, y, f) { // 四足
       r(g, c.c, x + 1, y - 9, 10, 6); r(g, c.c, x + 9, y - 12, 6, 6); r(g, K, x + 13, y - 10, 1, 1);
       if (c.f) r(g, c.f, x + 13, y - 8, 2, 2); if (c.e) { r(g, c.e, x + 10, y - 14, 1, 2); r(g, c.e, x + 13, y - 14, 1, 2); }
@@ -121,21 +121,44 @@
     bear: {n: '北极熊', rows: ['...........WW.WW', '...........WWWWW', '...........WKWWW', 'WWWWWWWWWWWWWWKK', 'WWWWWWWWWWWWWW..', 'WWWWWWWWWWWWWW..', 'WWW.WWW..WWW.WWW', 'WWW.WWW..WWW.WWW'], pal: {W: '#f2f6fb', K: K2}},
     horse: {n: '小马', rows: ['...........KBB..', '..........KBBBB.', '..........KBKBBB', '..........KBBBBB', 'K........KBB....', 'K.BBBBBBBBBB....', 'K.BBBBBBBBBB....', '..BBBBBBBBBB....', '..BB.BB..BB.BB..', '..BB.BB..BB.BB..', '..KK.KK..KK.KK..'], pal: {B: '#8a5a2c', K: K2}},
     goat: {n: '山羊', rows: ['...........H.H..', '..........WWWW..', '..........WKWWW.', '.WWWWWWWWWWWWW..', '.WWWWWWWWWWD....', '.WWWWWWWWWWW....', '..WW.WW..WW.WW..', '..HH.HH..HH.HH..'], pal: {W: W0, H: '#6c6f76', D: W9, K: K2}},
-    camel: {n: '骆驼', rows: ['.............CCC', '.....HH......CKC', '....HHHH.....CCF', '.CCCCCCCCCCCCCC.', '.CCCCCCCCCCCC...', '.CCCCCCCCCCCC...', '..CC.CC..CC.CC..', '..CC.CC..CC.CC..', '..CC.CC..CC.CC..'], pal: {C: '#d9b479', H: '#b98a22', K: K2, F: '#b98a22'}},
     squid: {n: '鱿鱼', rows: ['.....NNNNNN.....', '....NNNNNNNN....', '....NKNNNNKN....', '....NNNNNNNN....', '....NNNNNNNN....', '....N.NN.NN.N...', '...N..N..N...N..', '...N..N..N...N..'], pal: {N: '#2f5fa8', K: W0}},
     puffer: {n: '河豚', rows: ['....S.S.S.......', '...YYYYYYYY.....', 'S.YYKYYYYKYY.S..', '..YYYYYYYYYY....', 'S.YYWWWWWWYY.S..', '...YYYYYYYY.....', '....S.S.S.......'], pal: {Y: '#f2c14e', S: '#b98a22', K: K2, W: W0}},
   };
+  // 原创角色：造型和名字都是自己的，d = 图鉴里的一句介绍
+  const DG = (c, d, h, e) => ({rows: ['............HH..', '...........CCCC.', '..WW.......CKCCC', '..WWW......CCCCT', '...WWW....CC....', '....WWWW.CCC....', 'TT..CCCCCCCC....', '.TCCCCCCCCCC....', '..CCCCCCCCCC....', '...CC.CC..CC....'], pal: {C: c, W: d, H: h, T: d, K: e}});
+  Object.assign(PX, {
+    bomb: {n: '炸弹蘑菇', d: '引线一闪一闪，碰一下就冒烟', rows: ['..........X.....', '.........F......', '....RRRRRFRR....', '...RRWRRRRRWR...', '..RRRRRRWRRRRR..', '..RRRRRRRRRRRR..', '.....CCCCCC.....', '.....CKCCKC.....', '.....CCCCCC.....', '.....CMMMMC.....', '.....C....C.....'], pal: {R: '#d9342b', W: W0, C: '#e6d8c0', K: K2, M: '#8a5a2c', F: '#5a3a20', X: '#f2c14e'}},
+    jelly: {n: '弹弹果冻', d: '最爱在草地上弹来弹去', rows: ['....GGGGGGGG....', '...GWGGGGGGGG...', '..GWGGGGGGGGGG..', '..GGGKGGGGKGGG..', '..GGGGGGGGGGGG..', '..GGGGMMMMGGGG..', '..DDDDDDDDDDDD..'], pal: {G: '#7bd88f', W: '#d8f5de', K: K2, M: '#2f5e1c', D: '#4f8a2e'}},
+    cactus: {n: '跳跳仙人掌', d: '沙漠里跑得最快的仙人掌', rows: ['.......PP.......', '......GGGG......', '......GKGK......', '..GG..GGGG..GG..', '..GG..GMMG..GG..', '..GGGGGGGGGGGG..', '......GGGG......', '......GGGG......', '......GGGG......', '.....G....G.....'], pal: {G: '#4f8a2e', P: '#f6a5a0', K: K2, M: '#2f5e1c'}},
+    yeti: {n: '雪球怪', d: '住在雪山顶，打喷嚏会下雪', rows: ['.....WWWWWW.....', '...WWWWWWWWWW...', '..WWWKWWWWKWWW..', '..WWWWWWWWWWWW..', '..WWWBBBBBBWWW..', '..WWBWBWWBWBWW..', '...WWWWWWWWWW...', 'W..WWWWWWWWWW..W', 'WW.WWWWWWWWWW.WW', '...WW......WW...'], pal: {W: '#d6ecff', K: K2, B: '#2f6fb0'}},
+    lamp: {n: '矿灯蜘蛛', d: '戴着矿灯，在黑暗里帮你找路', rows: ['......YX........', '.....HHHH.......', '....HHHHHH......', '..SSSSSSSSSS....', '.SSRSSSSRSSSS...', '.SSSSSSSSSSSS...', 'S.S.S.S..S.S.S..', 'S.S.S.S..S.S.S..'], pal: {S: '#55585f', H: '#f2c14e', Y: '#fff3b0', X: '#fff3b0', R: '#d9342b'}},
+    lava: {n: '熔岩龟', d: '背上驮着一座小火山', rows: ['......X.........', '....OOOOOO......', '...OYOOOYOO.....', '..OOOOYOOOOO.SS.', '..KKKKKKKKKKKSKS', '..KK......KK.SS.'], pal: {O: '#d9542b', Y: '#f2c14e', X: '#fff3b0', K: '#3a3d44', S: '#6c6f76'}},
+    star: {n: '闪现星', d: '一眨眼就跑到你身后', rows: ['.......Y........', '......YYY.......', 'X.....YYY.......', '.YYYYYYYYYYYYY..', '...YYKYYYKYY....', '....YYYYYYY.....', '....YYYMYYY.....', '...YYY...YYY..X.', '...Y.......Y....'], pal: {Y: '#5fd9e6', K: K2, M: '#2f9fae', X: '#ecebe4'}},
+    knight: {n: '铁皮骑士', d: '盔甲叮当响，从不后退', rows: ['.....RR.........', '....SSSSSS......', '....SKKKKS......', '....SSSSSS....W.', '...BBBBBBBB...W.', '..SBBBYYBBBSS.W.', '..SBBBYYBBB.SSW.', '....BBBBBB....H.', '....SS..SS......', '....SS..SS......'], pal: {S: '#c9ccd2', K: K2, R: '#d9342b', B: '#2f6fb0', Y: '#f2c14e', W: W0, H: '#6b4628'}},
+    drummer: {n: '骨头鼓手', d: '一敲鼓，大家都想跳舞', rows: ['....WWWWWW......', '....WKWWKW......', '....WWWWWW......', '....WMWMWM......', '.....WWWW.......', '..WWWWWWWWWW....', '.....WWWW.......', '....RRRRRRRR.W..', '....YYYYYYYY.W..', '....RRRRRRRR....', '....WW....WW....'], pal: {W: '#e4e4dc', K: K2, M: '#6c6f76', R: '#b3261e', Y: '#f2c14e'}},
+    wizard: {n: '雷电小巫', d: '挥一挥手杖，就有一道闪电', rows: ['......PP.......X', '.....PPPP.....X.', '....PPPPPP...XX.', '..PPPPPPPPPP..X.', '....SSSSSS...X..', '....SKSSKS......', '....SSSSSS.W....', '...BBBBBBBWW....', '...BBBBBBB.W....', '...BBBBBBB.W....', '..BBBBBBBBB.....'], pal: {P: '#8a1c16', S: '#e6b89c', K: K2, B: '#d9342b', W: '#8a5a2c', X: '#f2c14e'}},
+    pirate: {n: '章鱼海盗', d: '八只手，抢的全是好吃的', rows: ['....KKKKKKKK....', '...KKKWWKKKKK...', '..KKKKKKKKKKKK..', '....OOOOOOOO....', '...OOKOOOOKOO...', '...OOOOOOOOOO...', '....OOOOOOOO....', '...O.O.OO.O.O...', '..O..O.OO.O..O..', '..O..O....O..O..'], pal: {K: '#2b2b2b', W: W0, O: '#e0762a'}},
+    bat: {n: '夜翼蝠', d: '白天睡觉，晚上巡逻', rows: ['...K.......K....', 'K..KK.....KK..K.', 'KK.KKKKKKKKK.KK.', 'KKKKKRKKKRKKKKK.', 'KKKKKKKKKKKKKKK.', '.KKK.KWKWK.KKK..', '..K...KKK...K...'], pal: {K: '#8d7ab8', R: '#f2c14e', W: W0}},
+    wrap: {n: '绷带怪', d: '身上的绷带总是散开', rows: ['....WWWWWW......', '....LLLLLL......', '....WKWWKW......', '....LLLLLL......', '....WWWWWW..LL..', '...LLLLLLLLLL...', '..WWWWWWWW......', '...LLLLLL.......', '....WW..WW......', '....LL..LL......', '....WW..WW......'], pal: {W: '#e8e0c8', L: '#b5a97e', K: K2}},
+    rock: {n: '岩石巨人', d: '睡一觉，身上就长满青苔', rows: ['...SSSSSSSSS....', '...SGGSSSSSS....', '...SKKSSKKSS....', '..SSSSSSSSSSS...', 'SSSSSSSSSSSSSSS.', 'SSSSSSSGSSSSSSS.', 'SS.SSSSSSSSS.SS.', 'SS.SSSSSSSSS.SS.', '...SSS...SSS....', '...SSS...SSS....'], pal: {S: '#8a8d94', G: '#6fae3a', K: '#f2c14e'}},
+    robot: {n: '齿轮机器人', d: '算题比谁都快', rows: ['.......X........', '.......S........', '....SSSSSSSS....', '....SCCSSCCS....', '....SSSSSSSS....', '....SMMMMMMS....', '.SS.BBBBBBBB.SS.', '.SSSBBOOBBBBSSS.', '.S..BBOOBBBB..S.', '....SS....SS....', '....SS....SS....'], pal: {S: '#c9ccd2', C: '#5fd9e6', M: '#6c6f76', B: '#6ea8c8', O: '#f2c14e', X: '#d9342b'}},
+    spark: {n: '火花精灵', d: '走到哪里，哪里就亮', rows: ['.......X........', '......RR...X....', '.....RRRR.......', '....RRYYRR......', '...RRYYYYRR.....', '...RYKYYKYR.....', '...RYYYYYYR.....', '....RYYYYR......', '.....RRRR.......'], pal: {R: '#e0762a', Y: '#f2c14e', K: K2, X: '#fff3b0'}},
+    crystal: Object.assign({n: '水晶龙', d: '翅膀像冰一样透明'}, DG('#5fd9e6', '#2f9fae', '#d6ecff', K2)),
+    gold: Object.assign({n: '金龙', d: '岛上最厉害的伙伴'}, DG('#f2c14e', '#b98a22', '#fff3b0', '#b3261e')),
+    kingJelly: {rows: ['....Y..Y..Y.....', '....YYYYYYYY....', '...GGGGGGGGGG...', '..GGWGGGGGGGGG..', '..GGGKGGGGKGGG..', '..GGGGGGGGGGGG..', '..GGGGMMMMGGGG..', '..DDDDDDDDDDDD..'], pal: {Y: '#f2c14e', G: '#7bd88f', W: '#d8f5de', K: K2, M: '#2f5e1c', D: '#4f8a2e'}},
+    general: {rows: ['....RRRRRRRR....', '....WWWWWWWW..S.', '....WKKWWKKW..S.', '....WWWWWWWW..S.', '....WMWMWMWM..S.', '...RRRRRRRRRR.S.', '..WWWRRRRRRWWWH.', '..W.WWWWWWWW..H.', '....WW....WW....', '....WW....WW....'], pal: {R: '#b3261e', W: '#e4e4dc', K: '#d9342b', M: '#6c6f76', S: '#c9ccd2', H: '#6b4628'}},
+    queen: {rows: ['......Y.Y.Y.....', '......YYYYY.....', '..SSSSSSSSSSSS..', '.SSRRSSSSSSRRSS.', '.SSSSSSKKSSSSSS.', '.SSSSSSSSSSSSSS.', 'S.S.S.S..S.S.S.S', 'S.S.S.S..S.S.S.S'], pal: {Y: '#f2c14e', S: '#c9365a', R: '#fff3b0', K: '#7a1a40'}},
+    bigDragon: DG('#d9342b', '#8a1c16', '#f2c14e', '#f2c14e'),
+  });
   const px = k => Object.assign({t: 'px'}, PX[k]);
   // 一个技能一只，顺序 = K.SKILLS（理解 19 + 秒答 19）。最受欢迎的排最前，一开始练就能解锁
   const CREATURES = [
     px('wolf'), px('axo'), px('bee'), px('cat'), px('fox'), px('parrot'), px('panda'), px('sheep'), px('pig'), px('turtle'), px('cow'), px('frog'), px('chick'), px('rabbit'), px('llama'), px('dolphin'), px('bear'), px('horse'), px('goat'),
-    {n: '绿果冻', t: 'blob', c: '#7bd88f', d: '#4f8a2e'}, {n: '蘑菇怪', t: 'blob', c: '#e6d8c0', cap: '#b3261e'}, px('camel'), {n: '雪人', t: 'snow'},
-    {n: '矿洞蜘蛛', t: 'spider', c: '#3a3d44', d: '#2b2b2b'}, {n: '熔岩团', t: 'blob', c: '#a8322d', d: '#e0762a', f: '#f2c14e'}, {n: '幽灵', t: 'ghost', c: '#dfe6ee'},
-    {n: '丧尸兵', t: 'hum', c: '#8aa37b', b: '#7a5230', l: '#5a3a20'}, {n: '骨头兵', t: 'hum', c: '#d9d9d2', f: '#2b2b2b'}, {n: '小巫师', t: 'hum', c: '#e6b89c', b: '#b3261e', hat: '#8a1c16'}, px('squid'),
-    px('puffer'), {n: '蝙蝠', t: 'fly', c: '#8d7ab8', w: '#b6a6d8'}, {n: '木乃伊', t: 'hum', c: '#d9cfae', s: '#b5a97e', arm: 1}, {n: '石头人', t: 'hum', c: '#8a8d94', b: '#6c6f76', f: '#f2c14e'},
-    {n: '机器人', t: 'hum', c: '#c9ccd2', b: '#9a9da4', f: '#b3261e', arm: 1}, {n: '火焰精', t: 'ghost', c: '#f2c14e', f: '#b3261e'}, {n: '水晶龙', t: 'dragon', c: '#5fd9e6', d: '#2f9fae'}, {n: '金龙', t: 'dragon', c: '#f2c14e', d: '#b98a22', f: '#b3261e'},
+    px('jelly'), px('bomb'), px('cactus'), px('yeti'), px('lamp'), px('lava'), px('star'),
+    px('knight'), px('drummer'), px('wizard'), px('pirate'), px('puffer'), px('bat'), px('wrap'), px('rock'),
+    px('robot'), px('spark'), px('crystal'), px('gold'),
   ];
-  const BOSS = {'speed:L1': {t: 'blob', c: '#7bd88f', d: '#4f8a2e', cap: '#f2c14e'}, 'speed:L2': {t: 'hum', c: '#d9d9d2', f: '#b3261e', hat: '#6c6f76'}, 'speed:L3': {t: 'spider', c: '#c9365a', d: '#7a1a40', f: '#f2c14e'}, 'speed:L4': {t: 'dragon', c: '#a8322d', d: '#6b1a14'}};
+  const BOSS = {'speed:L1': px('kingJelly'), 'speed:L2': px('general'), 'speed:L3': px('queen'), 'speed:L4': px('bigDragon')};
   // 画一只：x,y = 左下角；flip 朝左；scale 放大
   const cache = document.createElement('canvas'); cache.width = 22; cache.height = 24;
   function creature(g, c, x, y, f, opt) {
@@ -440,14 +463,14 @@
   // ---------- 伙伴图鉴 ----------
   function showBook() {
     closeSheet(); const v = el('h_book'), L = learned(), SK = K.SKILLS;
-    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2><span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${S.home.pets.includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="20" height="24"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
-    v.hidden = false; v.querySelectorAll('canvas[data-c]').forEach(c => { const i = c.dataset.c; A.creature(c.getContext('2d'), crOf(i), 0, 24, 0, L.includes(i) ? {} : {shadow: '#0c0d10'}); });
+    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2><span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${S.home.pets.includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="18" height="16"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
+    v.hidden = false; v.querySelectorAll('canvas[data-c]').forEach(c => { const i = c.dataset.c; A.creature(c.getContext('2d'), crOf(i), 0, 16, 0, L.includes(i) ? {} : {shadow: '#0c0d10'}); });
     el('h_bkClose').onclick = closeBook;
     v.querySelector('.bkg').onclick = e => {
       const b = e.target.closest('.bkc'); if (!b) return; const i = b.dataset.i, s = K.BY[i], has = L.includes(i); blip(SND.tap);
       if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · 学会「${s.name}」后解锁</span><button class="btn go" id="h_bkGo">去练这一块</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
       const at = S.home.pets.includes(i);
-      el('h_bkD').innerHTML = `<span><b>${crOf(i).n}${isGold(i) ? ' · 附魔' : ''}</b> · 学会了「${s.name}」${isGold(i) ? '，全部隔 3 天还做对' : ''}</span><button class="btn go" id="h_bkPet">${at ? '留在图鉴' : '带回家'}</button>`;
+      el('h_bkD').innerHTML = `<span><b>${crOf(i).n}${isGold(i) ? ' · 附魔' : ''}</b>${crOf(i).d ? ' · ' + crOf(i).d : ''}<br><small class="muted">学会了「${s.name}」${isGold(i) ? '，全部隔 3 天还做对' : ''}</small></span><button class="btn go" id="h_bkPet">${at ? '留在图鉴' : '带回家'}</button>`;
       el('h_bkPet').onclick = () => { const p = S.home.pets; if (at) p.splice(p.indexOf(i), 1); else { if (p.length >= 4) p.shift(); p.push(i); blip(SND.get); } o.save(); v.querySelectorAll('.bkc').forEach(x => x.classList.toggle('home', p.includes(x.dataset.i))); b.click(); };
     };
   }
@@ -475,7 +498,7 @@
       if (el('h_lootC').dataset.o) return; el('h_lootC').dataset.o = 1; paint(true); blip(SND.open); v.querySelector('.lootT').textContent = '战利品';
       const list = news.slice(0, 5); el('h_lootL').innerHTML = list.map((x, i) => `<div class="lootI stamp" style="animation-delay:${.15 + i * .18}s"><canvas data-x="${x.id}"></canvas><b>${x.title || (x.skill ? crOf(x.skill.id).n : x.name)}</b><small>${kindOf(x)}</small></div>`).join('') + (news.length > 5 ? `<div class="lootI"><b>+${news.length - 5}</b><small>已放入家中</small></div>` : '');
       list.forEach((x, i) => setTimeout(() => blip(SND.get), 150 + i * 180));
-      el('h_lootL').querySelectorAll('canvas').forEach(c => { const x = news.find(n => n.id === c.dataset.x); if (x.skill) { c.width = 20; c.height = 24; A.creature(c.getContext('2d'), crOf(x.skill.id), 0, 24, 0); } else if (x.scene) { c.width = 19; c.height = 14; A.thumb(c.getContext('2d'), x, 0, 0, 19, 14, 3); } else A.icon(c, x.id); });
+      el('h_lootL').querySelectorAll('canvas').forEach(c => { const x = news.find(n => n.id === c.dataset.x); if (x.skill) { c.width = 18; c.height = 16; A.creature(c.getContext('2d'), crOf(x.skill.id), 0, 16, 0); } else if (x.scene) { c.width = 19; c.height = 14; A.thumb(c.getContext('2d'), x, 0, 0, 19, 14, 3); } else A.icon(c, x.id); });
       el('h_lootOk').hidden = false;
     };
     el('h_lootOk').onclick = () => { v.hidden = true; certQ = news.filter(x => x.scene).slice(0, 3); S.home.loot = [];   // 补发时可能十几张：只连弹 3 张，其余已上墙
