@@ -378,8 +378,6 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #house .muted{color:var(--dim);font-size:14px}
 #house .stamp{animation:hstamp .35s cubic-bezier(.2,1.5,.5,1) backwards}
 @keyframes hstamp{from{transform:scale(1.8);opacity:0}}
-@page{size:landscape;margin:10mm}
-@media print{body *{visibility:hidden}#house #h_certV{position:static;background:none}#house .cert,#house .cert *{visibility:visible}#house .cert{position:fixed;left:0;top:0;width:100%;max-width:none;flex-direction:column;background:#fff;animation:none;box-shadow:none}#house .cert canvas{width:100%;max-height:70vh;object-fit:contain}#house .certR{width:100%}#house .certR h1,#house .csay,#house .cwho,#house .cdate{color:#000}}
 #house.shOpen .nav{visibility:hidden}
 #house .nav .toGo{background:#6fae3a;color:#10140c;font-weight:900}
 #house #h_vp{position:absolute;inset:0;touch-action:none;background:#2a1d12}
@@ -450,6 +448,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #house .lootI canvas{height:42px;max-width:72px}
 #house .lootI b{font-size:13px;line-height:1.15}
 #house .lootI small{font-size:11px;color:var(--warn)}
+@page{size:landscape;margin:10mm}
+@media print{body *{visibility:hidden}#house #h_certV{position:static;background:none}#house .cert,#house .cert *{visibility:visible}#house .cert{position:fixed;left:0;top:0;width:100%;max-width:none;flex-direction:column;background:#fff;animation:none;box-shadow:none;outline:none}#house .cert canvas{width:100%;max-height:70vh;object-fit:contain}#house .certR{width:100%}#house .certR h1,#house .csay,#house .cwho,#house .cdate,#house .ench h1{color:#000}#house .certbtns{display:none}}
 </style>
 </head>
 <body class="write">
@@ -773,7 +773,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v38:b414d18caf09 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v39:539a035ccf8b -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -783,15 +783,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=38"></script>
-<script src="core.js?v=38"></script>
-<script src="ink.js?v=38"></script>
-<script src="skills.js?v=38"></script>
-<script src="engine.js?v=38"></script>
-<script src="render.js?v=38"></script>
-<script src="world.js?v=38"></script>
-<script src="home.js?v=38"></script>
-<script src="house.js?v=38"></script>
+<script src="bank.js?v=39"></script>
+<script src="core.js?v=39"></script>
+<script src="ink.js?v=39"></script>
+<script src="skills.js?v=39"></script>
+<script src="engine.js?v=39"></script>
+<script src="render.js?v=39"></script>
+<script src="world.js?v=39"></script>
+<script src="home.js?v=39"></script>
+<script src="house.js?v=39"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1278,7 +1278,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const goHome = () => { P = null; renderSpeed(); show('home'); };
     if (!done.length) return goHome();
     const fast = done.filter(r => r.fast).length, wrong = done.filter(r => r.wrong).length, slow = done.length - fast - wrong;
-    HOME.addOre(S, fast + slow); save();
+    HOME.addOre(S, fast + slow); HOME.sync(S, today()); save(); const box = S.home.loot.length;
     const mins = Math.max(1, Math.round((Date.now() - P.startAt) / 60000));
     const okT = done.filter(r => !r.wrong).map(r => r.ms), avg = okT.length ? (okT.reduce((a, b) => a + b, 0) / okT.length / 1000).toFixed(1) : '–';
     const lastOf = {}; done.forEach(r => { lastOf[r.id] = r; });
@@ -1303,10 +1303,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         ${P.ups.length ? `<div style="font-weight:900">这次升级的方块${P.L === 0 ? '（去墙上的地图涂上这个颜色）' : ''}</div><div class="ups">${P.ups.map(blk).join('')}</div>` : '<div class="muted">这次没有方块升级</div>'}
         <div class="panel" style="flex-direction:row;align-items:center;gap:12px"><b>错题本</b><span>新放进 <b style="color:var(--bad)">${P.newMist}</b> 道 · 今天复习过关 <b style="color:var(--ok)">${P.passed}</b> 道</span><span style="flex:1"></span><button class="btn" id="sumMist" style="background:var(--stone-hi)">去看看</button></div>
         ${slowIds.length ? `<div style="font-weight:900">这几个写对了，还不够快</div><div class="ups">${slowIds.map(blk).join('')}</div>` : ''}
-        <button class="btn go big" id="sumHome" style="align-self:flex-start;min-width:220px;font-size:20px">回到地图</button>
+        <div style="display:flex;gap:10px;align-self:flex-start">${box ? '<button class="btn go big" id="sumHouse" style="min-width:200px;font-size:20px">回家打开</button>' : ''}<button class="btn${box ? '' : ' go'} big" id="sumHome" style="min-width:${box ? 150 : 220}px;font-size:20px">回到地图</button></div>
       </div>`;
     show('summary');
     $('sumHome').addEventListener('click', goHome);
+    if (box) $('sumHouse').addEventListener('click', () => { P = null; HS.enter(); });
     $('sumMist').addEventListener('click', () => { const L = P.L; P = null; openMist('speed:L' + (L + 1)); });
   }
 
@@ -1328,7 +1329,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     clearInterval(Q.tick); Q.tick = setInterval(qBar, 500);
     if (kind === 'free' || kind === 'review') Zone = String((opts && opts.group) || Zone || 'look').split(':')[0];
     Q.zone = Zone || 'look'; Q.ore = 0; $('qMined').querySelector('b').textContent = 0; $('qMined').querySelector('i').style.background = ''; $('qMined').hidden = kind === 'place';
-    nextQ(); requestAnimationFrame(() => WORLD.sceneBg($('qBg'), Q.zone, innerWidth, innerHeight));
+    const zone = Q.zone; nextQ(); requestAnimationFrame(() => WORLD.sceneBg($('qBg'), zone, innerWidth, innerHeight));   // nextQ 可能已结束练习（今天没题了），Q 变成 null
   }
   function nextQ() {
     if (!Q) return;
@@ -1867,8 +1868,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     else nextQ();
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) pauseQ();
-    else { C.mergeV1(store, CTX, S); checkSuperseded(); askResume(); }
+    if (document.hidden) { pauseQ(); if (cur === 'house') HS.pauseClock(); }
+    else { C.mergeV1(store, CTX, S); checkSuperseded(); askResume(); if (cur === 'house') HS.resumeClock(); }
   });
   window.matchMedia('(orientation: portrait) and (max-width: 700px)').addEventListener('change', () => { if (portrait() && !S.oral) pauseQ(); else askResume(); });
   // 12b 另一个页面写了同一份进度或笔迹：这一页停下，不互相覆盖

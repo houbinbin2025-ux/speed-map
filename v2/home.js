@@ -13,9 +13,9 @@
 
   function stats(S) {
     const all = K.SKILLS.flatMap(s => s.items), lv = id => E.lv(S, id) || 0;
-    const practiced = new Set(); // 这一天算「练过」：练满 5 分钟或今天的题做完了（防止每天答 1 题刷奖励，也不亏待都学会了的孩子）；v1 的旧日子没有时长，答满 10 题算
+    const practiced = new Set(); // 这一天算「练过」：练满 5 分钟或今天的题做完了（防止每天答 1 题刷奖励，也不亏待都学会了的孩子）；秒答（含 v1 旧日子）不进时长，答满 10 题算
     Object.entries(S.stats || {}).forEach(([d, v]) => { if (v && (v.sec >= DAY_SEC || v.done)) practiced.add(d); });
-    Object.entries(S.log || {}).forEach(([d, v]) => { if (v && v.n >= DAY_N && !(S.stats || {})[d]) practiced.add(d); });
+    Object.entries(S.log || {}).forEach(([d, v]) => { if (v && v.n >= DAY_N) practiced.add(d); });
     const days = practiced.size;
     const fullDays = Object.values(S.stats || {}).filter(d => d.sec >= 600).length;
     const ms = Object.values(S.mistakes || {});

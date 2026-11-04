@@ -34,8 +34,8 @@ test('同一天 stats 和 log 都有只算 1 天', () => {
   const S = C.blank(); S.log[D(0)] = {ups: [], n: 30}; S.stats = {[D(0)]: {sec: 400, n: 30}};
   assert.equal(H.stats(S).days, 1);
 });
-test('防刷：当天没练满 5 分钟不算一天；有时长的日子不看 log', () => {
-  const S = C.blank(); S.stats = {}; for (let i = 0; i < 30; i++) S.stats[D(i)] = {sec: 8, n: 1}; S.log[D(0)] = {ups: [], n: 12};
+test('防刷：理解题没练满 5 分钟、秒答没满 10 题，都不算一天', () => {
+  const S = C.blank(); S.stats = {}; for (let i = 0; i < 30; i++) S.stats[D(i)] = {sec: 8, n: 1}; S.log[D(0)] = {ups: [], n: 9};
   assert.equal(H.stats(S).days, 0);
   S.stats[D(1)] = {sec: 300, n: 30}; assert.equal(H.stats(S).days, 1);
   const V = C.blank(); V.log[D(0)] = {ups: [], n: 9}; assert.equal(H.stats(V).days, 0);
@@ -108,4 +108,9 @@ test('学得好的孩子不吃亏：今天的题全做完了，不满 5 分钟�
   const Q = C.blank(); Q.placedAt = 1; const q = E.session(Q, D(0), {rnd: seeded(6)});
   let x = q.next(); if (x.kind !== 'q') x = q.next(); q.answer({ok: true, fast: true, secs: 6});
   assert.equal(H.stats(Q).days, 0);
+});
+
+test('审查：进一次家（只记 home 秒数）或练 1 分钟理解题，不影响当天秒答满 10 题算一天', () => {
+  const S = C.blank(); S.log[D(0)] = {ups: [], n: 30}; E.stat(S, D(0)).home = 5; S.stats[D(0)].sec = 60;
+  assert.equal(H.stats(S).days, 1);
 });

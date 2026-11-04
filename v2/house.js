@@ -281,7 +281,8 @@
   const SLOTS = {}; FS.concat(WS).forEach(s => { SLOTS[s.id] = s; });
   const placeable = () => E0.items.filter(i => !i.part);
   function autoPlace() {
-    const pl = S.home.place, used = new Set(Object.values(pl));
+    const pl = S.home.place, used = new Set();
+    Object.keys(pl).forEach(k => { if (used.has(pl[k])) delete pl[k]; else used.add(pl[k]); });   // 备份合并可能把两件放到同一格
     placeable().forEach(i => { if (pl[i.id]) return; const t = A.ITEM[i.id].t, s = (t === 'F' ? FS : WS).find(s => !used.has(s.id)); if (s) { pl[i.id] = s.id; used.add(s.id); } });
   }
   const parts = () => E0.items.filter(i => i.part).map(i => i.id);
@@ -487,7 +488,7 @@
     el('h_cClose').onclick = () => { clearInterval(certT); v.hidden = true; nextCert(); }; el('h_cPrint').onclick = () => print();
   }
   let certQ = [];
-  function nextCert() { const c = certQ.shift(); if (c) panTo(certPos[c.id].x * P - VW() / 2, 300, () => showCert(c)); }
+  function nextCert() { const c = certQ.shift(); if (c) panTo(certPos[c.id].x * P - VW() / 2, 300, () => { if (!rootEl.hidden) showCert(c); }); }
   // ---------- 战利品箱 ----------
   const kindOf = x => (x.kind === 'bronze' ? '新伙伴' : x.kind === 'gold' ? '伙伴附魔' : x.scene ? '奖状' : '道具');
   function openLoot() {
@@ -536,13 +537,13 @@
   // 系统返回手势：先关最上面一层；没有可关的返回 false（页面负责回岛）
   function back() {
     if (!el('h_loot').hidden) { el('h_loot').hidden = true; return true; }
-    if (!el('h_certV').hidden) { clearInterval(certT); el('h_certV').hidden = true; return true; }
+    if (!el('h_certV').hidden) { clearInterval(certT); el('h_certV').hidden = true; certQ = []; return true; }
     if (!el('h_book').hidden) { closeBook(); return true; }
     if (el('h_sheet').classList.contains('on')) { closeSheet(); return true; }
     if (editing) { el('h_btnEdit').click(); return true; }
     return false;
   }
-  return {enter, back, leave: () => { stopClock(); hideAll(); }, tap: (x, y) => tap(x, y), get P() { return P; }, get cam() { return camX; }, certPos, SLOTS, get E0() { return E0; }, CAB, BOOK, LOOT, SIGN, CHEST, DOOR, get pets() { return pets; }};
+  return {enter, back, pauseClock: stopClock, resumeClock: () => { clock = Date.now(); }, leave: () => { stopClock(); hideAll(); }, tap: (x, y) => tap(x, y), get P() { return P; }, get cam() { return camX; }, certPos, SLOTS, get E0() { return E0; }, CAB, BOOK, LOOT, SIGN, CHEST, DOOR, get pets() { return pets; }};
   }
   root.HOUSE = {create};
 })(this);
