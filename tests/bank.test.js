@@ -58,7 +58,7 @@ test('迁移：卡的编号、题目、答案和改造前一模一样（理解 7
   assert.deepStrictEqual(Object.keys(sc), Object.keys(OLD.speedCards)); assert.deepStrictEqual(sc, OLD.speedCards);
 });
 test('迁移：题型编号一个不差，每个题型出的题字段和改造前一样（旧错题按「编号|题目数据」能对上）', () => {
-  const now = Object.values(K.ITEM).filter(it => it.gen).map(it => it.id).sort();
+  const now = Object.values(K.ITEM).filter(it => it.gen && !K.BY[it.skill].hard).map(it => it.id).sort();   // 挑战题是新增的，tests/hard.test.js 管
   assert.deepStrictEqual(now, Object.keys(OLD.types).sort());
   // 字段顺序也要一样：理解题的错题键 = 编号|JSON.stringify(q)，顺序一变同一道题就成了两条错题
   Object.entries(OLD.types).forEach(([id, o]) => { for (let i = 0; i < 30; i++) assert.deepStrictEqual(Object.keys(K.make(id, Math.random).q), o.qkeys, id); });
@@ -195,10 +195,10 @@ test('比大小、前后数答错图解：两个数挨得近时，标签不叠�
 test('示范卡用固定例题：前面出过什么题都不影响', () => {
   const a = R.demo('cmp3'); for (let i = 0; i < 7; i++) K.make('cmp:t:100', Math.random); assert.strictEqual(R.demo('cmp3'), a);
 });
-test('页面按 bank → core → ink → skills → engine → render → world → home → house 的顺序加载；没有题库时 core 明确报错', () => {
+test('页面按 bank → hardbank → core → ink → skills → engine → render → world → home → house 的顺序加载；没有题库时 core 明确报错', () => {
   const html = require('fs').readFileSync(require('path').join(__dirname, '../v2/index.html'), 'utf8');
   const order = [...html.matchAll(/<script src="([a-z]+)\.js\?v=\d+"><\/script>/g)].map(m => m[1]);
-  assert.deepStrictEqual(order, ['bank', 'core', 'ink', 'skills', 'engine', 'render', 'world', 'home', 'house']);
+  assert.deepStrictEqual(order, ['bank', 'hardbank', 'core', 'ink', 'skills', 'engine', 'render', 'world', 'home', 'house']);
   const src = require('fs').readFileSync(require('path').join(__dirname, '../v2/core.js'), 'utf8'), sandbox = {};
   assert.throws(() => new Function('self', 'module', src)(sandbox, undefined), /题库 bank\.js 没有加载/);
 });

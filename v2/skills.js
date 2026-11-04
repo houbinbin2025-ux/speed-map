@@ -1,9 +1,9 @@
 // 空空数学岛 · 技能图谱（纯逻辑，无 DOM）：理解数的 19 个技能 + 秒答地图各级，出题、显示、判题、前置关系
 // 浏览器里挂到 window.SKILLS（依赖 window.SM），node 里 require 后直接测
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./bank.js'));
-  else root.SKILLS = factory(root.SM, root.BANK);
-})(typeof self !== 'undefined' ? self : this, function (C, B) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./bank.js'), require('./hardbank.js'));
+  else root.SKILLS = factory(root.SM, root.BANK, root.HARDBANK);
+})(typeof self !== 'undefined' ? self : this, function (C, B, HB) {
   'use strict';
 
   const rint = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
@@ -50,8 +50,8 @@
   skill({id: 'line3', group: 'line', name: '0—100 整十', kind: 'type8', input: 'line', pre: ['line2', 'cmp3'], items: [type('line:t:100t')]});
   skill({id: 'line4', group: 'line', name: '0—100 任意', kind: 'type8', input: 'line', pre: ['line3'], items: [type('line:t:100')]});
 
-  const LINE_TOL = {10: 0.5, 20: 1, 100: 5, '100a': 10};
-  const tolOf = (q, settings) => { const key = q.any ? '100a' : q.max; return (settings && settings.lineTol && settings.lineTol[key]) || LINE_TOL[key]; };
+  const LINE_TOL = {10: 0.5, 20: 1, 100: 5, '100a': 10, 1000: 50, '1000a': 100};
+  const tolOf = (q, settings) => { const key = q.any ? q.max + 'a' : q.max; return (settings && settings.lineTol && settings.lineTol[key]) || LINE_TOL[key]; };
 
   // ---------- 秒答地图接进图谱：L1 / L2 每个世界一个技能（卡），L3 / L4 加法、减法各一个技能（同一天合格 5 次） ----------
   const speedPre = (L, w) => {
@@ -73,6 +73,23 @@
   });
 
   // ---------- 判题 ----------
+  // ---------- 挑战题（家长勾选才出；不进 SK：现有地图、奖状、伙伴不受影响。说明书-挑战题） ----------
+  const HARD = [];
+  const hard = o => { const s = Object.assign({hard: true, kind: 'type8', timedFrom: null, input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
+  hard({id: 'lookH1', group: 'look', name: '几排几个', ids: ['look:h:grid']});
+  hard({id: 'lookH2', group: 'look', name: '百格图数数', pre: ['lookH1'], ids: ['look:h:h100']});
+  hard({id: 'bondH1', group: 'bond', name: '整十分合', timedFrom: 1, ids: ['bond:h:tens']});
+  hard({id: 'bondH2', group: 'bond', name: '凑一百', timedFrom: 1, pre: ['bondH1'], ids: ['bond:h:to100']});
+  hard({id: 'placeH1', group: 'place', name: '看百十个写数', ids: ['place:h:read']});
+  hard({id: 'placeH2', group: 'place', name: '几个百几个十', pre: ['placeH1'], ids: ['place:h:split']});
+  hard({id: 'cmpH1', group: 'cmp', name: '算式谁大', timedFrom: 1, input: 'pick', ids: ['cmp:h:expr']});
+  hard({id: 'cmpH2', group: 'cmp', name: '三位数谁大', timedFrom: 1, input: 'pick', pre: ['cmpH1'], ids: ['cmp:h:1000']});
+  hard({id: 'lineH1', group: 'line', name: '0—1000 整百', input: 'line', ids: ['line:h:1000t']});
+  hard({id: 'lineH2', group: 'line', name: '0—1000 任意', input: 'line', pre: ['lineH1'], ids: ['line:h:1000']});
+  hard({id: 'speedH1', group: 'speedH', name: '连加连减', timedFrom: 1, ids: ['speed:h:chain']});
+  hard({id: 'speedH2', group: 'speedH', name: '两位数加减两位数', timedFrom: 1, pre: ['speedH1'], ids: ['speed:h:two']});
+  hard({id: 'speedH3', group: 'speedH', name: '乘法 2、5、10', timedFrom: 1, pre: ['speedH2'], ids: ['speed:h:mul']});
+
   // 输入：write → 写的数字；pick → 点的那个数；line → 放的位置（数值）
   function judge(item, inst, input, settings) {
     const s = BY[item.skill];
@@ -91,7 +108,7 @@
   // 固定例题（示范卡用，不受发牌影响）：卡 = 卡本身；题型 = 题库池第 1 道；秒答题型 = 池第 1 道
   function example(itemId) {
     const it = ITEM[itemId]; if (!it.gen) return {id: itemId, q: it.q, ans: it.ans};
-    const p = B.pools[itemId]; if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
+    const p = B.pools[itemId] || HB.pools[itemId]; if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
     const u = C.BYID[itemId], [a, b] = B.speedPools[itemId].pool[0]; return {id: itemId, q: {a, op: u.op, b}, ans: u.op === '+' ? a + b : a - b};
   }
   const isType = itemId => !!ITEM[itemId].gen;
@@ -103,6 +120,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {SKILLS: SK, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
+  return {SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

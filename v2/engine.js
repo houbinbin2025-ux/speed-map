@@ -14,6 +14,10 @@
   const STATS_DAYS = 400;
 
   const skillOf = id => K.BY[K.ITEM[id].skill];
+  // 挑战题：家长按板块勾选（S.settings.hard）；秒答的挑战题属于 speedH 组，勾选项还是「秒答」
+  const boardOf = s => (s.group === 'speedH' ? 'speed' : s.group);
+  const hardOn = S => { const h = S.settings && S.settings.hard; return h ? K.HARD.filter(s => h[boardOf(s)]) : []; };
+  const activeItem = (S, id) => { const s = skillOf(id); return !s.hard || !!(S.settings && S.settings.hard && S.settings.hard[boardOf(s)]); };
   // 格子的种类看题目本身：固定题 = 卡；每次出新数 = 题型（秒答题型沿用 v2 的"一天 5 次"）
   const kindOf = id => !K.ITEM[id].gen ? 'card' : skillOf(id).speed ? 'day5' : 'type8';
 
@@ -89,9 +93,9 @@
     return key;
   }
   const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid];
-  const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && (!only || only(m.uid)))
+  const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && activeItem(S, m.uid) && (!only || only(m.uid)))
     .sort((a, b) => a.due.localeCompare(b.due) || a.added.localeCompare(b.added));
-  const dueCount = (S, day) => { let n = 0; for (const k in S.mistakes || {}) if (isDue(S.mistakes[k], day)) n++; return n; };
+  const dueCount = (S, day) => { let n = 0; for (const k in S.mistakes || {}) if (isDue(S.mistakes[k], day) && activeItem(S, S.mistakes[k].uid)) n++; return n; };
   const instOfMistake = m => m.src ? K.make(m.uid, null, {q: m.q, ans: m.ans}) : {id: m.uid, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans};
 
   // ---------- 统计（意图卡的指标） ----------
@@ -203,7 +207,8 @@
       // 防冷落：已经开始学、≥ STALE 天没练的技能排到最前
       const stale = s => { const l = s.items.map(it => lastSeen(peek(S, it.id))).sort().pop(); return started(s.id) && l && C.dayDiff(l, day) >= STALE; };
       const byStale = list => list.filter(stale).concat(list.filter(s => !stale(s)));
-      const u = byStale(K.understand.filter(ok)), sp = byStale(K.speed.filter(ok));
+      const u = hardOn(S).filter(ok).concat(byStale(K.understand.filter(ok))), sp =   // 家长勾选的挑战题排最前
+        byStale(K.speed.filter(ok));
       const front = u.slice(0, 1).concat(sp.slice(0, 1));
       for (const s of u.slice(1).concat(sp.slice(1))) { if (front.length >= FRONT) break; front.push(s); }
       const chosen = [];
@@ -225,7 +230,7 @@
     function fillReview() { queue = dueMistakes(S, day).filter(m => room(m.uid)).map(m => ({inst: instOfMistake(m), mkey: m.key, seg: 'review'})); }
     function fillFluency() {
       const due = [], learning = [], keep = [];
-      K.SKILLS.forEach(s => s.items.forEach(it => {
+      K.SKILLS.concat(hardOn(S)).forEach(s => s.items.forEach(it => {
         const p = peek(S, it.id), seen = lastSeen(p);
         if (p.lv === 0 || p.lastDay === day || !room(it.id)) return;
         if ((p.lv === 1 && p.d[0] < day) || (p.lv === 2 && C.dayDiff(p.d[1], day) >= C.GAP_DAYS)) due.push(it);
@@ -311,7 +316,7 @@
     opts = opts || {};
     const r = opts.rnd || Math.random, n = opts.n || (opts.mistOnly ? Infinity : FREE_N);
     S.demoSeen = S.demoSeen || {}; S.known = S.known || {};
-    const skills = K.SKILLS.filter(s => inGroup(s, group)), inSet = id => skills.includes(skillOf(id));
+    const skills = hardOn(S).concat(K.SKILLS).filter(s => inGroup(s, group)), inSet = id => skills.includes(skillOf(id));
     const asked = {}, recent = [], pick = picker(S, asked, recent);
     const mist = dueMistakes(S, day, inSet).map(m => ({inst: instOfMistake(m), mkey: m.key, seg: 'review'}));
     const items = opts.mistOnly ? [] : skills.flatMap(s => s.items.map(it => ({it, s})));
@@ -403,7 +408,7 @@
   }
 
   return {BUDGET, REVIEW_MAX, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
-    prog, peek, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
+    boardOf, hardOn, activeItem, prog, peek, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS,
     review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
 });

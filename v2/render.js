@@ -16,7 +16,7 @@
     {id: 'line', name: '数线', rule: '把旗子插到这个数的位置'},
     {id: 'speed', name: '秒答地图', rule: '又对又快'},
   ];
-  const GNAME = Object.fromEntries(GROUPS.map(g => [g.id, g.name]));
+  const GNAME = Object.fromEntries(GROUPS.map(g => [g.id, g.name])); GNAME.speedH = '秒答';
   const itemsOf = g => K.SKILLS.filter(s => s.group === g).flatMap(s => s.items);
   // 每块地的格子统计：counts[档位]、亮了几格、共几格
   function groupStat(S, g) {
@@ -25,7 +25,7 @@
     return {counts, lit: counts[1] + counts[2] + counts[3], total: counts.reduce((a, b) => a + b, 0)};
   }
   const skillOf = id => K.BY[K.ITEM[id].skill];
-  const tagOf = id => { const s = skillOf(id); return s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
+  const tagOf = id => { const s = skillOf(id); return s.hard ? `${GNAME[s.group]} · 挑战 · ${s.name}` : s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
 
   // ---------- 小零件 ----------
   const dot = cls => `<i class="dot${cls ? ' ' + cls : ''}"></i>`;
@@ -62,8 +62,18 @@
 
   // ---------- 题面 ----------
   // 返回 {input:'write'|'pick'|'line', tag, html（左栏题目）, note（左栏底部小字）, flash（看数：要闪现的部分）, pick:[a,b], line:{max, target, mid}}
+  // 挑战题的图：点阵、百格、百十个、算式
+  const hardFig = (q, a) => {
+    if (q.view === 'grid') return `<div class="hgrid" style="grid-template-columns:repeat(${q.cols},26px)">${dot().repeat(q.rows * q.cols)}</div>`;
+    if (q.view === 'h100') return `<div class="h100">${Array.from({length: 100}, (_, i) => `<i${i < q.n ? ' class="on"' : ''}></i>`).join('')}</div>`;
+    if (q.view === 'hto') return `<div class="hto"><div class="hsqs">${'<i class="hsq"></i>'.repeat(q.h)}</div>${rods(q.t, q.o)}</div>`;
+    const t = q.text || ''; return `<div class="eq num${t.length > 11 ? ' sm' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
+  };
+  const pickWord = (q, n) => (n === q.a ? q.la || n : q.lb || n);
   function question(inst) {
     const it = K.ITEM[inst.id], s = skillOf(inst.id), q = inst.q, tag = tagOf(inst.id);
+    if (s.hard && s.input === 'pick') return {input: 'pick', tag, html: '<div class="say2">哪个大？点它</div>', pick: [q.a, q.b], pickText: q.la ? [q.la, q.lb] : null};
+    if (s.hard && s.input === 'write') return {input: 'write', tag, html: hardFig(q), note: q.view === 'hto' ? '方块是 100，一根是 10，一块是 1' : q.view === 'grid' ? '一排一排数，写在右边' : q.view === 'h100' ? '一行是 10，一共涂了几格？' : '在右边写出答案'};
     if (s.speed) return {input: 'write', tag, html: `<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} =</div>`, note: '在右边写出答案，写完停一下就好'};
     if (s.group === 'look') return {input: 'write', tag, html: `<div class="look">${pattern(q)}</div>`, flash: true, note: '有几个？写在右边'};
     if (s.group === 'bond') {
@@ -123,6 +133,8 @@
   function explain(inst) {
     const s = skillOf(inst.id), q = inst.q, a = inst.ans;
     const pack = (fig, line) => `<div class="explain">${fig}<div class="why">${line}</div></div>`;
+    if (s.hard && s.input === 'pick') return pack(`<div class="say2"><span class="num" style="font-size:32px">${pickWord(q, a)}</span> 更大</div>`, q.why);
+    if (s.hard && s.input === 'write') return pack(hardFig(q, a), q.why);
     if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
     if (s.group === 'look') {
       const five = q.layout === 'tf' && q.n > 5 ? `5 和 ${q.n - 5}，是 ${ans(q.n)}` : q.layout === 'tf2' ? `10 和 ${q.n - 10}，是 ${ans(q.n)}` : `一共是 ${ans(q.n)}`;
@@ -196,7 +208,12 @@
   function demo(skillId) {
     const s = K.BY[skillId], ex = K.example(s.items[0].id), q = ex.q;
     let title, body, foot;
-    if (s.speed) {
+    if (s.hard && s.input !== 'line') {
+      title = '挑战：' + s.name;
+      body = s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
+        : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
+      foot = q.why;
+    } else if (s.speed) {
       title = '秒答：看到算式，马上写答案';
       const it = s.items.find(x => !x.gen) || s.items[0], e = K.example(it.id);
       body = step(1, `<div class="eq num">${e.q.a} ${opSign(e.q.op)} ${e.q.b} =</div>`, '看到算式') + arrow + step(2, `<div class="eq num">${ans(e.ans)}</div>`, '马上写答案') + arrow + step(3, '<div class="say2">⚡</div>', '又对又快就点亮');
@@ -244,6 +261,7 @@
     'place:t:read': '看图写数', 'place:t:split': '47 里有几个十',
     'cmp:t:10': '10 以内', 'cmp:t:20': '20 以内', 'cmp:t:100': '两位数', 'cmp:t:swap': '47 和 74 这种',
     'cmp:t:p1': '多 1', 'cmp:t:m1': '少 1', 'cmp:t:p10': '多 10', 'cmp:t:m10': '少 10',
+    'line:h:1000t': '0 到 1000 整百', 'line:h:1000': '0 到 1000 任意数',
     'line:t:10': '0 到 10', 'line:t:20': '0 到 20', 'line:t:100t': '0 到 100 整十', 'line:t:100': '0 到 100 任意数',
   };
   // 一个格子的短名字（卡 = 题本身，题型 = 题型名）
@@ -259,6 +277,8 @@
   function mistLabel(m) {
     if (!m.src) return `${m.a} ${opSign(m.op)} ${m.b}`;
     const q = m.q || {}, s = skillOf(m.uid);
+    if (s.hard && s.input === 'pick') return `${q.la || q.a} 和 ${q.lb || q.b} 谁大`;
+    if (s.hard && s.input === 'write') return q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;
     if (s.group === 'look') return `看数 · ${q.n}`;
     if (s.group === 'bond') {
       if (q.blank === 'part') return `${q.n} = ${q.a} + □`;

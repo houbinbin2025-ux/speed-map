@@ -450,6 +450,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #house .lootI small{font-size:11px;color:var(--warn)}
 @page{size:landscape;margin:10mm}
 @media print{body *{visibility:hidden}#house #h_certV{position:static;background:none}#house .cert,#house .cert *{visibility:visible}#house .cert{position:fixed;left:0;top:0;width:100%;max-width:none;flex-direction:column;background:#fff;animation:none;box-shadow:none;outline:none}#house .cert canvas{width:100%;max-height:70vh;object-fit:contain}#house .certR{width:100%}#house .certR h1,#house .csay,#house .cwho,#house .cdate,#house .ench h1{color:#000}#house .certbtns{display:none}}
+/* ---------- 挑战题 ---------- */
+.hgrid{display:inline-grid;gap:8px;justify-items:center}.hgrid .dot{width:24px;height:24px}
+.h100{display:grid;grid-template-columns:repeat(10,1fr);width:min(44vh,190px);border:2px solid #000;background:#000;gap:1px}.h100 i{aspect-ratio:1;background:var(--stone-hi,#4a4f58);display:block}.h100 i.on{background:var(--warn)}
+.hto{display:flex;flex-direction:column;gap:8px;align-items:center}.hsqs{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:280px}
+.hsq{width:34px;height:34px;display:block;background:var(--warn);border:2px solid #000;background-image:linear-gradient(rgba(0,0,0,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.25) 1px,transparent 1px);background-size:6px 6px}
+.hto .rods{transform:scale(.72);transform-origin:top center;margin-bottom:-30px}
+.eq.sm{font-size:clamp(30px,6vw,42px)}.pickcard.expr{font-size:clamp(34px,6vw,50px);white-space:nowrap}.cards2 b.sm{font-size:20px;white-space:nowrap}
+.hardboxes{display:grid;grid-template-columns:1fr 1fr;gap:6px}.hardboxes label{display:flex;align-items:center;gap:8px;background:var(--stone);border:2px solid #000;padding:4px 8px;min-height:48px}.hardboxes input{width:26px;height:26px;flex:none;margin:0}.hardboxes b{display:block;font-size:14px}.hardboxes small{font-size:12px;color:var(--mute);line-height:1.25;display:block}
 </style>
 </head>
 <body class="write">
@@ -697,6 +705,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="kv">看数图案闪现</div><div class="seg" id="segFlash"></div>
       <div class="kv">数线合格范围</div><div class="seg" id="segTol"></div>
       <div class="kv" id="lineErr"></div>
+      <div class="kv">挑战题（更高难度，勾选的板块才出，默认不出）</div><div id="hardBoxes" class="hardboxes"></div>
       <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">口答模式：家长陪着时用，孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
     </div>
     <div class="panel">
@@ -773,7 +782,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v39:539a035ccf8b -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v41:04860df212f8 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -783,15 +792,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=39"></script>
-<script src="core.js?v=39"></script>
-<script src="ink.js?v=39"></script>
-<script src="skills.js?v=39"></script>
-<script src="engine.js?v=39"></script>
-<script src="render.js?v=39"></script>
-<script src="world.js?v=39"></script>
-<script src="home.js?v=39"></script>
-<script src="house.js?v=39"></script>
+<script src="bank.js?v=41"></script>
+<script src="hardbank.js?v=41"></script>
+<script src="core.js?v=41"></script>
+<script src="ink.js?v=41"></script>
+<script src="skills.js?v=41"></script>
+<script src="engine.js?v=41"></script>
+<script src="render.js?v=41"></script>
+<script src="world.js?v=41"></script>
+<script src="home.js?v=41"></script>
+<script src="house.js?v=41"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -903,7 +913,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('zName').textContent = z.name; $('zCt').textContent = `亮了 ${st.lit} / ${st.total} 格`;
     $('zSkills').innerHTML = zoneSkills(z.id).map((s, i) => `<span class="zsk"><i class="l${sq[i]}"></i>${s.name}</span>`).join('');
     $('zGo').textContent = z.id === 'speed' ? '去秒答地图' : '练这一块'; $('zMap').hidden = z.id === 'speed';
-    const nm = Object.values(S.mistakes || {}).filter(m => m.due !== null && m.due <= today() && (z.id === 'speed' ? !m.src : m.src === z.id)).length;
+    const nm = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.activeItem(S, m.uid) && m.due !== null && m.due <= today() && (z.id === 'speed' ? !m.src : m.src === z.id)).length;
     $('zMist').textContent = nm ? `这里的错题（${nm}）` : '这里的错题';
     $('zSheet').classList.add('open'); $('lead').style.visibility = 'hidden'; document.querySelector('.w-mini').style.visibility = 'hidden';
   }
@@ -1447,7 +1457,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
   // 比大小 · 点选：两张大卡片直接点大的；乱点后数字出现 1 秒才能点，2 秒限时从能点那一刻算
   function showPick(v) {
-    $('qWide').innerHTML = `<div class="pickgrid">${v.pick.map(n => `<button class="pickcard${Q.pickDelay ? ' lock' : ''}" data-n="${n}" aria-label="${n}">${n}</button>`).join('')}</div>`;
+    $('qWide').innerHTML = `<div class="pickgrid">${v.pick.map((n, i) => `<button class="pickcard${Q.pickDelay ? ' lock' : ''}${v.pickText ? ' expr' : ''}" data-n="${n}" aria-label="${v.pickText ? v.pickText[i] : n}">${v.pickText ? v.pickText[i] : n}</button>`).join('')}</div>`;
     Q.pickOpen = !Q.pickDelay;
     const open = () => { if (!Q) return; Q.pickOpen = true; Q.t0 = performance.now(); $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.remove('lock')); };
     if (Q.pickDelay) Q.pickT = setTimeout(open, Q.pickDelay);
@@ -1486,7 +1496,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   function submitLine() {
     const inst = Q.x.inst, j = K.judge(K.ITEM[inst.id], inst, Q.val, S.settings);
-    const key = inst.q.any ? '100a' : String(inst.q.max);
+    const key = inst.q.any ? inst.q.max + 'a' : String(inst.q.max);
     S.lineErr = S.lineErr || {}; S.lineErr[key] = (S.lineErr[key] || []).concat(Math.round(j.err * 10) / 10).slice(-20);
     resolve({ok: j.ok});
   }
@@ -1524,7 +1534,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('qNote').textContent = inBox ? '已放进错题宝箱，明天再来' : '记住它，下次再来';
     const bad = r.dunno ? '<div class="badline">没关系，记住它</div>'
       : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${r.typed}</s></div>`
-      : v.input === 'pick' && Q.pickedN != null ? `<div class="badline">✗ 你点的是 <s class="num">${Q.pickedN}</s></div>`
+      : v.input === 'pick' && Q.pickedN != null ? `<div class="badline">✗ 你点的是 <s class="num">${v.pickText ? v.pickText[v.pick.indexOf(Q.pickedN)] : Q.pickedN}</s></div>`
       : v.input === 'line' ? '' : '<div class="badline">✗ 这题答错了</div>';
     if (v.input === 'line') {
       drawTarget(false);
@@ -1654,7 +1664,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('smTabs').innerHTML = R.GROUPS.filter(g => g.id !== 'speed').map(g => `<button class="tab${g.id === smGroup ? ' on' : ''}" data-g="${g.id}">${g.name}</button>`).join('');
     $('smRule').textContent = R.GROUPS.find(g => g.id === smGroup).rule;
     const INK = ['#b8bac3', '#1b1d22', '#1b1d22', '#ffffff'];
-    $('smRows').innerHTML = K.understand.filter(s => s.group === smGroup).map(s => `<div class="srow"><div class="sn">${s.name}</div><div class="cells">${s.items.map(it => {
+    $('smRows').innerHTML = K.understand.concat(E.hardOn(S)).filter(s => s.group === smGroup).map(s => `<div class="srow"><div class="sn">${s.name}</div><div class="cells">${s.items.map(it => {
       const l = E.lv(S, it.id) || 0, bg = ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][l];
       if (!it.gen) return `<i class="cl" style="background:${bg}" title="${R.label(it.id)}"></i>`;
       const w = ((S.skills || {})[it.id] || {}).win || [];
@@ -1666,13 +1676,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('smGo').addEventListener('click', () => begin(() => startQ('free', {group: smGroup}), () => openSkillMap(smGroup)));
 
   // ---------- 9 错题本（按技能组；秒答按级别） ----------
-  const MGROUPS = R.GROUPS.filter(g => g.id !== 'speed').map(g => ({id: g.id, name: g.name, has: m => m.src === g.id}))
+  const MGROUPS = R.GROUPS.filter(g => g.id !== 'speed').map(g => ({id: g.id, name: g.name, has: m => m.src === g.id})).concat([{id: 'speedH', name: '秒答 · 挑战', has: m => m.src === 'speedH'}])
     .concat(C.LEVELS.map((LV, L) => ({id: 'speed:L' + (L + 1), name: '秒答 · ' + LV.name, has: m => !m.src && m.L === L})));
   const backOn = (due, t) => { const n = Math.round((new Date(due) - new Date(t)) / 864e5); return n <= 1 ? '明天' : n === 2 ? '后天' : n + ' 天后'; };
   let mistFocus = null;
   function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
   function renderMist() {
-    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid]);
+    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.activeItem(S, m.uid));
     const due = m => m.due !== null && m.due <= t;
     $('mistN').textContent = all.filter(due).length;
     const order = MGROUPS.slice().sort((a, b) => (b.id === mistFocus) - (a.id === mistFocus));
@@ -1708,6 +1718,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const errs = Object.entries(S.lineErr || {}).map(([k, a]) => `${k === '100a' ? '0—100 任意' : '0—' + k}：最近 ${a.length} 题平均差 ${(a.reduce((x, y) => x + y, 0) / a.length).toFixed(1)}`);
     $('lineErr').innerHTML = errs.length ? errs.join('<br>') : '数线还没练过';
     $('oralBox').checked = !!S.oral;
+    const hs = (S.settings && S.settings.hard) || {};
+    $('hardBoxes').innerHTML = HARD_BOARDS.map(([b, name, what]) => `<label><input type="checkbox" data-b="${b}"${hs[b] ? ' checked' : ''}><span><b>${name}</b><small>${what}</small></span></label>`).join('');
     const n = Object.values(INKS.t || {}).map(a => a.length), ist = INKS.stats || [];
     $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${ist.length ? `<br>最近 ${ist.length} 次不用确认就认出 ${ist.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
     // 存储
@@ -1765,7 +1777,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     BQ = [];
     const sw = c => `<i class="bq${c}" style="display:inline-block;min-height:14px;min-width:14px;height:14px;width:14px;padding:0;vertical-align:-2px"></i>`;
     const legend = `<div class="muted" style="font-size:12px;line-height:1.8;flex:none">共 ${bankTotal()} 道题 · 理解 ${K.understand.length} 个技能 · 秒答 ${K.speed.length} 个 · 点一道题看孩子看到的样子<br>固定题按进度上色：${sw('')} 灰 没练会 ${sw(' l1')} 淡黄 第 1 天对 ${sw(' l2')} 淡红 另一天又对 ${sw(' l3')} 深红 隔 3 天还对 ${sw(' m')} 在错题本里（题型整体一个颜色，每道题只标红点）</div>`;
-    $('bankList').innerHTML = legend + K.SKILLS.filter(s => s.group === bankTab).map(s => {
+    $('bankList').innerHTML = legend + K.SKILLS.concat(K.HARD).filter(s => s.group === bankTab || (bankTab === 'speed' && s.group === 'speedH')).map(s => {
       const txt = BK.text[s.speed ? speedTextKey(s) : s.id] || ['', ''], n = s.items.reduce((m, it) => m + bankItems(it).length, 0);
       const cardsN = s.items.filter(it => !it.gen).length, typesN = s.items.length - cardsN;
       const lit = s.items.filter(it => E.lv(S, it.id) > 0).length;
@@ -1809,6 +1821,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('qpE').innerHTML = R.explain(inst); $('ovQ').hidden = false;
   });
   $('qpX').addEventListener('click', () => { $('ovQ').hidden = true; });
+  const HARD_BOARDS = [['look', '看数', '几排几个、百格图'], ['bond', '分合', '整十分合、凑一百'], ['place', '数位', '三位数的百十个'], ['cmp', '比大小', '算式谁大、三位数'], ['line', '数线', '0 到 1000'], ['speed', '秒答', '连加连减、两位数加减、乘法']];
+  $('hardBoxes').addEventListener('change', e => { const b = e.target.dataset.b; if (!b) return; S.settings.hard = S.settings.hard || {}; S.settings.hard[b] = e.target.checked; save(); });
   $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
   $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }, () => { renderParent(); show('parent'); }));
   let replacing = false;   // 家长区「重新摸底」：结果页 → 首页（说明书 §5）
