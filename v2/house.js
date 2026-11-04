@@ -53,6 +53,8 @@
   'use strict';
   const A = root.ART, r = A.r, K = '#1b1d22';
   const T = {
+    // 手绘像素：rows 从上到下，字符对应 pal；走路时上下动 1 格
+    px(g, c, x, y, f) { const b = f % 2, h = c.rows.length; c.rows.forEach((row, j) => [...row].forEach((ch, i) => { if (c.pal[ch]) r(g, c.pal[ch], x + i, y - h + j - b, 1, 1); })); },
     quad(g, c, x, y, f) { // 四足
       r(g, c.c, x + 1, y - 9, 10, 6); r(g, c.c, x + 9, y - 12, 6, 6); r(g, K, x + 13, y - 10, 1, 1);
       if (c.f) r(g, c.f, x + 13, y - 8, 2, 2); if (c.e) { r(g, c.e, x + 10, y - 14, 1, 2); r(g, c.e, x + 13, y - 14, 1, 2); }
@@ -97,17 +99,40 @@
       const d = f % 2; r(g, c.c, x + 2, y - 8, 11, 6); r(g, c.c, x + 11, y - 12, 2, 5); r(g, c.c, x + 11, y - 15, 6, 4); r(g, c.f || '#f2c14e', x + 15, y - 14, 1, 1); r(g, c.d, x + 4, y - 14 + d * 2, 6, 6); r(g, c.c, x - 2, y - 7, 4, 2); r(g, c.d, x + 4, y - 2, 2, 2); r(g, c.d, x + 9, y - 2, 2, 2);
     },
   };
-  // 一个技能一只，顺序 = K.SKILLS（理解 19 + 秒答 19）
+  // 手绘动物：全部原创像素画（真实动物，自己画）
+  const K2 = '#1b1d22', W0 = '#ecebe4', W9 = '#c9c6ba';
+  const PX = {
+    wolf: {n: '小狼', rows: ['...........W..W.', '...........WWWW.', 'T..........WWKWW', 'TW.........WWWWN', '.WWWWWWWWWWRRWW.', '.WWWWWWWWWWWWW..', '.LWWWWWWWWWWWL..', '.LL.LL....LL.LL.', '.LL.LL....LL.LL.'], pal: {W: '#c9ccd2', L: '#9a9da4', T: '#9a9da4', K: K2, N: K2, R: '#b3261e'}},
+    axo: {n: '美西螈', rows: ['............G..G', '...........PPPPG', 'T..........PKPKP', 'TTPPPPPPPPPPPPPG', '.TPPPPPPPPPPMMPG', '...PP.....PP....'], pal: {P: '#f6b6c8', G: '#d9477f', T: '#f6a5a0', K: K2, M: '#d9477f'}},
+    bee: {n: '蜜蜂', rows: ['....WW..WW......', '....WW..WW......', '.YYKKYYKKYYYYY..', 'SYYKKYYKKYYKYY..', '.YYKKYYKKYYYYY..', '...k.k.k.k......'], pal: {W: '#d6ecff', Y: '#f2c14e', K: K2, S: '#6b4628', k: K2}},
+    cat: {n: '小猫', rows: ['...........O..O.', '...........OOOO.', 'O..........OKOK.', 'O..........OOPO.', 'OO.OOOOOOOOOOOO.', '.OOOOSOOSOOOOO..', '.OOOOOOOOOOOOO..', '.OO.OO....OO.OO.'], pal: {O: '#e0a15a', S: '#b27d48', K: K2, P: '#f6a5a0'}},
+    fox: {n: '狐狸', rows: ['...........O..O.', '...........OOOO.', '...........OKOWW', 'WWO........OOWWK', '.OOOOOOOOOOOWW..', '..OOOOOOOOOOO...', '..KK.KK...KK.KK.'], pal: {O: '#e0762a', W: W0, K: K2}},
+    parrot: {n: '鹦鹉', rows: ['.....RR.........', '....RRRR........', '....RKRYY.......', '....RRRRY.......', '...BBRRR........', '...BBRRR........', '..BBBRRR........', '..BB.YY.........', '.....YY.........'], pal: {R: '#d9342b', B: '#3d7fd9', Y: '#f2c14e', K: K2}},
+    panda: {n: '熊猫', rows: ['...........KK.KK', '...........WWWWW', '...........KKWKK', 'W..........WWWKW', 'WWWWWWWKKKKWWWW.', 'WWWWWWWKKKKWWW..', 'KKKWWWWWKKKKK...', 'KKK.......KKK...'], pal: {W: W0, K: K2}},
+    sheep: {n: '羊', rows: ['...........FFF..', '.WWWWWWWWWWFKF..', '.WWWWWWWWWWFFF..', '.WWWWWWWWWWW....', '.WWWWWWWWWWW....', '..LL.LL..LL.LL..', '..LL.LL..LL.LL..'], pal: {W: W0, F: '#e6b89c', K: K2, L: '#e6b89c'}},
+    pig: {n: '小猪', rows: ['...........PPPP.', '...........PKPPN', '.PPPPPPPPPPPPPNN', '.PPPPPPPPPPPPP..', '.PPPPPPPPPPPP...', '..PP.PP..PP.PP..'], pal: {P: '#f6a5a0', N: '#d97f7a', K: K2}},
+    cow: {n: '奶牛', rows: ['..........H..H..', '..........BBBB..', '..........BKBFF.', '.BWWBBBBWWBBBFF.', '.BWWBBBBWWBBB...', '.BBBBWWBBBBBB...', '..BB.BB..BB.BB..', '..WW.WW..WW.WW..'], pal: {B: '#6b4628', W: W0, H: W9, F: '#e6b89c', K: K2}},
+    turtle: {n: '海龟', rows: ['....GGGGGG......', '...GgGGgGGG.....', '..GGGGgGGGGGSS..', '..SSSSSSSSSSSKS.', '..SS......SS.SS.'], pal: {G: '#3d7524', g: '#7bd88f', S: '#a8d08d', K: K2}},
+    frog: {n: '青蛙', rows: ['..GG.....GG.....', '.GKG.....GKG....', '.GGGGGGGGGGG....', '.GGWWWWWWWGG....', 'GGGGGGGGGGGGG...', 'GG...GG.GG..GG..'], pal: {G: '#6fae3a', W: '#d8e8a8', K: K2}},
+    chick: {n: '小鸡', rows: ['.....R..........', '....WWW.........', '....WKWY........', '....WWWYY.......', '...WWWWR........', '.WWWWWWW........', 'WWWWWWWW........', '.WWWWWW.........', '...Y..Y.........', '...YY.YY........'], pal: {W: W0, R: '#b3261e', Y: '#f2c14e', K: K2}},
+    rabbit: {n: '兔子', rows: ['....BB.BB.......', '....BB.BB.......', '....BBBBB.......', '....BKBKB.......', 'WW..BBPBB.......', 'WWBBBBBBB.......', '.BBBBBBBB.......', '.BB....BB.......'], pal: {B: '#c9a98a', W: W0, K: K2, P: '#f6a5a0'}},
+    llama: {n: '羊驼', rows: ['............C.C.', '............CCCC', '............CKCC', '............CCCF', '............CC..', '............CC..', '..CCCCCCCCCCCC..', '..RRYYRRYYRRCC..', '..CCCCCCCCCCC...', '..CC.CC...CC.CC.', '..CC.CC...CC.CC.'], pal: {C: '#e8d9b8', R: '#b3261e', Y: '#f2c14e', K: K2, F: '#c9a98a'}},
+    dolphin: {n: '海豚', rows: ['.......D........', '......DDD.......', '..DDDDDDDDDDD...', '.DDDDDDDDDDKDD..', 'DD.LLLLLLLLLLDDD', 'D.....LL........'], pal: {D: '#6ea8c8', L: '#d6ecff', K: K2}},
+    bear: {n: '北极熊', rows: ['...........WW.WW', '...........WWWWW', '...........WKWWW', 'WWWWWWWWWWWWWWKK', 'WWWWWWWWWWWWWW..', 'WWWWWWWWWWWWWW..', 'WWW.WWW..WWW.WWW', 'WWW.WWW..WWW.WWW'], pal: {W: '#f2f6fb', K: K2}},
+    horse: {n: '小马', rows: ['...........KBB..', '..........KBBBB.', '..........KBKBBB', '..........KBBBBB', 'K........KBB....', 'K.BBBBBBBBBB....', 'K.BBBBBBBBBB....', '..BBBBBBBBBB....', '..BB.BB..BB.BB..', '..BB.BB..BB.BB..', '..KK.KK..KK.KK..'], pal: {B: '#8a5a2c', K: K2}},
+    goat: {n: '山羊', rows: ['...........H.H..', '..........WWWW..', '..........WKWWW.', '.WWWWWWWWWWWWW..', '.WWWWWWWWWWD....', '.WWWWWWWWWWW....', '..WW.WW..WW.WW..', '..HH.HH..HH.HH..'], pal: {W: W0, H: '#6c6f76', D: W9, K: K2}},
+    camel: {n: '骆驼', rows: ['.............CCC', '.....HH......CKC', '....HHHH.....CCF', '.CCCCCCCCCCCCCC.', '.CCCCCCCCCCCC...', '.CCCCCCCCCCCC...', '..CC.CC..CC.CC..', '..CC.CC..CC.CC..', '..CC.CC..CC.CC..'], pal: {C: '#d9b479', H: '#b98a22', K: K2, F: '#b98a22'}},
+    squid: {n: '鱿鱼', rows: ['.....NNNNNN.....', '....NNNNNNNN....', '....NKNNNNKN....', '....NNNNNNNN....', '....NNNNNNNN....', '....N.NN.NN.N...', '...N..N..N...N..', '...N..N..N...N..'], pal: {N: '#2f5fa8', K: W0}},
+    puffer: {n: '河豚', rows: ['....S.S.S.......', '...YYYYYYYY.....', 'S.YYKYYYYKYY.S..', '..YYYYYYYYYY....', 'S.YYWWWWWWYY.S..', '...YYYYYYYY.....', '....S.S.S.......'], pal: {Y: '#f2c14e', S: '#b98a22', K: K2, W: W0}},
+  };
+  const px = k => Object.assign({t: 'px'}, PX[k]);
+  // 一个技能一只，顺序 = K.SKILLS（理解 19 + 秒答 19）。最受欢迎的排最前，一开始练就能解锁
   const CREATURES = [
-    {n: '羊', t: 'quad', c: '#ecebe4', f: '#e6b89c', l: '#6c6f76'}, {n: '小鸡', t: 'bird', c: '#fff3b0', w: '#f2c14e', e: '#b3261e'}, {n: '小猪', t: 'quad', c: '#f6a5a0', f: '#d97f7a', tail: '#f6a5a0'}, {n: '奶牛', t: 'quad', c: '#ecebe4', s: '#2b2b2b', f: '#f6a5a0', l: '#2b2b2b'},
-    {n: '兔子', t: 'small', c: '#c9a98a', e: '#c9a98a', f: '#f6a5a0'}, {n: '蜜蜂', t: 'fly', c: '#f2c14e', s: '#2b2b2b'}, {n: '狐狸', t: 'quad', c: '#e0762a', f: '#ecebe4', e: '#e0762a', tail: '#ecebe4'}, {n: '海龟', t: 'swim', c: '#7bd88f', s: '#3d7524'},
-    {n: '灰狼', t: 'quad', c: '#9a9da4', f: '#2b2b2b', e: '#6c6f76', tail: '#6c6f76'}, {n: '熊猫', t: 'quad', c: '#ecebe4', s: '#2b2b2b', e: '#2b2b2b', l: '#2b2b2b'}, {n: '鹦鹉', t: 'bird', c: '#b3261e', w: '#6ea8fe', e: '#7bd88f'}, {n: '猫头鹰', t: 'bird', c: '#8a5a2c', w: '#c9a98a', e: '#5a3a20'},
-    {n: '小丑鱼', t: 'swim', c: '#e0762a', w: '#ecebe4'}, {n: '蝙蝠', t: 'fly', c: '#8d7ab8', w: '#b6a6d8'}, {n: '骆驼', t: 'quad', c: '#d9b479', h: '#b98a22', f: '#b98a22'}, {n: '企鹅', t: 'bird', c: '#2b2b2b', w: '#ecebe4', f: '#e0762a'},
-    {n: '青蛙', t: 'small', c: '#6fae3a', f: '#2f5e1c'}, {n: '小鹿', t: 'quad', c: '#b27d48', s: '#ecebe4', e: '#5a3a20'}, {n: '水母', t: 'ghost', c: '#c79bf0', f: '#3a2a58'},
-    {n: '绿果冻', t: 'blob', c: '#7bd88f', d: '#4f8a2e'}, {n: '蘑菇怪', t: 'blob', c: '#e6d8c0', cap: '#b3261e'}, {n: '木乃伊', t: 'hum', c: '#d9cfae', s: '#b5a97e', arm: 1}, {n: '雪人', t: 'snow'},
+    px('wolf'), px('axo'), px('bee'), px('cat'), px('fox'), px('parrot'), px('panda'), px('sheep'), px('pig'), px('turtle'), px('cow'), px('frog'), px('chick'), px('rabbit'), px('llama'), px('dolphin'), px('bear'), px('horse'), px('goat'),
+    {n: '绿果冻', t: 'blob', c: '#7bd88f', d: '#4f8a2e'}, {n: '蘑菇怪', t: 'blob', c: '#e6d8c0', cap: '#b3261e'}, px('camel'), {n: '雪人', t: 'snow'},
     {n: '矿洞蜘蛛', t: 'spider', c: '#3a3d44', d: '#2b2b2b'}, {n: '熔岩团', t: 'blob', c: '#a8322d', d: '#e0762a', f: '#f2c14e'}, {n: '幽灵', t: 'ghost', c: '#dfe6ee'},
-    {n: '丧尸兵', t: 'hum', c: '#8aa37b', b: '#7a5230', l: '#5a3a20'}, {n: '骨头兵', t: 'hum', c: '#d9d9d2', f: '#2b2b2b'}, {n: '小巫师', t: 'hum', c: '#e6b89c', b: '#b3261e', hat: '#8a1c16'}, {n: '石头人', t: 'hum', c: '#8a8d94', b: '#6c6f76', f: '#f2c14e'},
-    {n: '树精', t: 'hum', c: '#5a3a20', b: '#3d7524', f: '#7bd88f'}, {n: '蝎子', t: 'spider', c: '#c9a227', d: '#8a6d18', tail: '#8a6d18', f: '#2b2b2b'}, {n: '闪电虫', t: 'fly', c: '#6ea8fe', s: '#f2c14e'}, {n: '蓝果冻', t: 'blob', c: '#6ea8fe', d: '#2f6fb0'},
+    {n: '丧尸兵', t: 'hum', c: '#8aa37b', b: '#7a5230', l: '#5a3a20'}, {n: '骨头兵', t: 'hum', c: '#d9d9d2', f: '#2b2b2b'}, {n: '小巫师', t: 'hum', c: '#e6b89c', b: '#b3261e', hat: '#8a1c16'}, px('squid'),
+    px('puffer'), {n: '蝙蝠', t: 'fly', c: '#8d7ab8', w: '#b6a6d8'}, {n: '木乃伊', t: 'hum', c: '#d9cfae', s: '#b5a97e', arm: 1}, {n: '石头人', t: 'hum', c: '#8a8d94', b: '#6c6f76', f: '#f2c14e'},
     {n: '机器人', t: 'hum', c: '#c9ccd2', b: '#9a9da4', f: '#b3261e', arm: 1}, {n: '火焰精', t: 'ghost', c: '#f2c14e', f: '#b3261e'}, {n: '水晶龙', t: 'dragon', c: '#5fd9e6', d: '#2f9fae'}, {n: '金龙', t: 'dragon', c: '#f2c14e', d: '#b98a22', f: '#b3261e'},
   ];
   const BOSS = {'speed:L1': {t: 'blob', c: '#7bd88f', d: '#4f8a2e', cap: '#f2c14e'}, 'speed:L2': {t: 'hum', c: '#d9d9d2', f: '#b3261e', hat: '#6c6f76'}, 'speed:L3': {t: 'spider', c: '#c9365a', d: '#7a1a40', f: '#f2c14e'}, 'speed:L4': {t: 'dragon', c: '#a8322d', d: '#6b1a14'}};
@@ -130,7 +155,7 @@
     const W = 96, H = 54, J = jump ? -2 - (f % 2) * 2 : 0, G = 44, C = CREATURES;
     if (id === 'look') {
       sky(g, W, H, '#8ec8ff', '#bfe3ff'); clouds(g, f); ground(g, W, H, 22, '#6fae3a', '#5c9a30');
-      [[40, 32], [66, 32], [53, 41], [40, 50], [66, 50]].forEach(([x, y], i) => creature(g, C[0], x, y + J, f + i, {flip: i % 2 === 1}));
+      [[40, 32], [66, 32], [53, 41], [40, 50], [66, 50]].forEach(([x, y], i) => creature(g, px('sheep'), x, y + J, f + i, {flip: i % 2 === 1}));
       spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 14, G + 4 + J); r(g, '#6b4628', 24, G - 14 + J, 1, 18); r(g, '#6b4628', 24, G - 14 + J, 3, 1); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 2, G + 5 + J);
     } else if (id === 'bond') {
       r(g, '#2a2c33', 0, 0, W, H); for (let i = 0; i < 26; i++) r(g, i % 3 ? '#34373f' : '#3f434c', (i * 37) % W, (i * 23) % 40, 8, 4); ground(g, W, H, G, '#6c6f76', '#4a4d55');
@@ -185,7 +210,7 @@
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
     const cx = x + (w >> 1) - 7, by = y + h - 1;
     if (sc.startsWith('speed')) creature(g, BOSS[sc], x + 4, by + 1, 0, {flip: true, scale: .62});
-    else if (sc === 'look') creature(g, CREATURES[0], x + 3, by + 1, 0);
+    else if (sc === 'look') creature(g, px('sheep'), x + 2, by + 1, 0);
     else if (sc === 'line') { r(g, '#2b2b2b', x + 3, by - 7, w - 6, 6); r(g, '#8a8d94', x + 4, by - 6, w - 8, 4); r(g, '#2b2b2b', x + 5, by - 1, 2, 1); r(g, '#2b2b2b', x + w - 7, by - 1, 2, 1); }
     else if (sc === 'cmp') { r(g, '#9a9da4', x + 3, by - 5, 5, 5); r(g, '#9a9da4', x + 11, by - 11, 5, 11); r(g, '#b3261e', x + 13, by - 13, 3, 2); }
     else if (sc === 'place') { r(g, '#c08a52', x + 4, by - 6, 11, 6); r(g, '#b3261e', x + 2, by - 9, 15, 3); r(g, '#4a2f1b', x + 8, by - 3, 3, 3); }
@@ -467,7 +492,7 @@
     const old = pl[sel]; if (who && who.id !== sel) pl[who.id] = old; pl[sel] = slot.id; sel = null; o.save(); drawRoom();
   }
   el('h_btnEdit').addEventListener('click', () => { editing = !editing; sel = null; closeSheet(); el('h_btnEdit').textContent = editing ? '完成' : '摆放'; toast(editing ? '点一件东西，再点新位置' : '已保存摆放'); drawRoom(); });
-  let toastT = 0; function toast(t) { const el = el('h_toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 1800); }
+  let toastT = 0; function toast(t) { const b = el('h_toast'); b.textContent = t; b.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { b.hidden = true; }, 1800); }
 
 
   // ---------- 进出 ----------

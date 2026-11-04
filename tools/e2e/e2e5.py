@@ -42,6 +42,17 @@ with sync_playwright() as p:
     # 告示牌、矿物柜、木箱
     for name, x, y, sel in [('h-sign', pg.evaluate('__sm.HS.SIGN.x') + 6, 20, '.sh-h'), ('i-cab', pg.evaluate('__sm.HS.CAB.x') + 6, 30, '.ore3'), ('j-chest', pg.evaluate('__sm.HS.CHEST.x') + 6, 55, '.sh-h')]:
         tap_art(pg, x, y); pg.wait_for_timeout(1000); check(pg.is_visible(sel), name + ' 卡片没开'); shot(pg, name); pg.click('.sh-x'); pg.wait_for_timeout(250)
+    # 摆放（10-xx 真机崩溃：提示框里变量重名）：进入、选中、放错类型、挪动、完成；点伙伴也会弹提示
+    pg.click('#h_btnEdit'); pg.wait_for_timeout(150); check(pg.is_visible('#h_toast'), '摆放提示没出来')
+    slots = pg.evaluate("(() => { const H = __sm.HS, p = __sm.S.home.place, ks = Object.keys(p); const a = H.SLOTS[p[ks[0]]], other = Object.values(H.SLOTS).find(s => s.t === a.t && !Object.values(p).includes(s.id)), wrong = Object.values(H.SLOTS).find(s => s.t !== a.t); return {a, other, wrong, k: ks[0]}; })()")
+    tap_art(pg, slots['a']['x'] + 4, slots['a']['y'] + 4); pg.wait_for_timeout(100)
+    tap_art(pg, slots['wrong']['x'] + 4, slots['wrong']['y'] + 4); pg.wait_for_timeout(100)
+    tap_art(pg, slots['other']['x'] + 4, slots['other']['y'] + 4); pg.wait_for_timeout(100)
+    check(pg.evaluate(f"__sm.S.home.place['{slots['k']}']") == slots['other']['id'], '摆放没生效')
+    pg.click('#h_btnEdit'); pg.wait_for_timeout(100)
+    pets = pg.evaluate("__sm.HS.pets.map(p => p.x)")
+    if pets: tap_art(pg, pets[0] + 6, 58); pg.wait_for_timeout(100)
+    check(not pg.is_visible('#ovCrash'), '摆放或点伙伴崩溃')
     # 返回手势：先关卡片，再回岛
     tap_art(pg, pg.evaluate('__sm.HS.SIGN.x') + 6, 20); pg.wait_for_timeout(1000); pg.go_back(); pg.wait_for_timeout(300)
     check(not pg.evaluate("document.getElementById('h_sheet').classList.contains('on')"), '返回没先关卡片'); check(cur(pg) != 'island', '返回提前离开了家')
