@@ -371,6 +371,85 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #ovQ .qpg .muted{font-size:12px}
 #ovQ .qpb{zoom:.72;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}
 .seg{display:flex;gap:6px}.seg button{min-height:40px;padding:0 10px;font-size:13px}.seg button.on{background:var(--ink);color:var(--cave)}
+/* ---------- v5 空空的家（house.js） ---------- */
+#house{--panel:#23262c;--panel2:#31353c;--dim:#b9b6a8;--ink:#ecebe4;--ok:#7bd88f;--warn:#f2c14e;padding:0;overflow:hidden;background:#2a1d12;color:var(--ink)}
+#house canvas{image-rendering:pixelated;display:block}
+#house .go{background:#6fae3a;color:#10140c;font-size:18px;min-height:52px}
+#house .muted{color:var(--dim);font-size:14px}
+#house .stamp{animation:hstamp .35s cubic-bezier(.2,1.5,.5,1) backwards}
+@keyframes hstamp{from{transform:scale(1.8);opacity:0}}
+@page{size:landscape;margin:10mm}
+@media print{body *{visibility:hidden}#house #h_certV{position:static;background:none}#house .cert,#house .cert *{visibility:visible}#house .cert{position:fixed;left:0;top:0;width:100%;max-width:none;flex-direction:column;background:#fff;animation:none;box-shadow:none}#house .cert canvas{width:100%;max-height:70vh;object-fit:contain}#house .certR{width:100%}#house .certR h1,#house .csay,#house .cwho,#house .cdate{color:#000}}
+#house.shOpen .nav{visibility:hidden}
+#house .nav .toGo{background:#6fae3a;color:#10140c;font-weight:900}
+#house #h_vp{position:absolute;inset:0;touch-action:none;background:#2a1d12}
+#house #h_world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#house #h_world canvas{position:absolute;left:0;top:0}
+#house .hud{position:absolute;top:calc(6px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));right:calc(8px + env(safe-area-inset-right));display:flex;gap:8px;align-items:center;pointer-events:none}
+#house .hud>*{pointer-events:auto}
+#house .hud .sp{flex:1;pointer-events:none}
+#house .tally{display:flex;gap:10px;align-items:center;background:rgba(27,29,34,.88);border:3px solid #000;padding:0 10px;height:44px;font-weight:800;font-size:15px}
+#house .tally b{font-size:19px;color:var(--warn)}
+#house .nav{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(6px + env(safe-area-inset-bottom));display:flex;gap:4px;background:rgba(27,29,34,.88);border:3px solid #000;padding:3px}
+#house .nav button{height:40px;min-width:62px;padding:0 8px;background:var(--panel2);border:0;font-size:14px;font-weight:800;white-space:nowrap}
+#house .nav button.on{background:var(--warn);color:#10140c}
+#house .toast{z-index:11;position:absolute;left:50%;top:60px;transform:translateX(-50%);background:var(--panel);border:3px solid #000;padding:8px 14px;font-weight:800;font-size:15px;white-space:nowrap}
+#house .toast[hidden]{display:none}
+#house .sheet{z-index:10;position:absolute;top:0;bottom:0;right:0;width:min(46%,380px);background:var(--panel);border-left:4px solid #000;display:flex;flex-direction:column;gap:10px;padding:12px calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) 14px;transform:translateX(102%);transition:transform .18s ease-out;overflow-y:auto}
+#house .sheet.on{transform:none}
+#house .sh-h{display:flex;align-items:center;gap:10px}
+#house .sh-h canvas{width:64px;height:64px;background:#17191d;border:3px solid #000;flex:none}
+#house .sh-h h2{margin:0;font-size:21px;line-height:1.2;flex:1}
+#house .sh-x{width:44px;height:44px;flex:none;background:var(--panel2);border:3px solid #000;font-size:20px;font-weight:900}
+#house .sh-b{font-size:15px;line-height:1.55;color:var(--ink)}
+#house .muted{color:var(--dim);font-size:14px}
+#house .barw{height:14px;background:#111;border:2px solid #000}
+#house .barw i{display:block;height:100%;background:var(--ok)}
+#house .sh-f{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+#house .rows{display:flex;flex-direction:column;gap:6px}
+#house .row{display:flex;align-items:center;gap:8px;background:var(--panel2);border:2px solid #000;padding:6px 8px;font-size:14px;font-weight:700;line-height:1.3;text-align:left;width:100%}
+#house .row canvas{width:32px;height:32px;flex:none}
+#house .row span{flex:1}
+#house .row em{font-style:normal;color:var(--warn);font-weight:900;white-space:nowrap}
+#house .ore3{display:grid;grid-template-columns:1fr;gap:6px}
+#house .medals{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;font-size:14px;align-items:center}
+#house .md{width:18px;height:18px;border:2px solid #000;display:block}
+#house #h_certV{position:absolute;inset:0;background:rgba(10,10,12,.88);display:flex;align-items:center;justify-content:center;gap:12px;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));z-index:20}
+#house #h_certV[hidden]{display:none}
+#house .cert{display:flex;gap:12px;align-items:stretch;background:var(--panel);border:6px solid var(--fr);outline:4px solid #000;box-shadow:inset 0 0 0 3px var(--fr2);padding:10px;max-width:calc(100vw - 140px);animation:hstamp .35s cubic-bezier(.2,1.5,.5,1) backwards}
+#house .cert canvas{width:min(calc(100vw - 380px),calc((100vh - 60px)*1.777));height:auto;aspect-ratio:96/54;border:3px solid #000;cursor:pointer}
+#house .certR{width:190px;display:flex;flex-direction:column;gap:6px;justify-content:center}
+#house .clab{align-self:flex-start;background:var(--fr);color:#fff;font-weight:900;font-size:14px;padding:2px 8px;border:2px solid #000}
+#house .certR h1{margin:0;font-size:29px;line-height:1.15;color:var(--warn)}
+#house .cwho{font-size:17px;font-weight:800}
+#house .csay{font-size:14px;line-height:1.4;color:var(--ink)}
+#house .cdate{font-size:12px;color:var(--dim)}
+#house .ench{animation:hstamp .35s cubic-bezier(.2,1.5,.5,1) backwards,hglow 1.6s infinite steps(4)}
+@keyframes hglow{50%{box-shadow:inset 0 0 0 3px #fff,0 0 22px #b46eff}}
+#house .ench h1{color:#e9c6ff}
+#house .certbtns{display:flex;flex-direction:column;gap:8px;flex:none}
+#house #h_book{position:absolute;inset:0;background:#2b2140;z-index:20;display:flex;flex-direction:column;padding:6px calc(10px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));gap:6px}
+#house #h_book[hidden]{display:none}
+#house .bkh{display:flex;align-items:center;gap:10px}
+#house .bkh h2{margin:0;flex:1;font-size:20px}
+#house .bkg{flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;align-content:start}
+#house .bkc{height:84px;background:#3a2d58;border:3px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px}
+#house .bkc canvas{height:52px;width:44px}
+#house .bkc small{font-size:12px;font-weight:800;white-space:nowrap}
+#house .bkc.gold{background:#5a3db0;box-shadow:inset 0 0 0 2px #e9c6ff}
+#house .bkc.home{outline:3px solid var(--warn);outline-offset:-3px}
+#house .bkc.lock small{color:var(--dim)}
+#house .bkd{min-height:54px;background:var(--panel);border:3px solid #000;padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;line-height:1.35}
+#house .bkd .go{min-height:44px;font-size:15px}
+#house #h_loot{position:absolute;inset:0;background:rgba(14,10,28,.92);z-index:21;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}
+#house #h_loot[hidden]{display:none}
+#house #h_lootC{height:38vh;aspect-ratio:40/32;cursor:pointer}
+#house .lootT{font-size:20px;font-weight:900;color:var(--warn)}
+#house .lootL{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#house .lootI{width:96px;background:var(--panel);border:3px solid #000;padding:4px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+#house .lootI canvas{height:42px;max-width:72px}
+#house .lootI b{font-size:13px;line-height:1.15}
+#house .lootI small{font-size:11px;color:var(--warn)}
 </style>
 </head>
 <body class="write">
@@ -573,6 +652,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <!-- 秒答地图练习的结算（v2 原样） -->
 <div class="scr" id="summary" hidden></div>
 
+<!-- v5 空空的家：house.js 填内容 -->
+<div class="scr" id="house" hidden></div>
+
 <!-- 9 错题本（按技能组） -->
 <div class="scr" id="mist" hidden style="flex-direction:column;gap:10px">
   <div class="top">
@@ -691,7 +773,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v28:26fb93e6bc03 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v34:17481ab94b94 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -701,13 +783,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=28"></script>
-<script src="core.js?v=28"></script>
-<script src="ink.js?v=28"></script>
-<script src="skills.js?v=28"></script>
-<script src="engine.js?v=28"></script>
-<script src="render.js?v=28"></script>
-<script src="world.js?v=28"></script>
+<script src="bank.js?v=34"></script>
+<script src="core.js?v=34"></script>
+<script src="ink.js?v=34"></script>
+<script src="skills.js?v=34"></script>
+<script src="engine.js?v=34"></script>
+<script src="render.js?v=34"></script>
+<script src="world.js?v=34"></script>
+<script src="home.js?v=34"></script>
+<script src="house.js?v=34"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -743,7 +827,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv'];
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv', 'house'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); show('island'); };
@@ -770,6 +854,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const dueAll = () => E.dueMistakes(S, today()).length;
   const isDone = () => !!(S.daily && S.daily.day === today() && S.daily.done);
   function renderIsland() {
+    if (HOME.sync(S, today()).length) save();   // 新达成的奖励放进战利品箱，岛上的家亮旗子
     const t = today(), d = dueAll(), first = !S.placedAt && !S.placement, done = isDone();
     $('mistDot').hidden = !d; $('mistDot').textContent = d;
     $('preBadge').hidden = !CTX.preview;
@@ -827,7 +912,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     sign: g => ({sq: zoneSq(g), today: todayZone() === g}),
     onZone: z => (z ? openZone(z) : closeZone()),
     closeAll: () => closeZone(),
+    onHome: () => { closeZone(); WD.go('home', () => HS.enter()); },
+    homeLoot: () => !!(S.home && S.home.loot && S.home.loot.length),
     heroLine: () => isDone() ? '今天练完啦，明天再来' : !S.placedAt ? '一起看看你会什么吧！' : `今天去${zoneName(todayZone())}吧！`,
+  });
+  const HS = HOUSE.create($('house'), {
+    S: () => S, today, save, show: () => show('house'), leave: goIsland, doneToday: isDone,
+    // 从家里去练：有对应的地方就走过去，秒答进秒答地图，其余 = 今天的探险
+    practice: r => {
+      HOME.ensure(S).go++; save(); goIsland();
+      const sk = r && r.skill, g = r && (r.place || (sk && (sk.speed ? 'speed:L' + (sk.L + 1) : sk.group)));
+      if (!g) { if (!isDone()) $('btnStart').click(); return; }
+      if (g.startsWith('speed')) { S.level = +g.slice(-1) - 1; renderSpeed(); show('home'); return; }
+      Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
+    },
   });
   $('chestIco').src = WORLD.iconURL('chest');
   document.documentElement.style.setProperty('--cartimg', `url(${WORLD.iconURL('cart')})`);
@@ -1180,6 +1278,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const goHome = () => { P = null; renderSpeed(); show('home'); };
     if (!done.length) return goHome();
     const fast = done.filter(r => r.fast).length, wrong = done.filter(r => r.wrong).length, slow = done.length - fast - wrong;
+    HOME.addOre(S, fast + slow); save();
     const mins = Math.max(1, Math.round((Date.now() - P.startAt) / 60000));
     const okT = done.filter(r => !r.wrong).map(r => r.ms), avg = okT.length ? (okT.reduce((a, b) => a + b, 0) / okT.length / 1000).toFixed(1) : '–';
     const lastOf = {}; done.forEach(r => { lastOf[r.id] = r; });
@@ -1492,6 +1591,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
     const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
     const ore = q.n - q.wrong;
+    HOME.addOre(S, ore); HOME.sync(S, today()); save(); const box = S.home.loot.length;
     $('qsum').innerHTML = `<canvas class="scnbg px" id="qsBg"></canvas>
       <div class="col" style="width:330px;flex:none;justify-content:center;gap:10px">
         <div style="display:flex;align-items:flex-end;gap:12px"><div class="sumHero${ore ? '' : ' still'}"><canvas class="px" id="qsHero"></canvas><canvas class="px" id="qsDog"></canvas></div><div style="font-size:28px;font-weight:900;line-height:1.1">${title}</div></div>
@@ -1509,9 +1609,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         <div>${q.ups.slice(0, 16).map(chip).join('')}</div>
         ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
         ${full ? '<div style="font-size:15px;color:var(--warn);font-weight:700">练满 10 分钟了，去墙上贴 1 颗珠子</div>' : ''}
+        ${box ? '<div style="font-size:16px;color:var(--warn);font-weight:800">家门口有 1 个战利品箱</div>' : ''}
         <div style="display:flex;gap:12px;margin-top:6px">
           ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
-          <button class="gobig" id="qsHome" style="flex:2;height:72px;font-size:22px">${full ? '贴好珠子，回到岛上' : '回到岛上'}</button>
+          ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">${full ? '贴好珠子，回到岛上' : '回到岛上'}</button>
         </div><div style="margin-top:auto"></div>
       </div>`;
     show('qsum');
@@ -1519,6 +1620,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('qsBag').querySelectorAll('i').forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 60));
     // 回到岛上：这次点亮的格子所在的木牌闪一下
     $('qsHome').addEventListener('click', () => { goIsland(); q.ups.forEach(id => { const s = K.BY[K.ITEM[id].skill], g = s.group, i = s.speed ? s.L : zoneSkills(g).indexOf(s); if (i >= 0) WD.pulse(g, i); }); });
+    if (box) $('qsHouse').addEventListener('click', () => HS.enter());
     if (q.kind === 'free') $('qsAgain').addEventListener('click', () => begin(() => startQ('free', q.opts)));
   }
   function showPlaceResult(q, quit) {
@@ -1793,6 +1895,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (cur === 'play') { $('quitHint').hidden = false; setTimeout(() => { $('quitHint').hidden = true; }, 1500); return; }
     if (cur === 'calib') return $('calBack').click();
     if (cur === 'summary') return (renderSpeed(), show('home'));
+    if (cur === 'house') { if (!HS.back()) { HS.leave(); goIsland(); } return; }
     if (cur === 'island' && closeZone()) return;   // 首页卡片开着：右滑先关卡片
     if (cur === 'island' || cur === 'placeResult') return;
     if (cur === 'bankv') { if (!$('ovQ').hidden) $('ovQ').hidden = true; else show('parent'); return; }
@@ -1818,7 +1921,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       save(); renderIsland();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();

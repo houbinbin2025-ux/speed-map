@@ -192,6 +192,7 @@
     const recent = [], pick = picker(S, Dy.asked, recent), room = id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)];
     let cur = null, queue = [], pending = [];
     const RT = retrier(S, Dy.retried = Dy.retried || {}, room);
+    const finished = () => { Dy.done = true; stat(S, day).done = 1; };   // 今天的题做完了：家的累计天数要用（说明书-v5-家）
     Dy.seg = Dy.seg || 'review';
     const started = sid => K.BY[sid].items.some(it => peek(S, it.id).seen > 0);
     // 学新的：同时最多 2 个技能（理解技能和秒答各占一个，缺一类时另一类补）；一天最多开始 3 个从没练过的技能
@@ -267,8 +268,8 @@
         if (pending.length) { cur = pending.shift(); return cur; }
         if (Dy.sec < Dy.budget) { const rt = RT.due(false); if (rt) { cur = rt; return cur; } }
         for (let guard = 0; guard < 6; guard++) {
-          if (Dy.sec >= Dy.budget) { Dy.done = true; cur = null; return null; }
-          if (!advance()) { const rt = RT.due(true); if (rt) { cur = rt; return cur; } Dy.done = true; cur = null; return null; }
+          if (Dy.sec >= Dy.budget) { finished(); cur = null; return null; }
+          if (!advance()) { const rt = RT.due(true); if (rt) { cur = rt; return cur; } finished(); cur = null; return null; }
           const x = pick(queue);
           if (!x) { queue = []; continue; }
           const sid = K.ITEM[x.inst.id].skill;
@@ -279,7 +280,7 @@
           }
           cur = Object.assign({kind: 'q'}, x); return cur;
         }
-        Dy.done = true; cur = null; return null;
+        finished(); cur = null; return null;
       },
       inject(x) { cur = x; },             // 测试用：直接指定当前题
       answer(res) {

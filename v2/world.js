@@ -163,7 +163,12 @@
     function refresh() {
       props.innerHTML = '';
       ZONES.forEach(z => {
-        if (z.id === 'home') return;
+        if (z.id === 'home') {   // 家：木牌 + 有战利品箱时的旗子
+          const s = document.createElement('div'), loot = o.homeLoot && o.homeLoot();
+          s.className = 'w-sign' + (loot ? ' today' : ''); s.dataset.z = 'home'; s.style.left = z.x * P + 'px'; s.style.top = Math.max(84, 15 * P) + 'px';
+          s.innerHTML = (loot ? '<span class="w-flag">战利品箱</span>' : '') + `<div class="board"><div class="nm">${z.name}</div></div>`;
+          props.appendChild(s); return;
+        }
         const st = o.sign(z.id), s = document.createElement('div');
         s.className = 'w-sign' + (st.today ? ' today' : ''); s.dataset.z = z.id;
         s.style.left = (z.sx || z.x) * P + 'px'; s.style.top = Math.max(84, 15 * P) + 'px';
@@ -242,7 +247,7 @@
     }
     function focus(id) {
       const z = ZONES.find(x => x.id === id); panTo(centerOf(z));
-      if (z.id === 'home') { o.onZone(null); setTimeout(() => sayAt(null, z.x, surf(z.x) - 30, '这是空空的家'), 380); return; }
+      if (z.id === 'home') { o.onHome(); return; }
       o.onZone(z);
     }
     mini.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || entering) return; pinZone = ZONES.find(x => x.id === b.dataset.z); focus(b.dataset.z); });

@@ -364,6 +364,14 @@
     if (!valid(v)) throw new Error('不是有效的备份');
     return Object.assign(upgrade(v), {goodReset: true});
   }
+  // 家（说明书-v5-家 §6）：得到过的取并集、日期取早，矿石取大；备份里没开的箱子，这边已得到过就不再进箱；摆放按当前设备
+  function mergeHome(a, b) {
+    a = a || {}; b = b || {};
+    const ga = a.got || {}, gb = b.got || {}, got = Object.assign({}, gb, ga);
+    Object.keys(gb).forEach(k => { if (ga[k] && gb[k] < ga[k]) got[k] = gb[k]; });
+    return Object.assign({}, b, a, {got, ore: Math.max(a.ore || 0, b.ore || 0), sec: Math.max(a.sec || 0, b.sec || 0), go: Math.max(a.go || 0, b.go || 0),
+      loot: (a.loot || []).concat((b.loot || []).filter(k => !ga[k])), place: Object.assign({}, b.place, a.place), pets: a.pets || b.pets || null});
+  }
   // 「导入进度」：按格子取高合并，旧备份不会把新进度退回去；错题、摸底记录取并集
   function importMerge(S, text) {
     const v = parse(text);
@@ -374,6 +382,7 @@
     M.known = Object.assign({}, v.known || {}, S.known || {});
     M.demoSeen = Object.assign({}, v.demoSeen || {}, S.demoSeen || {});
     M.placedAt = S.placedAt || v.placedAt;
+    if (S.home || v.home) M.home = mergeHome(S.home, v.home);
     if (!M.placedAt) delete M.placedAt;
     return M;
   }
