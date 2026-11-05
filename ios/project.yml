@@ -1,0 +1,45 @@
+name: KongMath
+options:
+  bundleIdPrefix: com.benhou
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "2"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: 2S2G66F4LH
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+targets:
+  KongMath:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: web
+        type: folder
+        buildPhase: resources
+    preBuildScripts:
+      - name: 同步已提交的网页
+        script: bash "$SRCROOT/sync-web.sh"
+        basedOnDependencyAnalysis: false
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: 空空数学岛
+        CFBundleShortVersionString: "1.0"
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: true
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight, UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.benhou.kongmath
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
