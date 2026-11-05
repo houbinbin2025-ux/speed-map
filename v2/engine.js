@@ -92,7 +92,7 @@
     }
     return key;
   }
-  const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid];
+  const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !(m.q && C.isLow(m.q));
   const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && activeItem(S, m.uid) && (!only || only(m.uid)))
     .sort((a, b) => a.due.localeCompare(b.due) || a.added.localeCompare(b.added));
   const dueCount = (S, day) => { let n = 0; for (const k in S.mistakes || {}) if (isDue(S.mistakes[k], day) && activeItem(S, S.mistakes[k].uid)) n++; return n; };

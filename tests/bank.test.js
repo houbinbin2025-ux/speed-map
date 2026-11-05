@@ -53,17 +53,19 @@ const HARD = {add2c: x => x.ans % 10 === 0, sub2c: x => x.a % 10 === 0, sub2n: x
 test('迁移：卡的编号、题目、答案和改造前一模一样（理解 76 张 + 秒答 200 张，顺序也一样）', () => {
   const now = {};
   Object.values(K.ITEM).filter(it => !it.gen).forEach(it => { now[it.id] = {skill: it.skill, q: it.q, ans: it.ans}; });
-  assert.deepStrictEqual(now, OLD.cards);
+  assert.deepStrictEqual(now, Object.fromEntries(Object.entries(OLD.cards).filter(([id, c]) => (C.BYID[id] ? !C.BYID[id].retired : !C.isLow(c.q)))));   // 11-05 Ben：所有数字 ≤ 5 的题剔除
   const sc = {}; C.UNITS.filter(u => !u.gen).forEach(u => { sc[u.id] = {L: u.L, w: u.w, a: u.a, op: u.op, b: u.b, ans: u.ans, fast: u.fast}; });
   assert.deepStrictEqual(Object.keys(sc), Object.keys(OLD.speedCards)); assert.deepStrictEqual(sc, OLD.speedCards);
 });
 test('迁移：题型编号一个不差，每个题型出的题字段和改造前一样（旧错题按「编号|题目数据」能对上）', () => {
   const now = Object.values(K.ITEM).filter(it => it.gen && !K.BY[it.skill].hard).map(it => it.id).sort();   // 挑战题是新增的，tests/hard.test.js 管
-  assert.deepStrictEqual(now, Object.keys(OLD.types).sort());
+  const OLDT = Object.entries(OLD.types).filter(([id]) => K.ITEM[id]);   // 11-05：题全被剔除的题型（5 以内合起来）不再有
+  assert.deepStrictEqual(now, OLDT.map(([id]) => id).sort());
+  assert.deepStrictEqual(Object.keys(OLD.types).filter(id => !K.ITEM[id]), ['bond:t:whole5']);
   // 字段顺序也要一样：理解题的错题键 = 编号|JSON.stringify(q)，顺序一变同一道题就成了两条错题
-  Object.entries(OLD.types).forEach(([id, o]) => { for (let i = 0; i < 30; i++) assert.deepStrictEqual(Object.keys(K.make(id, Math.random).q), o.qkeys, id); });
+  OLDT.forEach(([id, o]) => { for (let i = 0; i < 30; i++) assert.deepStrictEqual(Object.keys(K.make(id, Math.random).q), o.qkeys, id); });
   // 原来生成器出的错题，在新版本里拼出的错题键逐字一样
-  Object.entries(OLD.types).filter(([id]) => !K.BY[K.ITEM[id].skill].speed).forEach(([id, o]) => o.mkeys.forEach(mk => {
+  OLDT.filter(([id]) => !K.BY[K.ITEM[id].skill].speed).forEach(([id, o]) => o.mkeys.forEach(mk => {
     const q = JSON.parse(mk.slice(id.length + 1)); assert.strictEqual(K.mkey({id, q}), mk);
     const inPool = (B.pools[id] || []).find(x => JSON.stringify(x.q) === JSON.stringify(q)); if (inPool) assert.strictEqual(K.mkey({id, q: K.make(id, null, inPool).q}), mk);
   }));
@@ -148,7 +150,7 @@ test('S4 有讲解：题库里每一道题都能画出题面和答错图解；�
 test('出题：发牌——同一题型一轮把池里的题发完才重来（一轮里不重复），换轮时也不连着出同一道', () => {
   C._resetDecks();
   ['cmp:t:10', 'line:t:100t', 'bond:t:to10-7', 'cmp:t:100', 'place:t:split'].forEach(id => {
-    const n = B.pools[id].length, got = [];
+    const n = K.pool(id).length, got = [];
     for (let i = 0; i < n * 3; i++) got.push(key(K.make(id, Math.random).q));
     for (let r = 0; r < 3; r++) assert.strictEqual(new Set(got.slice(r * n, r * n + n)).size, n, id + ' 第 ' + (r + 1) + ' 轮有重复');
     for (let i = 1; i < got.length; i++) assert.notStrictEqual(got[i], got[i - 1], id + ' 连着出了同一道');

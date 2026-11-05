@@ -40,13 +40,13 @@ test('示范卡：每个技能都有，三步，标题和说明完整', () => {
   K.SKILLS.forEach(s => { const h = R.demo(s.id); clean(h, '示范卡 ' + s.id); ['st1', 'st2', 'st3'].forEach(c => assert.ok(h.includes(c), s.id + ' 缺 ' + c)); });
 });
 
-test('首页每块地的格子数：看数 31、分合 54、数位 2、比大小 8、数线 4、秒答 = v1 全部卡和题型', () => {
+test('首页每块地的格子数：看数 16、分合 43、数位 2、比大小 8、数线 4、秒答 = 没被剔除的卡和题型', () => {
   const S = C.blank();
   const t = g => R.groupStat(S, g).total;
-  assert.deepEqual(['look', 'bond', 'place', 'cmp', 'line'].map(t), [31, 54, 2, 8, 4]);
-  assert.equal(t('speed'), C.UNITS.length);
-  E.record(S, 'look:tf:3', {ok: true}, '2026-11-01');
-  assert.deepEqual(R.groupStat(S, 'look').counts, [30, 1, 0, 0]);
+  assert.deepEqual(['look', 'bond', 'place', 'cmp', 'line'].map(t), [16, 43, 2, 8, 4]);
+  assert.equal(t('speed'), C.UNITS.filter(u => !u.retired).length);
+  E.record(S, 'look:tf:7', {ok: true}, '2026-11-01');
+  assert.deepEqual(R.groupStat(S, 'look').counts, [15, 1, 0, 0]);
 });
 
 test('答对的字：卡第一次合格「对了！点亮了」；题型升级「点亮了！」；淡黄以后对但慢「再快一点」；数线「很接近！」', () => {

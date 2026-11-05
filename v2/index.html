@@ -782,7 +782,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v41:04860df212f8 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v43:0fac74e9c628 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -792,16 +792,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=41"></script>
-<script src="hardbank.js?v=41"></script>
-<script src="core.js?v=41"></script>
-<script src="ink.js?v=41"></script>
-<script src="skills.js?v=41"></script>
-<script src="engine.js?v=41"></script>
-<script src="render.js?v=41"></script>
-<script src="world.js?v=41"></script>
-<script src="home.js?v=41"></script>
-<script src="house.js?v=41"></script>
+<script src="bank.js?v=43"></script>
+<script src="hardbank.js?v=43"></script>
+<script src="core.js?v=43"></script>
+<script src="ink.js?v=43"></script>
+<script src="skills.js?v=43"></script>
+<script src="engine.js?v=43"></script>
+<script src="render.js?v=43"></script>
+<script src="world.js?v=43"></script>
+<script src="home.js?v=43"></script>
+<script src="house.js?v=43"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -985,6 +985,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const allDone = LV.worlds.every((w, i) => worldDone(L, i));
     $('map').innerHTML = LV.worlds.map((w, wi) => {
       const us = C.worldUnits(L, wi), lit = us.filter(u => cs(u.id).lv === 3).length;
+      if (!us.length) return '';   // 题全被剔除的世界不显示
       const won = S.boss[bossKey(L, wi)] ? ' · Boss 已通关' : '';
       return `<div class="world"><div class="wh"><b>${w.name}</b><span class="muted" style="font-size:12px">深红 ${lit}/${us.length}${won}</span><span class="sp"></span>
         <button class="btn" data-scan="${wi}">摸底</button><button class="btn boss" data-boss="${wi}" ${worldDone(L, wi) ? '' : 'disabled'}>Boss 关</button></div>
@@ -1682,7 +1683,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   let mistFocus = null;
   function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
   function renderMist() {
-    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.activeItem(S, m.uid));
+    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.activeItem(S, m.uid) && !(m.q && C.isLow(m.q)));
     const due = m => m.due !== null && m.due <= t;
     $('mistN').textContent = all.filter(due).length;
     const order = MGROUPS.slice().sort((a, b) => (b.id === mistFocus) - (a.id === mistFocus));
@@ -1756,7 +1757,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const s = K.BY[it.skill];
     if (!it.gen) return [{id: it.id, q: it.q, ans: it.ans}];
     if (s.speed) { const u = C.BYID[it.id]; return BK.speedPools[it.id].pool.map(([a, b]) => ({id: it.id, q: {a, op: u.op, b}, ans: u.op === '+' ? a + b : a - b})); }
-    return BK.pools[it.id].map(x => ({id: it.id, q: x.q, ans: x.ans, tag: x.tag}));
+    return (BK.pools[it.id] ? K.pool(it.id) : HARDBANK.pools[it.id]).map(x => ({id: it.id, q: x.q, ans: x.ans, tag: x.tag}));
   }
   const bankTotal = () => K.SKILLS.reduce((n, s) => n + s.items.reduce((m, it) => m + bankItems(it).length, 0), 0);
   function ruleText(s) {
@@ -1924,7 +1925,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const setLv = (units, lv) => units.forEach(u => { const st = cs(u.id); st.lv = lv; st.seen = Math.max(st.seen, 1); st.d = [C.addDays(today(), -4), C.addDays(today(), -3), today()].slice(0, lv); });
     $('testBar').addEventListener('click', e => {
       const b = e.target.closest('[data-t]'); if (!b) return;
-      const t = b.dataset.t, w1 = C.worldUnits(curL(), 0);
+      const t = b.dataset.t, w1 = C.worldUnits(curL(), C.LEVELS[curL()].worlds.findIndex((_, i) => C.worldUnits(curL(), i).length));
       if (t === 'day+1') S.testDays = (S.testDays || 0) + 1;
       else if (t === 'day+3') S.testDays = (S.testDays || 0) + 3;
       else if (t === 'day0') S.testDays = 0;

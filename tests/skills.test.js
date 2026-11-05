@@ -5,21 +5,21 @@ const C = require('../v2/core.js'), K = require('../v2/skills.js');
 const seeded = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
 const itemsOf = g => K.understand.filter(s => s.group === g).flatMap(s => s.items);
 
-test('理解技能数量与编号：看数 31 卡、分合 45 卡 + 9 题型、数位 2、比大小 8、数线 4', () => {
+test('理解技能数量与编号（已剔除所有数字 ≤ 5 的题）：看数 16 卡、分合 35 卡 + 8 题型、数位 2、比大小 8、数线 4', () => {
   const n = g => [itemsOf(g).filter(i => !i.gen).length, itemsOf(g).filter(i => i.gen).length];
-  assert.deepEqual(n('look'), [31, 0]);
-  assert.deepEqual(n('bond'), [45, 9]);
+  assert.deepEqual(n('look'), [16, 0]);
+  assert.deepEqual(n('bond'), [35, 8]);
   assert.deepEqual(n('place'), [0, 2]);
   assert.deepEqual(n('cmp'), [0, 8]);
   assert.deepEqual(n('line'), [0, 4]);
-  assert.equal(K.understand.length, 19);
+  assert.equal(K.understand.length, 17);
   assert.ok(K.ITEM['look:tf2:20'] && K.ITEM['bond:7=3+_'] && K.ITEM['bond:10=9+_'] && K.ITEM['cmp:t:swap'] && K.ITEM['line:t:100']);
 });
 
 test('秒答地图每个世界 / 题型组都接进了图谱，题目编号和 v1 完全一样', () => {
   const ids = K.speed.flatMap(s => s.items.map(i => i.id)).sort();
-  assert.deepEqual(ids, C.UNITS.map(u => u.id).sort());
-  assert.equal(K.speed.length, 7 + 8 + 2 + 2);
+  assert.deepEqual(ids, C.UNITS.filter(u => !u.retired).map(u => u.id).sort());
+  assert.equal(K.speed.length, 6 + 8 + 2 + 2);   // 世界 1 全是 5 以内，已剔除
 });
 
 test('全部编号不重复，也不和秒答的 Boss 键撞', () => {

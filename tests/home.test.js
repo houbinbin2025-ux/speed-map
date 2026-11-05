@@ -17,8 +17,8 @@ test('没有 home 的旧存档：不报错，已达成的进战利品箱，格�
 test('再次 sync 不重复发；新达成的才进箱', () => {
   const S = C.blank(); lit(S, 'look1', 1); H.sync(S, D(0)); S.home.loot = [];
   assert.equal(H.sync(S, D(0)).length, 0);
-  lit(S, 'look2', 1);
-  assert.deepEqual(ids(H.sync(S, D(1))), ['m:look2:1']);
+  lit(S, 'look3', 1);
+  assert.deepEqual(ids(H.sync(S, D(1))), ['m:look3:1']);
 });
 test('只增不减：统计被裁、错题被删、格子清零后，得到过的还在', () => {
   const S = C.blank(); S.stats = {}; for (let i = 0; i < 8; i++) S.stats[D(i)] = {sec: 700, n: 5, ups: 0, over: 0, gap: 0};

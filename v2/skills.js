@@ -12,13 +12,15 @@
   // timedFrom：从第几档开始要求"快"（0 = 一开始就要快，秒答；1 = 淡黄以后，先对后快；null = 不计时）
   function skill(o) {
     const s = Object.assign({timedFrom: null, input: 'write', pre: [], items: []}, o);
+    s.items = s.items.filter(Boolean); if (!s.items.length) return null;   // 题全被剔除的技能（如 5 以内分合）不再存在
     s.items.forEach(it => { it.skill = s.id; ITEM[it.id] = it; });
     SK.push(s); BY[s.id] = s; return s;
   }
   // 题目都来自题库（bank.js）：卡 = 题库里这个技能的固定题；题型 = 从题库池里发牌（一轮发完再洗，同一轮不重复）
-  const cards = sid => B.cards[sid].map(c => ({id: c.id, q: c.q, ans: c.ans}));
-  const fromPool = id => r => { const p = B.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; };
-  const type = id => ({id, gen: fromPool(id)});
+  const cards = sid => B.cards[sid].filter(c => !C.isLow(c.q)).map(c => ({id: c.id, q: c.q, ans: c.ans}));
+  const POOL = {}, pool = id => POOL[id] || (POOL[id] = B.pools[id].filter(x => !C.isLow(x.q)));
+  const fromPool = id => r => { const p = pool(id), x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; };
+  const type = id => (pool(id).length ? {id, gen: fromPool(id)} : null);
 
   // ---------- 看数（一眼看出有几个，不计时） ----------
   skill({id: 'look1', group: 'look', name: '骰子点', kind: 'card', items: cards('look1')});
@@ -73,6 +75,8 @@
   });
 
   // ---------- 判题 ----------
+  SK.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 被剔除的技能不再是前置
+
   // ---------- 挑战题（家长勾选才出；不进 SK：现有地图、奖状、伙伴不受影响。说明书-挑战题） ----------
   const HARD = [];
   const hard = o => { const s = Object.assign({hard: true, kind: 'type8', timedFrom: null, input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
@@ -108,7 +112,7 @@
   // 固定例题（示范卡用，不受发牌影响）：卡 = 卡本身；题型 = 题库池第 1 道；秒答题型 = 池第 1 道
   function example(itemId) {
     const it = ITEM[itemId]; if (!it.gen) return {id: itemId, q: it.q, ans: it.ans};
-    const p = B.pools[itemId] || HB.pools[itemId]; if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
+    const p = B.pools[itemId] ? pool(itemId) : HB.pools[itemId]; if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
     const u = C.BYID[itemId], [a, b] = B.speedPools[itemId].pool[0]; return {id: itemId, q: {a, op: u.op, b}, ans: u.op === '+' ? a + b : a - b};
   }
   const isType = itemId => !!ITEM[itemId].gen;
@@ -120,6 +124,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
+  return {pool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

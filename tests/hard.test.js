@@ -8,10 +8,10 @@ const BOARDS = ['look', 'bond', 'place', 'cmp', 'line', 'speed'];
 const fresh = () => { const S = C.blank(); S.placedAt = 1; S.demoSeen = Object.fromEntries(K.SKILLS.concat(K.HARD).map(s => [s.id, true])); return S; };
 function play(S, day, f) { const s = E.session(S, day, {rnd: seeded(3)}), qs = []; for (let x = s.next(), g = 0; x && g < 500; x = s.next(), g++) if (x.kind === 'q') { qs.push(x); s.answer(f ? f(x) : ok); } return qs; }
 
-test('现有技能不变：38 个技能，挑战题不计入地图和奖励', () => {
-  assert.equal(K.SKILLS.length, 38); assert.ok(K.HARD.length >= 12);
+test('挑战题不进技能表，不计入地图和奖励', () => {
+  assert.ok(K.HARD.length >= 12);
   K.HARD.forEach(s => { assert.ok(s.hard); assert.ok(!K.SKILLS.includes(s)); assert.ok(K.BY[s.id]); });
-  assert.equal(H.MEDALS.length, 76);
+  assert.equal(H.MEDALS.length, K.SKILLS.length * 2);
 });
 test('每个板块至少 2 个挑战技能，编号不撞', () => {
   BOARDS.forEach(b => assert.ok(K.HARD.filter(s => E.boardOf(s) === b).length >= 2, b));

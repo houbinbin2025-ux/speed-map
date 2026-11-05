@@ -64,10 +64,10 @@ test('秒答题型沿用 v2：同一天合格 5 次升一级，且一开始就�
 test('秒答卡存在 S.cards（和 v1 / v2 同一个地方），理解技能存在 S.skills', () => {
   const S = C.blank();
   E.record(S, '3+4', ok, D(0));
-  E.record(S, 'look:dice:3', ok, D(0));
+  E.record(S, 'look:dice:6', ok, D(0));
   assert.equal(S.cards['3+4'].lv, 1);
-  assert.equal(S.skills['look:dice:3'].lv, 1);
-  assert.equal(S.cards['look:dice:3'], undefined);
+  assert.equal(S.skills['look:dice:6'].lv, 1);
+  assert.equal(S.cards['look:dice:6'], undefined);
 });
 
 test('日期往回调：不升级', () => {
@@ -154,8 +154,8 @@ test('10-29 Ben：学新的时（还是灰色）答错也进错题本，明天�
 
 test('复习后还剩 > 10 道到期错题：当天不学新的', () => {
   const S = C.blank(); S.placedAt = 1;
-  for (let k = 1; k <= 30; k++) { E.record(S, 'bond:' + (k % 8 + 2) + '=1+_', ok, D(-9)); }
-  K.understand.filter(s => s.group === 'look').forEach(s => s.items.forEach(it => { E.record(S, it.id, ok, D(-9)); E.addMistake(S, K.make(it.id), D(-2)); }));
+  for (let k = 1; k <= 30; k++) { E.record(S, 'bond:' + (k % 4 + 6) + '=1+_', ok, D(-9)); }
+  K.understand.filter(s => s.group === 'look' || s.id === 'bond3' || s.id === 'bond2').forEach(s => s.items.forEach(it => { E.record(S, it.id, ok, D(-9)); E.addMistake(S, K.make(it.id), D(-2)); }));
   const {qs} = play(S, D(0), () => ({ok: true, fast: true, secs: 20}));           // 每题 20 秒，复习做不完
   assert.ok(E.dueMistakes(S, D(0)).length > 10);
   assert.equal(qs.filter(x => x.seg === 'new').length, 0);
@@ -211,7 +211,7 @@ test('统计：每天用时、题数、新点亮数、练完后剩下的到期�
   const {s} = play(S, D(0), () => ok);
   const st = S.stats[D(0)];
   assert.ok(st.sec === s.elapsed && st.n > 0 && st.ups > 0 && st.over === 0 && st.gap === 0);
-  const S2 = C.blank(); Object.assign(E.prog(S2, 'look:dice:1'), {seen: 1, lv: 1, lastDay: D(-5)});
+  const S2 = C.blank(); Object.assign(E.prog(S2, 'look:dice:6'), {seen: 1, lv: 1, lastDay: D(-5)});
   assert.equal(E.gapNow(S2, D(0)), 5);                                  // 开始学了 5 天没练
   K.BY.look1.items.forEach(it => Object.assign(E.prog(S2, it.id), {seen: 1, lv: 3, lastDay: D(-9)}));
   assert.equal(E.gapNow(S2, D(0)), 0);                                  // 全部深红的不算"在学"
@@ -235,7 +235,7 @@ test('摸底：最难的技能 3 题全对 → 测过的格子点亮淡黄，同
   assert.equal(E.lv(S, 'line:t:100'), 1);
   assert.equal(S.known.line1, true);
   assert.ok(!S.known.cmp1 && !S.known.look1, '不跨组点亮');
-  assert.equal(E.lv(S, 'look:dice:1'), 0);
+  assert.equal(E.lv(S, 'look:dice:6'), 0);
 });
 
 test('摸底：不全对就往下测更简单的；全不会就停在最简单的；只点亮不变灰', () => {
@@ -243,10 +243,9 @@ test('摸底：不全对就往下测更简单的；全不会就停在最简单�
   E.record(S, 'look:tf2:15', ok, D(-5)); E.record(S, 'look:tf2:15', ok, D(-4));
   const asked = place(S, D(0), x => /^look:(dice|scat)/.test(x.inst.id));
   const lookSkills = [...new Set(asked.map(x => K.ITEM[x.inst.id].skill).filter(s => s.startsWith('look')))];
-  assert.deepEqual(lookSkills, ['look4', 'look2', 'look3']);              // 先测最难的，再二分往下找
+  assert.deepEqual(lookSkills, ['look4', 'look1', 'look3']);              // 先测最难的，再二分往下找
   assert.equal(E.lv(S, 'look:tf2:15'), 2, '已有颜色不变');
   assert.equal(S.known.look1, true);
-  assert.equal(S.known.look2, true);
 });
 
 test('摸底最多 5 分钟 / 40 题；中途关掉下次接着测', () => {
@@ -274,16 +273,16 @@ test('R2-B1 维持复习：一天里答对几题只往后推一档（7 → 14）
 
 test('R2-B2 分合"求整体"是题型：按"最近 8 次对 7 次"升级，不是对 1 次就亮', () => {
   const S = C.blank();
-  E.record(S, 'bond:t:whole5', ok, D(0));
-  assert.equal(E.lv(S, 'bond:t:whole5'), 0);
-  assert.equal(E.kindOf('bond:t:whole5'), 'type8');
-  assert.equal(E.kindOf('bond:5=2+_'), 'card');
+  E.record(S, 'bond:t:whole9', ok, D(0));
+  assert.equal(E.lv(S, 'bond:t:whole9'), 0);
+  assert.equal(E.kindOf('bond:t:whole9'), 'type8');
+  assert.equal(E.kindOf('bond:7=2+_'), 'card');
 });
 
 test('R2-B3 秒答 L3 题型在"学新的"里一次出够 5 题（能凑够同一天合格 5 次）', () => {
   const S = C.blank(); S.placedAt = 1;
   K.understand.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, d: [D(-40), D(-35), D(-30)], seen: 9, lastDay: D(-1)})));
-  C.UNITS.filter(u => u.L < 2).forEach(u => Object.assign(E.prog(S, u.id), {lv: 3, d: [D(-40), D(-35), D(-30)], seen: 9, lastDay: D(-1)}));
+  C.unitsOf(0).concat(C.unitsOf(1)).forEach(u => Object.assign(E.prog(S, u.id), {lv: 3, d: [D(-40), D(-35), D(-30)], seen: 9, lastDay: D(-1)}));
   const {qs} = play(S, D(0), x => ({ok: true, fast: true, secs: 6}));
   const n = qs.filter(x => x.seg === 'new' && x.inst.id === 'L3:add10').length;
   assert.ok(n >= 5, '出了 ' + n + ' 次');
@@ -363,7 +362,7 @@ test('R2-B11 统计用时是累加：今日练习 + 自由加练', () => {
 
 test('R2-B12 学新的：理解技能和秒答新卡并行，前置学会后秒答新卡不用等全部理解技能', () => {
   const S = C.blank(); S.placedAt = 1;
-  ['look1', 'look3', 'bond1'].forEach(sid => K.BY[sid].items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 1, d: [D(-1)], seen: 1, lastDay: D(-1)})));
+  ['look1', 'look3', 'bond2'].forEach(sid => K.BY[sid].items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 1, d: [D(-1)], seen: 1, lastDay: D(-1)})));
   const {qs} = play(S, D(0), () => ok);
   assert.ok(qs.some(x => x.seg === 'new' && K.BY[K.ITEM[x.inst.id].skill].speed), '秒答 L1 世界 1 的新卡应该出现');
 });
@@ -413,7 +412,7 @@ test('题型错题每种最多留最近 2 道（同一类题不堆成一串）�
   const n = uid => Object.values(S.mistakes).filter(m => m.uid === uid).length;
   assert.equal(n('cmp:t:p10'), 2);
   assert.equal(n('L3:add2c'), 2);
-  ['look:tf:3', 'look:tf:4', 'look:tf:5'].forEach(id => E.addMistake(S, K.make(id), D(0)));
+  ['look:tf:7', 'look:tf:8', 'look:tf:9'].forEach(id => E.addMistake(S, K.make(id), D(0)));
   assert.equal(Object.values(S.mistakes).filter(m => m.src === 'look').length, 3);
 });
 
@@ -532,7 +531,7 @@ test('G6-5 学新的段最多 3 分钟（+ 一题的余量）', () => {
 
 test('G6-6 有余力再学新的前提是没有到期错题；复习段没做完的错题在最后接着复习（第 5 步）', () => {
   const S = C.blank(); S.placedAt = 1;
-  const red = ['look1', 'look2', 'look3'].flatMap(sid => K.BY[sid].items.map(it => it.id));
+  const red = ['look1', 'look3', 'look4'].flatMap(sid => K.BY[sid].items.map(it => it.id));
   red.forEach(id => Object.assign(E.prog(S, id), {lv: 3, d: [D(-60), D(-55), D(-50)], seen: 9, lastDay: D(-1)}));
   red.slice(0, 13).forEach(id => E.addMistake(S, K.make(id), D(-1)));     // 13 道到期；复习段每题 30 秒，做 10 道剩 3 道
   const qs = trace(S, D(0), x => ({ok: true, fast: true, secs: x.seg === 'review' ? 30 : 6}));
@@ -569,12 +568,12 @@ test('G6-8 addTime：笔迹校准的时间计入当天 10 分钟和用时统计'
 
 test('G6-9 错题本「复习这一组」：只出这一组的到期错题，出完就停；秒答按级别分组', () => {
   const S = C.blank(); S.placedAt = 1;
-  ['look:tf:3', 'look:tf:4'].forEach(id => { E.record(S, id, ok, D(-3)); E.addMistake(S, K.make(id), D(-1)); });
+  ['look:tf:7', 'look:tf:8'].forEach(id => { E.record(S, id, ok, D(-3)); E.addMistake(S, K.make(id), D(-1)); });
   E.record(S, 'bond:7=3+_', ok, D(-3)); E.addMistake(S, K.make('bond:7=3+_'), D(-1));
   E.addMistake(S, {id: '3+4', q: {a: 3, op: '+', b: 4}, ans: 7}, D(-1));
   E.addMistake(S, {id: '9+4', q: {a: 9, op: '+', b: 4}, ans: 13}, D(-1));
   const ids = g => { const f = E.review(S, D(0), g), out = []; for (let x = f.next(); x; x = f.next()) if (x.kind === 'q') { out.push(x.inst.id); f.answer(ok); } return out; };
-  assert.deepEqual(ids('look').sort(), ['look:tf:3', 'look:tf:4']);
+  assert.deepEqual(ids('look').sort(), ['look:tf:7', 'look:tf:8']);
   assert.deepEqual(ids('speed:L1'), ['3+4']);
   assert.deepEqual(ids('speed:L2'), ['9+4']);
   assert.deepEqual(ids('look'), [], '复习过的明天才再来');

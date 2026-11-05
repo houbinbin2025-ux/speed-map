@@ -73,9 +73,12 @@
       // 从题库池里抽一道（池子由 tools/build-bank.js 按 ok 规则挑出，测试会逐题复查）
       gen: () => { const key = LEVELS[L].key + ':' + t.k, p = BANK.speedPools[key].pool, [a, b] = p[deal(key, p.length, () => (rnd(0, 1e6 - 1)) / 1e6)]; return {a, b, ans: t.op === '+' ? a + b : a - b}; }}));
   });
+  // Ben 11-05：题里所有数字都不超过 5 的题不再出（1+1、5−4、骰子 3 点、5 以内分合……）。编号和旧进度保留，只是不出、不计
+  const isLow = q => { const ns = Object.values(q || {}).filter(v => typeof v === 'number'); return ns.length > 0 && ns.every(v => v <= 5); };
+  UNITS.forEach(u => { if (!u.gen && isLow({a: u.a, b: u.b, ans: u.ans})) u.retired = true; });
   const BYID = Object.fromEntries(UNITS.map(u => [u.id, u]));
-  const unitsOf = L => UNITS.filter(u => u.L === L);
-  const worldUnits = (L, w) => UNITS.filter(u => u.L === L && u.w === w);
+  const unitsOf = L => UNITS.filter(u => u.L === L && !u.retired);
+  const worldUnits = (L, w) => UNITS.filter(u => u.L === L && u.w === w && !u.retired);
   // 出题实例：题型每次生成新数字；带 fixed 的（错题复习）用错题原来的数字
   const inst = p => {
     const u = BYID[p.id] || p;
@@ -124,10 +127,10 @@
   }
   const seriesOk = (series, op) => series === 'mix' || !series || op === (series === 'add' ? '+' : '-');
   const dueMistakes = (S, t, L, series) => Object.values(S.mistakes || {})
-    .filter(m => m.due !== null && m.due <= t && m.L === L && seriesOk(series, m.op))
+    .filter(m => m.due !== null && m.due <= t && m.L === L && seriesOk(series, m.op) && !(BYID[m.uid] && BYID[m.uid].retired))
     .sort((x, y) => x.due.localeCompare(y.due) || x.added.localeCompare(y.added));
   const mistakeGroups = (S, t) => {
-    const all = Object.values(S.mistakes || {});
+    const all = Object.values(S.mistakes || {}).filter(m => !(BYID[m.uid] && BYID[m.uid].retired));
     return {
       due: all.filter(m => m.due !== null && m.due <= t),
       doing: all.filter(m => m.due !== null && m.due > t),
@@ -388,7 +391,7 @@
   }
 
   return {
-    LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
+    isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
     keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
