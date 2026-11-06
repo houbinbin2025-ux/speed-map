@@ -122,13 +122,23 @@
   hard({id: 'speedH4', group: 'speedH', name: '表内乘法', timedFrom: 1, pre: ['speedH3'], ids: ['speed:h:mul2']});
   hard({id: 'speedH5', group: 'speedH', name: '表内除法', timedFrom: 1, pre: ['speedH4'], ids: ['speed:h:div']});
 
+  // ---------- 三四年级第一批（说明书-到四年级第一批）：不计时，答对累计下架；不进地图格子和奖励 ----------
+  const g34 = (group, name, ids) => hard({id: 'g34:' + ids[0].split(':').slice(1).join(':'), group, name, ids});
+  g34('speedH', '有余数除法', ['speed:g10:rem', 'speed:g10:quo']); g34('speedH', '三位数加减', ['speed:g10:add3', 'speed:g10:sub3']); g34('place', '千位', ['place:g10:thou']);
+  g34('market', '单位换算', ['market:g10:conv']); g34('market', '经过时间', ['market:g10:span']); g34('dock', '余数应用题', ['dock:g10:remain']); g34('dock', '两步应用题', ['dock:g10:two']);
+  g34('speedH', '乘一位数', ['speed:g11:mul']); g34('speedH', '除以一位数', ['speed:g11:div', 'speed:g11:divrem']); g34('dock', '周长', ['dock:g11:perim']); g34('dock', '倍', ['dock:g11:times']); g34('dock', '买东西和剩下', ['dock:g11:two']); g34('dock', '速度和路程', ['dock:g11:speed']); g34('dock', '一半和四分之一', ['dock:g11:part']);
+  g34('speedH', '两位数乘两位数', ['speed:g12:mul2']); g34('speedH', '一位小数', ['speed:g12:dec']); g34('dock', '面积', ['dock:g12:area']); g34('dock', '单价和总价', ['dock:g12:price']); g34('market', '24 时', ['market:g12:24']); g34('market', '年月周天', ['market:g12:year']);
+  g34('speedH', '乘两位数', ['speed:g13:mul3']); g34('speedH', '两位除数', ['speed:g13:div2']); g34('speedH', '四则混合', ['speed:g13:order']); g34('place', '取整', ['place:g13:round']); g34('dock', '归一', ['dock:g13:unit']); g34('dock', '路程', ['dock:g13:speed']); g34('dock', '平均分', ['dock:g13:share']);
+  g34('speedH', '运算律', ['speed:g14:law', 'speed:g14:lawfill']); g34('speedH', '两位小数', ['speed:g14:dec2']); g34('speedH', '小数点移动', ['speed:g14:move']); g34('dock', '平均数', ['dock:g14:avg']); g34('dock', '相遇', ['dock:g14:meet']); g34('dock', '内角和', ['dock:g14:tri']); g34('market', '小数换算', ['market:g14:unit']);
+  g34('place', '公倍数', ['place:g15:lcm']); g34('place', '公因数', ['place:g15:gcd']); g34('dock', '多步应用题', ['dock:g15:three']); g34('dock', '和差', ['dock:g15:sumdiff']); g34('dock', '和倍差倍', ['dock:g15:timessum']); g34('dock', '鸡兔同笼', ['dock:g15:legs']); g34('dock', '年龄', ['dock:g15:age']);
+
   // ---------- 15 级难度（说明书-难度分级）：每道题一个级别，按题算，题库数据不改 ----------
   const LEVELS = [
-    ['10 以内的数', '看数、比大小、数线、接方块'], ['10 以内分合', '6–9 分合、8 以内加减、整点'], ['凑十', '凑十、缺数算式、9 和 10 的加减'],
-    ['20 以内的数', '十格框、比大小、数线、十几加减几'], ['20 以内进位加', '过十准备、9/8/7/6 加几、付钱'], ['20 以内退位减', '十几减几、找零、半点、应用题'],
-    ['100 以内的数', '数位、两位数比大小、前后数、跳着数'], ['两位数加减一位数', '不进退位、整十、付钱'], ['进位退位', '进退位、连加连减、整十分合、应用题'],
-    ['两位数加减两位数', '不进退位、凑一百、百格图、几点几分'], ['两位数进位退位', '进退位、100 以内应用题、找零'], ['三位数', '百十个、比大小、0—1000 数线'],
-    ['乘法入门', '2、5、10 的乘法、应用题'], ['表内乘法', '3、4、6、7、8、9 的乘法、应用题'], ['表内除法', '除法、应用题'],
+    ['10 以内的数与分合', '看数、比大小、数线、6–9 分合、整点'], ['凑十', '凑十、缺数算式、9 和 10 的加减'], ['20 以内的数', '十格框、比大小、数线、十几加减几'],
+    ['20 以内进位退位', '过十、十几减几、半点、找零、应用题'], ['100 以内的数', '数位、比大小、前后数、数线、跳着数'], ['两位数加减一位数', '不进退位和进退位、连加连减、付钱'],
+    ['两位数加减两位数', '进退位、凑一百、几点几分、找零、应用题'], ['三位数与乘法入门', '百十个、0—1000 数线、2、5、10 的乘法'], ['表内乘除', '全部口诀、表内除法、应用题'],
+    ['万以内的数与有余数除法', '余数、三位数加减、千克、千米、经过时间'], ['乘除一位数', '多位数乘除一位数、周长、倍、速度'], ['两位数乘法与小数入门', '两位数乘两位数、一位小数、面积、单价、24 时'],
+    ['多位数乘除与四则混合', '三位数乘两位数、两位除数、括号、取整、归一'], ['运算律与两位小数', '简便算、两位小数、平均数、相遇、内角和'], ['综合应用', '公倍数、公因数、多步应用题、和差、和倍'],
   ].map(([name, what], i) => ({n: i + 1, name, what}));
   const SKILL_LEVEL = {look1: 1, look3: 1, look4: 4, cmp1: 1, cmp2: 4, cmp3: 7, cmp4: 7, line1: 1, line2: 4, line3: 7, line4: 7, bond2: 2, bond3: 3, bond4: 3, bond5: 5, place1: 7, place2: 7,
     gardenA: 1, gardenB: 7, gardenC: 7, clockA: 2, clockB: 6, money2: 6,
@@ -136,7 +146,8 @@
     dockH1: 6, dockH2: 9, dockH3: 11, dockH4: 13, dockH5: 14, dockH6: 15, marketH1: 9, marketH2: 11, marketH3: 10, gardenH1: 9, gardenH2: 10};
   const SPEED_L1 = {1: 2, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3}, SPEED_L2 = {0: 4, 1: 5, 2: 5, 3: 5, 4: 6, 5: 6, 6: 6, 7: 6};
   const SPEED_TYPE = {add10: 8, addT: 8, sub10: 8, subT: 8, add1n: 8, sub1n: 8, add1c: 9, sub1c: 9, add2n: 10, sub2n: 10, add2c: 11, sub2c: 11};
-  function levelOfQ(id, q, ans) {
+  function levelOfQ(id, q, ans) { const g = /:g(\d+):/.exec(id); return g ? +g[1] : C.LEVEL_REMAP[oldLevelOfQ(id, q, ans)]; }
+  function oldLevelOfQ(id, q, ans) {
     const it = ITEM[id], s = BY[it.skill];
     if (s.speed) { const u = C.BYID[id]; return u.L === 0 ? SPEED_L1[u.w] : u.L === 1 ? SPEED_L2[u.w] : SPEED_TYPE[id.split(':')[1]]; }
     if (SKILL_LEVEL[s.id]) return SKILL_LEVEL[s.id];
@@ -173,7 +184,8 @@
     return {id: itemId, q: it.q, ans: it.ans};
   }
   // 错题编号：卡 = 卡编号；题型 = 编号 | 题目数据
-  const mkey = inst => ITEM[inst.id].gen ? inst.id + '|' + JSON.stringify(inst.q) : inst.id;
+  // 新题带固定短编号 q.qk：键短，改讲解不换键；旧题的键一字不改
+  const mkey = inst => !ITEM[inst.id].gen ? inst.id : inst.q && inst.q.qk ? inst.id + '|' + inst.q.qk : inst.id + '|' + JSON.stringify(inst.q);
   // 固定例题（示范卡用，不受发牌影响）：卡 = 卡本身；题型 = 题库池第 1 道；秒答题型 = 池第 1 道
   function example(itemId) {
     const it = ITEM[itemId]; if (!it.gen) return {id: itemId, q: it.q, ans: it.ans};

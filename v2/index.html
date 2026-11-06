@@ -813,7 +813,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v70:1f7c3fb35f63 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v74:581c9f2a84b4 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -823,17 +823,17 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=70"></script>
-<script src="hardbank.js?v=70"></script>
-<script src="placebank.js?v=70"></script>
-<script src="core.js?v=70"></script>
-<script src="ink.js?v=70"></script>
-<script src="skills.js?v=70"></script>
-<script src="engine.js?v=70"></script>
-<script src="render.js?v=70"></script>
-<script src="world.js?v=70"></script>
-<script src="home.js?v=70"></script>
-<script src="house.js?v=70"></script>
+<script src="bank.js?v=74"></script>
+<script src="hardbank.js?v=74"></script>
+<script src="placebank.js?v=74"></script>
+<script src="core.js?v=74"></script>
+<script src="ink.js?v=74"></script>
+<script src="skills.js?v=74"></script>
+<script src="engine.js?v=74"></script>
+<script src="render.js?v=74"></script>
+<script src="world.js?v=74"></script>
+<script src="home.js?v=74"></script>
+<script src="house.js?v=74"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1917,7 +1917,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('lvBoxes').addEventListener('click', e => {
     const b = e.target.closest('[data-lv]'); if (!b) return;
     const n = +b.dataset.lv, c = (E.chosen(S) || []).slice();
-    S.settings.levels = n === 0 ? null : c.includes(n) ? c.filter(x => x !== n) : c.concat(n).sort((x, y) => x - y);
+    S.settings.levels = n === 0 ? null : c.includes(n) ? c.filter(x => x !== n) : c.concat(n).sort((x, y) => x - y); S.settings.levelsV = 2;   // 新级别号，不再换算
     if (S.settings.levels && !S.settings.levels.length) S.settings.levels = null;
     save(); renderLevels();
   });

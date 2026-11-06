@@ -21,7 +21,7 @@ test('每道题都有 1–15 的级别；每级至少 40 道题、至少 2 个�
   K.LEVELS.forEach(l => { assert.ok(n[l.n] >= 40, `第 ${l.n} 级只有 ${n[l.n]} 道`); assert.ok(sk[l.n].size >= 2, `第 ${l.n} 级只有 ${[...sk[l.n]]}`); });
 });
 test('不越级：低级别的题数字不超过这一级的范围', () => {
-  const cap = {1: 10, 2: 10, 3: 10, 4: 20, 5: 20, 6: 20};
+  const cap = {1: 10, 2: 10, 3: 20, 4: 20};
   each((s, it, i) => { const L = K.levelOf(i); if (!cap[L] || i.q.view === 'clock' || i.q.view === 'pat') return; const big = Math.max(i.ans || 0, ...Object.values(i.q).filter(v => typeof v === 'number' && v < 200)); assert.ok(big <= cap[L] || s.group === 'line', `${i.id} 第 ${L} 级出现 ${big}`); });
 });
 test('秒答世界 7（6 + 0、10 − 0、7 − 7）剔除；前置和伙伴不受影响', () => {
@@ -64,7 +64,7 @@ test('手选几级：练这一块也只出这几级；前置不管；没有题�
 });
 test('手选后错题只回来选中级别的，其他暂停不丢；改回自动都回来', () => {
   const S = blank(); E.addMistake(S, K.make('cmp:t:10', seeded(1)), D(-3)); E.addMistake(S, K.make('speed:h:mul', seeded(1)), D(-3));
-  S.settings = {levels: [13]};
+  S.settings = {levels: [8]};
   assert.deepEqual(E.dueMistakes(S, D(0)).map(m => m.uid), ['speed:h:mul']);
   S.settings = {levels: [1]};
   assert.deepEqual(E.dueMistakes(S, D(0)).map(m => m.uid), ['cmp:t:10']);
@@ -78,19 +78,30 @@ test('自动：零进度开放到第 2 级，不出高级别题；10 分钟用�
 });
 test('自动：不会卡死，好孩子一路开到第 15 级，每一级的题都能出', () => {
   const S = blank(), seen = new Set(); let d = 0;
-  for (; d < 200 && (E.autoLevel(S) < 15 || seen.size < 15); d++) play(S, D(d)).forEach(i => seen.add(K.levelOf(i)));
+  for (; d < 400 && (E.autoLevel(S) < 15 || seen.size < 15); d++) play(S, D(d)).forEach(i => seen.add(K.levelOf(i)));
   assert.equal(E.autoLevel(S), 15, `第 ${d} 天还在第 ${E.autoLevel(S)} 级`);
   assert.equal(seen.size, 15, '出现过的级别 ' + [...seen]);
 });
+test('自动：三四年级开得慢（第 10 级起每级至少隔 25 个练习日），手选不受限', () => {
+  const S = blank(), first = {}; let d = 0;
+  for (; d < 400 && E.autoLevel(S) < 15; d++) { play(S, D(d)); const t = E.autoLevel(S); if (!first[t]) first[t] = d; }
+  for (let L = 11; L <= 15; L++) assert.ok(first[L] - first[L - 1] >= 25, `第 ${L} 级只隔 ${first[L] - first[L - 1]} 天`);
+  assert.ok(first[15] >= 150, `第 ${first[15]} 天就到第 15 级`);
+  const P = blank(); P.settings = {levels: [15], levelsV: 2}; assert.ok(play(P, D(0)).every(i => K.levelOf(i) === 15));
+});
+test('自动：没练够的孩子（只淡黄，没到深红）开不到第 10 级', () => {
+  const S = blank(); K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 1, d: [D(-5)], seen: 3, lastDay: D(-1)})));
+  S.lvTop = 15; assert.ok(E.autoLevel(S) <= 10, '开放到 ' + E.autoLevel(S));
+});
 test('自动：摸底全对的孩子不用从第 1 级起', () => {
   const S = blank(); S.known = Object.fromEntries(K.understand.filter(s => !s.nb).map(s => [s.id, true]));   // 真实摸底只测理解，不测秒答
-  assert.ok(E.autoLevel(S) >= 7, '开放到 ' + E.autoLevel(S));
-  const seen = play(S, D(0)).slice(0, 30).map(i => K.levelOf(i)); assert.ok(Math.max(...seen) >= 4, '前 30 题还是低级别：' + seen);
+  assert.ok(E.autoLevel(S) >= 5, '开放到 ' + E.autoLevel(S));
+  const seen = play(S, D(0)).slice(0, 30).map(i => K.levelOf(i)); assert.ok(Math.max(...seen) >= 3, '前 30 题还是低级别：' + seen);
 });
 test('旧存档：没有 settings.levels 或还留着 settings.hard 都不报错；选择跟着备份走', () => {
   const O = blank(); delete O.settings; assert.ok(play(O, D(0)).length);
   const H = blank(); H.settings = {hard: {look: true}}; assert.ok(play(H, D(0)).length);
-  const T = blank(); T.settings = {levels: [3, 5]}; assert.deepEqual(C.importText(C.exportText(T)).settings.levels, [3, 5]);
+  const T = blank(); T.settings = {levels: [3, 5], levelsV: 2}; assert.deepEqual(C.importText(C.exportText(T)).settings.levels, [3, 5]);
 });
 test('每道新题都能画题面和图解，不露答案', () => {
   ['dock:h:20', 'dock:h:div', 'market:h:pay', 'market:h:clock', 'garden:h:skip', 'speed:h:div'].forEach(id => HB.pools[id].slice(0, 5).forEach(x => {
@@ -111,9 +122,9 @@ test('手选时第一次遇到新题有示范卡', () => {
   const S = C.blank(); S.placedAt = 1; S.settings = {levels: [15]};
   const s = E.session(S, D(0), {rnd: seeded(2)}); assert.equal(s.next().kind, 'demo');
 });
-test('放错级修正：过十的 20 以内分合第 6 级；要退位的凑一百第 11 级；50 以内应用题没有两位数加减两位数；倒着跳不到三位数', () => {
-  HB.pools['bond:h:20'].forEach(x => { const a = +x.q.text.match(/= (\d+)/)[1], L = K.levelOf({id: 'bond:h:20', q: x.q, ans: x.ans}); assert.equal(L, a >= 10 || x.ans >= 10 ? 4 : 6); });
-  HB.pools['bond:h:to100'].forEach(x => { const a = +x.q.text.match(/^\d+/)[0]; assert.equal(K.levelOf({id: 'bond:h:to100', q: x.q, ans: x.ans}), a % 10 ? 11 : 10); });
+test('放错级修正：过十的 20 以内分合第 4 级；凑一百第 7 级；50 以内应用题没有两位数加减两位数；倒着跳不到三位数', () => {
+  HB.pools['bond:h:20'].forEach(x => { const a = +x.q.text.match(/= (\d+)/)[1], L = K.levelOf({id: 'bond:h:20', q: x.q, ans: x.ans}); assert.equal(L, a >= 10 || x.ans >= 10 ? 3 : 4); });
+  HB.pools['bond:h:to100'].forEach(x => { const a = +x.q.text.match(/^\d+/)[0]; assert.equal(K.levelOf({id: 'bond:h:to100', q: x.q, ans: x.ans}), 7); });
   HB.pools['dock:h:50'].forEach(x => { const [a, b] = x.q.text.match(/\d+/g).map(Number); assert.ok(Math.min(a, b) < 10, x.q.say); });
   HB.pools['garden:h:down'].forEach(x => assert.ok(x.q.text.match(/\d+/g).every(v => +v <= 100), x.q.text));
 });

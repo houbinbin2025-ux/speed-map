@@ -16,18 +16,32 @@
   const FAST_OUT = 4, FAST_PER_DAY = 2, MIST_EVERY = 2, MIST_DAY = 15;   // MIST_EVERY：每出 2 道别的题插 1 道到期错题；MIST_DAY：今日练习一天最多复习几道，多的顺延
 
   const skillOf = id => K.BY[K.ITEM[id].skill];
+  const countsRight = inst => /:g\d+:/.test(inst.id);   // 三四年级第一批（说明书-到四年级第一批）
   // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级
   const AUTO_PASS = 0.7, ALL_ITEMS = K.SKILLS.concat(K.HARD).flatMap(s => s.items);
   const CELLS = K.LEVELS.map(l => ALL_ITEMS.filter(it => K.itemLevels(it.id)[0] === l.n));
   const chosen = S => { const l = S.settings && S.settings.levels; return Array.isArray(l) && l.length ? l : null; };
   // 自动：开放到「第一个还没点亮 70% 的级别」再往上一级，题量才够用满 10 分钟；摸底判为会的技能算点亮，全对的孩子不用从第 1 级起
   let topMemo = null;   // 排课时一题要查几百次；档位变了（bump、retire）、新一次练习开始时清掉
-  function autoLevel(S) {
-    if (topMemo && topMemo.S === S) return topMemo.top;
-    let top = K.LEVELS.length;
-    for (let i = 0; i < CELLS.length; i++) { const share = l => (l.length ? l.filter(it => lv(S, it.id) >= 1 || (S.known && S.known[it.skill])).length / l.length : -1), c = CELLS[i];
+  // 三四年级（第 10 级起）开得慢一点（说明书-到四年级第一批，模拟）：上一级格子要到深红，上次开级后还要练满 HOLD_DAYS 个练习日。
+  // 只看格子的话，一年级孩子两三个月就能开到四年级内容。S.lvTop = 已放行到第几级，S.lvTopDay = 放行那天。手选难度不受限
+  const HOLD_FROM = 9, HOLD_DAYS = 25;
+  const rawLevel = S => { let top = K.LEVELS.length;
+    for (let i = 0; i < CELLS.length; i++) { const need = i >= HOLD_FROM - 1 ? 3 : 1, share = l => (l.length ? l.filter(it => lv(S, it.id) >= need || (S.known && S.known[it.skill])).length / l.length : -1), c = CELLS[i];
       // 理解和秒答分开算，有一条线过 70% 就算过：摸底不测秒答，不能因为秒答还灰把会的数位关掉
       if (c.length && Math.max(share(c.filter(it => skillOf(it.id).speed)), share(c.filter(it => !skillOf(it.id).speed))) < AUTO_PASS) { top = Math.min(i + 2, K.LEVELS.length); break; } }
+    return top; };
+  const practiceDays = (S, since) => Object.keys(S.stats || {}).filter(d => d > since && S.stats[d].sec > 0).length;
+  // 每次练习开始时调用：到了该开新级的时候，一次只放行一级
+  function tickLevel(S, day) {
+    const raw = rawLevel(S); if (raw <= HOLD_FROM) return;
+    if (!S.lvTop) { S.lvTop = HOLD_FROM; S.lvTopDay = day; }
+    if (raw > S.lvTop && S.lvTop < K.LEVELS.length && practiceDays(S, S.lvTopDay) >= HOLD_DAYS) { S.lvTop++; S.lvTopDay = day; }
+    topMemo = null;
+  }
+  function autoLevel(S) {
+    if (topMemo && topMemo.S === S) return topMemo.top;
+    const top = Math.min(rawLevel(S), Math.max(HOLD_FROM, S.lvTop || 0));
     topMemo = {S, top};
     return top;
   }
@@ -229,8 +243,9 @@
     const id = x.inst.id, p = prog(S, id);
     if (!x.retry && !res.peeked) { let known = false; try { known = isKnown(S, x.inst, p.lv); } catch (e) {} noteAnswer(S, day, x.inst, res, known); }   // 先于这次作答判断
     const lv0 = p.lv, out = record(S, id, res, day);
-    if (res.ok && res.fast && !res.peeked && !x.retry && addFast(S, x.inst, day, lv0)) out.up = true;
-    if (res.ok && res.fast) sweep(S);
+    const counted = res.ok && (res.fast || countsRight(x.inst));   // 新题答对就计次（文字题和多位计算达不到秒答时限，否则永不下架）
+    if (counted && !res.peeked && !x.retry && addFast(S, x.inst, day, lv0)) out.up = true;
+    if (counted) sweep(S);
     if (x.keep) {
       if (out.pass && p.keepDay !== day) { p.keep = (p.keep || 0) + 1; p.keepDay = day; }
       if (!res.ok) p.keep = 0;
@@ -305,7 +320,7 @@
   function session(S, day, opts) {
     opts = opts || {};
     const r = opts.rnd || Math.random, Dy = daily(S, day);
-    topMemo = null;
+    topMemo = null; tickLevel(S, day);
     S.demoSeen = S.demoSeen || {}; S.known = S.known || {};
     if (opts.extra && Dy.done) { Dy.budget = Dy.sec + opts.extra; Dy.done = false; Dy.seg = null; Dy.mistN = 0; }
     const CHOSEN_EXTRA = 60, extra = chosen(S) ? CHOSEN_EXTRA : 0;   // 手选难度时题少，题型放宽，才练得满 10 分钟（一道题一天只记 2 次秒答）
@@ -554,7 +569,7 @@
 
   return {BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
-    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
+    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, countsRight, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,
     review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
 });

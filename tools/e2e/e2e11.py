@@ -47,13 +47,13 @@ with sync_playwright() as p:
     for lv, name in [(6, 'L6'), (10, 'L10'), (15, 'L15')]:
         choose(pg, [lv]); pg.click('#btnStart'); pg.wait_for_timeout(2600); play_some(pg, [lv], 8, name); quit_home(pg); pg.evaluate("__sm.S.daily=null;__sm.S.stats={}")
     # 手选多级 + 练这一块；没有题的地块
-    choose(pg, [3, 12]); check(pg.evaluate("__sm.S.settings.levels.join()") == '3,12', '多选没存')
-    pg.locator('.w-mini button[data-z="place"]').scroll_into_view_if_needed(); pg.click('.w-mini button[data-z="place"]'); pg.wait_for_timeout(500); check(pg.inner_text('#zGo') == '练这一块', '数位第 12 级有题'); pg.click('#zGo'); pg.wait_for_timeout(3000); play_some(pg, [3, 12], 4, 'zone'); quit_home(pg)
+    choose(pg, [2, 8]); check(pg.evaluate("__sm.S.settings.levels.join()") == '2,8', '多选没存')
+    pg.locator('.w-mini button[data-z="place"]').scroll_into_view_if_needed(); pg.click('.w-mini button[data-z="place"]'); pg.wait_for_timeout(500); check(pg.inner_text('#zGo') == '练这一块', '数位第 8 级有题'); pg.click('#zGo'); pg.wait_for_timeout(3000); play_some(pg, [2, 8], 4, 'zone'); quit_home(pg)
     pg.click('.w-mini button[data-z="look"]'); pg.wait_for_timeout(500); check(pg.inner_text('#zGo') == '这个难度没有题' and pg.is_disabled('#zGo'), '看数应显示这个难度没有题：' + pg.inner_text('#zGo')); shot(pg, 'b-empty'); pg.click('#zX'); pg.wait_for_timeout(200)
-    # 秒答地图：选第 9 级，只出进退位
-    choose(pg, [9]); pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(500); pg.click('#zGo'); pg.wait_for_timeout(400); pg.click('.lvtab[data-level="2"]'); pg.wait_for_timeout(300); pg.click('[data-series="add"]'); pg.wait_for_timeout(800)
-    ids = pg.evaluate("[...new Set(__sm.P.deck.map(c=>c.id))]"); check(ids and all(i.endswith('add1c') for i in ids), '秒答地图第 9 级出了 ' + str(ids))
-    pg.evaluate(f"localStorage.setItem('speedmap.v2.test', JSON.stringify(__sm.S))"); pg.goto(url); pg.reload(); pg.wait_for_timeout(500); check(pg.evaluate("__sm.S.settings.levels.join()") == '9', '刷新后难度丢了')
+    # 秒答地图：选第 6 级，只出两位数加减一位数和整十
+    choose(pg, [6]); pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(500); pg.click('#zGo'); pg.wait_for_timeout(400); pg.click('.lvtab[data-level="2"]'); pg.wait_for_timeout(300); pg.click('[data-series="add"]'); pg.wait_for_timeout(800)
+    ids = pg.evaluate("[...new Set(__sm.P.deck.map(c=>c.id))]"); check(ids and all(i.split(':')[1] in ('add10', 'addT', 'add1n', 'add1c') for i in ids), '秒答地图第 6 级出了 ' + str(ids))
+    pg.evaluate(f"localStorage.setItem('speedmap.v2.test', JSON.stringify(__sm.S))"); pg.goto(url); pg.reload(); pg.wait_for_timeout(500); check(pg.evaluate("__sm.S.settings.levels.join()") == '6', '刷新后难度丢了'); check(pg.evaluate("__sm.S.settings.levelsV") == 2, '没写级别版本')
     pg.evaluate("__sm.S.oral = true")
     # 改回自动
     choose(pg, []); check(pg.evaluate("__sm.E.chosen(__sm.S)") is None, '改回自动失败')
