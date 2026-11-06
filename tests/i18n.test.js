@@ -131,8 +131,8 @@ test('英文语法：单复数、整句、时间', () => {
   t('挖到 1 块矿石', 'Mined 1 ore'); t('挖到 3 块矿石', 'Mined 3 ores');
   t('2 排，每排 3 个，一共 6 个', '2 rows of 3 is 6');
   t('比 10 多 1', '10 plus 1'); t('比 11 少 1', '11 minus 1');
-  t('空空的家', "Kongkong's Home"); t('末影龙', 'Void Dragon'); t('凋灵', 'Shadow King'); t('监守者', 'Deep Guard');
-  t('世界 6 · 下界', 'World 6 · Lava Land'); t('世界 7 · 末地', 'World 7 · Sky End');
+  t('空空的家', "Kongkong's Home"); t('末影龙', 'Ender Dragon'); t('凋灵', 'Wither'); t('监守者', 'Warden');   // Ben 11-06：这 5 个用我的世界原名
+  t('世界 6 · 下界', 'World 6 · The Nether'); t('世界 7 · 末地', 'World 7 · The End');
   // 拆开的文本节点：前一个节点是 1 用单数
   const h = ht('<div><span class="num">1</span> 个十和 3 个一</div>');
   assert.match(h, /1<\/span> ten and 3 ones/);
@@ -140,7 +140,7 @@ test('英文语法：单复数、整句、时间', () => {
   assert.match(ht('<span class="box"></span> 个百'), /<\/span> hundreds/);
 });
 
-test('题里的数字一个不改，英文里不许出现 Minecraft 官方名字', () => {
+test('题里的数字一个不改；Ben 11-06：这 5 个名字用我的世界原名，其他不许加', () => {
   all.forEach(s => s.items.forEach(it => bankInsts(it).slice(0, 40).forEach(inst => {
     const v = R.question(inst), html = v.html.replace(/<[^>]*>/g, ' ');
     if (!s.nb) return;
@@ -148,7 +148,7 @@ test('题里的数字一个不改，英文里不许出现 Minecraft 官方名字
     assert.equal(nums(txt(inst.q.say || '')), nums(inst.q.say || ''), inst.q.say);
     void html;
   })));
-  const banned = /Ender|Wither|Warden|Nether|Creeper|\bThe End\b|Elder Guardian/;
+  const banned = /Creeper|Elder Guardian|Enderman|Steve|Ghast/;
   const src = I18N.dump();
   Object.values(src).forEach(en => assert.doesNotMatch(en, banned, en));
 });
