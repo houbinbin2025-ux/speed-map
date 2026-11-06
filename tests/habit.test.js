@@ -61,10 +61,10 @@ test('坏数据不让汇总报错', () => {
 });
 test('导入合并：习惯记录按天取大，最近失误合并去重，其他统计不变', () => {
   const a = blank(), b = blank();
-  a.stats = {[D(0)]: {sec: 5, n: 1, ups: 0, over: 0, gap: 0, h: {a: 2, ks: 1}}}; a.slips = [{d: D(0), uid: 'x'}];
-  b.stats = {[D(0)]: {sec: 9, n: 9, ups: 0, over: 0, gap: 0, h: {a: 1, ks: 3}}, [D(1)]: {sec: 7, n: 2, ups: 0, over: 0, gap: 0, h: {a: 4}}, [D(2)]: {sec: 7, n: 2, ups: 0, over: 0, gap: 0}}; b.slips = [{d: D(0), uid: 'x'}, {d: D(1), uid: 'y'}];
+  a.stats = {[D(0)]: {sec: 5, n: 1, ups: 0, over: 0, gap: 0, h: {a: 2, ks: 1, ds: {5: [3, 240]}}}}; a.slips = [{d: D(0), uid: 'x'}];
+  b.stats = {[D(0)]: {sec: 9, n: 9, ups: 0, over: 0, gap: 0, h: {a: 1, ks: 3, ds: {5: [1, 90], 3: [2, 150]}}}, [D(1)]: {sec: 7, n: 2, ups: 0, over: 0, gap: 0, h: {a: 4}}, [D(2)]: {sec: 7, n: 2, ups: 0, over: 0, gap: 0}}; b.slips = [{d: D(0), uid: 'x'}, {d: D(1), uid: 'y'}];
   const M = C.importMerge(a, JSON.stringify(b));
-  assert.deepEqual(M.stats[D(0)].h, {a: 2, ks: 3}); assert.equal(M.stats[D(0)].sec, 5, '原有统计不合并');
+  assert.deepEqual(M.stats[D(0)].h, {a: 2, ks: 3, ds: {5: [3, 240], 3: [2, 150]}}); assert.equal(M.stats[D(0)].sec, 5, '原有统计不合并');
   assert.deepEqual(M.stats[D(1)].h, {a: 4}); assert.equal(M.stats[D(1)].sec, 0); assert.equal(M.stats[D(2)], undefined);
   assert.equal(M.slips.length, 2); assert.equal(M.slips[1].uid, 'y');
 });
@@ -92,8 +92,10 @@ test('文字题记录用时；近 14 天汇总，和前 14 天比', () => {
 });
 test('书写和朗读计入当天', () => {
   const S = blank();
-  E.noteInk(S, D(0), [80, 60], true); E.noteInk(S, D(0), [40], false); E.noteSay(S, D(0));
+  E.noteInk(S, D(0), [80, 60], true, ['5', '3']); E.noteInk(S, D(0), [40], false, ['5']); E.noteSay(S, D(0));
   const h = S.stats[D(0)].h;
+  assert.deepEqual(h.ds, {5: [2, 120], 3: [1, 60]}, '按数字分别记');
+  assert.deepEqual(E.habit(S, D(0)).now.ds, {5: [2, 120], 3: [1, 60]});
   assert.equal(h.in, 3); assert.equal(h.is, 180); assert.equal(h.ia, 2); assert.equal(h.ic, 1); assert.equal(h.say, 1);
 });
 // ---------- 书写评分 ----------
@@ -113,14 +115,16 @@ test('书写评分：4、7、1 的常见写法都认', () => {
 test('书写评分：数字不在 0–9 或笔画为空，返回 null，不报错', () => {
   assert.equal(I.legibility([], '3'), null); assert.equal(I.legibility(strokesOf(I.STD[3][0]), 'x'), null);
 });
-test('最近写的字：简化后点数有上限，24 个答案以内约 12 KB', () => {
+test('最近写的字：留 14 天，每天留开头 3 个和结尾 3 个，满档约 12 KB', () => {
   const raw = strokesOf(I.STD[8][0]).concat(strokesOf(I.STD[3][0]));
   const g = I.sketch(raw);
   g.forEach(st => assert.ok(st.length <= 32, '每笔最多 16 个点'));
   assert.ok(g.flat().every(n => Number.isInteger(n) && n >= 0 && n <= 100));
-  let list = []; for (let k = 0; k < 40; k++) list = I.pushRecent(list, {d: D(k), a: '83', s: [80, 70], g});
-  assert.equal(list.length, 24); assert.equal(list[23].d, D(39));
-  assert.ok(JSON.stringify(list).length < 12000, JSON.stringify(list).length);
+  let list = []; for (let k = 0; k < 30; k++) for (let i = 0; i < 10; i++) list = I.pushRecent(list, {d: D(k), a: String(i), s: [80, 70], g});
+  assert.equal(new Set(list.map(x => x.d)).size, 14); assert.equal(list.length, 84); assert.equal(list[83].d, D(29));
+  assert.deepEqual(list.filter(x => x.d === D(29)).map(x => x.a), ['0', '1', '2', '7', '8', '9']);
+  assert.ok(JSON.stringify(list).length < 40000, JSON.stringify(list).length);
+  assert.equal(I.pushRecent({}, {d: D(0), a: '1', s: [], g: []}).length, 1, '坏数据不报错');
 });
 test('写空笔画也能简化，不报错', () => {
   assert.deepEqual(I.sketch([]), []);

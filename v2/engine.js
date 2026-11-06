@@ -189,7 +189,7 @@
   const habDay = (S, day) => { const st = stat(S, day); return (st.h = st.h || {}); };
   const inc = (h, k, n = 1) => { h[k] = (h[k] || 0) + n; };
   // 熟题：作答前所在格已到淡红以上，或这道题已算过 2 次秒答
-  // 「已算 2 次秒答」要跨天：一天最多记 2 次，所以 ≥ 3 次一定跨天；正好 2 次时，最后一天只记了 1 次才算跨天
+  // 「已算 2 次秒答」要跨天：一天最多记 2 次，所以 ≥ 3 次一般已跨天；正好 2 次时，最后一天只记了 1 次才算跨天。卡的次数有按档位打底的，家长手选难度时可能同一天就够，影响小
   const isKnown = (S, inst, lv0) => { if (lv0 >= 2) return true; const f = (S.fast || {})[qkey(inst)]; return !!f && (f[0] >= 3 || (f[0] === 2 && f[2] < 2)); };
   function noteAnswer(S, day, inst, res, known) {
     try {
@@ -206,13 +206,17 @@
       }
     } catch (e) {}
   }
-  function noteInk(S, day, scores, clear) {
-    try { const h = habDay(S, day), ok = scores.filter(x => x !== null); inc(h, 'in', ok.length); inc(h, 'is', ok.reduce((a, b) => a + b, 0)); inc(h, 'ia'); if (clear) inc(h, 'ic'); } catch (e) {}
+  // digits：每一位是什么数字。按数字分别记：不同数字的评分不可比（h.ds[数字] = [个数, 评分之和]）
+  function noteInk(S, day, scores, clear, digits) {
+    try {
+      const h = habDay(S, day), ok = scores.filter(x => x !== null); inc(h, 'in', ok.length); inc(h, 'is', ok.reduce((a, b) => a + b, 0)); inc(h, 'ia'); if (clear) inc(h, 'ic');
+      (digits || []).forEach((d, i) => { if (scores[i] === null) return; const ds = h.ds = h.ds || {}, c = ds[d] = ds[d] || [0, 0]; c[0]++; c[1] += scores[i]; });
+    } catch (e) {}
   }
   function noteSay(S, day) { try { inc(habDay(S, day), 'say'); } catch (e) {} }
   // 汇总：近 n 天和再往前 n 天；days = 有作答的天数
   function habit(S, day, n = HABIT_DAYS) {
-    const sum = (from, to) => { const o = {days: 0}; HABIT_KEYS.forEach(k => { o[k] = 0; }); for (let i = from; i < to; i++) { const st = (S.stats || {})[C.addDays(day, -i)], h = st && st.h; if (!h) continue; if (h.a) o.days++; HABIT_KEYS.forEach(k => { o[k] += h[k] || 0; }); } return o; };
+    const sum = (from, to) => { const o = {days: 0, ds: {}}; HABIT_KEYS.forEach(k => { o[k] = 0; }); for (let i = from; i < to; i++) { const st = (S.stats || {})[C.addDays(day, -i)], h = st && st.h; if (!h) continue; if (h.a) o.days++; HABIT_KEYS.forEach(k => { o[k] += h[k] || 0; }); for (const d in h.ds || {}) { const c = o.ds[d] = o.ds[d] || [0, 0]; c[0] += h.ds[d][0]; c[1] += h.ds[d][1]; } } return o; };
     return {now: sum(0, n), prev: sum(n, n * 2), n, slips: (Array.isArray(S.slips) ? S.slips : []).filter(m => m && K.ITEM[m.uid]).slice().reverse()};
   }
 

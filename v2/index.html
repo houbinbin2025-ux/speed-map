@@ -813,7 +813,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v69:4a94d930f6e1 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v70:1f7c3fb35f63 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -823,17 +823,17 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=69"></script>
-<script src="hardbank.js?v=69"></script>
-<script src="placebank.js?v=69"></script>
-<script src="core.js?v=69"></script>
-<script src="ink.js?v=69"></script>
-<script src="skills.js?v=69"></script>
-<script src="engine.js?v=69"></script>
-<script src="render.js?v=69"></script>
-<script src="world.js?v=69"></script>
-<script src="home.js?v=69"></script>
-<script src="house.js?v=69"></script>
+<script src="bank.js?v=70"></script>
+<script src="hardbank.js?v=70"></script>
+<script src="placebank.js?v=70"></script>
+<script src="core.js?v=70"></script>
+<script src="ink.js?v=70"></script>
+<script src="skills.js?v=70"></script>
+<script src="engine.js?v=70"></script>
+<script src="render.js?v=70"></script>
+<script src="world.js?v=70"></script>
+<script src="home.js?v=70"></script>
+<script src="house.js?v=70"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -866,7 +866,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function recordInk(res, picked, clear) {
     try {
       const scores = res.digits.map((d, k) => I.legibility(d.strokes, picked[k]));
-      E.noteInk(S, today(), scores, clear);
+      E.noteInk(S, today(), scores, clear, picked);
       INKS.recent = I.pushRecent(INKS.recent, {d: today(), a: picked.join(''), s: scores, g: I.sketch([].concat(...res.digits.map(d => d.strokes)))});
       saveInk();
     } catch (e) {}
@@ -1227,6 +1227,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   // 识别没把握且答案也定夺不了：只问那一位，两个候选只按笔迹排名，不参考答案
   function askConfirm() {
+    P.askedI = P.i;   // 弹过确认，这道题就不算免确认（点重写后写清楚了也一样）
     P.phase = 'confirm'; playPad.enabled = false;
     const i = P.unsure[0], d = P.rec.digits[i];
     $('cfShown').innerHTML = P.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
@@ -1247,7 +1248,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function decide(viaConfirm) {
     const c = P.deck[P.i], text = P.picked.join(''), right = text === String(c.ans);
     P.typed = text;
-    if (!NO_HABIT[P.kind]) recordInk(P.rec, P.picked, !viaConfirm && !P.byAnswer.length);
+    if (!NO_HABIT[P.kind]) recordInk(P.rec, P.picked, !viaConfirm && !P.byAnswer.length && P.askedI !== P.i);
     P.result = !right ? 'wrong' : (!viaConfirm && P.ms <= limitOf(c)) ? 'fast' : 'slow';
     // 高把握且写对的笔迹，加进模板（越用越准）；弹窗确认的、靠答案定夺的那一位不加（两可的字可能是形近写错，学进去会越学越糊）
     if (right && !viaConfirm) P.rec.digits.forEach((d, k) => { if (!P.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }), saveInk();
@@ -1490,6 +1491,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qDecide(false);
   }
   function qAsk() {
+    Q.x.asked = true;   // 弹过确认，这道题就不算免确认
     Q.phase = 'confirm'; qPad.enabled = false;
     const i = Q.unsure[0], d = Q.rec.digits[i];
     $('qcShown').innerHTML = Q.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
@@ -1504,7 +1506,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const qLimit = inst => { const u = C.BYID[inst.id]; return u ? C.fastLimit(u, inst.ans, mode(), INKS.speed) : S.oral ? 3000 : 3000 + (INKS.speed || 1000) * C.digits(inst.ans); };
   function qDecide(viaConfirm) {
     const inst = Q.x.inst, text = Q.picked.join(''), right = text === String(inst.ans);
-    if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) recordInk(Q.rec, Q.picked, !viaConfirm && !Q.byAnswer.length);
+    if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) recordInk(Q.rec, Q.picked, !viaConfirm && !Q.byAnswer.length && !Q.x.asked);
     if (right && !viaConfirm) { Q.rec.digits.forEach((d, k) => { if (!Q.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }); saveInk(); }
     resolve({ok: right, fast: right && !viaConfirm && Q.ms <= qLimit(inst), typed: text});
   }
@@ -1786,7 +1788,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('lineErr').innerHTML = errs.length ? errs.join('<br>') : '数线还没练过';
     $('oralBox').checked = !!S.oral;
     renderLevels();
-    try { const hb = E.habit(S, t).now; $('habInfo').innerHTML = `熟题失误率（近 14 天）${pctOf(hb.ks, hb.k)}<br>书写评分（试运行）${hb.in ? Math.round(hb.is / hb.in) : '--'}`; } catch (e) { $('habInfo').textContent = '暂无数据'; }
+    try { const hb = E.habit(S, t).now; $('habInfo').innerHTML = `熟题失误率（近 14 天）${pctOf(hb.ks, hb.k)}<br>最近 14 天作答 ${hb.a} 题`; } catch (e) { $('habInfo').textContent = '暂无数据'; }
     const n = Object.values(INKS.t || {}).map(a => a.length), ist = INKS.stats || [];
     $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${ist.length ? `<br>最近 ${ist.length} 次不用确认就认出 ${ist.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
     // 存储
@@ -1820,18 +1822,17 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const prevOf = (x, y, px, py) => { if (!y || !py) return ''; const d = Math.round(x / y * 100) - Math.round(px / py * 100); return ` · 较前 14 天 ${d === 0 ? '持平' : (d > 0 ? '▲' : '▼') + Math.abs(d) + 'pp'}`; };
   const inkSvg = g => `<svg class="hsk" viewBox="-6 -6 112 112" aria-hidden="true">${g.map(st => `<polyline points="${st.map((v, i) => (i % 2 ? ',' : ' ') + v).join('').trim()}"></polyline>`).join('')}</svg>`;
   function renderHabit() {
-    const h = E.habit(S, today()), a = h.now, b = h.prev, row = (k, v) => `<div class="kv">${k}：<b>${v}</b></div>`, avg = a.in ? Math.round(a.is / a.in) : '--';
+    const h = E.habit(S, today()), a = h.now, b = h.prev, row = (k, v) => `<div class="kv">${k}：<b>${v}</b></div>`, digs = Object.keys(a.ds).sort().map(d => `${d}：${Math.round(a.ds[d][1] / a.ds[d][0])}（${a.ds[d][0]}）`).join(' · ');
     const recent = (Array.isArray(INKS.recent) ? INKS.recent : []).filter(r => r && Array.isArray(r.g) && Array.isArray(r.s)).slice().reverse();
     $('habBody').innerHTML = `
-      <div class="panel"><div class="ptitle">练习</div>${row('有作答的天数', a.days + ' 天')}${row('作答', a.a + ' 题')}${row('正确率', pctOf(a.r, a.a) + prevOf(a.r, a.a, b.r, b.a))}${row('「不会」占比', pctOf(a.d, a.a) + prevOf(a.d, a.a, b.d, b.a))}<div class="muted" style="font-size:12px;line-height:1.5">含秒答地图；不含摸底、再来一次、看过提示的题</div></div>
+      <div class="panel"><div class="ptitle">练习</div>${row('有作答的天数', a.days + ' 天')}${row('作答', a.a + ' 题')}${row('正确率', pctOf(a.r, a.a) + prevOf(a.r, a.a, b.r, b.a))}${row('「不会」占比', pctOf(a.d, a.a) + prevOf(a.d, a.a, b.d, b.a))}<div class="muted" style="font-size:12px;line-height:1.5">含秒答地图；不含摸底、Boss 关、再来一次、看过提示的题</div></div>
       <div class="panel"><div class="ptitle">熟题</div>${row('作答', a.k + ' 题')}${row('失误', a.ks + ' 次')}${row('失误率', pctOf(a.ks, a.k) + prevOf(a.ks, a.k, b.ks, b.k))}<div class="muted" style="font-size:12px;line-height:1.5">熟题：格子已到淡红，或这道题已在不同的日子算过 2 次秒答。失误：熟题答错，不含点「不会」。写对但被识别错，也会计入</div></div>
-      <div class="panel"><div class="ptitle">书写</div>${row('书写评分（试运行）', avg)}${row('免确认识别率', pctOf(a.ic, a.ia))}<div class="muted" style="font-size:12px;line-height:1.5">书写评分和规范字形比，0–100，还没有校准，不同数字之间不可比，所以不做前后对比。请对照下面的字判断是否准确。免确认识别率是识别的把握，不代表工整</div></div>
+      <div class="panel"><div class="ptitle">书写</div><div class="kv">书写评分（试运行）：<b>${digs || '--'}</b></div>${row('免确认识别率', pctOf(a.ic, a.ia))}<div class="muted" style="font-size:12px;line-height:1.5">书写评分和规范字形比，0–100，还没有校准。不同数字之间不可比，所以按数字显示（括号里是个数），也不做前后对比。请对照下面的字判断是否准确。免确认识别率是识别的把握，不代表工整</div></div>
       <div class="panel"><div class="ptitle">读题</div>${row('文字题平均用时', a.wn ? (a.ws / a.wn).toFixed(0) + ' 秒' : '--')}${row('朗读次数', a.say + ' 次')}</div>
-      <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${m.d.slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
-      <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 写的是 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
-    $('habBody').scrollTop = 0;
+      <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${String(m.d).slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
+      <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 认定为 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
   }
-  $('btnHabit').addEventListener('click', () => { renderHabit(); show('habit'); });
+  $('btnHabit').addEventListener('click', () => { renderHabit(); show('habit'); $('habBody').scrollTop = 0; });
   $('habBack').addEventListener('click', () => { renderParent(); show('parent'); });
 
   // ---------- 11 家长区 · 题库（只看不改；题目来自 bank.js） ----------

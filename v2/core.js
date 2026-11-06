@@ -396,7 +396,10 @@
     for (const d in v.stats || {}) {
       const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;
       M.stats = M.stats || {}; const day = M.stats[d] = M.stats[d] || {sec: 0, n: 0, ups: 0, over: 0, gap: 0}, h = day.h = day.h || {};
-      for (const k in vh) if (!(h[k] >= vh[k])) h[k] = vh[k];
+      for (const k in vh) {
+        if (k === 'ds') { const ds = h.ds = h.ds || {}; for (const d in vh.ds) if (!ds[d] || ds[d][0] < vh.ds[d][0]) ds[d] = vh.ds[d]; }
+        else if (!(h[k] >= vh[k])) h[k] = vh[k];
+      }
     }
     if (S.slips || v.slips) { const seen = new Set(); M.slips = [].concat(S.slips || [], v.slips || []).filter(m => { const k = JSON.stringify(m); if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => String(a.d).localeCompare(String(b.d))).slice(-30); }
     return M;

@@ -38,7 +38,7 @@ with sync_playwright() as p:
         n += 1
         if n >= 6: break
     check(n >= 6, f'只手写了 {n} 题')
-    rec = pg.evaluate("window.__sm.INK.recent || []"); check(len(rec) == first, f'最近写的字 {len(rec)} 条，应为 {first}')
+    rec = pg.evaluate("window.__sm.INK.recent || []"); check(len(rec) == min(first, 6), f'最近写的字 {len(rec)} 条，应为 {min(first, 6)}')
     check(all(isinstance(x, int) for r in rec for x in r['s']), '评分不是数字')
     day = pg.evaluate("(() => { const S = window.__sm.S, k = Object.keys(S.stats).sort().pop(); return S.stats[k].h; })()")
     check(day and day['ia'] == first and day['in'] >= first and day['a'] >= first, f'每日记录不对 {day}，应为 {first}')
@@ -68,6 +68,8 @@ with sync_playwright() as p:
     check('熟题失误率' in pg.inner_text('#habInfo'), '家长区摘要缺失')
     pg.locator('#btnHabit').scroll_into_view_if_needed(); pg.click('#btnHabit'); pg.wait_for_timeout(300)
     check(pg.evaluate("!document.getElementById('habit').hidden"), '能力观察页没打开')
+    pg.evaluate("document.getElementById('habBody').scrollTop = 500"); pg.click('#habBack'); pg.wait_for_timeout(200); pg.locator('#btnHabit').scroll_into_view_if_needed(); pg.click('#btnHabit'); pg.wait_for_timeout(200)
+    check(pg.evaluate("document.getElementById('habBody').scrollTop") == 0, '再次进入没有回到顶部')
     body = pg.inner_text('#habBody')
     for w in ['熟题', '失误率', '书写评分', '免确认识别率', '文字题平均用时', '最近写的字', '最近失误的题', '「不会」占比']: check(w in body, f'缺 {w}')
     check(pg.locator('#habBody .hsk').count() == 24, f"字 {pg.locator('#habBody .hsk').count()} 个")

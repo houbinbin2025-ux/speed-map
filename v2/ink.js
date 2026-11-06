@@ -155,8 +155,8 @@
     const dist = Math.min(...stdOf(d).map(t => match(c, t)));
     return Math.round(100 * Math.max(0, 1 - dist / LEG_MAX));
   }
-  // 最近写的字：笔画简化成整数（0–100），每笔最多 16 个点；只留 24 个答案
-  const RECENT_MAX = 24, SKETCH_PTS = 16;
+  // 最近写的字：笔画简化成整数（0–100），每笔最多 16 个点；留最近 14 天，每天留开头 3 个和结尾 3 个（看得到一次练习前后的变化）
+  const RECENT_DAYS = 14, RECENT_EDGE = 3, SKETCH_PTS = 16;
   function sketch(strokes) {
     const all = [].concat(...(strokes || [])); if (!all.length) return [];
     const b = box(all), s = Math.max(b.x1 - b.x0, b.y1 - b.y0) || 1;
@@ -166,7 +166,10 @@
       return o;
     });
   }
-  const pushRecent = (list, item) => (list || []).concat(item).slice(-RECENT_MAX);
+  function pushRecent(list, item) {
+    const all = (Array.isArray(list) ? list : []).concat(item), days = [...new Set(all.map(x => x.d))].slice(-RECENT_DAYS);
+    return days.flatMap(d => { const l = all.filter(x => x.d === d); return l.length <= RECENT_EDGE * 2 ? l : l.slice(0, RECENT_EDGE).concat(l.slice(-RECENT_EDGE)); });
+  }
 
   // ---------- 书写速度：写一个数字用时的中位数 ----------
   const writeMs = strokes => { const p = [].concat(...strokes); return p.length ? p[p.length - 1].t - p[0].t : 0; };
