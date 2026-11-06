@@ -1,0 +1,37 @@
+// 变异验收：逐条改坏一条规则，看规则测试能不能拦住。用法：node docs/原型-v7-世界/mutate.js
+const fs = require('fs'), os = require('os'), path = require('path'), cp = require('child_process');
+const src = fs.readFileSync(path.join(__dirname, 'world-core.js'), 'utf8'), dir = fs.mkdtempSync(path.join(os.tmpdir(), 'v7mut-'));
+fs.copyFileSync(path.join(__dirname, 'world-core.test.js'), path.join(dir, 'world-core.test.js'));
+const M = [
+  ['第 2 步不看间隔', 'const GAPS = [0, 1, 3]', 'const GAPS = [0, 0, 3]'], ['第 3 步只隔 1 天', 'const GAPS = [0, 1, 3]', 'const GAPS = [0, 1, 1]'], ['附魔只隔 7 天', 'ENCH_GAP = 14', 'ENCH_GAP = 7'],
+  ['题型只要 1 次', 'it.pick ? 3 : it.gen ? 2 : 1', 'it.pick ? 3 : 1'], ['选择题只要 2 次', 'it.pick ? 3 : it.gen ? 2 : 1', 'it.gen ? 2 : 1'], ['题型只值 1 分', 'it.gen ? 3 : 1);               //', '1);               //'],
+  ['当场再来一次也算', 'if (r.retry) return out;', ''], ['当天重复也算', 'if (e.done) return out;', ''], ['偷看也算', 'if (r.peeked) { e.done = 1; return out; }', ''],
+  ['写错不退步', 'if (p.s > 0 && p.s < 3) p.s--;', ''], ['第 3 步写错也退', 'if (p.s > 0 && p.s < 3) p.s--;', 'if (p.s > 0) p.s--;'], ['写错不重算间隔', 'if (p.s > 0) p.last = day;', ''],
+  ['慢答也算', 'if (r.needFast && !r.fast) { e.done = 1; e.slow = 1; return out; }', ''], ['重复发材料', 'p.s <= GAPS.length && p.s > (p.top || 0)', 'p.s <= GAPS.length'], ['未来日期不夹回', 'if (p.last && p.last > day) p.last = day;', ''],
+  ['复查结果被覆盖', 'if (p.s === 3 && !p.chk) p.chk = {day, ok: 1};', 'if (p.s === 3) p.chk = {day, ok: 1};'], ['写错不记复查', 'if (p.s === 3 && due && !p.chk) p.chk = {day, ok: 0};', ''],
+  ['去掉 age 烧火把', 'let burn = pl.age > AGE_MAX;', 'let burn = false;'], ['慢答也烧', 'if (es.some(e => e.ok || e.slow)) return;', 'if (es.some(e => e.ok)) return;'],
+  ['写错不烧', 'if (es.some(e => e.bad)) burn = true;', ''], ['保险失效', 'if (pl.torch <= 1) { if (quota <= 0) return; quota--; }', ''], ['答对也烧', 'if (es.some(e => e.ok || e.slow)) return;', 'if (es.some(e => e.slow)) return;'], ['前进也烧', 'if (es.some(e => e.adv)) return;', ''], ['当天插的也烧', "pl.st === 'temp' && pl.born !== day", "pl.st === 'temp'"],
+  ['不防重复结算', 'if (W.burned && day <= W.burned) { W.burned = day; return []; }', ''], ['到期开关无效', 'if (W.settings.expire === false) return;   // 到期开关', '// '], ['迷雾建筑被删', "pl.st = 'wild'; pl.wildDay = day;", "pl.st = 'wild'; pl.wildDay = day; delete W.built[pkey(pl.x, pl.y)];"],
+  ['struggling 永不触发', 'recentWild(W, day) >= 2', 'recentWild(W, day) >= 200'], ['未来日期算进到期', '&& dayDiff(l.day, day) >= 0', ''], ['减负不绑 2 分', 'goal = struggling(W, day) ? 2 : 3', 'goal = 3'], ['减负不加火把', 'struggling(W, day) ? TORCH_EASY : TUNE.torch', 'TUNE.torch'],
+  ['不足 3 分也换永久', 'if (full.proven.cr >= 3) return', 'if (full.proven.ids.length) return'], ['上限不拦', "if (c.live.ids.length) { if (room) return {kind: 'temp', bound: c.live.ids}; return {kind: 'cap'}; }", "if (c.live.ids.length) return {kind: 'temp', bound: c.live.ids};"], ['拓不了也扣旗', "if (plan.kind === 'cap' || plan.kind === 'learn') return {ok: false, why: plan.kind};", "if (plan.kind === 'cap' || plan.kind === 'learn') { spendOne(W, 'flag', 1); return {ok: false, why: plan.kind}; }"],
+  ['没学会也白给', 'done / open.length >= 0.7', 'done / open.length >= 0'], ['题型贪心卡住', 'if (cr < goal) { const big = list.find(i => creditOf(i) >= goal); if (big) return {ids: [big.id], cr: creditOf(big)}; }', ''], ['满额题还绑', '&& !maxedOut(W, i))', ')'],
+  ['迷雾绑定被清', 'if (old && old.bound.length) return', 'if (false) return'], ['回来按次计', 'if (p.backDay !== day) { p.backDay = day; p.back = (p.back || 0) + 1; }', 'p.back = (p.back || 0) + 1;'],
+  ['题库空也清', 'if (!items.length || items.length < W.itemMax * 0.9) return [];', ''], ['题库缩水不防', '|| items.length < W.itemMax * 0.9', ''], ['evs 删当天', '.filter(k => k !== day)', ''], ['burned 不夹回', '{ W.burned = day; return []; }', '{ return []; }'], ['prune 不记到期', "logPush(W, {day, type: 'wild', x: p.x, y: p.y, by: 'prune'});", ''], ['换题按题数', 'const c = pickBound(W, items, lost);', 'const c = pickBound(W, items, gone.length + maxed.length);'], ['Boss 题池不看', '&& bossPool(W, BANDS[bi], items).length >= 3', ''], ['设置不留本机', 'W.settings = JSON.parse(JSON.stringify(local.settings));', ''], ['玩过也替换', 'const keep = played(local) || !worldOk(local);', 'const keep = !worldOk(local);'], ['坏数据也接', 'worldOk(incoming) ? incoming : local', 'incoming'], ['绑定空变永久', "p.st = 'wild'; if (gone.length) gain(W, 'flag', 1);", "p.st = 'perm'; if (gone.length) gain(W, 'flag', 1);"], ['下线不退旗', "if (gone.length) gain(W, 'flag', 1);", ''], ['满额不换题', 'p.bound = p.bound.concat(c.live.ids);', ''],
+  ['守护题不限量', 'return out.slice(0, max === undefined ? GUARD_MAX : max).map(id => by[id]);', 'return out.map(id => by[id]);'], ['复查不限量', 'return out.slice(0, max === undefined ? ENCH_MAX : max).map(id => by[id]);', 'return out.map(id => by[id]);'], ['守护题不看满额', 'if (maxedOut(W, it)) return;', ''], ['复查看满额', 'if (pr.last && dayDiff(pr.last, day) >= ENCH_GAP) out.push(id);', 'if (it.spent && pr.back >= BACK_MAX) return; if (pr.last && dayDiff(pr.last, day) >= ENCH_GAP) out.push(id);'],
+  ['矿脉不看技能', "if (lit && !lit.bond) return {kind: 'vein', lockSkill: 'bond'};", ''], ['矿脉不看工具', "if (toolTier(W) < f.tier) return {kind: 'vein', lockTier: f.tier};", ''], ['frontier 不看 Boss 圈', 'ok: r <= mr && (!need || lit[need])', 'ok: (!need || lit[need])'], ['frontier 不看地形', 'ok: r <= mr && (!need || lit[need])', 'ok: r <= mr'],
+  ['工具不看前一级', 'toolTier(W) >= t.tier - 1 && ', ''], ['工具看余额', '(W.total[k] || 0) >= v) && canPay', '(W.bag[k] || 0) >= v) && canPay'], ['工具不看累计', 'Object.entries(t.need).every(([k, v]) => (W.total[k] || 0) >= v) && ', ''],
+  ['Boss 资格会掉', 'return !!W.bossOpen[id] && toolTier', 'return bandShare(W, BANDS[bi], items) >= BOSS_SHARE && toolTier'], ['Boss 血量不累计', '&& W.bossHp[id] < (hp === undefined ? BOSS_HP : hp)', ''], ['Boss 可连打', 'bossReady(W, bi, items) && W.bossDay !== day', 'bossReady(W, bi, items)'], ['Boss 不看工具', '&& toolTier(W) >= BANDS[bi].tool', ''], ['Boss 不排序', '.sort((a, b) => (a.spent ? 1 : 0) - (b.spent ? 1 : 0))', ''], ['Boss 考第 1 步的', 'stepOf(W, i.id) >= 2).sort', 'stepOf(W, i.id) >= 1).sort'],
+  ['迁移不看隔 3 天', 'const real3 = lv === 3 && d[1] && d[2] && dayDiff(d[1], d[2]) >= 3;', 'const real3 = lv === 3;'], ['迁移覆盖证明', 'if (W.proof[it.id]) return;\n      const lv', 'const lv'], ['迁移翻倍', 'if (W.migrated) { catchUp(W, items, lvOf, dOf, today); return false; }', ''], ['导入后不补证明', 'if (W.migrated) { catchUp(W, items, lvOf, dOf, today); return false; }', 'if (W.migrated) return false;'],
+  ['世界时间不看正确率', 'if (correct / Math.max(1, answered) < 0.5) return 1;', ''], ['世界时间不封顶', 'Math.min(6, 1 + Math.floor(correct / 12))', '1 + Math.floor(correct / 12)'], ['拆除不退来源', "if (v.b === 'diamondb') W.gemQ.push(v.from || null);", ''], ['旗价不随地盘', 'Math.min(70, 15 + 5 * r)', '20'], ['木头不封顶', 'Math.min(8, 2 + Math.floor', '(2 + Math.floor'], ['技能不限方块', '(b.skill && lit && !lit[b.skill])', 'false'],
+];
+const notFound = [], survived = []; let killed = 0;
+for (const [name, a, b] of M) {
+  if (!src.includes(a)) { notFound.push(name); continue; }
+  fs.writeFileSync(path.join(dir, 'world-core.js'), src.replace(a, () => b));
+  const r = cp.spawnSync('node', ['--test', 'world-core.test.js'], {cwd: dir, timeout: 60000});
+  if (r.status === 0) survived.push(name); else killed++;
+}
+console.log(`变异 ${M.length - notFound.length} 个，拦住 ${killed}，漏过 ${survived.length}`);
+if (survived.length) console.log('漏过：' + survived.join('、'));
+if (notFound.length) console.log('没匹配上（规则已改）：' + notFound.join('、'));
+fs.rmSync(dir, {recursive: true});
