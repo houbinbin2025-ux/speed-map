@@ -2,7 +2,13 @@
 
 把 `v2/` 网页打包成可离线运行的 iPad App。网页本身不改，iPhone 和线上网页不受影响。
 
-## 生成工程并安装到 iPad
+## 题库和页面同步到 iPad（改了 `v2/` 并推送后必须跑）
+```bash
+bash ios/release.sh
+```
+App 里的题是打包进去的，线上网页更新不会带到 iPad。这个脚本把已提交的 `v2/` 打包、核对版本、装到连着的 iPad；iPad 没连上会报错，不会悄悄跳过。只同步题库和页面，进度各存各的：手机和 iPad 的进度、秒答次数互不相通。
+
+## 手动生成工程并安装到 iPad
 ```bash
 cd ios
 bash sync-web.sh && xcodegen generate
