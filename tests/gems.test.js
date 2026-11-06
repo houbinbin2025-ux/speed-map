@@ -183,7 +183,7 @@ test('挑战出题：高 1～2 级、没下架、不重复，到顶封顶', () =
   const S = C.loadState({getItem: () => null, setItem() {}, removeItem() {}}, {}, Date.now());
   S.settings = S.settings || {};
   let i = 0; const rnd = () => { i = (i * 16807 + 12345) % 2147483647; return i / 2147483647; };
-  for (const [top, lo, hi] of [[7, 8, 9], [13, 14, 15], [14, 14, 15], [15, 14, 15]]) {
+  for (const [top, lo, hi] of [[7, 8, 9], [8, 9, 9], [9, 9, 9], [10, 11, 12], [13, 14, 15], [14, 14, 15], [15, 14, 15]]) {
     const qs = G.pickChallenge(S, top, rnd, G.blank());
     assert.equal(qs.length, 5, `第 ${top} 级要能出 5 题`);
     assert.equal(new Set(qs.map(G.key)).size, 5);

@@ -130,7 +130,7 @@
   }
   // 出题：高 1～2 级（到顶时第 14、15 级）；没下架、今天没作答过、互不重复
   function pickChallenge(S, topLevel, r, st) {
-    const lo = Math.min(topLevel + 1, 14), hi = Math.min(topLevel + 2, 15), seen = (st && st.seen.keys) || {};
+    const hi = topLevel < 10 ? Math.min(topLevel + 2, 9) : Math.min(topLevel + 2, 15), lo = Math.min(topLevel + 1, 14, hi), seen = (st && st.seen.keys) || {};
     const items = K.SKILLS.concat(K.HARD).flatMap(s => s.items).filter(it => K.itemLevels(it.id).some(L => L >= lo && L <= hi));
     const out = [], used = {};
     for (let tries = 0; out.length < CH_N && tries < 2000 && items.length; tries++) {

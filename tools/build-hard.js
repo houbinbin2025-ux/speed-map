@@ -74,6 +74,7 @@ P['garden:h:down'] = [2, 5, 10].flatMap(st => range(4, 15).filter(k => st * (k +
 // 乘除法口诀
 P['speed:h:mul2'] = [3, 4, 6, 7, 8, 9].flatMap(k => range(2, 9).map(n => ({q: {view: 'eq', text: `${n} × ${k} =`, why: `${n} 个 ${k} 是 ${n * k}`}, ans: n * k})));
 P['speed:h:div'] = range(2, 9).flatMap(k => range(2, 9).map(n => ({q: {view: 'eq', text: `${n * k} ÷ ${k} =`, why: `想乘法：${n} × ${k} = ${n * k}，所以是 ${n}`}, ans: n})));
+Object.assign(P, require('./grade34-pools.js'));   // 三四年级第一批（docs/说明书-到四年级第一批.md）
 const out = `// 空空数学岛 · 挑战题题库（只有数据）。由 tools/build-hard.js 生成；规则见 docs/说明书-难度分级.md；npm test 检查答案\n(function (root, data) {\n  if (typeof module === 'object' && module.exports) module.exports = data;\n  else root.HARDBANK = data;\n})(typeof self !== 'undefined' ? self : this, ${JSON.stringify({pools: P})});\n`;
 fs.writeFileSync(path.join(__dirname, '../v2/hardbank.js'), out);
 console.log(Object.entries(P).map(([k, v]) => `${k} ${v.length}`).join(' · '), `· ${(out.length / 1024).toFixed(0)} KB`);

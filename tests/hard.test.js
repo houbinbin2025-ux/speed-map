@@ -21,7 +21,7 @@ test('答案对：另写算法从题面重算', () => {
   const calc = t => { const [l, r] = t.split('='); const ev = s => { const m = s.trim().split(' '); let v = +m[0]; for (let i = 1; i < m.length; i += 2) { const y = +m[i + 1]; v = m[i] === '+' ? v + y : m[i] === '−' ? v - y : v * y; } return v; }; return {l, r, ev}; };
   Object.entries(HB.pools).forEach(([id, p]) => p.forEach(x => {
     const q = x.q, a = x.ans;
-    if (['story', 'clock5'].includes(q.view) || id.startsWith('garden:') || id === 'bond:h:20' || id === 'speed:h:div') return;   // 这几类在 levels.test.js 另算
+    if (/:g\d+:/.test(id) || ['story', 'clock5'].includes(q.view) || id.startsWith('garden:') || id === 'bond:h:20' || id === 'speed:h:div') return;   // 这几类在 levels.test.js、grade34.test.js 另算
     if (q.view === 'grid') assert.equal(a, q.rows * q.cols);
     else if (q.view === 'h100') assert.equal(a, q.n);
     else if (q.view === 'hto') assert.equal(a, q.h * 100 + q.t * 10 + q.o);

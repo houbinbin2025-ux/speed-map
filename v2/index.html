@@ -362,6 +362,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .ovl .card .small{font-size:12px;color:var(--dim);word-break:break-all}
 .kv{font-size:13px;line-height:1.7}
 .pgrid .panel{overflow:visible}
+/* 三四年级：长算式、讲解里的题干 */
+.eq.xs{font-size:clamp(22px,4vw,28px);white-space:normal;flex-wrap:wrap;justify-content:center;gap:4px}.whysay{font-size:15px;line-height:1.3;font-weight:700;color:var(--mute);margin-bottom:6px}
 /* 家长区 · 能力观察 */
 .hskgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}.hskc{font-size:12px;line-height:1.4;text-align:center}.hsk{display:block;width:100%;aspect-ratio:1;background:var(--paper);border:2px solid #000}.hsk polyline{fill:none;stroke:#1b1d22;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.hslips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 /* 家长区 · 题库 */
@@ -865,7 +867,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v83:15117a1ebd36 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v84:e28e804a9439 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -875,24 +877,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=83"></script>
-<script src="i18n.js?v=83"></script>
-<script src="bank.js?v=83"></script>
-<script src="hardbank.js?v=83"></script>
-<script src="placebank.js?v=83"></script>
-<script src="core.js?v=83"></script>
-<script src="ink.js?v=83"></script>
-<script src="skills.js?v=83"></script>
-<script src="engine.js?v=83"></script>
-<script src="render.js?v=83"></script>
-<script src="world.js?v=83"></script>
-<script src="home.js?v=83"></script>
-<script src="puzzles.js?v=83"></script>
-<script src="thinking.js?v=83"></script>
-<script src="house.js?v=83"></script>
-<script src="kongmine.js?v=83"></script>
-<script src="gems.js?v=83"></script>
-<script src="gemui.js?v=83"></script>
+<script src="touchfix.js?v=84"></script>
+<script src="i18n.js?v=84"></script>
+<script src="bank.js?v=84"></script>
+<script src="hardbank.js?v=84"></script>
+<script src="placebank.js?v=84"></script>
+<script src="core.js?v=84"></script>
+<script src="ink.js?v=84"></script>
+<script src="skills.js?v=84"></script>
+<script src="engine.js?v=84"></script>
+<script src="render.js?v=84"></script>
+<script src="world.js?v=84"></script>
+<script src="home.js?v=84"></script>
+<script src="puzzles.js?v=84"></script>
+<script src="thinking.js?v=84"></script>
+<script src="house.js?v=84"></script>
+<script src="kongmine.js?v=84"></script>
+<script src="gems.js?v=84"></script>
+<script src="gemui.js?v=84"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1553,7 +1555,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (!Q || Q.phase !== 'q' || Q.v.input !== 'write') return;
     clearTimeout(Q.submitT);
     const groups = I.groupStrokes(qPad.strokes()).length;
-    Q.submitT = setTimeout(qSubmit, groups < C.digits(Q.x.inst.ans) ? 1500 : 900);
+    Q.submitT = setTimeout(qSubmit, groups < C.digits(Q.x.inst.ans) ? (E.countsRight(Q.x.inst) ? 4000 : 1500) : 900);   // 新题多位计算：写到一半停下想，不算写完
   }
   function qSubmit() {
     if (!Q || Q.phase !== 'q') return;
@@ -1934,7 +1936,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const card = '每道题：答对变淡黄 → 另一天再对变淡红 → 隔 3 天以上再对变深红';
     const type = '每个题型：最近 8 次答对 7 次升一级（淡红要另一天，深红要再隔 3 天）';
     const hasCard = s.items.some(it => !it.gen), hasType = s.items.some(it => it.gen);
-    return (hasCard && hasType ? card + '；「合起来是几」是题型，' + type.replace('每个题型：', '') : hasCard ? card : type) + fast + '。同一道题累计秒答 4 次不再出';
+    return (hasCard && hasType ? card + '；「合起来是几」是题型，' + type.replace('每个题型：', '') : hasCard ? card : type) + fast + (s.items.every(it => E.countsRight(it)) ? '。同一道题累计答对 4 次不再出' : '。同一道题累计秒答 4 次不再出');
   }
   const qText = inst => { const it = K.ITEM[inst.id], s = K.BY[it.skill]; return s.speed ? `${inst.q.a} ${inst.q.op === '+' ? '+' : '−'} ${inst.q.b}` : !it.gen ? R.label(inst.id) : R.mistLabel({src: 1, uid: inst.id, q: inst.q}); };
   const isMist = inst => { const s = K.BY[K.ITEM[inst.id].skill]; return s.speed ? Object.values(S.mistakes || {}).some(m => !m.src && m.uid === inst.id && m.a === inst.q.a && m.b === inst.q.b && m.due !== null) : !!(S.mistakes[K.mkey(inst)] && S.mistakes[K.mkey(inst)].due !== null); };
@@ -1961,7 +1963,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
           const win = kind === 'day5' ? (p.fday === t0 ? `今天合格 ${p.fn || 0} / 5 次` : p.seen ? '今天还没合格' : '还没练过')
             : p.win && p.win.length ? `最近 ${p.win.length} 次对 ${p.win.reduce((a, b) => a + b, 0)} 次` : p.seen ? '刚升级，重新数' : '还没练过';
           const can = s.speed ? BK.speedPools[it.id].all : BK.meta.all[it.id] || all.length;
-          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · 秒答满 ${E.FAST_OUT} 次不再出：${E.spentCount(S, it.id)} 道 · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
+          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · ${/:g\d+:/.test(it.id) ? '答对' : '秒答'}满 ${E.FAST_OUT} 次不再出：${E.spentCount(S, it.id)} 道 · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
           const tags = [...new Set(all.map(x => x.tag || ''))];
           tags.forEach(tg => sets.push({title: tg ? `${head} · ${tg}（${all.filter(x => (x.tag || '') === tg).length}）` : head, list: all.filter(x => (x.tag || '') === tg).map(inst => ({inst}))}));
           // 不在题库里的旧错题（题库建好以前随机出的数），单列出来
@@ -1999,7 +2001,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('lvBoxes').addEventListener('click', e => {
     const b = e.target.closest('[data-lv]'); if (!b) return;
     const n = +b.dataset.lv, c = (E.chosen(S) || []).slice();
-    S.settings.levels = n === 0 ? null : c.includes(n) ? c.filter(x => x !== n) : c.concat(n).sort((x, y) => x - y);
+    S.settings.levels = n === 0 ? null : c.includes(n) ? c.filter(x => x !== n) : c.concat(n).sort((x, y) => x - y); S.settings.levelsV = 2;   // 新级别号，不再换算
     if (S.settings.levels && !S.settings.levels.length) S.settings.levels = null;
     save(); renderLevels();
   });

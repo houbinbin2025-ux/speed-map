@@ -227,7 +227,14 @@
   };
   const parse = s => { try { return JSON.parse(s || 'null'); } catch (e) { return null; } };
   const valid = o => !!o && typeof o === 'object' && typeof o.cards === 'object' && o.cards !== null;
-  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; return S; };
+  // 家长手选的级别：旧 15 级压到前 9 级（docs/说明书-到四年级第一批.md），旧存档换算一次
+  const LEVEL_REMAP = [0, 1, 1, 2, 3, 4, 4, 5, 6, 6, 7, 7, 8, 8, 9, 9];
+  function migrateLevels(st) {
+    if (!st || st.levelsV === 2) return;
+    if (Array.isArray(st.levels)) st.levels = [...new Set(st.levels.map(n => LEVEL_REMAP[n]).filter(Boolean))].sort((a, b) => a - b);
+    st.levelsV = 2;
+  }
+  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; migrateLevels(S.settings); return S; };
   const trySet = (store, k, v) => { try { store.setItem(k, v); return true; } catch (e) { return false; } };
   const TRANSIENT = ['readOnly', 'stopped', 'goodReset'];
   const litOf = S => [S.cards, S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0);
@@ -396,6 +403,7 @@
       [S.think || {}, v.think || {}].forEach(t => { for (const id in t) if (Array.isArray(t[id])) { M.think[id] = M.think[id] || []; t[id].forEach((n, i) => { M.think[id][i] = Math.max(M.think[id][i] || 0, Number(n) || 0); }); } });
     }
     if (!M.placedAt) delete M.placedAt;
+    if (S.lvTop || v.lvTop) { const hi = (v.lvTop || 0) > (S.lvTop || 0) ? v : S; M.lvTop = hi.lvTop; M.lvTopDay = hi.lvTopDay; }   // 自动开级放行到哪一级：取大，不退回去
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
     for (const d in v.stats || {}) {
       const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;
@@ -410,7 +418,7 @@
   }
 
   return {
-    isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
+    upgrade, LEVEL_REMAP, isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
     keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
