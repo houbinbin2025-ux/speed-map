@@ -4,7 +4,7 @@ from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 N = int(sys.argv[3]) if len(sys.argv) > 3 else 40
 url = (root / 'v2' / 'index.html').as_uri() + '#test'
-seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'oral': True}
+seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'oral': True, 'settings': {'bilingual': False}}
 shots, errs = set(), []
 def shot(pg, name):
     if name in shots: return

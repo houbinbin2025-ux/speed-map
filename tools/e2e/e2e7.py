@@ -14,7 +14,7 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate("localStorage.clear()")
     # 旧存档：骰子点 + 乱点全部深红，练过 8 天；没有 home 字段
-    st = pg.evaluate("""() => { const S = {v: 2, savedAt: 0, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}, lastBackup: 0, placedAt: 1, known: {}, skills: {}, stats: {}};
+    st = pg.evaluate("""() => { const S = {v: 2, savedAt: 0, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}, lastBackup: 0, placedAt: 1, known: {}, skills: {}, stats: {}, settings: {bilingual: false}};
       ['look1', 'look3'].forEach(sid => __sm.K.BY[sid].items.forEach(i => { S.skills[i.id] = {lv: 3, d: ['2026-09-01', '2026-09-02', '2026-09-06'], seen: 3, lastDay: '2026-09-06', win: []}; }));
       for (let d = 1; d <= 8; d++) S.stats['2026-09-0' + d] = {sec: 620, n: 40, ups: 0, over: 0, gap: 0};
       return JSON.stringify(S); }""")

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="i18n-wait">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -22,6 +22,9 @@
   --padL:max(16px, env(safe-area-inset-left)); --padR:max(16px, env(safe-area-inset-right));
 }
 [hidden]{display:none!important}
+html.i18n-wait body{visibility:hidden} /* 语言定下来之前不画，英文日不闪中文（i18n.js 的 set 去掉） */
+@media(max-width:900px){html[lang=en] #l2tip{display:none}}html[lang=en] .isl-top .brand b{white-space:nowrap}@media(max-width:700px){html[lang=en] .isl-top .brand b{font-size:15px}html[lang=en] #backupHint{display:none}}
+html[lang=en] .mbtn{padding:6px 12px}html[lang=en] .mbtn b{font-size:18px;line-height:1.15}html[lang=en] .mbtn span{font-size:12px;line-height:1.2}html[lang=en] #hint{font-size:11px;line-height:1.25}html[lang=en] #home .top .btn,html[lang=en] #skillmap .tabs .btn{white-space:nowrap;flex:none}html[lang=en] #l2tip{white-space:normal!important;font-size:11px;line-height:1.2;min-width:0}html[lang=en] #home .col:first-child{overflow-y:auto}html[lang=en] #home .top{gap:8px;min-width:0}html[lang=en] #home .top h1{font-size:18px;white-space:nowrap}html[lang=en] #levels .lvtab{padding:0 6px;font-size:13px}html[lang=en] #skillmap .tab{padding:0 8px;font-size:13px;white-space:nowrap}@media (max-height:400px){html[lang=en] .mbtn{padding:3px 12px}}@media (max-width:760px){html[lang=en] #skillmap .tab{padding:0 5px}html[lang=en] #skillmap .tabs .btn{padding:0 6px;font-size:13px}html[lang=en] #skillmap .tabs{gap:4px}}html[lang=en] .pickcard.expr{font-size:clamp(22px,4vw,38px);white-space:normal;padding:0 6px}html[lang=en] .dcap{white-space:normal;text-align:center;font-size:12px;line-height:1.2}html[lang=en] .dbody .dstep{min-width:0;flex:0 1 auto;gap:6px}html[lang=en] .dbody .nbsay{font-size:13px}html[lang=en] .dbody .say2{font-size:20px;line-height:1.2}html[lang=en] .dbody .nbthink{font-size:14px}html[lang=en] .dbody .dstep:first-child{flex:1 1 0}html[lang=en] .dnb .dbody .eq{font-size:clamp(20px,3.4vw,28px)}html[lang=en] .dnb .dbody .say2{font-size:15px}html[lang=en] .dnb .dbody .say2 .num{font-size:22px}html[lang=en] .dnb .dbody .pclock{width:68px;height:68px}html[lang=en] .w-hint{gap:5px}html[lang=en] .w-lead .startbtn{font-size:19px;line-height:1.1}@media (max-width:760px){html[lang=en] .w-lead .startbtn{font-size:16px}} /* 英文比中文长：按钮不换成三行、不出屏 */
 html,body{height:100%;margin:0}
 body{background:var(--cave);color:var(--ink);font-family:var(--f-cn);-webkit-tap-highlight-color:transparent;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 *{box-sizing:border-box}
@@ -454,7 +457,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 @page{size:landscape;margin:10mm}
 @media print{body *{visibility:hidden}#house #h_certV{position:static;background:none}#house .cert,#house .cert *{visibility:visible}#house .cert{position:fixed;left:0;top:0;width:100%;max-width:none;flex-direction:column;background:#fff;animation:none;box-shadow:none;outline:none}#house .cert canvas{width:100%;max-height:70vh;object-fit:contain}#house .certR{width:100%}#house .certR h1,#house .csay,#house .cwho,#house .cdate,#house .ench h1{color:#000}#house .certbtns{display:none}}
 /* ---------- 三个新地方 ---------- */
-.nbsay{display:flex;align-items:center;gap:8px;justify-content:center;font-size:18px;font-weight:800;line-height:1.3;text-align:left;flex:none}.spk{width:44px;height:44px;flex:none;background:var(--stone);border:3px solid #000;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.nbsay{display:flex;align-items:center;gap:8px;justify-content:center;font-size:18px;font-weight:800;line-height:1.3;text-align:left;flex:none}.spk{width:44px;height:44px;flex:none;background:var(--stone);border:3px solid #000;display:inline-flex;align-items:center;justify-content:center;padding:0;position:relative;z-index:2;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.spk svg{pointer-events:none}.spk:active,.spk.on{background:var(--warn);box-shadow:inset 0 0 0 3px #fff}.spk.on svg path{fill:#000}
 .spr{image-rendering:pixelated;width:clamp(38px,6.6vw,56px);height:auto;display:block;background:none}.spr.away{opacity:.4;transform:translateY(-4px)}
 .pgrp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}.pbox{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border:2px dashed #6c6f76;justify-content:center;max-width:min(46%,220px)}.pbox.wide{max-width:100%}.pplus{font-size:24px}
 .pore{width:clamp(22px,4vw,30px);aspect-ratio:1;display:block;border:2px solid #000;box-shadow:inset 3px 3px 0 rgba(255,255,255,.45)}
@@ -724,6 +727,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="kv">数线合格范围</div><div class="seg" id="segTol"></div>
       <div class="kv" id="lineErr"></div>
       <div class="kv">难度（选了就只出这几级的题，可以多选；默认自动）</div><div id="lvBoxes" class="lvboxes"></div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">单日英文、双日中文（今天：<span id="biToday"></span>）</span><input type="checkbox" id="biBox" style="width:44px;height:44px;margin:0"></label>
       <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">口答模式：家长陪着时用，孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
     </div>
     <div class="panel">
@@ -800,27 +804,28 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v67:8ff6a20cf1ce -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v73:5c217c6f53a1 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
   var shown = false;
-  function crash(msg) { if (shown) return; shown = true; if (window.__crash) window.__crash(msg); else { var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;z-index:99;background:#1b1d22;color:#ecebe4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:18px sans-serif'; d.innerHTML = '<b style="font-size:28px">哎呀，卡住了</b><button onclick="location.reload()" style="font-size:20px;padding:14px 30px">重新打开</button><small style="color:#9a9ca6"></small>'; d.lastChild.textContent = msg; document.body.appendChild(d); } }
+  function crash(msg) { document.documentElement.classList.remove('i18n-wait'); if (shown) return; shown = true; if (window.__crash) window.__crash(msg); else { var d = document.createElement('div'); d.setAttribute('data-i18n-skip', ''); d.style.cssText = 'position:fixed;inset:0;z-index:99;background:#1b1d22;color:#ecebe4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font:18px sans-serif'; d.innerHTML = '<b style="font-size:28px">哎呀，卡住了</b><button onclick="location.reload()" style="font-size:20px;padding:14px 30px">重新打开</button><small style="color:#9a9ca6"></small>'; d.lastChild.textContent = msg; document.body.appendChild(d); } }
   window.addEventListener('error', function (e) { crash(e.message || String(e)); });
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=67"></script>
-<script src="hardbank.js?v=67"></script>
-<script src="placebank.js?v=67"></script>
-<script src="core.js?v=67"></script>
-<script src="ink.js?v=67"></script>
-<script src="skills.js?v=67"></script>
-<script src="engine.js?v=67"></script>
-<script src="render.js?v=67"></script>
-<script src="world.js?v=67"></script>
-<script src="home.js?v=67"></script>
-<script src="house.js?v=67"></script>
+<script src="i18n.js?v=73"></script>
+<script src="bank.js?v=73"></script>
+<script src="hardbank.js?v=73"></script>
+<script src="placebank.js?v=73"></script>
+<script src="core.js?v=73"></script>
+<script src="ink.js?v=73"></script>
+<script src="skills.js?v=73"></script>
+<script src="engine.js?v=73"></script>
+<script src="render.js?v=73"></script>
+<script src="world.js?v=73"></script>
+<script src="home.js?v=73"></script>
+<script src="house.js?v=73"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -853,6 +858,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   let persisted = null;
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist().then(v => { persisted = v; }).catch(() => {}); } catch (e) {}
   S.settings = S.settings || {};
+  // 单日英文、双日中文（i18n.js）：打开页面和每次回到岛上时判断，练习中途跨天不切
+  const applyLang = () => I18N.set(I18N.isEn(S.settings, today()));
+  applyLang();
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
@@ -883,6 +891,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const dueAll = () => E.dueMistakes(S, today()).length;
   const isDone = () => !!(S.daily && S.daily.day === today() && S.daily.done);
   function renderIsland() {
+    applyLang();
     E.sweep(S);
     if (HOME.sync(S, today()).length) save();   // 新达成的奖励放进战利品箱，岛上的家亮旗子
     const t = today(), d = dueAll(), first = !S.placedAt && !S.placement && !E.chosen(S), done = isDone();
@@ -1367,7 +1376,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const qPad = Pad($('qPad'), () => qSchedule());
   qPad.onDown = () => { if (!Q) return; clearTimeout(Q.submitT); if (Q.phase === 'q') $('qFootNote').textContent = ''; if (Q.phase === 'trace') $('qPadTip').hidden = true; };
   const flashMs = () => S.settings.flashMs || 1500;
-  const timers = () => { try { speechSynthesis.cancel(); } catch (e) {} if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
+  const timers = () => { sayStop(); if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
   function startQ(kind, opts) {
     const day = today();
     const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : E.placement(S, day);
@@ -1398,6 +1407,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   // 题面区兜底：内容比左栏宽 / 高就整体缩小，不钻到写字板下面
   function fitBody() {
+    I18N.flush();   // 先翻好再量尺寸
     const b = $('qBody'); b.style.zoom = '';
     if (b.hidden || !b.clientWidth) return;
     const k = Math.min(1, b.clientWidth / b.scrollWidth, b.clientHeight / b.scrollHeight);
@@ -1759,6 +1769,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const errs = Object.entries(S.lineErr || {}).map(([k, a]) => `${k === '100a' ? '0—100 任意' : '0—' + k}：最近 ${a.length} 题平均差 ${(a.reduce((x, y) => x + y, 0) / a.length).toFixed(1)}`);
     $('lineErr').innerHTML = errs.length ? errs.join('<br>') : '数线还没练过';
     $('oralBox').checked = !!S.oral;
+    renderBi();
     renderLevels();
     const n = Object.values(INKS.t || {}).map(a => a.length), ist = INKS.stats || [];
     $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${ist.length ? `<br>最近 ${ist.length} 次不用确认就认出 ${ist.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
@@ -1875,8 +1886,30 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     save(); renderLevels();
   });
   // 朗读题目（系统自带语音，没有就什么也不发生）
-  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(b.dataset.say); u.lang = 'zh-CN'; u.rate = .9; speechSynthesis.speak(u); } catch (err) {} });
+  // iPad App 走原生语音（离线、不受内嵌网页限制）；手机网页走系统语音。按下就亮，孩子看得见有反应
+  const SAY = {u: null, btn: null, t: 0};
+  function sayEnd() { clearTimeout(SAY.t); if (SAY.btn) SAY.btn.classList.remove('on'); SAY.btn = null; }
+  function sayStop() {
+    sayEnd();
+    try { const nat = window.webkit && webkit.messageHandlers && webkit.messageHandlers.speak; if (nat) nat.postMessage(''); else if (window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); } catch (err) {}
+  }
+  function sayIt(b) {
+    const text = b.dataset.say, zh = /[\u4e00-\u9fff]/.test(text), lang = zh ? 'zh-CN' : 'en-US';   // 按文字本身判断：英文日的家长区预览还是中文
+    sayStop(); SAY.btn = b; b.classList.add('on');
+    SAY.t = setTimeout(sayEnd, Math.min(12000, 1500 + text.length * (zh ? 260 : 70)));   // 没有结束回调时按字数收起
+    try {
+      const nat = window.webkit && webkit.messageHandlers && webkit.messageHandlers.speak;
+      if (nat) { nat.postMessage(JSON.stringify({text, lang})); return; }
+      const u = new SpeechSynthesisUtterance(text);   // 只设语言、用系统默认声音：声音列表排在前面的可能是搞怪音色
+      u.lang = lang; u.rate = .9; u.onend = u.onerror = sayEnd;
+      SAY.u = u;   // 留住引用，否则 iOS 上可能被回收，念不出来
+      speechSynthesis.speak(u);
+    } catch (err) { sayEnd(); }
+  }
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (b) sayIt(b); });
   R.setSprite(ART.spriteURL);
+  function renderBi() { $('biBox').checked = S.settings.bilingual !== false; $('biToday').textContent = I18N.isEn(S.settings, today()) ? '英文' : '中文'; }
+  $('biBox').addEventListener('change', e => { S.settings.bilingual = e.target.checked; save(); applyLang(); renderBi(); });
   $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
   $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }, () => { renderParent(); show('parent'); }));
   let replacing = false;   // 家长区「重新摸底」：结果页 → 首页（说明书 §5）
@@ -1937,7 +1970,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { pauseQ(); if (cur === 'house') HS.pauseClock(); }
-    else { C.mergeV1(store, CTX, S); checkSuperseded(); askResume(); if (cur === 'house') HS.resumeClock(); }
+    else { C.mergeV1(store, CTX, S); checkSuperseded(); askResume(); if (cur === 'house') HS.resumeClock(); if (cur === 'island') renderIsland(); }   // 隔夜切回前台：按新的日子重判语言和今日任务
   });
   window.matchMedia('(orientation: portrait) and (max-width: 700px)').addEventListener('change', () => { if (portrait() && !S.oral) pauseQ(); else askResume(); });
   // 12b 另一个页面写了同一份进度或笔迹：这一页停下，不互相覆盖
@@ -1990,7 +2023,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       save(); renderIsland();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  window.__sm = {today, get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();
