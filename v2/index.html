@@ -820,7 +820,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v76:4d3043d37533 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v77:a98d71a76c83 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -830,20 +830,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="i18n.js?v=76"></script>
-<script src="bank.js?v=76"></script>
-<script src="hardbank.js?v=76"></script>
-<script src="placebank.js?v=76"></script>
-<script src="core.js?v=76"></script>
-<script src="ink.js?v=76"></script>
-<script src="skills.js?v=76"></script>
-<script src="engine.js?v=76"></script>
-<script src="render.js?v=76"></script>
-<script src="world.js?v=76"></script>
-<script src="home.js?v=76"></script>
-<script src="puzzles.js?v=76"></script>
-<script src="thinking.js?v=76"></script>
-<script src="house.js?v=76"></script>
+<script src="i18n.js?v=77"></script>
+<script src="bank.js?v=77"></script>
+<script src="hardbank.js?v=77"></script>
+<script src="placebank.js?v=77"></script>
+<script src="core.js?v=77"></script>
+<script src="ink.js?v=77"></script>
+<script src="skills.js?v=77"></script>
+<script src="engine.js?v=77"></script>
+<script src="render.js?v=77"></script>
+<script src="world.js?v=77"></script>
+<script src="home.js?v=77"></script>
+<script src="puzzles.js?v=77"></script>
+<script src="thinking.js?v=77"></script>
+<script src="house.js?v=77"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);

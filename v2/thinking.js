@@ -22,6 +22,7 @@
 #think .say{font-size:22px;font-weight:700;line-height:1.3;min-height:30px}
 #think .sub{font-size:16px;color:var(--mute);line-height:1.35}
 #think .fb{font-size:18px;font-weight:700;line-height:1.3;min-height:26px;color:var(--mute)}
+#think .fb div{margin-top:5px}
 #think .fb.ok{color:var(--ok)}
 #think .fb.bad{color:var(--bad)}
 #think .eq{display:flex;align-items:center;justify-content:center;gap:7px;font-size:32px;font-weight:800;height:50px}
