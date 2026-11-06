@@ -1,0 +1,714 @@
+{
+ "level": 8,
+ "name": "三位数与乘法入门",
+ "items": [
+  {
+   "id": "L08-001",
+   "pool": "speed:g8:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "234 + 5 =",
+    "why": "234 加 5，只动一个数位，是 239"
+   },
+   "ans": 239,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数加几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-002",
+   "pool": "speed:g8:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "461 + 30 =",
+    "why": "461 加 30，只动一个数位，是 491"
+   },
+   "ans": 491,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数加几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-003",
+   "pool": "speed:g8:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "315 + 200 =",
+    "why": "315 加 200，只动一个数位，是 515"
+   },
+   "ans": 515,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数加几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-004",
+   "pool": "speed:g8:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "628 + 40 =",
+    "why": "628 加 40，只动一个数位，是 668"
+   },
+   "ans": 668,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数加几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-005",
+   "pool": "speed:g8:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "750 + 8 =",
+    "why": "750 加 8，只动一个数位，是 758"
+   },
+   "ans": 758,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数加几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-006",
+   "pool": "speed:g8:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "503 + 90 =",
+    "why": "503 加 90，只动一个数位，是 593"
+   },
+   "ans": 593,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数加几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-007",
+   "pool": "speed:g8:sub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "478 − 6 =",
+    "why": "478 减 6，只动一个数位，是 472"
+   },
+   "ans": 472,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数减几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-008",
+   "pool": "speed:g8:sub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "865 − 40 =",
+    "why": "865 减 40，只动一个数位，是 825"
+   },
+   "ans": 825,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数减几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-009",
+   "pool": "speed:g8:sub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "927 − 300 =",
+    "why": "927 减 300，只动一个数位，是 627"
+   },
+   "ans": 627,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数减几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-010",
+   "pool": "speed:g8:sub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "650 − 30 =",
+    "why": "650 减 30，只动一个数位，是 620"
+   },
+   "ans": 620,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数减几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-011",
+   "pool": "speed:g8:sub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "389 − 9 =",
+    "why": "389 减 9，只动一个数位，是 380"
+   },
+   "ans": 380,
+   "kind": "计算",
+   "source": "新加坡 P2 · 三位数减几个一 / 十 / 百",
+   "fun": false
+  },
+  {
+   "id": "L08-012",
+   "pool": "dock:g8:group",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "6 盒铅笔，每盒 2 支。一共几支？",
+    "text": "□",
+    "why": "6 × 2 = 12"
+   },
+   "ans": 12,
+   "kind": "应用题",
+   "source": "美国 3.OA.A.3 · 等组",
+   "fun": false,
+   "check": {
+    "expr": "6*2"
+   }
+  },
+  {
+   "id": "L08-013",
+   "pool": "dock:g8:group",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "7 盒铅笔，每盒 5 支。一共几支？",
+    "text": "□",
+    "why": "7 × 5 = 35"
+   },
+   "ans": 35,
+   "kind": "应用题",
+   "source": "美国 3.OA.A.3 · 等组",
+   "fun": false,
+   "check": {
+    "expr": "7*5"
+   }
+  },
+  {
+   "id": "L08-014",
+   "pool": "dock:g8:group",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "9 盒铅笔，每盒 10 支。一共几支？",
+    "text": "□",
+    "why": "9 × 10 = 90"
+   },
+   "ans": 90,
+   "kind": "应用题",
+   "source": "美国 3.OA.A.3 · 等组",
+   "fun": false,
+   "check": {
+    "expr": "9*10"
+   }
+  },
+  {
+   "id": "L08-015",
+   "pool": "dock:g8:group",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "8 盒铅笔，每盒 5 支。一共几支？",
+    "text": "□",
+    "why": "8 × 5 = 40"
+   },
+   "ans": 40,
+   "kind": "应用题",
+   "source": "美国 3.OA.A.3 · 等组",
+   "fun": false,
+   "check": {
+    "expr": "8*5"
+   }
+  },
+  {
+   "id": "L08-016",
+   "pool": "dock:g8:group",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "9 盒铅笔，每盒 2 支。一共几支？",
+    "text": "□",
+    "why": "9 × 2 = 18"
+   },
+   "ans": 18,
+   "kind": "应用题",
+   "source": "美国 3.OA.A.3 · 等组",
+   "fun": false,
+   "check": {
+    "expr": "9*2"
+   }
+  },
+  {
+   "id": "L08-017",
+   "pool": "look:g8:array",
+   "input": "write",
+   "q": {
+    "view": "grid",
+    "say": "点阵 4 排，每排 5 个。一共几个？",
+    "text": "□",
+    "rows": 4,
+    "cols": 5,
+    "why": "4 × 5 = 20"
+   },
+   "ans": 20,
+   "kind": "几何",
+   "source": "美国 3.OA.A.1 · 阵列",
+   "fun": false,
+   "check": {
+    "expr": "4*5"
+   }
+  },
+  {
+   "id": "L08-018",
+   "pool": "look:g8:array",
+   "input": "write",
+   "q": {
+    "view": "grid",
+    "say": "点阵 6 排，每排 10 个。一共几个？",
+    "text": "□",
+    "rows": 6,
+    "cols": 10,
+    "why": "6 × 10 = 60"
+   },
+   "ans": 60,
+   "kind": "几何",
+   "source": "美国 3.OA.A.1 · 阵列",
+   "fun": false,
+   "check": {
+    "expr": "6*10"
+   }
+  },
+  {
+   "id": "L08-019",
+   "pool": "place:g8:hundreds",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "百位是 7，十位是 0，个位是 4。这个数是几？",
+    "text": "□",
+    "why": "7 个百、0 个十、4 个一，是 704"
+   },
+   "ans": 704,
+   "kind": "填空",
+   "source": "台湾 N-2-1 · 位值表",
+   "fun": false,
+   "check": {
+    "expr": "7*100+0*10+4"
+   }
+  },
+  {
+   "id": "L08-020",
+   "pool": "place:g8:hundreds",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "百位比十位大 2，十位是 5，个位是 8。这个数是几？",
+    "text": "□",
+    "why": "百位是 7，是 758"
+   },
+   "ans": 758,
+   "kind": "逻辑",
+   "source": "思维 · 数位谜题",
+   "fun": false,
+   "check": {
+    "expr": "(5+2)*100+5*10+8"
+   }
+  },
+  {
+   "id": "L08-021",
+   "pool": "market:g8:price",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "书 125 元，再买 30 元的笔。一共几元？",
+    "text": "□",
+    "why": "125 + 30 = 155"
+   },
+   "ans": 155,
+   "kind": "钱",
+   "source": "香港 2M3 · 纸币",
+   "fun": false,
+   "check": {
+    "expr": "125+30"
+   }
+  },
+  {
+   "id": "L08-022",
+   "pool": "market:g8:price",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "有 2 张 100 元和 3 张 10 元。一共几元？",
+    "text": "□",
+    "why": "200 + 30 = 230"
+   },
+   "ans": 230,
+   "kind": "钱",
+   "source": "台湾 N-2-5 · 100 元",
+   "fun": false,
+   "check": {
+    "expr": "100+100+10+10+10"
+   }
+  },
+  {
+   "id": "L08-023",
+   "pool": "market:g8:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 米是 100 厘米。6 米是几厘米？",
+    "text": "6 米 = □ 厘米",
+    "why": "6 个 100 是 600"
+   },
+   "ans": 600,
+   "kind": "长度重量",
+   "source": "韩国 [2수03-11] · 米和厘米",
+   "fun": false,
+   "check": {
+    "expr": "6*100"
+   }
+  },
+  {
+   "id": "L08-024",
+   "pool": "market:g8:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "2 米 35 厘米是几厘米？",
+    "text": "2 米 35 厘米 = □ 厘米",
+    "why": "200 + 35 = 235"
+   },
+   "ans": 235,
+   "kind": "长度重量",
+   "source": "韩国 [2수03-11] · 米和厘米",
+   "fun": false,
+   "check": {
+    "expr": "2*100+35"
+   }
+  },
+  {
+   "id": "L08-025",
+   "pool": "market:g8:time",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 小时是 60 分钟。2 小时是几分钟？",
+    "text": "2 小时 = □ 分钟",
+    "why": "60 + 60 = 120"
+   },
+   "ans": 120,
+   "kind": "时间",
+   "source": "新加坡 P2 · 时分换算",
+   "fun": false,
+   "check": {
+    "expr": "60+60"
+   }
+  },
+  {
+   "id": "L08-026",
+   "pool": "shape:g8:side",
+   "input": "write",
+   "q": {
+    "view": "poly",
+    "say": "三角形三条边都是 5 厘米。一共几厘米？",
+    "text": "□",
+    "data": {
+     "sides": [
+      5,
+      5,
+      5
+     ]
+    },
+    "why": "5 + 5 + 5 = 15"
+   },
+   "ans": 15,
+   "kind": "几何",
+   "source": "台湾 S-2-4 · 边长关系",
+   "fun": false,
+   "newView": "poly",
+   "check": {
+    "expr": "5+5+5"
+   }
+  },
+  {
+   "id": "L08-027",
+   "pool": "chart:g8:pic",
+   "input": "write",
+   "q": {
+    "view": "chart",
+    "say": "看图表：梨比桃多几个？",
+    "text": "□",
+    "data": {
+     "labels": [
+      "苹果",
+      "梨",
+      "桃"
+     ],
+     "vals": [
+      6,
+      9,
+      4
+     ]
+    },
+    "why": "9 − 4 = 5"
+   },
+   "ans": 5,
+   "kind": "图表",
+   "source": "新加坡 P1 · 图画统计",
+   "fun": false,
+   "newView": "chart",
+   "check": {
+    "expr": "9-4"
+   }
+  },
+  {
+   "id": "L08-028",
+   "pool": "chart:g8:pic",
+   "input": "write",
+   "q": {
+    "view": "chart",
+    "say": "看图表：三个人一共钓了几条鱼？",
+    "text": "□",
+    "data": {
+     "labels": [
+      "小猫",
+      "小狗",
+      "小狐狸"
+     ],
+     "vals": [
+      8,
+      5,
+      7
+     ]
+    },
+    "why": "8 + 5 + 7 = 20"
+   },
+   "ans": 20,
+   "kind": "图表",
+   "source": "新加坡 P1 · 图画统计",
+   "fun": false,
+   "newView": "chart",
+   "check": {
+    "expr": "8+5+7"
+   }
+  },
+  {
+   "id": "L08-029",
+   "pool": "garden:g8:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "百位、十位、个位都是 3 的数，比 300 大几？",
+    "text": "□",
+    "why": "333 − 300 = 33"
+   },
+   "ans": 33,
+   "kind": "趣味",
+   "source": "思维 · 数位",
+   "fun": true,
+   "check": {
+    "expr": "3*100+3*10+3-300"
+   }
+  },
+  {
+   "id": "L08-030",
+   "pool": "garden:g8:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "用 7、0、5 组成最大的三位数。这个数是几？",
+    "text": "□",
+    "why": "大的放前面，是 750"
+   },
+   "ans": 750,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 组数",
+   "fun": true,
+   "check": {
+    "manual": "7>5>0，最大是 750"
+   }
+  },
+  {
+   "id": "L08-031",
+   "pool": "garden:g8:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "用 6、0、9 组成最小的三位数。这个数是几？",
+    "text": "□",
+    "why": "0 不能放最前面，是 609"
+   },
+   "ans": 609,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 组数",
+   "fun": true,
+   "check": {
+    "manual": "百位不能是 0，最小是 609"
+   }
+  },
+  {
+   "id": "L08-032",
+   "pool": "garden:g8:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "6 只鸡和 2 只兔，一共几条腿？",
+    "text": "□",
+    "why": "6 × 2 = 12，2 只兔 8 条，12 + 8 = 20"
+   },
+   "ans": 20,
+   "kind": "趣味",
+   "source": "思维专题 · 鸡兔同笼入门",
+   "fun": true,
+   "check": {
+    "expr": "6*2+2*4"
+   }
+  },
+  {
+   "id": "L08-033",
+   "pool": "garden:g8:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "盒里每层 5 个，放了 7 层。拿走 5 个还剩几个？",
+    "text": "□",
+    "why": "7 × 5 = 35，35 − 5 = 30"
+   },
+   "ans": 30,
+   "kind": "趣味",
+   "source": "思维 · 两步",
+   "fun": true,
+   "check": {
+    "expr": "7*5-5"
+   }
+  },
+  {
+   "id": "L08-034",
+   "pool": "garden:g8:pyr",
+   "input": "write",
+   "q": {
+    "view": "pyr",
+    "say": "数塔：上面的数 = 下面两个数相加。□ 是几？",
+    "text": "□",
+    "data": {
+     "rows": [
+      [
+       90
+      ],
+      [
+       40,
+       0
+      ]
+     ]
+    },
+    "why": "90 − 40 = 50"
+   },
+   "ans": 50,
+   "kind": "谜题",
+   "source": "思维 · 数塔",
+   "fun": true,
+   "newView": "pyr",
+   "check": {
+    "pyr": 1
+   }
+  },
+  {
+   "id": "L08-035",
+   "pool": "garden:g8:magic",
+   "input": "write",
+   "q": {
+    "view": "magic",
+    "say": "幻方：每行、每列、每条斜线的和都是 15。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       4,
+       9,
+       2
+      ],
+      [
+       0,
+       5,
+       7
+      ],
+      [
+       8,
+       1,
+       6
+      ]
+     ],
+     "sum": 15,
+     "r": 1,
+     "c": 0
+    },
+    "why": "第一列 4 + 8 = 12，15 − 12 = 3"
+   },
+   "ans": 3,
+   "kind": "谜题",
+   "source": "思维 · 幻方",
+   "fun": true,
+   "newView": "magic",
+   "check": {
+    "magic": 1
+   }
+  },
+  {
+   "id": "L08-036",
+   "pool": "garden:g8:sudoku",
+   "input": "write",
+   "q": {
+    "view": "grid4",
+    "say": "每行、每列、每个粗线框里 6、7、8、9 各一个。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       0,
+       8,
+       9,
+       7
+      ],
+      [
+       9,
+       0,
+       6,
+       8
+      ],
+      [
+       8,
+       6,
+       7,
+       0
+      ],
+      [
+       7,
+       9,
+       0,
+       6
+      ]
+     ],
+     "r": 3,
+     "c": 2
+    },
+    "why": "这一行还缺 8，是 8"
+   },
+   "ans": 8,
+   "kind": "谜题",
+   "source": "思维 · 数独入门",
+   "fun": true,
+   "newView": "grid4",
+   "check": {
+    "grid4": 1
+   }
+  }
+ ]
+}

@@ -1,0 +1,691 @@
+{
+ "level": 5,
+ "name": "100 以内的数",
+ "items": [
+  {
+   "id": "L05-001",
+   "pool": "garden:g5:skip",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "14、16、□",
+    "why": "每次多 2，是 18"
+   },
+   "ans": 18,
+   "kind": "规律",
+   "source": "新加坡 P2 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "16+2"
+   }
+  },
+  {
+   "id": "L05-002",
+   "pool": "garden:g5:skip",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "35、40、□",
+    "why": "每次多 5，是 45"
+   },
+   "ans": 45,
+   "kind": "规律",
+   "source": "新加坡 P2 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "40+5"
+   }
+  },
+  {
+   "id": "L05-003",
+   "pool": "garden:g5:skip",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "60、70、□",
+    "why": "每次多 10，是 80"
+   },
+   "ans": 80,
+   "kind": "规律",
+   "source": "新加坡 P2 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "70+10"
+   }
+  },
+  {
+   "id": "L05-004",
+   "pool": "garden:g5:skipdown",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "90、85、□",
+    "why": "每次少 5，是 80"
+   },
+   "ans": 80,
+   "kind": "规律",
+   "source": "新加坡 P2 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "85-5"
+   }
+  },
+  {
+   "id": "L05-005",
+   "pool": "garden:g5:skipdown",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "76、66、□",
+    "why": "每次少 10，是 56"
+   },
+   "ans": 56,
+   "kind": "规律",
+   "source": "新加坡 P2 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "66-10"
+   }
+  },
+  {
+   "id": "L05-006",
+   "pool": "garden:g5:skipdown",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "50、48、□",
+    "why": "每次少 2，是 46"
+   },
+   "ans": 46,
+   "kind": "规律",
+   "source": "新加坡 P2 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "48-2"
+   }
+  },
+  {
+   "id": "L05-007",
+   "pool": "place:g5:digit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "十位是 6，个位比十位小 2。这个数是几？",
+    "text": "□",
+    "why": "个位是 6 − 2 = 4，是 64"
+   },
+   "ans": 64,
+   "kind": "逻辑",
+   "source": "思维 · 数位谜题",
+   "fun": false,
+   "check": {
+    "expr": "60+6-2"
+   }
+  },
+  {
+   "id": "L05-008",
+   "pool": "place:g5:digit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "个位是 7，十位比个位大 1。这个数是几？",
+    "text": "□",
+    "why": "十位是 8，是 87"
+   },
+   "ans": 87,
+   "kind": "逻辑",
+   "source": "思维 · 数位谜题",
+   "fun": false,
+   "check": {
+    "expr": "(7+1)*10+7"
+   }
+  },
+  {
+   "id": "L05-009",
+   "pool": "place:g5:digit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "十位和个位都是 7 的两位数是几？",
+    "text": "□",
+    "why": "两位都是 7，是 77"
+   },
+   "ans": 77,
+   "kind": "逻辑",
+   "source": "思维 · 数位谜题",
+   "fun": false,
+   "check": {
+    "expr": "7*10+7"
+   }
+  },
+  {
+   "id": "L05-010",
+   "pool": "place:g5:digit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "十位是 9，个位是 0。这个数比 100 少几？",
+    "text": "□",
+    "why": "这个数是 90，100 − 90 = 10"
+   },
+   "ans": 10,
+   "kind": "逻辑",
+   "source": "思维 · 数位谜题",
+   "fun": false,
+   "check": {
+    "expr": "100-9*10"
+   }
+  },
+  {
+   "id": "L05-011",
+   "pool": "place:g5:grid",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "百数表里，34 正下方的格子是几？",
+    "text": "□",
+    "why": "往下一行多 10，是 44"
+   },
+   "ans": 44,
+   "kind": "规律",
+   "source": "美国 1.NBT · 百数表",
+   "fun": false,
+   "check": {
+    "expr": "34+10"
+   }
+  },
+  {
+   "id": "L05-012",
+   "pool": "place:g5:grid",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "百数表里，58 正上方的格子是几？",
+    "text": "□",
+    "why": "往上一行少 10，是 48"
+   },
+   "ans": 48,
+   "kind": "规律",
+   "source": "美国 1.NBT · 百数表",
+   "fun": false,
+   "check": {
+    "expr": "58-10"
+   }
+  },
+  {
+   "id": "L05-013",
+   "pool": "place:g5:grid",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "百数表里，67 右边的格子是几？",
+    "text": "□",
+    "why": "往右多 1，是 68"
+   },
+   "ans": 68,
+   "kind": "规律",
+   "source": "美国 1.NBT · 百数表",
+   "fun": false,
+   "check": {
+    "expr": "67+1"
+   }
+  },
+  {
+   "id": "L05-014",
+   "pool": "cmp:g5:between",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "38 和 42 中间有几个数？不算 38 和 42。",
+    "text": "□",
+    "why": "39、40、41，是 3 个"
+   },
+   "ans": 3,
+   "kind": "填空",
+   "source": "台湾 N-1-1 · 数的顺序",
+   "fun": false,
+   "check": {
+    "expr": "42-38-1"
+   }
+  },
+  {
+   "id": "L05-015",
+   "pool": "cmp:g5:between",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "从 61 数到 69，一共数了几个数？",
+    "text": "□",
+    "why": "69 − 61 + 1 = 9"
+   },
+   "ans": 9,
+   "kind": "填空",
+   "source": "思维专题 · 植树（两端都算）",
+   "fun": false,
+   "check": {
+    "expr": "69-61+1"
+   }
+  },
+  {
+   "id": "L05-016",
+   "pool": "cmp:g5:oddeven",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个是双数（偶数）？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "37",
+     "59",
+     "46"
+    ],
+    "why": "46 个位是 6，46 是双数"
+   },
+   "ans": 3,
+   "kind": "逻辑",
+   "source": "新加坡 P2 · 单双数",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "manual": "46 是偶数"
+   }
+  },
+  {
+   "id": "L05-017",
+   "pool": "cmp:g5:oddeven",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个是单数（奇数）？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "58",
+     "91",
+     "72"
+    ],
+    "why": "91 个位是 1，91 是单数"
+   },
+   "ans": 2,
+   "kind": "逻辑",
+   "source": "新加坡 P2 · 单双数",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "manual": "91 是奇数"
+   }
+  },
+  {
+   "id": "L05-018",
+   "pool": "market:g5:money",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "3 张 10 元和 4 张 1 元，一共几元？",
+    "text": "□",
+    "why": "30 + 4 = 34"
+   },
+   "ans": 34,
+   "kind": "钱",
+   "source": "美国 2.MD.C.8 · 数钱",
+   "fun": false,
+   "check": {
+    "expr": "10+10+10+1+1+1+1"
+   }
+  },
+  {
+   "id": "L05-019",
+   "pool": "market:g5:money",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "2 张 20 元和 1 张 5 元，一共几元？",
+    "text": "□",
+    "why": "40 + 5 = 45"
+   },
+   "ans": 45,
+   "kind": "钱",
+   "source": "美国 2.MD.C.8 · 数钱",
+   "fun": false,
+   "check": {
+    "expr": "20+20+5"
+   }
+  },
+  {
+   "id": "L05-020",
+   "pool": "market:g5:jiao",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 元是 10 角。2 元 5 角是几角？",
+    "text": "□",
+    "why": "20 + 5 = 25"
+   },
+   "ans": 25,
+   "kind": "钱",
+   "source": "中国大陆 · 元角换算",
+   "fun": false,
+   "check": {
+    "expr": "2*10+5"
+   }
+  },
+  {
+   "id": "L05-021",
+   "pool": "market:g5:jiao",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 元是 10 角。36 角是 3 元几角？",
+    "text": "36 角 = 3 元 □ 角",
+    "why": "30 角是 3 元，还剩 6 角"
+   },
+   "ans": 6,
+   "kind": "钱",
+   "source": "中国大陆 · 元角换算",
+   "fun": false,
+   "check": {
+    "expr": "36-3*10"
+   }
+  },
+  {
+   "id": "L05-022",
+   "pool": "market:g5:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "一段绳子长 9 厘米，再接一段同样长的。一共几厘米？",
+    "text": "□",
+    "why": "9 + 9 = 18"
+   },
+   "ans": 18,
+   "kind": "长度重量",
+   "source": "美国 2.MD.B.5 · 长度",
+   "fun": false,
+   "check": {
+    "expr": "9+9"
+   }
+  },
+  {
+   "id": "L05-023",
+   "pool": "market:g5:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "绳子 70 厘米，再接 30 厘米。一共几厘米？",
+    "text": "□",
+    "why": "70 + 30 = 100"
+   },
+   "ans": 100,
+   "kind": "长度重量",
+   "source": "美国 2.MD.B.5 · 长度加减",
+   "fun": false,
+   "check": {
+    "expr": "70+30"
+   }
+  },
+  {
+   "id": "L05-024",
+   "pool": "market:g5:clock",
+   "input": "write",
+   "q": {
+    "view": "clock5",
+    "say": "钟上长针指 3。现在是 7 点几分？",
+    "text": "7 点 □ 分",
+    "h": 7,
+    "m": 15,
+    "why": "一个数字 5 分钟，3 个 5 分钟是 15"
+   },
+   "ans": 15,
+   "kind": "时间",
+   "source": "美国 2.MD.C.7 · 读到 5 分钟",
+   "fun": false,
+   "check": {
+    "expr": "5+5+5"
+   }
+  },
+  {
+   "id": "L05-025",
+   "pool": "market:g5:clock",
+   "input": "write",
+   "q": {
+    "view": "clock5",
+    "say": "钟上长针指 8。现在是 2 点几分？",
+    "text": "2 点 □ 分",
+    "h": 2,
+    "m": 40,
+    "why": "8 个 5 分钟是 40"
+   },
+   "ans": 40,
+   "kind": "时间",
+   "source": "美国 2.MD.C.7 · 读到 5 分钟",
+   "fun": false,
+   "check": {
+    "expr": "5+5+5+5+5+5+5+5"
+   }
+  },
+  {
+   "id": "L05-026",
+   "pool": "garden:g5:week",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "今天星期三，再过 6 天是星期几？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "星期二",
+     "星期一",
+     "星期日"
+    ],
+    "why": "数 6 天：四五六日一二，是星期二"
+   },
+   "ans": 1,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 日历",
+   "fun": true,
+   "newView": "choice",
+   "check": {
+    "mod7": [
+     3,
+     6
+    ]
+   }
+  },
+  {
+   "id": "L05-027",
+   "pool": "garden:g5:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小路一边种 6 棵树，相邻两棵隔 2 米。两头相距几米？",
+    "text": "□",
+    "why": "5 个间隔：2 + 2 + 2 + 2 + 2 = 10"
+   },
+   "ans": 10,
+   "kind": "趣味",
+   "source": "思维专题 · 植树",
+   "fun": true,
+   "check": {
+    "expr": "2+2+2+2+2"
+   }
+  },
+  {
+   "id": "L05-028",
+   "pool": "garden:g5:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "10 张卡，每次拿 2 张，几次拿完？",
+    "text": "□",
+    "why": "2、4、6、8、10，是 5 次"
+   },
+   "ans": 5,
+   "kind": "趣味",
+   "source": "趣味结构 · 连减",
+   "fun": true,
+   "check": {
+    "expr": "10/2"
+   }
+  },
+  {
+   "id": "L05-029",
+   "pool": "garden:g5:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "哥哥 9 岁，妹妹 6 岁。哥哥 20 岁时妹妹几岁？",
+    "text": "□",
+    "why": "差 3 岁不变：20 − 3 = 17"
+   },
+   "ans": 17,
+   "kind": "趣味",
+   "source": "思维专题 · 年龄（差不变）",
+   "fun": true,
+   "check": {
+    "expr": "20-(9-6)"
+   }
+  },
+  {
+   "id": "L05-030",
+   "pool": "garden:g5:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "两袋糖一样多，一共 30 颗。每袋几颗？",
+    "text": "□",
+    "why": "15 + 15 = 30，是 15"
+   },
+   "ans": 15,
+   "kind": "趣味",
+   "source": "趣味结构 · 拆成相同的数",
+   "fun": true,
+   "check": {
+    "expr": "30/2"
+   }
+  },
+  {
+   "id": "L05-031",
+   "pool": "garden:g5:pyr",
+   "input": "write",
+   "q": {
+    "view": "pyr",
+    "say": "数塔：上面的数 = 下面两个数相加。□ 是几？",
+    "text": "□",
+    "data": {
+     "rows": [
+      [
+       25
+      ],
+      [
+       10,
+       0
+      ]
+     ]
+    },
+    "why": "25 − 10 = 15"
+   },
+   "ans": 15,
+   "kind": "谜题",
+   "source": "思维 · 数塔",
+   "fun": true,
+   "newView": "pyr",
+   "check": {
+    "pyr": 1
+   }
+  },
+  {
+   "id": "L05-032",
+   "pool": "garden:g5:pyr",
+   "input": "write",
+   "q": {
+    "view": "pyr",
+    "say": "数塔：上面的数 = 下面两个数相加。□ 是几？",
+    "text": "□",
+    "data": {
+     "rows": [
+      [
+       0
+      ],
+      [
+       20,
+       22
+      ],
+      [
+       8,
+       12,
+       10
+      ]
+     ]
+    },
+    "why": "20 + 22 = 42"
+   },
+   "ans": 42,
+   "kind": "谜题",
+   "source": "思维 · 数塔",
+   "fun": true,
+   "newView": "pyr",
+   "check": {
+    "pyr": 1
+   }
+  },
+  {
+   "id": "L05-033",
+   "pool": "garden:g5:sudoku",
+   "input": "write",
+   "q": {
+    "view": "grid4",
+    "say": "每行、每列、每个粗线框里 6、7、8、9 各一个。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       6,
+       0,
+       8,
+       9
+      ],
+      [
+       0,
+       9,
+       6,
+       7
+      ],
+      [
+       7,
+       6,
+       0,
+       8
+      ],
+      [
+       9,
+       8,
+       7,
+       0
+      ]
+     ],
+     "r": 0,
+     "c": 1
+    },
+    "why": "这一行还缺 7，是 7"
+   },
+   "ans": 7,
+   "kind": "谜题",
+   "source": "思维 · 数独入门",
+   "fun": true,
+   "newView": "grid4",
+   "check": {
+    "grid4": 1
+   }
+  }
+ ]
+}

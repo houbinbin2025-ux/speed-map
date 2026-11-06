@@ -1,0 +1,715 @@
+{
+ "level": 13,
+ "name": "大数、多位数乘除、四则混合",
+ "items": [
+  {
+   "id": "L13-001",
+   "pool": "speed:g13:mul3",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "125 × 16 =",
+    "why": "拆开 16 分两步乘，再相加，是 2000"
+   },
+   "ans": 2000,
+   "kind": "计算",
+   "source": "新加坡 P4 · 三位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L13-002",
+   "pool": "speed:g13:mul3",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "324 × 25 =",
+    "why": "拆开 25 分两步乘，再相加，是 8100"
+   },
+   "ans": 8100,
+   "kind": "计算",
+   "source": "新加坡 P4 · 三位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L13-003",
+   "pool": "speed:g13:mul3",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "208 × 45 =",
+    "why": "拆开 45 分两步乘，再相加，是 9360"
+   },
+   "ans": 9360,
+   "kind": "计算",
+   "source": "新加坡 P4 · 三位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L13-004",
+   "pool": "speed:g13:mul3",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "617 × 38 =",
+    "why": "拆开 38 分两步乘，再相加，是 23446"
+   },
+   "ans": 23446,
+   "kind": "计算",
+   "source": "新加坡 P4 · 三位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L13-005",
+   "pool": "speed:g13:mul3",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "450 × 60 =",
+    "why": "45 × 6 = 270，再添 2 个 0，是 27000"
+   },
+   "ans": 27000,
+   "kind": "计算",
+   "source": "新加坡 P4 · 三位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L13-006",
+   "pool": "speed:g13:div2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "936 ÷ 12 =",
+    "why": "试商：78 × 12 = 936，是 78"
+   },
+   "ans": 78,
+   "kind": "计算",
+   "source": "台湾 N-4-2 · 除数是多位数",
+   "fun": false
+  },
+  {
+   "id": "L13-007",
+   "pool": "speed:g13:div2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "875 ÷ 25 =",
+    "why": "试商：35 × 25 = 875，是 35"
+   },
+   "ans": 35,
+   "kind": "计算",
+   "source": "台湾 N-4-2 · 除数是多位数",
+   "fun": false
+  },
+  {
+   "id": "L13-008",
+   "pool": "speed:g13:div2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "1560 ÷ 40 =",
+    "why": "试商：39 × 40 = 1560，是 39"
+   },
+   "ans": 39,
+   "kind": "计算",
+   "source": "台湾 N-4-2 · 除数是多位数",
+   "fun": false
+  },
+  {
+   "id": "L13-009",
+   "pool": "speed:g13:div2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "2288 ÷ 44 =",
+    "why": "试商：52 × 44 = 2288，是 52"
+   },
+   "ans": 52,
+   "kind": "计算",
+   "source": "台湾 N-4-2 · 除数是多位数",
+   "fun": false
+  },
+  {
+   "id": "L13-010",
+   "pool": "speed:g13:div2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "672 ÷ 16 =",
+    "why": "试商：42 × 16 = 672，是 42"
+   },
+   "ans": 42,
+   "kind": "计算",
+   "source": "台湾 N-4-2 · 除数是多位数",
+   "fun": false
+  },
+  {
+   "id": "L13-011",
+   "pool": "speed:g13:order",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "48 + 12 × 5 =",
+    "why": "先乘除后加减，括号先算，是 108"
+   },
+   "ans": 108,
+   "kind": "计算",
+   "source": "台湾 R-4-1 · 四则混合约定",
+   "fun": false
+  },
+  {
+   "id": "L13-012",
+   "pool": "speed:g13:order",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "(48 + 12) × 5 =",
+    "why": "先乘除后加减，括号先算，是 300"
+   },
+   "ans": 300,
+   "kind": "计算",
+   "source": "台湾 R-4-1 · 四则混合约定",
+   "fun": false
+  },
+  {
+   "id": "L13-013",
+   "pool": "speed:g13:order",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "200 − 72 ÷ 8 =",
+    "why": "先乘除后加减，括号先算，是 191"
+   },
+   "ans": 191,
+   "kind": "计算",
+   "source": "台湾 R-4-1 · 四则混合约定",
+   "fun": false
+  },
+  {
+   "id": "L13-014",
+   "pool": "speed:g13:order",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "(200 − 72) ÷ 8 =",
+    "why": "先乘除后加减，括号先算，是 16"
+   },
+   "ans": 16,
+   "kind": "计算",
+   "source": "台湾 R-4-1 · 四则混合约定",
+   "fun": false
+  },
+  {
+   "id": "L13-015",
+   "pool": "speed:g13:order",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "36 × 2 + 64 ÷ 4 =",
+    "why": "先乘除后加减，括号先算，是 88"
+   },
+   "ans": 88,
+   "kind": "计算",
+   "source": "台湾 R-4-1 · 四则混合约定",
+   "fun": false
+  },
+  {
+   "id": "L13-016",
+   "pool": "speed:g13:order",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "90 − (15 + 25) =",
+    "why": "先乘除后加减，括号先算，是 50"
+   },
+   "ans": 50,
+   "kind": "计算",
+   "source": "台湾 R-4-1 · 四则混合约定",
+   "fun": false
+  },
+  {
+   "id": "L13-017",
+   "pool": "place:g13:big",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "40000 + 5000 + 300 =",
+    "why": "按数位合起来，是 45300"
+   },
+   "ans": 45300,
+   "kind": "计算",
+   "source": "台湾 N-4-1 · 一亿以内",
+   "fun": false
+  },
+  {
+   "id": "L13-018",
+   "pool": "place:g13:big",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "700000 + 20000 + 6000 =",
+    "why": "按数位合起来，是 726000"
+   },
+   "ans": 726000,
+   "kind": "计算",
+   "source": "台湾 N-4-1 · 一亿以内",
+   "fun": false
+  },
+  {
+   "id": "L13-019",
+   "pool": "place:g13:big",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "3000000 + 80000 =",
+    "why": "按数位合起来，是 3080000"
+   },
+   "ans": 3080000,
+   "kind": "计算",
+   "source": "台湾 N-4-1 · 一亿以内",
+   "fun": false
+  },
+  {
+   "id": "L13-020",
+   "pool": "place:g13:wan",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "305 万写成数字，是几？",
+    "text": "□",
+    "why": "305 个万，后面 4 个 0，是 3050000"
+   },
+   "ans": 3050000,
+   "kind": "填空",
+   "source": "台湾 N-4-1 · 一亿以内",
+   "fun": false,
+   "check": {
+    "expr": "305*10000",
+    "from": "10000"
+   }
+  },
+  {
+   "id": "L13-021",
+   "pool": "place:g13:round",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "4826 四舍五入到百位是几？",
+    "text": "□",
+    "why": "十位 2 小于 5，舍去，是 4800"
+   },
+   "ans": 4800,
+   "kind": "填空",
+   "source": "新加坡 P4 · 取整",
+   "fun": false,
+   "check": {
+    "manual": "十位是 2"
+   }
+  },
+  {
+   "id": "L13-022",
+   "pool": "place:g13:round",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "67350 四舍五入到千位是几？",
+    "text": "□",
+    "why": "百位 3 小于 5，舍去，是 67000"
+   },
+   "ans": 67000,
+   "kind": "填空",
+   "source": "新加坡 P4 · 取整",
+   "fun": false,
+   "check": {
+    "manual": "百位是 3"
+   }
+  },
+  {
+   "id": "L13-023",
+   "pool": "place:g13:round",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "39650 四舍五入到千位是几？",
+    "text": "□",
+    "why": "百位 6 大于 5，进一，是 40000"
+   },
+   "ans": 40000,
+   "kind": "填空",
+   "source": "新加坡 P4 · 取整",
+   "fun": false,
+   "check": {
+    "manual": "百位是 6"
+   }
+  },
+  {
+   "id": "L13-024",
+   "pool": "dock:g13:est",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "每箱约 48 瓶，198 箱。估算：约 50 瓶、200 箱，共约几瓶？",
+    "text": "□",
+    "why": "50 × 200 = 10000"
+   },
+   "ans": 10000,
+   "kind": "应用题",
+   "source": "台湾 N-3-8 · 估算",
+   "fun": false,
+   "check": {
+    "expr": "50*200"
+   }
+  },
+  {
+   "id": "L13-025",
+   "pool": "dock:g13:unit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "5 本书 85 元。同样的书 12 本要几元？",
+    "text": "□",
+    "why": "85 ÷ 5 = 17，17 × 12 = 204"
+   },
+   "ans": 204,
+   "kind": "应用题",
+   "source": "中国大陆 · 归一问题",
+   "fun": false,
+   "check": {
+    "expr": "85/5*12"
+   }
+  },
+  {
+   "id": "L13-026",
+   "pool": "dock:g13:speed",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小船 3 小时行 96 千米。照这样 7 小时行几千米？",
+    "text": "□",
+    "why": "96 ÷ 3 = 32，32 × 7 = 224"
+   },
+   "ans": 224,
+   "kind": "长度重量",
+   "source": "中国大陆 · 路程 = 速度 × 时间",
+   "fun": false,
+   "check": {
+    "expr": "96/3*7"
+   }
+  },
+  {
+   "id": "L13-027",
+   "pool": "dock:g13:three",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "每盒 24 个，买 15 盒，分给 6 个班。每班几个？",
+    "text": "□",
+    "why": "24 × 15 = 360，360 ÷ 6 = 60"
+   },
+   "ans": 60,
+   "kind": "应用题",
+   "source": "台湾 N-4-3 · 两步（乘除）",
+   "fun": false,
+   "check": {
+    "expr": "24*15/6"
+   }
+  },
+  {
+   "id": "L13-028",
+   "pool": "market:g13:km",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 千米是 1000 米。跑道 400 米，跑 15 圈是几千米？",
+    "text": "□",
+    "why": "400 × 15 = 6000 米，是 6"
+   },
+   "ans": 6,
+   "kind": "长度重量",
+   "source": "台湾 N-4-9 · 公里",
+   "fun": false,
+   "check": {
+    "expr": "400*15/1000"
+   }
+  },
+  {
+   "id": "L13-029",
+   "pool": "market:g13:t",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 吨是 1000 千克。8 吨比 3500 千克多几千克？",
+    "text": "□",
+    "why": "8000 − 3500 = 4500"
+   },
+   "ans": 4500,
+   "kind": "长度重量",
+   "source": "韩国 [4수03-22] · 吨",
+   "fun": false,
+   "check": {
+    "expr": "8*1000-3500"
+   }
+  },
+  {
+   "id": "L13-030",
+   "pool": "market:g13:cross",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "22 点 40 分开船，第二天 6 点 10 分到。走了几分钟？",
+    "text": "□",
+    "why": "到 24 点要 80 分钟，再 370 分钟，共 450"
+   },
+   "ans": 450,
+   "kind": "时间",
+   "source": "台湾 N-4-13 · 跨日时间",
+   "fun": false,
+   "check": {
+    "expr": "(24-22)*60-40+6*60+10"
+   }
+  },
+  {
+   "id": "L13-031",
+   "pool": "shape:g13:deg",
+   "input": "write",
+   "q": {
+    "view": "angle",
+    "say": "平角是 180 度。平角里有一个 65 度的角，另一个是几度？",
+    "text": "□",
+    "data": {
+     "angles": [
+      65,
+      null
+     ]
+    },
+    "why": "180 − 65 = 115"
+   },
+   "ans": 115,
+   "kind": "几何",
+   "source": "台湾 N-4-10 · 角度",
+   "fun": false,
+   "newView": "angle",
+   "check": {
+    "expr": "180-65"
+   }
+  },
+  {
+   "id": "L13-032",
+   "pool": "shape:g13:deg",
+   "input": "write",
+   "q": {
+    "view": "angle",
+    "say": "周角是 360 度。钟面上 12 个数字，相邻两个隔几度？",
+    "text": "□",
+    "data": {
+     "clock": 1
+    },
+    "why": "360 ÷ 12 = 30"
+   },
+   "ans": 30,
+   "kind": "几何",
+   "source": "台湾 S-4-2 · 旋转角",
+   "fun": false,
+   "newView": "angle",
+   "check": {
+    "expr": "360/12"
+   }
+  },
+  {
+   "id": "L13-033",
+   "pool": "shape:g13:deg",
+   "input": "write",
+   "q": {
+    "view": "clock5",
+    "say": "分针从 12 走到 3，转了几度？",
+    "text": "□",
+    "h": 12,
+    "m": 15,
+    "why": "3 格，每格 30 度，是 90"
+   },
+   "ans": 90,
+   "kind": "几何",
+   "source": "台湾 S-4-2 · 旋转角",
+   "fun": false,
+   "check": {
+    "expr": "360/12*3"
+   }
+  },
+  {
+   "id": "L13-034",
+   "pool": "chart:g13:bar",
+   "input": "write",
+   "q": {
+    "view": "chart",
+    "say": "看条形图：三个月一共几元？",
+    "text": "□",
+    "data": {
+     "labels": [
+      "一月",
+      "二月",
+      "三月"
+     ],
+     "vals": [
+      1200,
+      950,
+      1450
+     ]
+    },
+    "why": "1200 + 950 + 1450 = 3600"
+   },
+   "ans": 3600,
+   "kind": "图表",
+   "source": "台湾 D-4-1 · 长条图",
+   "fun": false,
+   "newView": "chart",
+   "check": {
+    "expr": "1200+950+1450"
+   }
+  },
+  {
+   "id": "L13-035",
+   "pool": "garden:g13:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "999 + 999 + 999 + 3 等于几？",
+    "text": "□",
+    "why": "每个 999 补 1，用掉 3，是 3000"
+   },
+   "ans": 3000,
+   "kind": "趣味",
+   "source": "思维专题 · 速算巧算",
+   "fun": true,
+   "check": {
+    "expr": "999+999+999+3"
+   }
+  },
+  {
+   "id": "L13-036",
+   "pool": "garden:g13:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "250 × 8 × 125 × 4 等于几？",
+    "text": "□",
+    "why": "250 × 4 = 1000，125 × 8 = 1000，是 1000000"
+   },
+   "ans": 1000000,
+   "kind": "趣味",
+   "source": "思维专题 · 速算巧算",
+   "fun": true,
+   "check": {
+    "expr": "250*8*125*4"
+   }
+  },
+  {
+   "id": "L13-037",
+   "pool": "garden:g13:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "笼里 30 个头、86 条腿，有鸡有兔。兔有几只？",
+    "text": "□",
+    "why": "都当鸡是 60 条，多 26 条，26 ÷ 2 = 13"
+   },
+   "ans": 13,
+   "kind": "趣味",
+   "source": "思维专题 · 鸡兔同笼",
+   "fun": true,
+   "check": {
+    "legs": {
+     "heads": 30,
+     "legs": 86,
+     "a": 2,
+     "b": 4,
+     "ask": "b"
+    }
+   }
+  },
+  {
+   "id": "L13-038",
+   "pool": "garden:g13:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "排成 8 × 8 的方阵，最外一圈几人？",
+    "text": "□",
+    "why": "(8 − 1) × 4 = 28"
+   },
+   "ans": 28,
+   "kind": "趣味",
+   "source": "思维专题 · 方阵",
+   "fun": true,
+   "check": {
+    "expr": "(8-1)*4"
+   }
+  },
+  {
+   "id": "L13-039",
+   "pool": "garden:g13:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "甲比乙大 24 岁。5 年后甲是乙的 3 倍。乙现在几岁？",
+    "text": "□",
+    "why": "差 24 是 2 份，5 年后乙 12 岁，12 − 5 = 7"
+   },
+   "ans": 7,
+   "kind": "趣味",
+   "source": "思维专题 · 年龄",
+   "fun": true,
+   "check": {
+    "expr": "24/(3-1)-5"
+   }
+  },
+  {
+   "id": "L13-040",
+   "pool": "garden:g13:code",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ × □ × □ = 216",
+    "why": "6 × 6 × 6 = 216，是 6"
+   },
+   "ans": 6,
+   "kind": "谜题",
+   "source": "思维专题 · 算式谜",
+   "fun": true,
+   "check": {
+    "digit": {
+     "expr": "□ * □ * □ = 216"
+    }
+   }
+  },
+  {
+   "id": "L13-041",
+   "pool": "garden:g13:week",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "某月 1 日是星期二，这个月 30 天。30 日是星期几？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "星期三",
+     "星期四",
+     "星期二"
+    ],
+    "why": "过了 29 天，4 周多 1 天，是星期三"
+   },
+   "ans": 1,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 日历周期",
+   "fun": true,
+   "newView": "choice",
+   "check": {
+    "mod7": [
+     2,
+     29
+    ]
+   }
+  }
+ ]
+}
