@@ -13,23 +13,27 @@
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
 
   // 没存过 → 空白；损坏 → null（调用方用副本恢复，不能当空白覆盖）
+  const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
   function parse(text) {
     if (text === null || text === undefined) return blank();
     let o; try { o = JSON.parse(text); } catch (e) { return null; }
-    if (!o || typeof o !== 'object' || Array.isArray(o)) return null;
-    const b = blank();
-    return Object.assign(b, o, {inv: Object.assign(b.inv, o.inv), seen: Object.assign(b.seen, o.seen)});
+    if (!isObj(o)) return null;
+    // 字段类型不对也算损坏：碎片数据出问题不能挡住练习
+    const has = k => o[k] === undefined || isObj(o[k]);
+    if (!['inv', 'days', 'seen', 'lvMax', 'sent'].every(has)) return null;
+    const b = blank(), inv = Object.assign(b.inv, o.inv), seen = Object.assign(b.seen, o.seen);
+    if (!['s', 'm', 'l'].every(t => Number.isInteger(inv[t]) && inv[t] >= 0) || !isObj(seen.keys) || !isObj(seen.cells)) return null;
+    if (!Object.values(o.days || {}).every(isObj) || (o.tickets !== undefined && !Number.isInteger(o.tickets))) return null;
+    return Object.assign(b, o, {inv, seen});
   }
   function prune(st, today) {
     const old = Object.keys(st.days).filter(d => d <= today).sort();
     old.slice(0, Math.max(0, old.length - KEEP_DAYS)).forEach(d => { delete st.days[d]; delete st.sent[d]; });
   }
 
-  // 去重 key：秒答题型只看两个数（老流程的题没有 op）；其他和错题本同一个编号
+  // 去重 key：和秒答下架同一个编号（秒答题型只看两个数，老流程的题没有 op）
   function key(inst) {
-    const it = K.ITEM[inst.id], s = it && K.BY[it.skill];
-    if (it && it.gen && s.speed) return inst.id + '|' + inst.q.a + ',' + inst.q.b;
-    return it ? K.mkey(inst) : inst.id;
+    return K.ITEM[inst.id] ? E.qkey(inst) : inst.id;
   }
   const cellOf = o => o.cell || o.inst.id;
   function seenToday(st, day) {

@@ -14,9 +14,9 @@
   function init(ctx) {
     c = ctx;
     on = ctx.enabled;
-    if (!on) return api;
+    if (!on) return;
     st = G.parse(ctx.store.getItem(ctx.key));
-    if (!st) { on = false; return api; }   // 损坏：不覆盖，等 App 外壳用副本恢复
+    if (!st) { on = false; return; }   // 损坏：不覆盖，等 App 外壳用副本恢复
     G.prune(st, c.today());
     syncNow();
     c.$('forgeList').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) add(b.dataset.add); });
@@ -26,7 +26,6 @@
     c.$('forgeBack').addEventListener('click', () => { if (busy) return; if (back === 'island') c.goIsland(); else c.show(back); });
     addEventListener('resize', () => { if (c.cur() === 'forge') layoutScene(); });
     window.__kongEarnFailed = () => { st.sent = {}; save(); msg = '没有找到空空矿场'; if (c.cur() === 'forge') draw(); };
-    return api;
   }
 
   // ---------- 记作答：判定一出来就调，在显示答案和存进度之前 ----------
@@ -53,7 +52,7 @@
 
   // ---------- 结算页的碎片区块 ----------
   function summary(run, day, opts) {
-    if (!on) return '';
+    if (!on || !c.canWrite() || run.kind === 'boss' || run.kind === 'scan' || run.kind === 'final') return '';   // Boss、摸底不算；只读时不结算
     opts = opts || {};
     const set = G.settle(st, day), g = run.gem || {s: 0, m: 0};
     let ticket = false;
@@ -62,9 +61,9 @@
     const more = opts.todayRun && S().daily && S().daily.done && c.E.hasMore(S(), c.today());
     return `<div class="gemsum">
       <b>这次的碎片</b>
-      <div class="gemline">${chip('s')} +${g.s}　${chip('m')} +${g.m}${set.bonus ? `　认真奖励 ${'★'.repeat(set.stars)} ${chip('m')} +${set.bonus}` : ''}${ticket ? '　挑战券 +1' : ''}</div>
-      <div class="gemline muted">背包：${chip('s')} ${st.inv.s}　${chip('m')} ${st.inv.m}　${chip('l')} ${st.inv.l}　挑战券 ${st.tickets}</div>
-      <div class="gembtns"><button class="btn go" data-gem="forge">去锻造</button>${more ? '<button class="btn" data-gem="more">再练一会 · 得 1 张挑战券</button>' : ''}${st.tickets > 0 ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
+      <div class="gemline">${chip('s')}<span>+${g.s}</span>${chip('m')}<span>+${g.m}</span>${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
+      <div class="gemline muted"><span>背包</span>${chip('s')}<span>${st.inv.s}</span>${chip('m')}<span>${st.inv.m}</span>${chip('l')}<span>${st.inv.l}</span><span>挑战券 ${st.tickets}</span></div>
+      <div class="gembtns"><button class="btn go" data-gem="forge">去锻造</button>${more ? `<button class="btn" data-gem="more">${S().oral ? '再练一会' : '再练一会 · 得 1 张挑战券'}</button>` : ''}${st.tickets > 0 && !S().oral ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
     </div>`;
   }
   function bind(root, from) {
@@ -73,15 +72,16 @@
       const a = b.dataset.gem;
       if (a === 'forge') openForge(from);
       if (a === 'more') c.begin(() => c.startQ('today', {extra: 300}));
-      if (a === 'challenge') challenge();
+      if (a === 'challenge') challenge(b);
     }));
   }
 
   // ---------- 挑战：进入就扣券并存盘 ----------
-  function challenge() {
-    if (!on || S().oral) return;
+  function challenge(btn) {
+    if (!on || S().oral || !c.canWrite()) return;
     const qs = G.pickChallenge(S(), G.top(st, auto()), Math.random, st);
-    if (qs.length < G.CH_N || !G.startChallenge(st)) { msg = ''; return; }
+    if (qs.length < G.CH_N) { if (btn) { btn.textContent = '暂时没有挑战题'; btn.disabled = true; } return; }
+    if (!G.startChallenge(st)) return;
     save();
     let i = 0;
     c.begin(() => c.startQ('challenge', {sess: {next: () => (i < qs.length ? {kind: 'q', inst: qs[i++], seg: 'challenge'} : null), answer: () => null}}));
@@ -116,10 +116,12 @@
 
   // ---------- 声音：和家里一样用系统合成，不带音频文件 ----------
   let AC = null;
-  function blip(notes, type) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); notes.forEach(([f, t, d]) => { const o = AC.createOscillator(), a = AC.createGain(); o.type = type || 'square'; o.frequency.value = f; a.gain.value = 0.05; o.connect(a); a.connect(AC.destination); o.start(AC.currentTime + t); a.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + t + d); o.stop(AC.currentTime + t + d); }); } catch (e) {} }
+  function blip(notes, type) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state !== 'running') AC.resume(); notes.forEach(([f, t, d]) => { const o = AC.createOscillator(), a = AC.createGain(); o.type = type || 'square'; o.frequency.value = f; a.gain.value = 0.05; o.connect(a); a.connect(AC.destination); o.start(AC.currentTime + t); a.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + t + d); o.stop(AC.currentTime + t + d); }); } catch (e) {} }
 
   // ---------- 飞行动画 ----------
   const wait = ms => new Promise(r => setTimeout(r, ms));
+  // 动画被系统暂停（切到矿场再回来）时 finished 可能一直不结束：到点就往下走
+  const settled = (an, ms) => Promise.race([an.finished.catch(() => {}), wait(ms + 500)]);
   const centre = el => { const b = el.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; };
   function flyImg(url, from, to, size, ms, lift) {
     const e = document.createElement('img'); e.src = url; e.className = 'flying'; e.style.width = size + 'px';
@@ -127,7 +129,7 @@
     const [x0, y0] = from, [x1, y1] = to, mx = (x0 + x1) / 2, my = Math.min(y0, y1) - (lift === undefined ? 60 : lift);
     const at = (x, y, sc, rot) => ({transform: `translate(${x - size / 2}px,${y - size / 2}px) scale(${sc}) rotate(${rot}deg)`});
     const an = e.animate([at(x0, y0, 1, 0), at(mx, my, 1.15, 160), at(x1, y1, 0.8, 340)], {duration: ms, easing: 'cubic-bezier(.3,.1,.5,1)'});
-    return an.finished.catch(() => {}).then(() => e.remove());
+    return settled(an, ms).then(() => e.remove());
   }
 
   // ---------- 场景：石墙、熔炉、铁砧、小人和小狗，一直在动 ----------
@@ -189,7 +191,7 @@
 
   // ---------- 锻造台：炉子里不显示合计，要自己算 ----------
   let busy = false, hold = 0;
-  function openForge(from) { if (!on) return; back = from || 'island'; slots = []; msg = ''; c.show('forge'); draw(); startScene(); }
+  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; c.show('forge'); draw(); startScene(); }
   const placed = t => slots.filter(x => x === t).length;
   function add(t) {
     if (busy) return;
@@ -207,8 +209,10 @@
     const r = {s: placed('s'), m: placed('m'), l: placed('l')}, res = G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
     if (!res.ok && res.why !== 'short') { if (res.why === 'daily') msg = `今天已炼 ${G.DAY_MAX} 颗，碎片留到明天`; return draw(); }
     if (res.ok) { save(); hold = 1; }
+    const done = res.ok ? `得到宝石 1，废料 ${res.waste}` : `还差 ${res.short}，碎片退回`;
     busy = true; msg = ''; c.$('forgeMsg').textContent = ''; const cells = [...c.$('forgeSlots').children], list = slots.slice(), root = c.$('forge');
     root.classList.add('working');
+    try {
     // 碎片一个个飞进炉膛
     await Promise.all(list.map((t, i) => wait(i * 55).then(() => { const cell = cells[i], x = centre(cell); const f = cell.querySelector('.frag'); if (f) f.style.visibility = 'hidden'; blip([[300 + i * 30, 0, 0.05]]); fire.heat = Math.min(1, fire.heat + 0.09); return flyImg(shardURL(t), x, mouth(), 30, 300).then(() => spark(3, fire.fx + 17, fire.fy + 20, ['#f2c14e', '#e0762a'], 1)); })));
     slots = []; draw();
@@ -217,7 +221,6 @@
       blip([[110, 0, 0.18], [80, 0.15, 0.22]], 'sawtooth'); smoke(26); fire.heat = 0.1;
       root.classList.add('shake'); await wait(260); root.classList.remove('shake');
       await Promise.all(list.map((t, i) => wait(i * 25).then(() => flyImg(shardURL(t), mouth(), centre(c.$('forgeList').querySelector(`[data-add="${t}"] img`)), 30, 280))));
-      msg = `还差 ${res.short}，碎片退回`;
     } else {
       // 够：抡三锤，火星四溅，宝石蹦出来
       fire.work = true;
@@ -229,9 +232,9 @@
       blip([[660, 0, 0.1], [880, 0.09, 0.1], [1320, 0.18, 0.22]]);
       await gemPop();
       if (res.waste) { blip([[160, 0, 0.1]], 'triangle'); await Promise.all([0, 1, 2].map(i => wait(i * 70).then(() => flyImg(SLAG(), mouth(), bucketPt(), 16, 360, 14)))); spark(8, fire.W - 12, fire.floor - 16, ['#6c6f76', '#9a9da4'], 0.8); }
-      msg = `得到宝石 1，废料 ${res.waste}`;
     }
-    root.classList.remove('working'); busy = false; draw();
+    } catch (e) { /* 动画出错不影响结果：碎片和宝石开始前已存好 */ }
+    fire.work = false; hold = 0; slots = []; msg = done; root.classList.remove('working', 'shake'); busy = false; draw();
     c.$('forgeMsg').classList.remove('pop'); void c.$('forgeMsg').offsetWidth; c.$('forgeMsg').classList.add('pop');
   }
   const SLAG = () => URLS.slag || (URLS.slag = px(['.aab.', 'aaabb', 'abbbb', '.bbb.'], {a: '#8a8d94', b: '#55585f'}, 4).toDataURL());
@@ -240,9 +243,9 @@
     document.body.appendChild(e);
     const [mx, my] = mouth(), to = centre(c.$('forgeToday')), cy = Math.max(70, my - 110);
     const place = (x, y, s) => ({transform: `translate(${x - 60}px,${y - 60}px) scale(${s})`});
-    await e.animate([place(mx, my, 0.2), place(mx, cy, 1.25), place(mx, cy, 1)], {duration: 520, easing: 'cubic-bezier(.2,1.5,.4,1)', fill: 'forwards'}).finished.catch(() => {});
+    await settled(e.animate([place(mx, my, 0.2), place(mx, cy, 1.25), place(mx, cy, 1)], {duration: 520, easing: 'cubic-bezier(.2,1.5,.4,1)', fill: 'forwards'}), 520);
     await wait(320);
-    await e.animate([place(mx, cy, 1), place(to[0], to[1], 0.25)], {duration: 300, easing: 'ease-in', fill: 'forwards'}).finished.catch(() => {});
+    await settled(e.animate([place(mx, cy, 1), place(to[0], to[1], 0.25)], {duration: 300, easing: 'ease-in', fill: 'forwards'}), 300);
     e.remove();
     hold = 0; draw(); const t = c.$('forgeToday'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
   }
@@ -273,6 +276,9 @@
   // 答题时碎片从屏幕中间飞向顶部
   function floatShard(t) { try { const to = c.$('qMined') && c.$('qMined').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], t === 'm' ? 28 : 20, 480, 30); if (t === 'm') blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
 
-  const api = {init, enabled: () => on, syncNow, answerQ, answerP, summary, bind, openForge, finishChallenge, state: () => st};
+  // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
+  const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
+  const api = {init: safe(init), enabled: () => on, syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+    finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();

@@ -30,12 +30,17 @@ enum ProgressBackup {
 
     /// 主存档缺失或损坏的快照不写入：好的副本不能被坏数据冲掉。返回是否写入
     static func save(_ json: String) -> Bool {
-        guard let data = json.data(using: .utf8),
-              let map = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+        guard var data = json.data(using: .utf8),
+              var map = try? JSONSerialization.jsonObject(with: data) as? [String: String],
               let main = map["speedmap.v2"]?.data(using: .utf8),
               (try? JSONSerialization.jsonObject(with: main)) is [String: Any] else { return false }
-        // 碎片单独存一个键，它坏了也不能冲掉好的副本
-        if let gems = map["speedmap.gems"]?.data(using: .utf8), !((try? JSONSerialization.jsonObject(with: gems)) is [String: Any]) { return false }
+        // 碎片单独存一个键：它坏了不能冲掉副本里好的那份，也不能让主进度停更
+        if let gems = map["speedmap.gems"]?.data(using: .utf8), !((try? JSONSerialization.jsonObject(with: gems)) is [String: Any]) {
+            let old = (try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
+            map["speedmap.gems"] = old?["speedmap.gems"]
+            guard let fixed = try? JSONSerialization.data(withJSONObject: map) else { return false }
+            data = fixed
+        }
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         return (try? data.write(to: url, options: .atomic)) != nil
     }
@@ -196,7 +201,7 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
             }
             // 碎片单独存：只有它缺失或损坏时也从副本恢复
             var gems = localStorage.getItem('speedmap.gems'), gemsBad = gems === null;
-            if (gems !== null) { try { JSON.parse(gems); } catch (e) { gemsBad = true; } }
+            if (gems !== null) { try { var g = JSON.parse(gems); gemsBad = !g || typeof g !== 'object' || Array.isArray(g); } catch (e) { gemsBad = true; } }
             if (saved && gemsBad && saved['speedmap.gems']) localStorage.setItem('speedmap.gems', saved['speedmap.gems']);
           } catch (e) {}
           var last = '';

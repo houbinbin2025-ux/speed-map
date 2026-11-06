@@ -32,6 +32,8 @@
   // 岛上小地图按钮只有 48 点宽、技能地图有 8 个标签，用短名字
   const SHORT = {看数: 'Count', 分合: 'Bonds', 数位: 'Place', 数线: 'Line', 规律: 'Pattern', 规律花园: 'Patterns', 钟楼集市: 'Market', 故事码头: 'Dock'};
   const D = {
+    // 碎片和锻造台（gemui.js）
+    小碎片: 'Small shard', 中碎片: 'Medium shard', 大碎片: 'Big shard', 这次的碎片: 'Shards this round', 背包: 'Backpack', 去锻造: 'Go to forge', 锻造: 'Forge', 领宝石: 'Claim gems', 再领一次: 'Claim again', 今天炼出: 'Forged today', 挑战: 'Challenge', 挑战结束: 'Challenge over', 先放碎片: 'Add shards first', 暂时没有挑战题: 'No challenge right now', 没有找到空空矿场: 'KongMine not found', 再练一会: 'Practice more', 返回: 'Back', 回到岛上: 'Back to the island',
     // 名字和地方
     空空数学岛: 'Kongkong Math Island', 空空: 'Kongkong', 空空的家: "Kongkong's Home", 家: 'Home',
     看数草原: 'Counting Meadow', 分合矿洞: 'Number Bond Mine', 数位村庄: 'Place Value Village', 比大小双塔: 'Compare Towers', 数线铁轨: 'Number Line Railway', 秒答高塔: 'Speed Tower', 规律花园: 'Pattern Garden', 钟楼集市: 'Clock Tower Market', 故事码头: 'Story Dock',
@@ -98,6 +100,7 @@
 
   // ---------- 正则模式（整句） ----------
   const P = [
+    [/^得 1 张挑战券$/, () => 'Earn 1 challenge ticket'], [/^认真奖励 (★+)$/, (m, a) => `Careful bonus ${a}`], [/^挑战券 (\+?\d+)$/, (m, a) => `Challenge tickets ${a}`], [/^大碎片 \+(\d+)$/, (m, a) => `Big shard +${a}`], [/^答对 (\d+) \/ (\d+) 题$/, (m, a, b) => `${a} / ${b} correct`], [/^炉子最多放 (\d+) 个$/, (m, a) => `The furnace holds ${a}`], [/^还差 (\d+)，碎片退回$/, (m, a) => `Short by ${a}. Shards returned`], [/^得到宝石 (\d+)，废料 (\d+)$/, (m, a, b) => `Got ${pl(a, 'gem')}, ${b} scrap`], [/^今天已炼 (\d+) 颗，碎片留到明天$/, (m, a) => `${pl(a, 'gem')} forged today. Shards keep for tomorrow`], [/^领 (\d+) 颗宝石$/, (m, a) => `Claim ${pl(a, 'gem')}`],
     // 应用题
     [new RegExp(`^${WHO}有 (\\d+) ${M}${THG}，又得到 (\\d+) ${M}。一共几${M}？$`), (m, w, a, t, b) => `${NAME[w]} has ${thing(a, t)} and gets ${b} more. How many in all?`],
     [new RegExp(`^${WHO}有 (\\d+) ${M}${THG}，送出 (\\d+) ${M}。还剩几${M}？$`), (m, w, a, t, b) => `${NAME[w]} has ${thing(a, t)} and gives away ${b}. How many are left?`],
