@@ -107,24 +107,23 @@ function fit() {
   $s.style.transform = `translate(-50%,-50%) scale(${s})`;
 }
 addEventListener('resize', fit);
-const hush = () => { try { speechSynthesis.cancel(); } catch (e) {} };
+const hush = () => o.stopSay();   // 朗读走页面的 sayIt（App 里是原生语音）
 document.addEventListener('visibilitychange', () => { if (document.hidden) hush(); });
 addEventListener('popstate', hush);
-function speak(t) { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/□/g, '空格').replace(/−/g, '减')); u.lang = 'zh-CN'; u.rate = .9; speechSynthesis.speak(u); } catch (e) {} }
 
 function enter(id) {
   G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = P.progress(o.S(), id).tier; G.tap = performance.now() + 500;
   o.show(); fit(); next();
 }
-function next() { try { speechSynthesis.cancel(); } catch (e) {} if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; render(); }
+function next() { hush(); if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; render(); }
 function earn() {   // 一题一块矿石；进度和矿石马上存，中途退出不丢
   if (G.got) return; G.got = true; G.ore++; const n = $s.querySelector('#oreN'); if (n) n.textContent = G.ore;
   G.note = '';
   if (P.record(o.S(), G.mod.id, G.tier)) {
     const last = G.tier === G.mod.tiers.length - 1, all = P.progress(o.S(), G.mod.id).passed === G.mod.tiers.length;
     if (!last) G.up = true;
-    G.note = all ? `。${G.mod.name}全部学会了` : last ? '' : `。学会了，下一个：${G.mod.tiers[G.tier + 1]}`;
-    const f = $s.querySelector('#fb'); if (f) setTimeout(() => { if (G.note) f.textContent += G.note; G.note = ''; }, 0);
+    G.note = all ? `${G.mod.name}全部学会了` : last ? '' : `学会了，下一个：${G.mod.tiers[G.tier + 1]}`;
+    const f = $s.querySelector('#fb'); if (f && G.note) setTimeout(() => { const t = document.createElement('div'); t.textContent = G.note; f.appendChild(t); G.note = ''; }, 0);
   }
   paintTabs();
   o.earn(1);
@@ -140,9 +139,8 @@ function tabsHtml() {   // 没开放的技能点不了；当前技能显示还�
   return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > pr.tier ? 'disabled' : ''}>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</button>`).join('');
 }
 function shell(say, sub) {
-  $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
-  $s.querySelector('#back').onclick = () => { try { speechSynthesis.cancel(); } catch (e) {} o.onExit(); };
-  $s.querySelector('#say').onclick = () => speak(say + '。' + (sub || ''));
+  $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
+  $s.querySelector('#back').onclick = () => { hush(); o.onExit(); };
   paintTabs();
   return $s.querySelector('#main');
 }
@@ -190,7 +188,7 @@ function rBalance() {
   const q = G.q, kind = q.kind;
   const say = {judge: '两边一样重吗', fill: '填几，两边才一样重', two: '填两个数，让两边一样重', blind: '先想好，填上再称'}[kind];
   const sideSay = t => t.map(x => x === null ? '空格' : x).join(' 加 '), sayEq = `${sideSay(q.left)} 等于 ${sideSay(q.right)}`;
-  const m = shell(say, kind === 'judge' ? q.left.join('加') + ' 和 ' + q.right.join('加') : sayEq), s = G.st; s.vals = s.vals || [];
+  const m = shell(say, kind === 'judge' ? q.left.join(' 加 ') + ' 和 ' + q.right.join(' 加 ') : sayEq), s = G.st; s.vals = s.vals || [];
   const nSlots = kind === 'two' ? 2 : (kind === 'judge' ? 0 : 1);
   const veiled = kind === 'judge' || kind === 'blind';
   m.innerHTML = `<div class="col" style="width:470px"><div class="say">${say}</div><div class="eq" id="eq"></div><div class="grow"><div class="scalewrap">${scaleSvg()}${veiled ? '<div class="veil" id="veil">答完再称</div>' : ''}</div></div></div>
@@ -227,7 +225,7 @@ const exprText = q => q.reduce((s, it, i) => s + (i ? ` ${it.sign} ` : '') + it.
 function rTarget() {
   const q = G.q, s = G.st; s.expr = []; s.sign = '+'; s.found = []; s.keys = [];
   const say = `用这些数字凑出 ${q.target}`, rule = '每个数字只能用一次，不用全部用完', m = shell(say, rule);
-  m.innerHTML = `<div class="col" style="width:400px;gap:8px"><div class="target"><span>${say.replace(String(q.target), '').trim()}</span><b>${q.target}</b></div><div class="sub">${rule}</div>
+  m.innerHTML = `<div class="col" style="width:400px;gap:8px"><div class="target"><span>${'用这些数字凑出'}</span><b>${q.target}</b></div><div class="sub">${rule}</div>
     <div class="expr" id="expr"></div><div class="found" id="found"></div></div>
    <div class="col" style="flex:1;gap:8px"><div class="ores">${q.cards.map((c, i) => `<button data-i="${i}">${c}</button>`).join('')}</div>
     ${q.minus ? '<div class="signs"><button id="sp" class="on">+</button><button id="sm">−</button></div>' : ''}

@@ -6,7 +6,7 @@ root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out
 url = (root / 'v2' / 'index.html').as_uri() + '#test'
 SIZES = [(932, 430), (844, 390), (667, 375), (874, 297), (1180, 820)]
 known = {k: True for k in ['look1', 'look2', 'look3', 'look4', 'bond1', 'cmp1']}
-seed = {'v': 2, 'savedAt': 0, 'cards': {'keep': {'lv': 2}}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'known': known, 'oral': True}
+seed = {'v': 2, 'savedAt': 0, 'cards': {'keep': {'lv': 2}}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'known': known, 'oral': True, 'settings': {'bilingual': False}}
 ALL = {'balance': [3, 3, 3, 3], 'target': [3, 3, 3], 'clue': [3, 3, 3, 3], 'block': [3, 3, 3, 3]}
 fails, errs = [], []
 def check(ok, msg):
@@ -149,6 +149,29 @@ with sync_playwright() as p:
     check(not dup, f'页面有重名 id {dup}')
     # 右滑返回
     enter(pg, 'clue'); pg.evaluate('history.back()'); pg.wait_for_timeout(500); check(pg.is_visible('#island'), '右滑回到岛上'); pg.close()
+    # 英文日：四个地点全部技能，题面 / 不会 / 做对都不能有中文、不能叠字出屏；朗读文字也是英文
+    ZHA = "(() => { const ZH = /[\\u3000-\\u303f\\u3400-\\u9fff\\uff00-\\uffef]/, out = []; const w = document.createTreeWalker(document.getElementById('think'), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (ZH.test(n.data) && n.parentElement.offsetParent) out.push(n.data.trim()); document.querySelectorAll('#think [data-say],#think [aria-label]').forEach(el => ['data-say', 'aria-label'].forEach(a => { const v = el.getAttribute(a); if (v && ZH.test(v)) out.push(a + ':' + v); })); return out; })()"
+    for W, H in [(844, 390), (874, 297)]:
+        pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True); pg.on('pageerror', lambda e: errs.append('英文 ' + str(e)))
+        S = {k: v for k, v in seed.items() if k != 'settings'}; S['think'] = ALL
+        pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(S))})"); pg.reload(); pg.wait_for_timeout(500)
+        en = pg.evaluate("document.documentElement.lang") == 'en'
+        if not en:   # 今天是双日：测试条往后调 1 天
+            pg.evaluate("[...document.querySelectorAll('#testBar button')].find(x => x.textContent.includes('+1')).click()"); pg.wait_for_timeout(600)
+        check(pg.evaluate("document.documentElement.lang") == 'en', f'{W}x{H} 没进英文日')
+        for mod, n in [('balance', 4), ('target', 3), ('clue', 4), ('block', 4)]:
+            enter(pg, mod)
+            for t in range(n):
+                if pg.evaluate('__sm.TH.G.tier') != t: tap(pg, f'[data-t="{t}"]'); pg.wait_for_timeout(650)
+                tag = f'英文 {W}x{H} {mod}{t}'; pg.wait_for_timeout(120); layout(pg, tag + ' 题面'); z = pg.evaluate(ZHA); check(not z, f'{tag} 题面有中文 {z[:4]}')
+                pg.screenshot(path=str(out / f'en-{W}-{mod}{t}-q.png'))
+                wrong(pg, mod); pg.wait_for_timeout(120); z = pg.evaluate(ZHA); check(not z, f'{tag} 答错有中文 {z[:4]}'); layout(pg, tag + ' 答错')
+                if not done(pg): tap(pg, '#dunno'); pg.wait_for_timeout(700)
+                z = pg.evaluate(ZHA); check(not z, f'{tag} 不会有中文 {z[:4]}'); layout(pg, tag + ' 不会'); pg.screenshot(path=str(out / f'en-{W}-{mod}{t}-dunno.png'))
+                tap(pg, '#cont'); pg.wait_for_timeout(650); solve(pg, mod); pg.wait_for_timeout(120)
+                z = pg.evaluate(ZHA); check(not z, f'{tag} 做对有中文 {z[:4]}'); layout(pg, tag + ' 做对'); pg.wait_for_timeout(550)
+            tap(pg, '#back'); pg.wait_for_timeout(300)
+        pg.close()
     b.close()
 print('错误', errs or '无'); print('不通过', fails or '无')
 sys.exit(1 if fails or errs else 0)

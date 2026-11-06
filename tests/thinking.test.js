@@ -121,3 +121,21 @@ test('导入进度只增不减：思维进度按技能取大，本机和备份�
   const N = C.blank(); N.think = {balance: [2, 0, 0, 0]};
   assert.deepStrictEqual(C.importMerge(C.blank(), C.exportText(N)).think, {balance: [2, 0, 0, 0]}, '新设备导入带上思维进度');
 });
+test('思维模块孩子能看到的文字都有英文（单双日语言）', () => {
+  const I = require(path.join(__dirname, '..', 'v2', 'i18n.js')), W = require(path.join(__dirname, '..', 'v2', 'world.js'));
+  const src = require('node:fs').readFileSync(path.join(__dirname, '..', 'v2', 'thinking.js'), 'utf8');
+  const out = [];
+  // 源码里的中文文字：字符串字面量和标签之间的字（带 ${} 的动态句子在下面单独列；朗读拼算式用的「空格」「加」「和」不上屏）
+  const tagText = [...src.matchAll(/>([^<>`'$\{\}]*[\u4e00-\u9fff][^<>`'$\{\}]*)</g)].map(m => m[1].trim());
+  const lits = [...src.matchAll(/'([^'\n<>$]*[\u4e00-\u9fff][^'\n<>$]*)'/g)].map(m => m[1].trim());
+  [...tagText, ...lits].filter(t => t && !/^(空格|加|和|等于|左边|右边|小|大)$/.test(t)).forEach(t => out.push(t));
+  P.MODULES.forEach(m => { out.push(m.name, m.name + '全部学会了'); m.tiers.forEach(t => out.push(t, t + ' 2/3', t + ' ✓', '学会了，下一个：' + t)); });
+  W.ZONES.filter(z => P.modOf(z.id)).forEach(z => out.push(z.name, z.short));
+  out.push('学会 1 / 4 个技能', '两边都是 7，一样重', '左边 9，右边 11，不一样重', '两边都是 7，桥放平了', '左边重了，填小一点', '右边重了，填大一点', '右边重了，换两个数', '填 3，两边都是 9', '答案不止一种，比如 2 和 5，两边都是 7',
+    '这题有 3 种凑法', '已找到 1 种，共 3 种', '5 + 2 是 7，不是 8', '9 − 1 + 3 是 11，不是 8', '比如 9 + 1 − 2 = 8', '用这些数字凑出 12', '每行、每列，1 到 3 各一个', '每行、每列、每个粗线框，1 到 4 各一个', '这一行或这一列已经有 3 了', '还差 2 块',
+    '比 5 大', '比 8 小', '不是 16', '有 1 个十', '16 不符合「比 8 小」', '小狗在 7 号木箱', '只有 7 符合全部线索',
+    '两边一样重吗。7 加 4 和 3 加 8', '填几，两边才一样重。3 加 空格 等于 5 加 6', '填两个数，让两边一样重。空格 加 空格 等于 1 加 6', '先想好，填上再称。4 加 空格 等于 7 加 2', '用这些数字凑出 12。每个数字只能用一次，不用全部用完', '小狗藏在哪个木箱。比 5 大，不是 7', '哪一个是它转过来的样子。不能翻面，只能转');
+  const r = P.rng(5); for (let i = 0; i < 300; i++) P.dog(r).clues.forEach(c => out.push(c));
+  const bad = [...new Set(out.filter(t => I.ZH.test(I.text(t))))];
+  assert.deepStrictEqual(bad.slice(0, 30), []);
+});
