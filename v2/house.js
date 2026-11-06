@@ -423,15 +423,16 @@
   function setCam(x) { camX = x; world.style.transform = `translate3d(${-Math.round(camX)}px,0,0)`; nav(); }
   function panTo(x, ms, done) { const a = camX, b = Math.max(0, Math.min(maxX, x)), t0 = performance.now(); ms = ms || 260; const st = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); setCam(a + (b - a) * e); if (k < 1) requestAnimationFrame(st); else done && done(); }; requestAnimationFrame(st); }
   let drag = null, vx = 0, inert = 0;
-  vp.addEventListener('pointerdown', e => { cancelAnimationFrame(inert); drag = {x: e.clientX, y: e.clientY, cam: camX, t: performance.now(), moved: 0, lx: e.clientX, lt: performance.now()}; vx = 0; try { vp.setPointerCapture(e.pointerId); } catch (x) {} });
-  vp.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x; drag.moved = Math.max(drag.moved, Math.abs(dx)); const now = performance.now(); vx = (e.clientX - drag.lx) / Math.max(1, now - drag.lt); drag.lx = e.clientX; drag.lt = now; let c = drag.cam - dx; if (c < 0) c *= .35; if (c > maxX) c = maxX + (c - maxX) * .35; setCam(c); });
+  vp.addEventListener('pointerdown', e => { cancelAnimationFrame(inert); drag = {id: e.pointerId, x: e.clientX, y: e.clientY, cam: camX, t: performance.now(), moved: 0, lx: e.clientX, lt: performance.now()}; vx = 0; try { vp.setPointerCapture(e.pointerId); } catch (x) {} });
+  vp.addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x; drag.moved = Math.max(drag.moved, Math.abs(dx)); const now = performance.now(); vx = (e.clientX - drag.lx) / Math.max(1, now - drag.lt); drag.lx = e.clientX; drag.lt = now; let c = drag.cam - dx; if (c < 0) c *= .35; if (c > maxX) c = maxX + (c - maxX) * .35; setCam(c); });
   vp.addEventListener('pointerup', e => {
-    if (!drag) return; const d = drag; drag = null;
+    if (!drag || e.pointerId !== drag.id) return; const d = drag; drag = null;
+    if (window.TOUCHFIX && TOUCHFIX.multiSince(d.t) && d.moved < 14) { if (camX < 0 || camX > maxX) panTo(camX); return; }   // 同时有别的手指：搭着的手指抬起不算点
     if (d.moved < 14 && performance.now() - d.t < 700) { tap((e.clientX + camX) / P, e.clientY / P); return; }
     let v = -vx * 16; const st = () => { v *= .94; let c = camX + v; if (c < 0 || c > maxX) { c = Math.max(0, Math.min(maxX, c)); setCam(c); return; } setCam(c); if (Math.abs(v) > .5) inert = requestAnimationFrame(st); };
     if (camX < 0 || camX > maxX) panTo(camX); else st();
   });
-  vp.addEventListener('pointercancel', () => { drag = null; panTo(camX); });
+  vp.addEventListener('pointercancel', e => { if (drag && e.pointerId !== undefined && e.pointerId !== drag.id) return; drag = null; panTo(camX); });
 
   // ---------- 导航 ----------
   const NAVS = [['奖状墙', 150], ['门口', 331], ['矿物柜', 406], ['道具', 542]];

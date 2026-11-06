@@ -260,22 +260,23 @@
       const step = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); setCam(from + (tx - from) * e); if (k < 1) anim = requestAnimationFrame(step); else { anim = null; done && done(); } };
       anim = requestAnimationFrame(step);
     }
-    vp.addEventListener('pointerdown', e => { if (entering) return; pinZone = null; stopAnim(); try { vp.setPointerCapture(e.pointerId); } catch (x) {} drag = {x0: e.clientX, cam0: camX, t0: performance.now(), moved: 0, s: [[performance.now(), e.clientX]]}; vp.classList.add('drag'); });
+    vp.addEventListener('pointerdown', e => { if (entering) return; pinZone = null; stopAnim(); try { vp.setPointerCapture(e.pointerId); } catch (x) {} drag = {id: e.pointerId, x0: e.clientX, cam0: camX, t0: performance.now(), moved: 0, s: [[performance.now(), e.clientX]]}; vp.classList.add('drag'); });   // 新手指接管，之前搭着的手指不再算
     vp.addEventListener('pointermove', e => {
-      if (!drag) return; const dx = e.clientX - drag.x0; drag.moved = Math.max(drag.moved, Math.abs(dx));
+      if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x0; drag.moved = Math.max(drag.moved, Math.abs(dx));
       setCam(clampSoft(drag.cam0 - dx));
       drag.s.push([performance.now(), e.clientX]); if (drag.s.length > 6) drag.s.shift();
     });
     vp.addEventListener('pointerup', e => {
-      if (!drag) return; vp.classList.remove('drag');
+      if (!drag || e.pointerId !== drag.id) return; vp.classList.remove('drag');
       const d = drag; drag = null;
+      if (window.TOUCHFIX && TOUCHFIX.multiSince(d.t0) && d.moved < 14) { if (camX < 0 || camX > maxX) glide(0); return; }   // 同时有别的手指：搭着的手指抬起不算点地图
       // 手指轻微滑动（< 14 像素）、按得慢一点（< 0.7 秒）也算点
       if (d.moved < 14 && performance.now() - d.t0 < 700) { const r = vp.getBoundingClientRect(); tapWorld(e.clientX - r.left, e.clientY - r.top); if (camX < 0 || camX > maxX) glide(0); return; }
       const a = d.s[0], b = d.s[d.s.length - 1], v = b[0] - a[0] > 0 ? -(b[1] - a[1]) / (b[0] - a[0]) : 0;
       glide(Math.max(-4, Math.min(4, v)));
     });
-    vp.addEventListener('pointercancel', () => { drag = null; vp.classList.remove('drag'); glide(0); });
-    vp.addEventListener('wheel', e => { e.preventDefault(); stopAnim(); setCam(Math.max(0, Math.min(maxX, camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY)))); }, {passive: false});
+    vp.addEventListener('pointercancel', e => { if (drag && e.pointerId !== undefined && e.pointerId !== drag.id) return; drag = null; vp.classList.remove('drag'); if (!entering) glide(0); });   // 走向关卡途中不能动镜头动画，否则走不到
+    vp.addEventListener('wheel', e => { e.preventDefault(); if (entering) return; stopAnim(); setCam(Math.max(0, Math.min(maxX, camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY)))); }, {passive: false});
     function zoneAt(ax) { let best = null; ZONES.forEach(z => { if (Math.abs(z.x - ax) < 62 && (!best || Math.abs(z.x - ax) < Math.abs(best.x - ax))) best = z; }); return best; }
     function tapWorld(cx, cy) {
       const wasOpen = o.closeAll && o.closeAll(), ax = (camX + cx) / P, ay = cy / P;
@@ -305,13 +306,18 @@
     // 走到这块地 → 镜头往里推、渐黑 → done()（进练习）。走的过程中锁住岛，防打断和连点
     function go(id, done) {
       if (entering) return false; entering = true;
+      drag = null; vp.classList.remove('drag');   // 搭着的手指抬起不能打断走路
       const z = ZONES.find(x => x.id === id) || ZONES[1], fade = document.querySelector('.w-fade');
-      panTo(Math.max(0, Math.min(maxX, hero.x * P + 20 * P - W() / 2)), 260, () => walkTo(z.x - 20, () => {
+      let arrived = false;
+      const arrive = () => {
+        if (arrived) return; arrived = true; clearTimeout(guard);
         Lmain.classList.add('zoom'); Lmain.style.transformOrigin = `${z.x * P}px ${H() * .6}px`;
         Lmain.style.transform = `translate3d(${-camX}px,0,0) scale(1.35)`;
         if (fade) fade.classList.add('on');
         setTimeout(() => { Lmain.classList.remove('zoom'); Lmain.style.transformOrigin = '0 0'; setCam(camX); entering = false; try { done(); } finally { if (fade) setTimeout(() => fade.classList.remove('on'), 30); } }, 260);
-      }));
+      };
+      const guard = setTimeout(arrive, 3000);   // 兜底：动画万一被打断也要走到，否则岛一直锁着
+      panTo(Math.max(0, Math.min(maxX, hero.x * P + 20 * P - W() / 2)), 260, () => walkTo(z.x - 20, arrive));
       return true;
     }
     function pulse(id, idx) { const s = signs[id]; if (!s) return; const i = s.querySelectorAll('.row i')[idx]; if (i) { i.classList.remove('pulse'); void i.offsetWidth; i.classList.add('pulse'); } }
