@@ -157,7 +157,8 @@
     for (let x = 0; x < W; x += 12) r('#33261b', x + ((t >> 5) * 0), F + 6, 8, 1);
     // 火光照亮墙面
     const fx = fire.fx, fy = fire.fy, heat = fire.heat, flick = (Math.sin(t / 3) + Math.sin(t / 7)) / 2;
-    g.globalAlpha = 0.10 + 0.05 * flick + heat * 0.25 + fire.flash * 0.5; g.fillStyle = '#e0762a'; g.beginPath(); g.arc(fx + 17, fy + 22, 44 + heat * 30 + flick * 3, 0, 7); g.fill(); g.globalAlpha = 1;
+    const glowR = 46 + heat * 34 + flick * 3, glow = g.createRadialGradient(fx + 17, fy + 22, 2, fx + 17, fy + 22, glowR), ga = Math.min(0.75, 0.22 + 0.06 * flick + heat * 0.3 + fire.flash * 0.35);
+    glow.addColorStop(0, `rgba(240,140,50,${ga})`); glow.addColorStop(1, 'rgba(224,118,42,0)'); g.fillStyle = glow; g.fillRect(fx + 17 - glowR, fy + 22 - glowR, glowR * 2, glowR * 2);
     // 熔炉（放大 2 倍画家里同一件）
     g.save(); g.translate(fx, fy); g.scale(2, 2); window.ART.item(g, 'furnace', 0, 0); g.restore();
     const fh = 3 + Math.round(heat * 5) + (t % 8 < 4 ? 1 : 0);
@@ -167,13 +168,13 @@
     r('#e0762a', fx + 21 - (t % 6 < 3 ? 0 : 2), fy + 26 - Math.max(2, fh - 4), 4, Math.max(2, fh - 4));
     // 铁砧
     const ax = fx - 24, ay = F - 12; r('#50535b', ax, ay, 18, 4); r('#6c6f76', ax, ay, 18, 1); r('#50535b', ax + 5, ay + 4, 8, 5); r('#3a3d44', ax + 2, ay + 9, 14, 3);
-    if (fire.hit > 0) r('#f2c14e', ax + 5, ay - 2, 8, 2);
+    if (fire.work) { r(fire.hit > 0 ? '#fff3b0' : '#f2c14e', ax + 4, ay - 3, 10, 3); r('#e0762a', ax + 4, ay - 1, 10, 1); }
     // 小人和锤子
-    const hx = ax - 19, hy = F - 30, idle = (t >> 4) % 2, down = fire.hit > 4;
+    const hx = ax - 19, hy = F - 30, idle = (t >> 4) % 2, down = fire.hit > 0;
     g.drawImage(idle ? fire.hero.a : fire.hero.b, hx, hy, fire.hero.a.width * 2, fire.hero.a.height * 2);
     const hmX = hx + 20, hmY = hy + 12;
-    if (down) { r('#8a5a2c', hmX, hmY + 3, 12, 2); r('#9a9da4', hmX + 10, hmY - 1, 5, 9); }
-    else { r('#8a5a2c', hmX - 1, hmY - 12, 2, 13); r('#9a9da4', hmX - 4, hmY - 16, 9, 5); }
+    if (down) { r('#8a5a2c', hmX - 2, hmY + 3, 13, 2); r('#c9ccd2', hmX + 9, hmY - 2, 6, 9); r('#6c6f76', hmX + 9, hmY + 5, 6, 2); }
+    else { r('#8a5a2c', hmX - 1, hmY - 12, 2, 13); r('#c9ccd2', hmX - 5, hmY - 18, 10, 6); r('#6c6f76', hmX - 5, hmY - 13, 10, 1); }
     // 小狗
     g.drawImage((t >> 5) % 2 ? fire.dog.a : fire.dog.b, hx - 26, F - 12 - (heat > 0.6 ? t % 4 < 2 ? 2 : 0 : 0), fire.dog.a.width * 2, fire.dog.a.height * 2);
     // 废料桶
@@ -187,7 +188,7 @@
   function startScene() { layoutScene(); if (!fire.raf) fire.raf = requestAnimationFrame(drawScene); }
 
   // ---------- 锻造台：炉子里不显示合计，要自己算 ----------
-  let busy = false;
+  let busy = false, hold = 0;
   function openForge(from) { if (!on) return; back = from || 'island'; slots = []; msg = ''; c.show('forge'); draw(); startScene(); }
   const placed = t => slots.filter(x => x === t).length;
   function add(t) {
@@ -205,7 +206,7 @@
     if (!slots.length) { msg = '先放碎片'; return draw(); }
     const r = {s: placed('s'), m: placed('m'), l: placed('l')}, res = G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
     if (!res.ok && res.why !== 'short') { if (res.why === 'daily') msg = `今天已炼 ${G.DAY_MAX} 颗，碎片留到明天`; return draw(); }
-    if (res.ok) save();
+    if (res.ok) { save(); hold = 1; }
     busy = true; msg = ''; c.$('forgeMsg').textContent = ''; const cells = [...c.$('forgeSlots').children], list = slots.slice(), root = c.$('forge');
     root.classList.add('working');
     // 碎片一个个飞进炉膛
@@ -219,11 +220,12 @@
       msg = `还差 ${res.short}，碎片退回`;
     } else {
       // 够：抡三锤，火星四溅，宝石蹦出来
+      fire.work = true;
       for (let i = 0; i < 3; i++) {
-        await wait(170); fire.hit = 10; fire.flash = Math.min(1, fire.flash + 0.3); spark(14 + i * 8, fire.fx - 15, fire.floor - 13, ['#fff3b0', '#f2c14e', '#e0762a'], 1.8 + i * 0.4);
-        blip([[880 - i * 60, 0, 0.05], [220, 0.01, 0.08]]); root.classList.add('shake'); await wait(90); root.classList.remove('shake');
+        await wait(200); fire.hit = 12; fire.flash = Math.min(1, fire.flash + 0.3); spark(14 + i * 8, fire.fx - 15, fire.floor - 13, ['#fff3b0', '#f2c14e', '#e0762a'], 1.8 + i * 0.4);
+        blip([[880 - i * 60, 0, 0.05], [220, 0.01, 0.08]]); root.classList.add('shake'); await wait(110); root.classList.remove('shake');
       }
-      fire.flash = 1; fire.heat = 1; spark(50, fire.fx + 17, fire.fy + 20, ['#c8fff4', '#1fc8b8', '#fff3b0'], 2.6);
+      fire.work = false; fire.flash = 1; fire.heat = 1; spark(50, fire.fx + 17, fire.fy + 20, ['#c8fff4', '#1fc8b8', '#fff3b0'], 2.6);
       blip([[660, 0, 0.1], [880, 0.09, 0.1], [1320, 0.18, 0.22]]);
       await gemPop();
       if (res.waste) { blip([[160, 0, 0.1]], 'triangle'); await Promise.all([0, 1, 2].map(i => wait(i * 70).then(() => flyImg(SLAG(), mouth(), bucketPt(), 16, 360, 14)))); spark(8, fire.W - 12, fire.floor - 16, ['#6c6f76', '#9a9da4'], 0.8); }
@@ -242,7 +244,7 @@
     await wait(320);
     await e.animate([place(mx, cy, 1), place(to[0], to[1], 0.25)], {duration: 300, easing: 'ease-in', fill: 'forwards'}).finished.catch(() => {});
     e.remove();
-    draw(); const t = c.$('forgeToday'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
+    hold = 0; draw(); const t = c.$('forgeToday'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
   }
   function claim() {
     if (busy) return;
@@ -262,10 +264,10 @@
     }).join('');
     $('forgeSlots').innerHTML = Array.from({length: G.SLOTS}, (_, i) => (slots[i] ? `<button class="fslot" data-i="${i}">${chip(slots[i])}</button>` : '<span class="fslot"></span>')).join('');
     $('forgeMsg').textContent = msg;
-    const today = c.today(), done = st.days[today] ? st.days[today].forged : 0, items = G.items(st, today), left = G.unsent(st, today);
+    const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span>`;
     const b = $('forgeClaim');
-    b.hidden = !items; b.textContent = left ? `领 ${left} 颗宝石` : '再领一次';
+    b.hidden = !items || hold > 0; b.textContent = left ? `领 ${left} 颗宝石` : '再领一次';
     b.classList.toggle('go', left > 0);
   }
   // 答题时碎片从屏幕中间飞向顶部
