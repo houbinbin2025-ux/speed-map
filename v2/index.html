@@ -2009,6 +2009,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // iPad App 走原生语音（离线、不受内嵌网页限制）；手机网页走系统语音。按下就亮，孩子看得见有反应
   const SAY = {u: null, btn: null, t: 0};
   function sayEnd() { clearTimeout(SAY.t); if (SAY.btn) SAY.btn.classList.remove('on'); SAY.btn = null; }
+  // iPhone 静音模式下按媒体声音播放（iOS 17 起）；念完还原，页面其他声音仍跟静音模式走
+  function saySession(type) { try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (err) {} }
   function sayStop() {
     sayEnd();
     try { const nat = window.webkit && webkit.messageHandlers && webkit.messageHandlers.speak; if (nat) nat.postMessage(''); else if (window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel(); } catch (err) {}
@@ -2021,8 +2023,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       const nat = window.webkit && webkit.messageHandlers && webkit.messageHandlers.speak;
       if (nat) { nat.postMessage(JSON.stringify({text, lang})); return; }
       const u = new SpeechSynthesisUtterance(text);   // 只设语言、用系统默认声音：声音列表排在前面的可能是搞怪音色
-      u.lang = lang; u.rate = .9; u.onend = u.onerror = sayEnd;
+      u.lang = lang; u.rate = .9;
+      u.onend = u.onerror = () => { if (SAY.u === u) { sayEnd(); saySession('auto'); } };   // 被新朗读顶掉的旧句子不碰新按钮
       SAY.u = u;   // 留住引用，否则 iOS 上可能被回收，念不出来
+      saySession('playback');
       speechSynthesis.speak(u);
     } catch (err) { sayEnd(); }
   }
