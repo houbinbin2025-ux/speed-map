@@ -1,6 +1,6 @@
 // 题库（v2/bank.js）：「够学会」五条标准 S1–S5 + 旧进度、旧错题不丢（说明书-题库 §2、§6）
 const test = require('node:test'), assert = require('node:assert');
-const B = require('../v2/bank.js'), C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), R = require('../v2/render.js');
+const NB = require('../v2/placebank.js'), B = require('../v2/bank.js'), C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), R = require('../v2/render.js');
 const OLD = require('./fixtures/items-before.json');
 const range = (a, b) => Array.from({length: b - a + 1}, (_, i) => a + i);
 const key = q => JSON.stringify(Object.keys(q).sort().map(k => [k, q[k]]));
@@ -58,7 +58,7 @@ test('迁移：卡的编号、题目、答案和改造前一模一样（理解 7
   assert.deepStrictEqual(Object.keys(sc), Object.keys(OLD.speedCards)); assert.deepStrictEqual(sc, OLD.speedCards);
 });
 test('迁移：题型编号一个不差，每个题型出的题字段和改造前一样（旧错题按「编号|题目数据」能对上）', () => {
-  const now = Object.values(K.ITEM).filter(it => it.gen && !K.BY[it.skill].hard).map(it => it.id).sort();   // 挑战题是新增的，tests/hard.test.js 管
+  const now = Object.values(K.ITEM).filter(it => it.gen && !K.BY[it.skill].hard && !K.BY[it.skill].nb).map(it => it.id).sort();   // 挑战题是新增的，tests/hard.test.js 管
   const OLDT = Object.entries(OLD.types).filter(([id]) => K.ITEM[id]);   // 11-05：题全被剔除的题型（5 以内合起来）不再有
   assert.deepStrictEqual(now, OLDT.map(([id]) => id).sort());
   assert.deepStrictEqual(Object.keys(OLD.types).filter(id => !K.ITEM[id]), ['bond:t:whole5']);
@@ -140,11 +140,11 @@ test('S1 覆盖：每个难点情况的题量不少于下限；秒答抽样题�
 });
 test('S4 有讲解：题库里每一道题都能画出题面和答错图解；每个理解技能都有示范卡和给家长的说明', () => {
   Object.values(K.ITEM).forEach(it => {
-    const list = it.gen ? (B.pools[it.id] || []).map(x => ({id: it.id, q: x.q, ans: x.ans})) : [{id: it.id, q: it.q, ans: it.ans}];
-    if (it.gen && !B.pools[it.id]) list.push(K.make(it.id, Math.random));
+    const list = it.gen ? (K.rawPool(it.id) || []).map(x => ({id: it.id, q: x.q, ans: x.ans})) : [{id: it.id, q: it.q, ans: it.ans}];
+    if (it.gen && !K.rawPool(it.id)) list.push(K.make(it.id, Math.random));
     list.forEach(inst => { const q = R.question(inst); assert.ok((q.html && q.html.length > 10) || q.pick, it.id); assert.ok(R.explain(inst).length > 20, it.id + ' 没有图解'); });
   });
-  K.understand.forEach(s => { assert.ok(R.demo(s.id) && R.demo(s.id).length > 20, s.id + ' 没有示范卡'); assert.ok(B.text[s.id] && B.text[s.id][0] && B.text[s.id][1], s.id + ' 没有家长说明'); });
+  K.understand.forEach(s => { assert.ok(R.demo(s.id) && R.demo(s.id).length > 20, s.id + ' 没有示范卡'); const tx = B.text[s.id] || NB.text[s.id]; assert.ok(tx && tx[0] && tx[1], s.id + ' 没有家长说明'); });
   ['speedL1', 'speedL2', 'speedL3', 'speedL4'].forEach(k => assert.ok(B.text[k], k));
 });
 test('出题：发牌——同一题型一轮把池里的题发完才重来（一轮里不重复），换轮时也不连着出同一道', () => {
@@ -200,7 +200,7 @@ test('示范卡用固定例题：前面出过什么题都不影响', () => {
 test('页面按 bank → hardbank → core → ink → skills → engine → render → world → home → house 的顺序加载；没有题库时 core 明确报错', () => {
   const html = require('fs').readFileSync(require('path').join(__dirname, '../v2/index.html'), 'utf8');
   const order = [...html.matchAll(/<script src="([a-z]+)\.js\?v=\d+"><\/script>/g)].map(m => m[1]);
-  assert.deepStrictEqual(order, ['bank', 'hardbank', 'core', 'ink', 'skills', 'engine', 'render', 'world', 'home', 'house']);
+  assert.deepStrictEqual(order, ['bank', 'hardbank', 'placebank', 'core', 'ink', 'skills', 'engine', 'render', 'world', 'home', 'house']);
   const src = require('fs').readFileSync(require('path').join(__dirname, '../v2/core.js'), 'utf8'), sandbox = {};
   assert.throws(() => new Function('self', 'module', src)(sandbox, undefined), /题库 bank\.js 没有加载/);
 });

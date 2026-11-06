@@ -8,7 +8,7 @@ const nums = q => Object.values(q).filter(v => typeof v === 'number');
 
 test('技能图谱里一道所有数字都 ≤ 5 的题也没有（卡、题型池、秒答）', () => {
   K.SKILLS.forEach(s => s.items.forEach(it => {
-    if (it.gen) { if (s.speed) return; K.pool(it.id).forEach(x => assert.ok(Math.max(...nums(x.q)) > 5, it.id + JSON.stringify(x.q))); }
+    if (it.gen) { if (s.speed) return; if (s.nb) return; K.pool(it.id).forEach(x => assert.ok(Math.max(...nums(x.q)) > 5, it.id + JSON.stringify(x.q))); }
     else { const v = nums(it.q).concat(it.ans); assert.ok(Math.max(...v) > 5, it.id); }
   }));
   ['1+1', '5-4', '2+3', '4+1'].forEach(id => { assert.ok(C.BYID[id].retired); assert.ok(!K.ITEM[id]); });
@@ -16,7 +16,7 @@ test('技能图谱里一道所有数字都 ≤ 5 的题也没有（卡、题型�
 });
 test('真实排 30 天，出的题都没有 5 以内', () => {
   const S = C.blank(); S.placedAt = 1;
-  for (let d = 0; d < 30; d++) { const s = E.session(S, D(d), {rnd: seeded(d + 1)}); for (let x = s.next(), g = 0; x && g < 500; x = s.next(), g++) if (x.kind === 'q') { assert.ok(Math.max(...nums(x.inst.q), x.inst.ans) > 5, x.inst.id + JSON.stringify(x.inst.q)); s.answer(ok); } }
+  for (let d = 0; d < 30; d++) { const s = E.session(S, D(d), {rnd: seeded(d + 1)}); for (let x = s.next(), g = 0; x && g < 500; x = s.next(), g++) if (x.kind === 'q') { assert.ok(K.BY[K.ITEM[x.inst.id].skill].nb || Math.max(...nums(x.inst.q), x.inst.ans) > 5, x.inst.id + JSON.stringify(x.inst.q)); s.answer(ok); } }
 });
 test('旧存档：被剔除题的进度原样留着，不崩；旧错题不再回来', () => {
   const S = C.blank(); S.placedAt = 1;

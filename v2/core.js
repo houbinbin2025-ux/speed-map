@@ -74,7 +74,8 @@
       gen: () => { const key = LEVELS[L].key + ':' + t.k, p = BANK.speedPools[key].pool, [a, b] = p[deal(key, p.length, () => (rnd(0, 1e6 - 1)) / 1e6)]; return {a, b, ans: t.op === '+' ? a + b : a - b}; }}));
   });
   // Ben 11-05：题里所有数字都不超过 5 的题不再出（1+1、5−4、骰子 3 点、5 以内分合……）。编号和旧进度保留，只是不出、不计
-  const isLow = q => { const ns = Object.values(q || {}).filter(v => typeof v === 'number'); return ns.length > 0 && ns.every(v => v <= 5); };
+  const isLow = q => { if (q && q.view) return false; const ns =   // 带 view 的是新关卡和挑战题，题库生成时已经把简单题剔除；它们的答案不在字段里，不能这样判
+     Object.values(q || {}).filter(v => typeof v === 'number'); return ns.length > 0 && ns.every(v => v <= 5); };
   UNITS.forEach(u => { if (!u.gen && isLow({a: u.a, b: u.b, ans: u.ans})) u.retired = true; });
   const BYID = Object.fromEntries(UNITS.map(u => [u.id, u]));
   const unitsOf = L => UNITS.filter(u => u.L === L && !u.retired);
@@ -386,6 +387,10 @@
     M.demoSeen = Object.assign({}, v.demoSeen || {}, S.demoSeen || {});
     M.placedAt = S.placedAt || v.placedAt;
     if (S.home || v.home) M.home = mergeHome(S.home, v.home);
+    if (S.fast || v.fast) {   // 秒答次数按题取大：恢复备份后已下架的题不回来
+      M.fast = Object.assign({}, v.fast || {});
+      for (const k in S.fast || {}) if (!M.fast[k] || S.fast[k][0] >= M.fast[k][0]) M.fast[k] = S.fast[k];
+    }
     if (!M.placedAt) delete M.placedAt;
     return M;
   }

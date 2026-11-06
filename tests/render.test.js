@@ -13,7 +13,7 @@ test('每个格子出 20 次题：题面、作答方式、图解都完整', () =
       assert.ok(['write', 'pick', 'line'].includes(v.input), it.id);
       assert.equal(v.input, s.input === 'pick' ? 'pick' : s.input === 'line' ? 'line' : 'write', it.id);
       clean(v.html + v.tag, '题面 ' + it.id);
-      if (v.input === 'pick') assert.deepEqual(v.pick.slice().sort((a, b) => a - b), [inst.q.a, inst.q.b].sort((a, b) => a - b));
+      if (v.input === 'pick' && !s.nb) assert.deepEqual(v.pick.slice().sort((a, b) => a - b), [inst.q.a, inst.q.b].sort((a, b) => a - b));
       if (v.input === 'line') assert.ok(v.line.max > 0 && v.line.target > 0 && v.line.target < v.line.max);
       if (v.input !== 'line') clean(R.explain(inst), '图解 ' + it.id);
     }

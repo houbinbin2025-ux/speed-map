@@ -72,7 +72,7 @@ with sync_playwright() as p:
     pg.goto(url); pg.evaluate("""() => { const S = __sm.S; __sm.K.SKILLS.forEach(s => s.items.forEach(i => { const p = __sm.E.prog(S, i.id); p.lv = 3; p.d = ['2026-01-01', '2026-01-02', '2026-01-06']; })); S.stats = {}; for (let i = 0; i < 200; i++) S.stats['2026-0' + (1 + (i >> 5) % 9) + '-' + String(1 + i % 28).padStart(2, '0') + 'x' + i] = {sec: 700, n: 5}; S.mistakes = {}; for (let i = 0; i < 60; i++) S.mistakes['x' + i] = {key: 'x' + i, uid: 'x', due: null, passes: 5}; }""")
     pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2600); shot(pg, 'm-full')
     miss = pg.evaluate("(() => { const h = __sm.S.home; return __sm.HS.E0.items.filter(i => !i.part && !__sm.HS.SLOTS[h.place[i.id]]).map(i => i.name); })()")
-    check(not miss, '放不下的道具：' + str(miss)); check(pg.evaluate("__sm.HS.E0.certs.length") == 25, '全部奖状数不对')
+    check(not miss, '放不下的道具：' + str(miss)); check(pg.evaluate("__sm.HS.E0.certs.length") == 31, '全部奖状数不对')
     b.close()
 print('错误', errs or '无'); print('不通过', fails or '无')
 sys.exit(1 if fails or errs else 0)

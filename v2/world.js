@@ -15,8 +15,11 @@
     {id: 'cmp', x: 592, sx: 572, name: '比大小双塔', short: '比大小', icon: '#b3261e'},
     {id: 'line', x: 722, name: '数线铁轨', short: '数线', icon: '#6ea8fe'},
     {id: 'speed', x: 850, sx: 816, name: '秒答高塔', short: '秒答', icon: '#5a3a20'},
+    {id: 'garden', x: 985, name: '规律花园', short: '规律', icon: '#d9342b'},
+    {id: 'market', x: 1130, name: '钟楼集市', short: '集市', icon: '#f2c14e'},
+    {id: 'dock', x: 1270, name: '故事码头', short: '码头', icon: '#3d7fd9'},
   ];
-  const WW = 896, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
+  const WW = 1344, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
   const ORE = ['#f2c14e', '#6ea8fe', '#7bd88f', '#f6a5a0'];
 
   // ---------- 像素画工具 ----------
@@ -95,6 +98,22 @@
     g.fillStyle = '#1b1d22'; g.fillRect(846, 48, 12, 16); g.fillStyle = '#000'; g.fillRect(845, 47, 14, 1);
     g.fillStyle = '#6b4628'; g.fillRect(851, 8, 1, 16); g.fillStyle = '#b3261e'; g.fillRect(852, 8, 9, 6); g.fillStyle = '#ecebe4'; g.fillRect(855, 10, 2, 2);
     tree(g, 886, 64, 3);
+    // 规律花园：按规律排的花、彩色方块拱门
+    for (let x = 920; x < 1050; x += 8) { const col = ['#d9342b', '#f2c14e', '#3d7fd9'][((x - 920) / 8) % 3]; g.fillStyle = '#3d7524'; g.fillRect(x + 2, 66, 2, 6); g.fillStyle = col; g.fillRect(x, 61, 6, 5); g.fillStyle = '#fff3b0'; g.fillRect(x + 2, 63, 2, 2); }
+    for (let y = 22; y < 60; y += 8) [958, 1006].forEach(x => { g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 10, 10); g.fillStyle = (y >> 3) % 2 ? '#d9342b' : '#3d7fd9'; g.fillRect(x, y, 8, 8); });
+    for (let x = 958; x < 1014; x += 8) { g.fillStyle = '#000'; g.fillRect(x - 1, 13, 10, 10); g.fillStyle = ['#f2c14e', '#7bd88f', '#5fd9e6'][(x >> 3) % 3]; g.fillRect(x, 14, 8, 8); }
+    tree(g, 1046, 72, 4);
+    // 钟楼集市：钟楼 + 两个摊位
+    for (let y = 12; y < 72; y += 8) for (let x = 1076; x < 1108; x += 8) tile(g, x, y, 'brick');
+    g.fillStyle = '#8a1c16'; g.fillRect(1072, 8, 40, 4); g.fillStyle = '#b3261e'; g.fillRect(1080, 2, 24, 6); g.fillStyle = '#1b1d22'; g.fillRect(1086, 60, 12, 12);
+    g.fillStyle = '#000'; g.fillRect(1081, 18, 22, 22); g.fillStyle = '#f4ecd8'; g.fillRect(1083, 20, 18, 18); g.fillStyle = '#1b1d22'; g.fillRect(1091, 22, 2, 8); g.fillStyle = '#b3261e'; g.fillRect(1092, 28, 5, 2);
+    [[1120, '#b3261e'], [1172, '#3d7fd9']].forEach(([x, col]) => { for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? col : '#ecebe4'; g.fillRect(x + i * 7, 40, 7, 7); } g.fillStyle = '#6b4628'; g.fillRect(x + 2, 47, 2, 25); g.fillRect(x + 38, 47, 2, 25); g.fillStyle = '#c08a52'; g.fillRect(x, 61, 42, 11); g.fillStyle = '#8a5a2c'; g.fillRect(x, 61, 42, 2); });
+    [[1126, '#f2c14e'], [1134, '#5fd9e6'], [1144, '#d9342b'], [1178, '#c9ccd2'], [1188, '#f2c14e'], [1198, '#6fae3a']].forEach(([x, col]) => { g.fillStyle = col; g.fillRect(x, 55, 5, 6); });
+    // 故事码头：水面、栈桥、灯塔、小船
+    for (let x = 1238; x < 1344; x += 2) for (let y = 73; y < 92; y += 2) { g.fillStyle = (x + y) % 8 === 0 ? '#6ea8fe' : (x * 3 + y) % 14 < 2 ? '#4f8fe0' : '#3d7fd9'; g.fillRect(x, y, 2, 2); }
+    for (let x = 1232; x < 1300; x += 6) { g.fillStyle = x % 12 ? '#c08a52' : '#b27d48'; g.fillRect(x, 70, 6, 3); } [1244, 1272, 1296].forEach(x => { g.fillStyle = '#5a3a20'; g.fillRect(x, 73, 3, 14); });
+    for (let i = 0; i < 5; i++) { g.fillStyle = i % 2 ? '#ecebe4' : '#b3261e'; g.fillRect(1218, 64 - i * 8, 12, 8); } g.fillStyle = '#2b2b2b'; g.fillRect(1216, 30, 16, 2); g.fillStyle = '#f2c14e'; g.fillRect(1220, 24, 8, 6); g.fillStyle = '#b3261e'; g.fillRect(1218, 20, 12, 4);
+    g.fillStyle = '#6b4628'; g.fillRect(1306, 70, 32, 7); g.fillStyle = '#8a5a2c'; g.fillRect(1310, 77, 24, 3); g.fillStyle = '#5a3a20'; g.fillRect(1320, 40, 2, 30); g.fillStyle = '#ecebe4'; g.fillRect(1322, 42, 14, 22); g.fillStyle = '#b3261e'; g.fillRect(1322, 37, 7, 4);
   }
   function tree(g, x, base, h) {
     for (let i = 0; i < h; i++) { g.fillStyle = i % 2 ? '#5a3a20' : '#6b4628'; g.fillRect(x, base - (i + 1) * 4, 4, 4); }

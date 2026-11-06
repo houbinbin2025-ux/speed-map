@@ -6,7 +6,7 @@
 })(typeof self !== 'undefined' ? self : this, function (C, K, E) {
   'use strict';
   const DAY_SEC = 300, DAY_N = 10;
-  const PLACES = [['look', '看数草原'], ['bond', '分合矿洞'], ['place', '数位村庄'], ['cmp', '比大小双塔'], ['line', '数线铁轨']];
+  const PLACES = [['look', '看数草原'], ['bond', '分合矿洞'], ['place', '数位村庄'], ['cmp', '比大小双塔'], ['line', '数线铁轨'], ['garden', '规律花园'], ['market', '钟楼集市'], ['dock', '故事码头']];
   const LV = C.LEVELS.map((l, i) => ['speed:L' + (i + 1), '秒答 ' + l.name]);
   const inGroup = (s, g) => (s.speed ? 'speed:L' + (s.L + 1) : s.group) === g;
   const cells = g => K.SKILLS.filter(s => inGroup(s, g)).flatMap(s => s.items);
@@ -21,7 +21,7 @@
     const ms = Object.values(S.mistakes || {});
     return {
       S, iron: all.filter(i => lv(i.id) >= 1).length, gold: all.filter(i => lv(i.id) >= 2).length, diamond: all.filter(i => lv(i.id) >= 3).length, total: all.length,
-      days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null).length,
+      days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null && !m.out).length,
       learned: K.SKILLS.filter(s => s.items.every(i => lv(i.id) >= 1)).length,
       started: PLACES.concat([['speed', '']]).filter(([g]) => K.SKILLS.some(s => (g === 'speed' ? s.speed : inGroup(s, g)) && s.items.some(i => lv(i.id) >= 1))).length,
       ore: (S.home && S.home.ore) || 0,
@@ -32,12 +32,13 @@
   const prog = (f, goal) => t => [Math.min(f(t), goal), goal];
   const TITLES = {
     look: ['草原牧羊人', '草原牧羊大师'], bond: ['矿洞矿工', '矿洞大师'], place: ['村庄建筑师', '村庄建筑大师'], cmp: ['双塔哨兵', '双塔将军'], line: ['铁轨列车长', '铁轨大师'],
+    garden: ['花园园丁', '花园大师'], market: ['集市伙计', '集市掌柜'], dock: ['码头水手', '码头船长'],
     'speed:L1': ['打败果冻王', '驯服果冻王'], 'speed:L2': ['打败骷髅将军', '驯服骷髅将军'], 'speed:L3': ['打败蜘蛛女王', '驯服蜘蛛女王'], 'speed:L4': ['打败巨龙', '驯服巨龙'],
   };
   const CERTS = [];
   PLACES.concat(LV).forEach(([g, name]) => {
     CERTS.push({id: 'c:' + g + ':1', kind: 'learn', scene: g, place: g, name, title: TITLES[g][0], need: t => [t.all(g).l1, t.all(g).n], text: name + '全部格子点亮', say: t => `学会了${name}全部 ${t.all(g).n} 格`});
-    CERTS.push({id: 'c:' + g + ':3', kind: 'keep', scene: g, place: g, name, title: TITLES[g][1], need: t => [t.all(g).l3, t.all(g).n], text: name + '全部格子变深红', say: t => `${name}全部 ${t.all(g).n} 格，隔 3 天还做对`});
+    CERTS.push({id: 'c:' + g + ':3', kind: 'keep', scene: g, place: g, name, title: TITLES[g][1], need: t => [t.all(g).l3, t.all(g).n], text: name + '全部格子变深红', say: t => `${name}全部 ${t.all(g).n} 格，都记牢了`});
   });
   [[1, '平安度过第一夜'], [7, '搭好营地'], [30, '老探险家'], [100, '百日传奇']].forEach(([n, title]) => CERTS.push({id: 'c:day:' + n, kind: 'day', scene: 'day:' + n, name: title, title, need: prog(t => t.days, n), text: `累计练习 ${n} 天`, say: () => `累计练习 ${n} 天`}));
   CERTS.push({id: 'c:fix:1', kind: 'fix', scene: 'fix:1', name: '点燃熔炉', title: '点燃熔炉', need: prog(t => t.passed, 1), text: '错题第一次复习做对', say: () => '写错的题，复习时做对了'});
@@ -79,7 +80,7 @@
   const done = (r, t) => { const [a, b] = r.need(t); return a >= b; };
   const ALL = CERTS.concat(ITEMS, MEDALS), BY = Object.fromEntries(ALL.map(r => [r.id, r]));
   // 伙伴：编号固定对应生物（art 在 house.js 的 CREATURES 里按这个下标取）。新增技能往后加
-  const CREATURE_IDS = ['look1', 'cmp1', 'look3', 'look4', 'bond2', 'line1', 'bond3', 'cmp2', 'bond4', 'bond5', 'line2', 'place1', 'place2', 'cmp3', 'cmp4', 'line3', 'line4', null, null, 'speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5', 'speed:L1:6', null, 'speed:L2:0', 'speed:L2:1', 'speed:L2:2', 'speed:L2:3', 'speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7', 'speed:L3:0', 'speed:L3:1', 'speed:L4:0', 'speed:L4:1'];   // 下标 = house.js 的 CREATURES；null = 暂时空出的伙伴，新技能用
+  const CREATURE_IDS = ['look1', 'cmp1', 'look3', 'look4', 'bond2', 'line1', 'bond3', 'cmp2', 'bond4', 'bond5', 'line2', 'place1', 'place2', 'cmp3', 'cmp4', 'line3', 'line4', 'dockC', 'clockB', 'speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5', 'speed:L1:6', 'dockD', 'speed:L2:0', 'speed:L2:1', 'speed:L2:2', 'speed:L2:3', 'speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7', 'speed:L3:0', 'speed:L3:1', 'speed:L4:0', 'speed:L4:1', 'dockA', 'dockB', 'gardenA', 'gardenB', 'gardenC', 'clockA', 'money1', 'money2'];   // 下标 = house.js 的 CREATURES
   const creatureOf = sid => CREATURE_IDS.indexOf(sid);
 
   function ensure(S) {

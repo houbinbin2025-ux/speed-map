@@ -149,6 +149,14 @@
     general: {rows: ['....RRRRRRRR....', '....WWWWWWWW..S.', '....WKKWWKKW..S.', '....WWWWWWWW..S.', '....WMWMWMWM..S.', '...RRRRRRRRRR.S.', '..WWWRRRRRRWWWH.', '..W.WWWWWWWW..H.', '....WW....WW....', '....WW....WW....'], pal: {R: '#b3261e', W: '#e4e4dc', K: '#d9342b', M: '#6c6f76', S: '#c9ccd2', H: '#6b4628'}},
     queen: {rows: ['......Y.Y.Y.....', '......YYYYY.....', '..SSSSSSSSSSSS..', '.SSRRSSSSSSRRSS.', '.SSSSSSKKSSSSSS.', '.SSSSSSSSSSSSSS.', 'S.S.S.S..S.S.S.S', 'S.S.S.S..S.S.S.S'], pal: {Y: '#f2c14e', S: '#c9365a', R: '#fff3b0', K: '#7a1a40'}},
     bigDragon: DG('#d9342b', '#8a1c16', '#f2c14e', '#f2c14e'),
+    gull: {n: '海鸥', d: '码头上最爱抢薯条的', rows: ['.........WW.....', '........WWWWY...', '........WKWWYY..', '.GG....WWWWW....', '..GGWWWWWWWW....', '...GGGWWWWWW....', '.....WWWWW......', '......Y..Y......', '......YY.YY.....'], pal: {W: W0, G: '#9a9da4', Y: '#e0762a', K: K2}},
+    crab: {n: '螃蟹', d: '横着走，从不撞船', rows: ['R............R..', 'RR..........RR..', '.RR..K....K.RR..', '..RRRRRRRRRRRR..', '..RRRRRRRRRRRR..', '...RRRRRRRRRR...', '..R.R.R..R.R.R..', '.R..R......R..R.'], pal: {R: '#d9342b', K: K2}},
+    butterfly: {n: '蝴蝶', d: '翅膀上的花纹左右一样', rows: ['..PP.K...K.PP...', '.PPYP.K.K.PYPP..', '.PYYPP.K.PPYYP..', '.PPPPPPKPPPPPP..', '..PPPPPKPPPPP...', '..BBPP.K.PPBB...', '..BBB..K..BBB...'], pal: {P: '#f6a5a0', Y: '#f2c14e', B: '#3d7fd9', K: K2}},
+    snail: {n: '蜗牛', d: '一步一步数着走', rows: ['.K.K............', '.Y.Y...SSSSS....', '.YYY..SSBBBSS...', '.YKYY.SSBSSBS...', '.YYYYYSSBBSBS...', 'YYYYYYYSSSSSS...', 'YYYYYYYYYYYYYY..'], pal: {K: K2, Y: '#d9cfae', S: '#b27d48', B: '#6b4628'}},
+    ladybug: {n: '瓢虫', d: '背上的点一边一样多', rows: ['...KK...........', '..KKKK..........', '.KKKKRRRRRR.....', '.KWKRRKRRKRR....', '.KKKRRRRRRRR....', '.KKKRRKRRKRR....', '..K.RRRRRRR.....', '...K..K..K......'], pal: {K: K2, R: '#d9342b', W: W0}},
+    cuckoo: {n: '布谷鸟', d: '整点准时出来叫', rows: ['.....BBB........', '....BBBBB.......', '....BKBBOO......', '....BBBBO.......', '...WWBBB........', '..BWWBBBB.......', '.BBWWBBBB.......', '..BBBBBB........', '...O..O.........', '...OO.OO........'], pal: {B: '#6ea8c8', K: K2, O: '#e0762a', W: W0}},
+    trader: {n: '小货郎', d: '背包里什么都有', rows: ['....HHHHHH......', '...HHHHHHHH.....', '....SSSSSS......', '....SKSSKS.PPP..', '....SSSSSS.PPP..', '...BBBBBBBPPP...', '..SBBBBBBBSPP...', '...BBBBBBB......', '...LL...LL......', '...LL...LL......'], pal: {H: '#c08a52', S: '#e6b89c', K: K2, P: '#8a5a2c', B: '#3d7524', L: '#5a3a20'}},
+    piggy: {n: '金币猪', d: '肚子里全是零钱', rows: ['.......Y........', '......YYY.......', '..PPPPPPPPPP.PP.', '.PPPPPPPPPPPPPP.', '.PPPPPPPPKPPNN..', '.PPPPPPPPPPPNN..', '.PPPPPPPPPPPP...', '..PP.PP..PP.PP..'], pal: {P: '#f2c14e', Y: '#fff3b0', K: K2, N: '#b98a22'}},
   });
   const px = k => Object.assign({t: 'px'}, PX[k]);
   // 一个技能一只，顺序 = K.SKILLS（理解 19 + 秒答 19）。最受欢迎的排最前，一开始练就能解锁
@@ -157,6 +165,7 @@
     px('jelly'), px('bomb'), px('cactus'), px('yeti'), px('lamp'), px('lava'), px('star'),
     px('knight'), px('drummer'), px('wizard'), px('pirate'), px('puffer'), px('bat'), px('wrap'), px('rock'),
     px('robot'), px('spark'), px('crystal'), px('gold'),
+    px('gull'), px('crab'), px('butterfly'), px('snail'), px('ladybug'), px('cuckoo'), px('trader'), px('piggy'),
   ];
   const BOSS = {'speed:L1': px('kingJelly'), 'speed:L2': px('general'), 'speed:L3': px('queen'), 'speed:L4': px('bigDragon')};
   // 画一只：x,y = 左下角；flip 朝左；scale 放大
@@ -200,6 +209,21 @@
       for (let x = 0; x < W; x += 5) r(g, '#6b4628', x, G + 1, 3, 2); r(g, '#9a9da4', 0, G, W, 1);
       for (let i = 0; i <= 10; i++) r(g, i % 5 ? '#ecebe4' : '#f2c14e', 4 + i * 9, i % 5 ? G - 4 : G - 7, 1, i % 5 ? 4 : 7);
       const cx = 10 + (f * 3) % 56; spr(g, WORLD.HERO, 'a', cx + 3, G - 3 + J); r(g, '#2b2b2b', cx, G - 8, 20, 7); r(g, '#8a8d94', cx + 1, G - 7, 18, 5); r(g, '#f2c14e', cx + 3, G - 6, 2, 2); r(g, '#2b2b2b', cx + 3, G - 1, 3, 2); r(g, '#2b2b2b', cx + 14, G - 1, 3, 2);
+    } else if (id === 'garden') {
+      sky(g, W, H, '#8ec8ff', '#bfe3ff'); clouds(g, f); ground(g, W, H, G, '#6fae3a', '#4f8a2e');
+      [0, 1, 2, 3, 4, 5, 6, 7].forEach(i => { const col = ['#d9342b', '#f2c14e', '#3d7fd9'][i % 3]; r(g, '#3d7524', 40 + i * 6 + 1, G - 4, 1, 4); r(g, col, 40 + i * 6, G - 7 - (keep && (f + i) % 2 ? 1 : 0), 4, 3); });
+      for (let i = 0; i < 4; i++) { r(g, '#000', 38, 12 + i * 6, 6, 6); r(g, i % 2 ? '#3d7fd9' : '#d9342b', 38, 12 + i * 6, 5, 5); r(g, '#000', 84, 12 + i * 6, 6, 6); r(g, i % 2 ? '#3d7fd9' : '#d9342b', 84, 12 + i * 6, 5, 5); } for (let x = 38; x < 90; x += 6) { r(g, '#000', x, 6, 6, 6); r(g, ['#f2c14e', '#7bd88f', '#5fd9e6'][(x / 6 | 0) % 3], x, 6, 5, 5); }
+      spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 16, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 2, G + 5 + J);
+    } else if (id === 'market') {
+      sky(g, W, H, '#ffcf9e', '#ffe2c0'); clouds(g, f); ground(g, W, H, G, '#6fae3a', '#7a5230');
+      for (let i = 0; i < 6; i++) r(g, i % 2 ? '#d9342b' : '#ecebe4', 44 + i * 8, 18, 8, 6); r(g, '#6b4628', 46, 24, 2, 20); r(g, '#6b4628', 88, 24, 2, 20); r(g, '#c08a52', 44, 34, 48, 10); r(g, '#8a5a2c', 44, 34, 48, 2);
+      A.item(g, 'cake', 50, 18); r(g, '#f2c14e', 72, 28, 5, 5); r(g, '#5fd9e6', 80, 28, 5, 5);
+      spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 22, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 8, G + 5 + J);
+    } else if (id === 'dock') {
+      sky(g, W, H, '#8ec8ff', '#bfe3ff'); clouds(g, f); r(g, '#3d7fd9', 0, G - 6, W, H - G + 6); for (let i = 0; i < 14; i++) r(g, '#6ea8fe', (i * 23 + f) % W, G - 4 + (i * 7) % 12, 6, 1);
+      for (let x = 0; x < 44; x += 5) r(g, x % 10 ? '#c08a52' : '#b27d48', x, G - 3, 5, 3); [6, 26].forEach(x => r(g, '#5a3a20', x, G, 3, 10));
+      const by = G - 8 + (f % 2); r(g, '#6b4628', 56, by, 30, 6); r(g, '#8a5a2c', 60, by + 6, 22, 3); r(g, '#5a3a20', 70, by - 26, 2, 26); r(g, '#ecebe4', 72, by - 24, 14, 20); r(g, '#b3261e', 72, by - 28, 7, 4);
+      spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 24, G - 3 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 10, G - 2 + J);
     } else if (id.startsWith('speed')) {
       const L = +id.slice(-1), bg = {1: ['#3d7524', '#6fae3a'], 2: ['#3f434c', '#6c6f76'], 3: ['#2b2140', '#3a2a58'], 4: ['#1d2340', '#2f3a6b']}[L];
       sky(g, W, H, bg[0], bg[0]); for (let i = 0; i < 18; i++) r(g, bg[1], (i * 29) % W, (i * 17) % 40, 3 + i % 4, 2); ground(g, W, H, G, bg[1], '#2b2b2b');
@@ -225,7 +249,7 @@
     if (keep) { for (let i = 0; i < 8; i++) { const p = (f + i * 3) % 12; if (p < 3) r(g, p === 1 ? '#fff' : '#e9c6ff', (i * 41 + 7) % W, (i * 23 + 5) % (H - 8), 2, 2); } const x = ((f * 6) % 160) - 40; g.fillStyle = 'rgba(180,100,255,.26)'; for (let y = 0; y < H; y++) g.fillRect(x - y / 2, y, 16, 1); }
   }
   // 奖状墙上的小图：主角色 + 底色
-  const THUMB = {look: ['#8ec8ff'], bond: ['#2a2c33'], place: ['#bfe3ff'], cmp: ['#ffdcb0'], line: ['#bfe3ff']};
+  const THUMB = {look: ['#8ec8ff'], bond: ['#2a2c33'], place: ['#bfe3ff'], cmp: ['#ffdcb0'], line: ['#bfe3ff'], garden: ['#bfe3ff'], market: ['#ffdcb0'], dock: ['#3d7fd9']};
   function thumb(g, c, x, y, w, h, f) {
     const sc = c.scene, keep = c.kind === 'keep';
     const bg = sc.startsWith('speed') ? '#3a2a58' : sc.startsWith('day') ? (sc === 'day:7' || sc === 'day:30' ? '#8ec8ff' : '#1d2340') : sc.startsWith('fix') ? '#3f2c1a' : THUMB[sc][0];
@@ -234,6 +258,9 @@
     const cx = x + (w >> 1) - 7, by = y + h - 1;
     if (sc.startsWith('speed')) creature(g, BOSS[sc], x + 4, by + 1, 0, {flip: true, scale: .62});
     else if (sc === 'look') creature(g, px('sheep'), x + 2, by + 1, 0);
+    else if (sc === 'garden') { ['#d9342b', '#3d7fd9', '#d9342b', '#3d7fd9'].forEach((col, i) => r(g, col, x + 2 + i * 4, by - 7, 3, 7)); r(g, '#f2c14e', x + 2, by - 11, 15, 3); }
+    else if (sc === 'market') { for (let i = 0; i < 4; i++) r(g, i % 2 ? '#d9342b' : '#ecebe4', x + 2 + i * 4, y + 2, 4, 4); r(g, '#c08a52', x + 2, by - 4, 16, 4); r(g, '#6b4628', x + 3, y + 6, 1, 5); r(g, '#6b4628', x + 16, y + 6, 1, 5); }
+    else if (sc === 'dock') { r(g, '#6b4628', x + 3, by - 3, 14, 3); r(g, '#5a3a20', x + 9, y + 1, 1, 9); r(g, '#ecebe4', x + 10, y + 2, 6, 7); }
     else if (sc === 'line') { r(g, '#2b2b2b', x + 3, by - 7, w - 6, 6); r(g, '#8a8d94', x + 4, by - 6, w - 8, 4); r(g, '#2b2b2b', x + 5, by - 1, 2, 1); r(g, '#2b2b2b', x + w - 7, by - 1, 2, 1); }
     else if (sc === 'cmp') { r(g, '#9a9da4', x + 3, by - 5, 5, 5); r(g, '#9a9da4', x + 11, by - 11, 5, 11); r(g, '#b3261e', x + 13, by - 13, 3, 2); }
     else if (sc === 'place') { r(g, '#c08a52', x + 4, by - 6, 11, 6); r(g, '#b3261e', x + 2, by - 9, 15, 3); r(g, '#4a2f1b', x + 8, by - 3, 3, 3); }
@@ -241,7 +268,15 @@
     if (keep) { const p = ((f || 0) * 4) % 40 - 8; g.fillStyle = 'rgba(190,110,255,.42)'; for (let i = 0; i < h; i++) g.fillRect(x + p - i / 2, y + i, 6, 1); }
     g.restore();
   }
-  Object.assign(A, {CREATURES, BOSS, creature, scene, thumb});
+  // 题目里用的图：名字 → 图片地址（题面是 HTML 字符串，用 img 最省事）
+  const URLS = {};
+  function spriteURL(name) {
+    if (URLS[name]) return URLS[name];
+    const c = document.createElement('canvas'), g = c.getContext('2d');
+    if (name.startsWith('it:')) { const id = name.slice(3); c.width = 24; c.height = 16; A.item(g, id, 0, 0); } else { c.width = 18; c.height = 16; creature(g, CREATURES.find(x => x.n === name), 0, 16, 0); }
+    return (URLS[name] = c.toDataURL());
+  }
+  Object.assign(A, {CREATURES, BOSS, creature, scene, thumb, spriteURL});
 })(this);
 
 (function (root) {
@@ -266,7 +301,7 @@
   const el = id => rootEl.querySelector('#' + id);
   let S = o.S(), E0 = H.earned(S);
   // ---------- 屋子布局（art 像素） ----------
-  const RH = 76, FLOOR = 62, RW = 900;
+  const RH = 76, FLOOR = 62, RW = 972;
   const CW = {x: 8, y: 8, dx: 24, dy: 17.5, w: 19, h: 14};   // 奖状墙：3 排大图
   const certPos = {};
   H.CERTS.forEach(c => {
@@ -274,10 +309,10 @@
     const row = c.kind === 'learn' ? 0 : c.kind === 'keep' ? 1 : 2, col = list.indexOf(c);
     certPos[c.id] = {x: CW.x + col * CW.dx, y: CW.y + row * CW.dy};
   });
-  const DOOR = {x: 239, w: 18}, LOOT = {x: 215, w: 18}, CHEST = {x: 265, w: 16}, SIGN = {x: 261, y: 12, w: 22, h: 18}, BOOK = {x: 289, w: 22}, CAB = {x: 319, w: 30};
+  const DOOR = {x: 311, w: 18}, LOOT = {x: 287, w: 18}, CHEST = {x: 337, w: 16}, SIGN = {x: 333, y: 12, w: 22, h: 18}, BOOK = {x: 361, w: 22}, CAB = {x: 391, w: 30};
   const FS = [], WS = [];
-  for (let i = 0; i < 22; i++) FS.push({id: 'F' + i, t: 'F', x: 359 + i * 24, y: FLOOR - 16});
-  for (let i = 0; i < 18; i++) WS.push({id: 'W' + i, t: 'W', x: 359 + i * 24, y: 16});
+  for (let i = 0; i < 22; i++) FS.push({id: 'F' + i, t: 'F', x: 431 + i * 24, y: FLOOR - 16});
+  for (let i = 0; i < 18; i++) WS.push({id: 'W' + i, t: 'W', x: 431 + i * 24, y: 16});
   const SLOTS = {}; FS.concat(WS).forEach(s => { SLOTS[s.id] = s; });
   const placeable = () => E0.items.filter(i => !i.part);
   function autoPlace() {
@@ -299,7 +334,7 @@
     for (let x = 0; x < RW; x += 8) { r(g, x % 16 ? '#7c7f86' : '#8a8d94', x, FLOOR, 8, 7); r(g, '#55585f', x + 7, FLOOR, 1, 7); r(g, '#55585f', x, FLOOR + 6, 8, 1); r(g, x % 16 ? '#5a5d64' : '#65686f', x, FLOOR + 7, 8, 7); }
     for (let x = 0; x < RW; x += 80) { r(g, '#5a3a20', x + 2, 4, 3, FLOOR - 4); }
     // 奖状墙
-    r(g, '#6b4628', 3, 4, 225, 56); r(g, '#8a5a2c', 4, 5, 223, 54);
+    r(g, '#6b4628', 3, 4, 297, 56); r(g, '#8a5a2c', 4, 5, 295, 54);
     H.CERTS.forEach(c => {
       const p = certPos[c.id], got = E0.certs.includes(c);
       if (got) { const a = frameCol[c.kind][0]; r(g, '#000', p.x - 2, p.y - 2, CW.w + 4, CW.h + 4); r(g, a, p.x - 1, p.y - 1, CW.w + 2, CW.h + 2); A.thumb(g, c, p.x, p.y, CW.w, CW.h, 0); }
@@ -355,7 +390,7 @@
   function syncPets() {
     const h = S.home, L = learned(); if (!h.pets) h.pets = L.slice(-3);
     h.pets = h.pets.filter(i => L.includes(i));
-    pets = h.pets.map((i, k) => (pets.find(p => p.i === i) || {i, x: 370 + k * 70, dir: k % 2 ? -1 : 1, hop: 0}));
+    pets = h.pets.map((i, k) => (pets.find(p => p.i === i) || {i, x: 442 + k * 70, dir: k % 2 ? -1 : 1, hop: 0}));
   }
   function drawHero(f) {
     heroF = f || heroF; cvHero.width = RW; cvHero.height = RH; const g = cvHero.getContext('2d');
@@ -364,7 +399,7 @@
     WORLD.drawSprite(a, WORLD.HERO, heroF, hero.flip); WORLD.drawSprite(b, WORLD.DOG, heroF, hero.flip);
     g.drawImage(a, Math.round(hero.x), FLOOR + 1 - a.height); g.drawImage(b, Math.round(dog.x), FLOOR + 1 - b.height);
   }
-  setInterval(() => { if (rootEl.hidden) return; petF++; pets.forEach(p => { if (p.hop > 0) p.hop--; if (Math.random() < .05) p.dir *= -1; p.x = Math.max(352, Math.min(RW - 20, p.x + p.dir * .9)); if (p.x <= 352 || p.x >= RW - 20) p.dir *= -1; }); if (!walking) drawHero(); }, 220);
+  setInterval(() => { if (rootEl.hidden) return; petF++; pets.forEach(p => { if (p.hop > 0) p.hop--; if (Math.random() < .05) p.dir *= -1; p.x = Math.max(424, Math.min(RW - 20, p.x + p.dir * .9)); if (p.x <= 424 || p.x >= RW - 20) p.dir *= -1; }); if (!walking) drawHero(); }, 220);
   // 8 位音效：全部现场合成
   let AC = null;
   function blip(notes) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t0 = AC.currentTime; notes.forEach(([f, at, len]) => { const o = AC.createOscillator(), v = AC.createGain(); o.type = 'square'; o.frequency.value = f; v.gain.setValueAtTime(.035, t0 + at); v.gain.linearRampToValueAtTime(0, t0 + at + len); o.connect(v); v.connect(AC.destination); o.start(t0 + at); o.stop(t0 + at + len); }); } catch (e) {} }
@@ -399,7 +434,7 @@
   vp.addEventListener('pointercancel', () => { drag = null; panTo(camX); });
 
   // ---------- 导航 ----------
-  const NAVS = [['奖状墙', 116], ['门口', 259], ['矿物柜', 334], ['道具', 470]];
+  const NAVS = [['奖状墙', 150], ['门口', 331], ['矿物柜', 406], ['道具', 542]];
   el('h_nav').innerHTML = NAVS.map(([n, x], i) => `<button data-i="${i}">${n}</button>`).join('') + '<button class="toGo">开始今天的探险</button>';
   el('h_nav').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.classList.contains('toGo')) { go(null); return; } closeSheet(); const i = +b.dataset.i, sl = placeable().map(x => SLOTS[S.home.place[x.id]]).filter(Boolean).sort((p, q) => p.x - q.x)[0]; panTo(i === 3 && sl ? (sl.x - 10) * P : NAVS[i][1] * P - VW() / 2, 300); });
   function nav() { const c = (camX + VW() / 2) / P; let k = 0; NAVS.forEach(([, x], i) => { if (c >= x - 40) k = i; }); [...el('h_nav').children].forEach((b, i) => { if (!b.classList.contains('toGo')) b.classList.toggle('on', i === k); }); }
@@ -455,7 +490,7 @@
   function showOres() {
     near(CAB.x + 4, () => {
       const t = E0.t, row = (n, name, what, c) => `<div class="row"><i class="md" style="background:${c}"></i><span>${name}<br><small class="muted">${what}</small></span><em>${n} / ${t.total}</em></div>`;
-      sheet(`<div class="sh-h"><h2>矿物柜</h2><button class="sh-x">×</button></div><div class="ore3">${row(t.diamond, '钻石', '隔 3 天仍然做对', '#5fd9e6')}${row(t.gold, '金锭', '另一天再次做对', '#f2c14e')}${row(t.iron, '铁锭', '格子第一次点亮', '#c9ccd2')}</div><div class="muted">格子每升一档，多一件。只增不减。</div>`);
+      sheet(`<div class="sh-h"><h2>矿物柜</h2><button class="sh-x">×</button></div><div class="ore3">${row(t.diamond, '钻石', '记牢了', '#5fd9e6')}${row(t.gold, '金锭', '另一天再次做对', '#f2c14e')}${row(t.iron, '铁锭', '格子第一次点亮', '#c9ccd2')}</div><div class="muted">格子每升一档，多一件。只增不减。</div>`);
     });
   }
   function showChest() {

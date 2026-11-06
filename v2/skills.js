@@ -1,9 +1,9 @@
 // 空空数学岛 · 技能图谱（纯逻辑，无 DOM）：理解数的 19 个技能 + 秒答地图各级，出题、显示、判题、前置关系
 // 浏览器里挂到 window.SKILLS（依赖 window.SM），node 里 require 后直接测
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./bank.js'), require('./hardbank.js'));
-  else root.SKILLS = factory(root.SM, root.BANK, root.HARDBANK);
-})(typeof self !== 'undefined' ? self : this, function (C, B, HB) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./bank.js'), require('./hardbank.js'), require('./placebank.js'));
+  else root.SKILLS = factory(root.SM, root.BANK, root.HARDBANK, root.PLACEBANK);
+})(typeof self !== 'undefined' ? self : this, function (C, B, HB, NB) {
   'use strict';
 
   const rint = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
@@ -21,28 +21,41 @@
   const POOL = {}, pool = id => POOL[id] || (POOL[id] = B.pools[id].filter(x => !C.isLow(x.q)));
   const fromPool = id => r => { const p = pool(id), x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; };
   const type = id => (pool(id).length ? {id, gen: fromPool(id)} : null);
+  // 三个新地方（docs/意图-v6-三个新关卡.md）：题在 placebank.js，不计时，排在各自前置学完之后
+  const place = (id, group, name, pre, ids, input) => skill({id, group, name, nb: true, kind: 'type8', input: input || 'write', pre, items: ids.map(i => ({id: i, gen: r => { const p = NB.pools[i], x = p[C.deal(i, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }}))});
 
   // ---------- 看数（一眼看出有几个，不计时） ----------
   skill({id: 'look1', group: 'look', name: '骰子点', kind: 'card', items: cards('look1')});
   skill({id: 'look2', group: 'look', name: '乱点', kind: 'card', items: cards('look2')});
   skill({id: 'cmp1', group: 'cmp', name: '10 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', items: [type('cmp:t:10')]});
   skill({id: 'look3', group: 'look', name: '一个十格框', kind: 'card', pre: ['look1'], items: cards('look3')});
+  place('gardenA', 'garden', '接方块', ['look3'], ['garden:t:next'], 'pick');
   // ---------- 分合（分合图：整体在上，两部分在下；先卡后题型） ----------
   skill({id: 'bond1', group: 'bond', name: '5 以内分合', kind: 'card', timedFrom: 1, pre: ['look3'], items: cards('bond1').concat([type('bond:t:whole5')])});
   skill({id: 'look4', group: 'look', name: '两个十格框', kind: 'card', pre: ['look3'], items: cards('look4')});
   skill({id: 'bond2', group: 'bond', name: '6–9 分合', kind: 'card', timedFrom: 1, pre: ['bond1'], items: cards('bond2').concat([type('bond:t:whole9')])});
+  place('dockA', 'dock', '装到一起', ['bond2'], ['dock:t:join']);
+  place('dockB', 'dock', '拿走', ['bond2'], ['dock:t:take']);
   skill({id: 'line1', group: 'line', name: '0—10 数线', kind: 'type8', input: 'line', pre: ['cmp1'], items: [type('line:t:10')]});
+  place('clockA', 'market', '整点', ['line1'], ['market:t:hour']);
+  place('clockB', 'market', '半点', ['clockA'], ['market:t:half'], 'pick');
   skill({id: 'bond3', group: 'bond', name: '凑十', kind: 'card', timedFrom: 1, pre: ['bond2'], items: cards('bond3')});
+  place('money1', 'market', '付钱', ['bond3'], ['market:t:pay']);
   skill({id: 'cmp2', group: 'cmp', name: '20 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp1', 'look4'], items: [type('cmp:t:20')]});
   // 缺数四种：□+a=b（答 b−a）、a+□=b（答 b−a）、□−a=b（答 a+b）、a−□=b（答 a−b）
   skill({id: 'bond4', group: 'bond', name: '缺数算式', kind: 'type8', timedFrom: 1, pre: ['bond3'],
     items: ['addL', 'addR', 'subL', 'subR'].map(f => type('bond:t:' + f))});
+  place('dockC', 'dock', '还差几个', ['bond4'], ['dock:t:need']);
+  place('money2', 'market', '找零', ['bond4'], ['market:t:change']);
   // 过十准备：k + a = 10 + □（和在 11–17）
   skill({id: 'bond5', group: 'bond', name: '过十准备', kind: 'type8', timedFrom: 1, pre: ['bond3', 'look4'], items: [9, 8, 7].map(k => type('bond:t:to10-' + k))});
+  place('dockD', 'dock', '比多少', ['bond4', 'cmp2'], ['dock:t:more']);
   skill({id: 'line2', group: 'line', name: '0—20 数线', kind: 'type8', input: 'line', pre: ['line1', 'cmp2'], items: [type('line:t:20')]});
   // ---------- 数位（几个十和几个一） ----------
   skill({id: 'place1', group: 'place', name: '看十和一写数', kind: 'type8', pre: ['look4'],
     items: [type('place:t:read')]});
+  place('gardenB', 'garden', '跳着数', ['place1'], ['garden:t:skip']);
+  place('gardenC', 'garden', '找错的', ['gardenB'], ['garden:t:bad'], 'pick');
   skill({id: 'place2', group: 'place', name: '几个十几个一', kind: 'type8', pre: ['place1'],
     items: [type('place:t:split')]});
   skill({id: 'cmp3', group: 'cmp', name: '两位数谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp2', 'place2'],
@@ -100,6 +113,7 @@
     if (s.input === 'line') { const err = Math.abs(input - inst.ans); return {ok: err < tolOf(inst.q, settings) || err === 0, err}; }
     return {ok: input === inst.ans};
   }
+  const rawPool = id => (B.pools[id] ? pool(id) : HB.pools[id] || NB.pools[id]);
   // 出一道题：卡用固定题，题型每次新数字；fixed 给错题复习用（原题原数）
   function make(itemId, r, fixed) {
     const it = ITEM[itemId];
@@ -112,7 +126,7 @@
   // 固定例题（示范卡用，不受发牌影响）：卡 = 卡本身；题型 = 题库池第 1 道；秒答题型 = 池第 1 道
   function example(itemId) {
     const it = ITEM[itemId]; if (!it.gen) return {id: itemId, q: it.q, ans: it.ans};
-    const p = B.pools[itemId] ? pool(itemId) : HB.pools[itemId]; if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
+    const p = rawPool(itemId); if (p) return {id: itemId, q: Object.assign({}, p[0].q), ans: p[0].ans};
     const u = C.BYID[itemId], [a, b] = B.speedPools[itemId].pool[0]; return {id: itemId, q: {a, op: u.op, b}, ans: u.op === '+' ? a + b : a - b};
   }
   const isType = itemId => !!ITEM[itemId].gen;
@@ -124,6 +138,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {pool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
+  return {pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

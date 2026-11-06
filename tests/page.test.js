@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '../v2/index.html'), 'utf8');
-const FILES = ['bank.js', 'hardbank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'world.js', 'home.js', 'house.js'];
+const FILES = ['bank.js', 'hardbank.js', 'placebank.js', 'core.js', 'ink.js', 'skills.js', 'engine.js', 'render.js', 'world.js', 'home.js', 'house.js'];
 const MODS = {C: require('../v2/core.js'), I: require('../v2/ink.js'), K: require('../v2/skills.js'), E: require('../v2/engine.js'), R: require('../v2/render.js'), WORLD: require('../v2/world.js'), HOME: require('../v2/home.js')};
 
 test('页面用到的 C. / I. / K. / E. / R. / WORLD. 函数在模块里都有（防止页面调了不存在的函数，一点就报错）', () => {
@@ -13,7 +13,7 @@ test('页面用到的 C. / I. / K. / E. / R. / WORLD. 函数在模块里都有�
   });
 });
 
-test('5 个脚本都带同一个版本号（防止手机缓存旧脚本配新页面）', () => {
+test('所有脚本都带同一个版本号（防止手机缓存旧脚本配新页面）', () => {
   const vs = FILES.map(f => { const m = html.match(new RegExp(`<script src="${f.replace('.', '\\.')}\\?v=(\\d+)"></script>`)); assert.ok(m, f + ' 没带 ?v='); return m[1]; });
   assert.equal(new Set(vs).size, 1, '版本号不一致：' + vs.join());
 });
@@ -26,7 +26,7 @@ test('改了任何一个脚本就必须把 ?v= 加 1（用脚本指纹提醒）'
   assert.ok(m, '页面里缺少「脚本指纹」注释');
   const v = html.match(/core\.js\?v=(\d+)/)[1];
   assert.equal(m[1], v, '指纹注释里的版本号要和 ?v= 一致');
-  assert.equal(m[2], now, `脚本改过了：请把 5 个脚本的 ?v= 都加 1，并把指纹改成 v${+v + 1}:${now}`);
+  assert.equal(m[2], now, `脚本改过了：请跑 node tools/bump-version.js，把所有脚本的 ?v= 都加 1，并把指纹改成 v${+v + 1}:${now}`);
 });
 
 test('页面里的 id 都唯一；脚本里 $(\'xx\') 取的 id 页面里都有', () => {

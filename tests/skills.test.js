@@ -12,7 +12,7 @@ test('理解技能数量与编号（已剔除所有数字 ≤ 5 的题）：看�
   assert.deepEqual(n('place'), [0, 2]);
   assert.deepEqual(n('cmp'), [0, 8]);
   assert.deepEqual(n('line'), [0, 4]);
-  assert.equal(K.understand.length, 17);
+  assert.equal(K.understand.length, 28);
   assert.ok(K.ITEM['look:tf2:20'] && K.ITEM['bond:7=3+_'] && K.ITEM['bond:10=9+_'] && K.ITEM['cmp:t:swap'] && K.ITEM['line:t:100']);
 });
 

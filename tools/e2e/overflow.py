@@ -18,6 +18,11 @@ SCAN = """async ([n]) => { const {K, R} = window.__sm, $ = id => document.getEle
     for (let i = 0; i < n; i++) { const inst = K.make(id); const key = JSON.stringify(inst.q); if (seen.has(key)) continue; seen.add(key);
       const v = R.question(inst); $('qBody').innerHTML = v.html; check(inst, '题面', v);
       if (v.input === 'write') { $('qBody').innerHTML = R.explain(inst); check(inst, '图解', v); }
+      if (v.input === 'pick') {   // 选项卡片和答错图解都要在屏幕内；选项不许矮到点不准，文字里不许混进标记
+        $('qWide').innerHTML = `<div class="pickgrid" style="grid-template-columns:repeat(${v.pick.length},minmax(0,1fr))">${v.pick.map((n, i) => `<button class="pickcard${v.pickText ? ' expr' : ''}" aria-label="${v.pickAria ? v.pickAria[i] : v.pickText ? v.pickText[i] : n}">${v.pickText ? v.pickText[i] : n}</button>`).join('')}</div>`; window.__sm.fitBody();
+        for (const c of $('qWide').querySelectorAll('.pickcard')) { const b = c.getBoundingClientRect(); if (b.bottom > innerHeight + 1 || b.height < 60 || c.textContent.includes('>')) { bad.push({id: inst.id, what: '选项', cls: 'pickcard', bottom: Math.round(b.bottom), lim: Math.round(b.height), right: 0}); break; } }
+        $('qBody').innerHTML = ''; $('qWide').innerHTML = R.explain(inst);
+        for (const el of $('qWide').querySelectorAll('*')) { const b = el.getBoundingClientRect(); if (b.width && (b.bottom > innerHeight + 1 || b.right > innerWidth + 1)) { bad.push({id: inst.id, what: '点选图解', cls: el.className || el.tagName, bottom: Math.round(b.bottom), right: Math.round(b.right), lim: innerHeight}); break; } } }
       if (!K.ITEM[id].gen) break; } }
   return bad; }"""
 out = {}

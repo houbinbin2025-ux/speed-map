@@ -101,6 +101,7 @@ test('学得好的孩子不吃亏：今天的题全做完了，不满 5 分钟�
   const seeded = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
   const S = C.blank(); S.placedAt = 1; S.demoSeen = Object.fromEntries(K.SKILLS.map(s => [s.id, true]));
   K.SKILLS.forEach(s => s.items.forEach(i => Object.assign(E.prog(S, i.id), {lv: 3, d: [D(-60), D(-55), D(-50)], seen: 9, lastDay: D(0)})));
+  Object.assign(E.prog(S, K.SKILLS.find(x => !x.speed).items.find(i => !i.gen).id), {lv: 1, d: [D(-60)], lastDay: D(-1)});   // 11-05：还剩一题（一题都没做的那天不算）
   const s = E.session(S, D(0), {rnd: seeded(5)});
   for (let x = s.next(), g = 0; x && g < 500; x = s.next(), g++) if (x.kind === 'q') s.answer({ok: true, fast: true, secs: 6});
   assert.ok(S.daily.done); assert.ok((S.stats || {})[D(0)] === undefined || S.stats[D(0)].sec < 300);

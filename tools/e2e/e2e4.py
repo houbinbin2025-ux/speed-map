@@ -30,6 +30,7 @@ with sync_playwright() as p:
             retries += 1; check('再来一次' in pg.inner_text('#qTag'), '再来一次的题签没写「再来一次」')
             check([st['id'], st['q']] in firsts, f"再来一次不是原题：{st['id']}")
         else: firsts.append([st['id'], st['q']])
+        pg.wait_for_timeout(600)   # 真人节奏：点「继续」后 0.5 秒内的点按被防连点挡掉（11-06 点选题也加了）
         answer(pg, st, False); pg.wait_for_timeout(400)
         body, note = pg.inner_text('#qBody'), pg.inner_text('#qNote')
         nm = pg.evaluate("Object.keys(window.__sm.S.mistakes).length")
