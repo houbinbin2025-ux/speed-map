@@ -262,4 +262,8 @@ test('碎片和锻造台的文字都有英文（单日显示英文）', () => {
   const I18N = require('../v2/i18n.js');
   for (const s of ['小碎片', '中碎片', '大碎片', '这次的碎片', '背包', '去锻造', '锻造', '领宝石', '再领一次', '今天炼出', '挑战 · 大碎片', '挑战结束', '先放碎片', '暂时没有挑战题', '没有找到空空矿场', '再练一会', '再练一会 · 得 1 张挑战券', '认真奖励 ★★', '挑战券 +1', '挑战券 3', '大碎片 +1', '答对 5 / 5 题', '炉子最多放 12 个', '还差 40，碎片退回', '得到宝石 1，废料 30', '今天已炼 30 颗，碎片留到明天', '领 6 颗宝石', '返回', '回到岛上'])
     assert.ok(!I18N.ZH.test(I18N.text(s)), `没有英文：${s}`);
+  assert.equal(I18N.text('挑战 · 大碎片'), 'Challenge · Big shard');
+  assert.equal(I18N.text('再练一会 · 得 1 张挑战券'), 'Practice more · Earn 1 challenge ticket');
+  assert.equal(I18N.text('挑战结束'), 'Challenge over');
+  assert.equal(I18N.text('得到宝石 1，废料 30'), 'Got 1 gem, 30 scrap');
 });
