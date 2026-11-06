@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>语音测试</title>
+<style>
+body{margin:0;padding:32px 16px;background:#1b1d22;color:#ecebe4;font-family:"PingFang SC",system-ui,sans-serif;text-align:center}
+h1{font-size:22px;margin:0 0 8px}
+p{font-size:16px;line-height:1.5;margin:0 0 24px;color:#b9b8b0}
+button{width:100%;max-width:360px;height:96px;font-size:24px;font-weight:700;border:0;border-radius:8px;background:#6aa932;color:#14160f}
+#st{margin-top:20px;font-size:18px;min-height:26px}
+</style>
+</head>
+<body>
+<h1>静音模式播放测试</h1>
+<p>打开静音，音量调大，点下面的按钮</p>
+<button id="b" type="button">播放</button>
+<div id="st">未播放</div>
+<audio id="a" src="test.m4a" preload="auto"></audio>
+<script>
+const a = document.getElementById('a'), st = document.getElementById('st');
+document.getElementById('b').addEventListener('click', () => { a.currentTime = 0; a.play().catch(e => { st.textContent = '播放失败：' + e.name; }); });
+a.addEventListener('playing', () => { st.textContent = '播放中'; });
+a.addEventListener('ended', () => { st.textContent = '播放完毕'; });
+a.addEventListener('error', () => { st.textContent = '音频加载失败'; });
+</script>
+</body>
+</html>
