@@ -568,6 +568,9 @@
   function leave() { closeSheet(); walkTo(DOOR.x + 2, () => { stopClock(); hideAll(); o.leave(); }); }
   el('h_btnOut').addEventListener('click', leave);
   addEventListener('resize', () => { if (!rootEl.hidden) layout(); });
+  // 同岛：iOS 尺寸变了不一定发 resize
+  let seenSize = '';
+  if (window.ResizeObserver) new ResizeObserver(() => { const sz = rootEl.clientWidth + 'x' + rootEl.clientHeight; if (sz !== seenSize) { seenSize = sz; if (!rootEl.hidden && rootEl.clientHeight) layout(); } }).observe(rootEl);
   setInterval(() => { if (!rootEl.hidden) drawFx(); }, 200);
   setInterval(() => { if (!rootEl.hidden && !walking) { drawHero('b'); setTimeout(() => { if (!walking) drawHero('a'); }, 160); } }, 2600);
   // 系统返回手势：先关最上面一层；没有可关的返回 false（页面负责回岛）

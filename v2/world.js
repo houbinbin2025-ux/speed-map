@@ -220,9 +220,11 @@
       mini.innerHTML = ZONES.map(z => `<button data-z="${z.id}" class="${z.id !== 'home' && o.sign(z.id).today ? 'today' : ''}"><i style="background:${z.icon}"></i><span>${z.short}</span></button>`).join('');
       onZone = null; pinZone = null; setCam(camX);
     }
+    let seenW = -1, seenH = -1;
     function layout() {
       const mid = started ? (camX + lastW / 2) / P : null;   // 转屏前屏幕中间对着岛上哪里（像素画坐标），转完还对着那里
       P = H() / WH; lastW = W();
+      seenW = root.clientWidth; seenH = root.clientHeight;
       main.style.width = WW * P + 'px'; main.style.height = H() + 'px';
       far.style.width = far.width * P + 'px'; far.style.height = H() + 'px';
       maxX = Math.max(0, WW * P - W());
@@ -321,6 +323,10 @@
     frame('a');
     setInterval(() => { if (!heroEl.classList.contains('walk') && shown()) { frame('b'); setTimeout(() => frame('a'), 160); } }, 2600); // 待机：眨眼、摇尾巴
     addEventListener('resize', () => { if (shown()) layout(); });   // 转屏、Safari 工具栏伸缩
+    // iOS 打开页面时尺寸还没定（转屏中、页面宽度没生效、工具栏伸缩），也不一定发 resize：盯住实际尺寸，变了就重算，否则岛会放大（Ben 11-07）
+    const fitNow = () => { if (shown() && (root.clientWidth !== seenW || root.clientHeight !== seenH)) layout(); };
+    if (window.ResizeObserver) new ResizeObserver(fitNow).observe(root);
+    addEventListener('pageshow', fitNow);
     return {start, layout, refresh, focus, go, pulse, sayAt: (t) => sayAt(heroEl, hero.x + 4, surf(hero.x + 4) - 15, t), get entering() { return entering; }, get camX() { return camX; }, get maxX() { return maxX; }};
   }
 
