@@ -82,7 +82,7 @@ function childHtml() {
   let h = read('../v2/index.html');
   h = h.slice(h.indexOf('<body'), h.indexOf('<!-- 改了 core'));
   const cut = id => { const i = h.indexOf(`id="${id}"`); if (i < 0) throw new Error('页面没有 ' + id); const start = h.lastIndexOf('<', i); let depth = 0; const re = /<(\/?)div\b[^>]*>/g; re.lastIndex = start; let m; while ((m = re.exec(h))) { depth += m[1] ? -1 : 1; if (!depth) { h = h.slice(0, start) + h.slice(m.index + m[0].length); return; } } throw new Error('没配平 ' + id); };
-  ['parent', 'bankv', 'ovQ', 'ovCrash', 'testBar'].forEach(cut);
+  ['parent', 'bankv', 'habit', 'ovQ', 'ovCrash', 'testBar'].forEach(cut);
   return h.replace(/<!--[\s\S]*?-->/g, '');
 }
 test('页面静态文字（家长区除外）都有英文', () => {
@@ -124,7 +124,7 @@ test('英文语法：单复数、整句、时间', () => {
   t('小猫有 2 盒箭，每盒 2 支。一共几支？', 'Little Cat has 2 boxes of arrows. Each box has 2. How many in all?');
   t('小狼要 15 颗松果，已经有 14 颗。还差几颗？', 'Little Wolf needs 15 pine cones and has 14. How many more?');
   t('小猫有 15 支箭，小狼有 8 支。小猫多几支？', 'Little Cat has 15 arrows. Little Wolf has 8. How many more does Little Cat have?');
-  t('东西 1 元，付了 10 元。找回几元？', 'Something costs 1 yuan. You pay 10 yuan. How much change do you get?');
+  t('东西 1 元，付了 10 元。找回几元？', 'It costs 1 yuan. You pay 10 yuan. How much change do you get?');
   t('3 点半', 'half past 3'); t('3 点', "3 o'clock"); t('5 元', '5 yuan');
   t('6 个圆点', '6 dots'); t('1 个圆点', '1 dot');
   t('2 个十', '2 tens'); t('1 个十', '1 ten'); t('1 个一', '1 one'); t('0 个一', '0 ones');

@@ -1,6 +1,6 @@
 // 空空数学岛 · 单双日语言：单日英文、双日中文，家长区可关（S.settings.bilingual === false 一直中文）
 // 只翻译屏幕上的字，不改业务代码、题库和存档：文本节点和 aria-label / title / data-say 按「整句字典 → 正则模式」换成英文，原文存在 WeakMap 里，切回中文时还原
-// 家长区（#parent）、题库（#bankv、#ovQ）、崩溃页（#ovCrash）、测试条（#testBar）不翻译。新增孩子能看到的文字要在这里加英文（tests/i18n.test.js 会查）
+// 家长区（#parent、#habit）、题库（#bankv、#ovQ）、崩溃页（#ovCrash）、测试条（#testBar）不翻译。新增孩子能看到的文字要在这里加英文（tests/i18n.test.js 会查）
 // 浏览器里挂到 window.I18N，最先加载；node 里 require 后直接测
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -284,7 +284,7 @@
   }
 
   // ---------- DOM 层（只在英文日工作；中文日完全不碰页面） ----------
-  const SKIP = '#parent,#bankv,#ovQ,#ovCrash,#testBar,[data-i18n-skip]', NOTEXT = {SCRIPT: 1, STYLE: 1, TEXTAREA: 1, NOSCRIPT: 1};
+  const SKIP = '#parent,#bankv,#habit,#ovQ,#ovCrash,#testBar,[data-i18n-skip]', NOTEXT = {SCRIPT: 1, STYLE: 1, TEXTAREA: 1, NOSCRIPT: 1};
   const api = {ZH, isEn, misses, text: s => tr(String(s)), html, dump: () => Object.assign({}, D), get on() { return en; }, set, flush};
   let en = false, ob = null, zhTitle = null;
   const TX = new WeakMap(), AT = new WeakMap();
