@@ -359,6 +359,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .ovl .card .small{font-size:12px;color:var(--dim);word-break:break-all}
 .kv{font-size:13px;line-height:1.7}
 .pgrid .panel{overflow:visible}
+/* 家长区 · 能力观察 */
+.hskgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}.hskc{font-size:12px;line-height:1.4;text-align:center}.hsk{display:block;width:100%;aspect-ratio:1;background:var(--paper);border:2px solid #000}.hsk polyline{fill:none;stroke:#1b1d22;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.hslips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 /* 家长区 · 题库 */
 .bkrow{background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:none}
 .bkrow .bh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.bkrow .bh b{font-size:16px}
@@ -712,6 +714,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <button class="btn" id="btnReplace">重新摸底</button>
     </div>
     <div class="panel">
+      <div class="ptitle">能力观察</div>
+      <div class="kv" id="habInfo"></div>
+      <button class="btn" id="btnHabit">查看能力观察</button>
+    </div>
+    <div class="panel">
       <div class="ptitle">进度备份</div>
       <div class="warnbox" id="bkInfo"></div>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
@@ -760,6 +767,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   </div>
 </div>
 
+<!-- 10b 家长区 · 能力观察（只看不改；docs/说明书-习惯记录.md） -->
+<div class="scr" id="habit" hidden style="flex-direction:column;gap:10px">
+  <div class="top"><button class="btn" id="habBack">返回</button><h1>能力观察</h1><span class="muted">近 14 天 · 只记录，不影响练习</span></div>
+  <div class="pgrid" id="habBody" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start"></div>
+</div>
+
 <!-- 11 家长区 · 题库 -->
 <div class="scr" id="bankv" hidden style="flex-direction:column;gap:10px">
   <div class="top"><button class="btn" id="bankBack">返回</button><h1>题库</h1><div class="tabs" id="bankTabs" style="flex-wrap:wrap"></div></div>
@@ -803,7 +816,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v71:68c25c2ba4d9 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v72:b4cba9721436 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -813,19 +826,19 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=71"></script>
-<script src="hardbank.js?v=71"></script>
-<script src="placebank.js?v=71"></script>
-<script src="core.js?v=71"></script>
-<script src="ink.js?v=71"></script>
-<script src="skills.js?v=71"></script>
-<script src="engine.js?v=71"></script>
-<script src="render.js?v=71"></script>
-<script src="world.js?v=71"></script>
-<script src="home.js?v=71"></script>
-<script src="puzzles.js?v=71"></script>
-<script src="thinking.js?v=71"></script>
-<script src="house.js?v=71"></script>
+<script src="bank.js?v=72"></script>
+<script src="hardbank.js?v=72"></script>
+<script src="placebank.js?v=72"></script>
+<script src="core.js?v=72"></script>
+<script src="ink.js?v=72"></script>
+<script src="skills.js?v=72"></script>
+<script src="engine.js?v=72"></script>
+<script src="render.js?v=72"></script>
+<script src="world.js?v=72"></script>
+<script src="home.js?v=72"></script>
+<script src="puzzles.js?v=72"></script>
+<script src="thinking.js?v=72"></script>
+<script src="house.js?v=72"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -853,6 +866,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   };
   const loadInk = () => { try { return Object.assign(I.blankStore(), JSON.parse(store.getItem(KEYS.ink) || 'null') || {}); } catch (e) { return I.blankStore(); } };
   let INKS = loadInk();
+  // 习惯记录：定案后记这次写的字和评分（只记录，出错也不影响作答）。摸底、Boss、再来一次、看过提示的不计，和作答统计同一口径
+  const NO_HABIT = {scan: 1, boss: 1};
+  function recordInk(res, picked, clear) {
+    try {
+      const scores = res.digits.map((d, k) => I.legibility(d.strokes, picked[k]));
+      E.noteInk(S, today(), scores, clear, picked);
+      INKS.recent = I.pushRecent(INKS.recent, {d: today(), a: picked.join(''), s: scores, g: I.sketch([].concat(...res.digits.map(d => d.strokes)))});
+      saveInk();
+    } catch (e) {}
+  }
   const saveInk = () => { if (!frozen && !S.readOnly && !S.stopped) try { store.setItem(KEYS.ink, JSON.stringify(INKS)); } catch (e) {} };
   const calibrated = () => INKS.done === true;
   let persisted = null;
@@ -861,7 +884,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv', 'house', 'think'];
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'habit', 'bankv', 'house', 'think'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); show('island'); };
@@ -1082,7 +1105,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const calPad = Pad($('calPad'), () => { clearTimeout(CAL && CAL.timer); CAL.timer = setTimeout(acceptCal, 900); });
   calPad.onDown = () => { CAL && clearTimeout(CAL.timer); };
   function startCal(then, back) {
-    INKS = Object.assign(I.blankStore(), {samples: []}); // 重新校准：从头来
+    INKS = Object.assign(I.blankStore(), {samples: [], recent: INKS.recent}); // 重新校准：从头来（最近写的字留着，能力观察页要看）
     CAL = {d: 0, k: 0, then, timer: null, speeds: [], t0: Date.now(), back};
     show('calib'); calPad.fit(); calPad.clear(); drawCal();
   }
@@ -1117,7 +1140,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const SERIES_NAME = {add: '加法练习', sub: '减法练习', mix: '加减混合'};
   const seriesPool = (key, L) => C.unitsOf(L).filter(u => C.seriesOk(key, u.op) && !E.outOf(S, u.id) && E.itemOn(S, u.id));
   // 秒答 4 次的题不再出：题型换一道没下架的，换不到就跳过；Boss 关是一次性的通关检验，不受影响
-  const asInst = c => ({id: c.id, q: {a: c.a, b: c.b}, ans: c.ans});
+  const asInst = c => ({id: c.id, q: {a: c.a, op: c.op, b: c.b}, ans: c.ans});
   const liveInst = p => { const gen = C.BYID[p.id] && C.BYID[p.id].gen; for (let k = 0; k < (gen ? 800 : 1); k++) { const c = C.inst(p); if (!E.spent(S, asInst(c))) return E.levelOn(S, asInst(c)) ? c : null; } if (gen) E.prog(S, p.id).out = 1; return null; };
   const liveDeck = picks => picks.map(liveInst).filter(Boolean);
   const playPad = Pad($('pad'), () => schedule());
@@ -1220,6 +1243,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   // 识别没把握且答案也定夺不了：只问那一位，两个候选只按笔迹排名，不参考答案
   function askConfirm() {
+    P.askedI = P.i;   // 弹过确认，这道题就不算免确认（点重写后写清楚了也一样）
     P.phase = 'confirm'; playPad.enabled = false;
     const i = P.unsure[0], d = P.rec.digits[i];
     $('cfShown').innerHTML = P.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
@@ -1240,6 +1264,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function decide(viaConfirm) {
     const c = P.deck[P.i], text = P.picked.join(''), right = text === String(c.ans);
     P.typed = text;
+    if (!NO_HABIT[P.kind]) recordInk(P.rec, P.picked, !viaConfirm && !P.byAnswer.length && P.askedI !== P.i);
     P.result = !right ? 'wrong' : (!viaConfirm && P.ms <= limitOf(c)) ? 'fast' : 'slow';
     // 高把握且写对的笔迹，加进模板（越用越准）；弹窗确认的、靠答案定夺的那一位不加（两可的字可能是形近写错，学进去会越学越糊）
     if (right && !viaConfirm) P.rec.digits.forEach((d, k) => { if (!P.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }), saveInk();
@@ -1282,6 +1307,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     clearTimeout(P.nextT);
     const c = P.deck[P.i], t = today(), r = P.result, fast = r === 'fast';
     const st = cs(c.id), lv0 = st.lv; st.seen++; st.last = new Date().toISOString(); st.intro = true;
+    if (!NO_HABIT[P.kind]) try { E.noteAnswer(S, t, asInst(c), {ok: r !== 'wrong', dunno: !!P.dunno, secs: (P.ms || 0) / 1000}, E.isKnown(S, asInst(c), lv0)); } catch (e) {}
     let up = false;
     if (fast) {
       if (c.gen) { if (st.fday !== t) { st.fday = t; st.fn = 0; } st.fn++; if (st.fn >= C.TYPE_NEED) up = C.tryUp(S, c.id, t); }
@@ -1481,6 +1507,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qDecide(false);
   }
   function qAsk() {
+    Q.x.asked = true;   // 弹过确认，这道题就不算免确认
     Q.phase = 'confirm'; qPad.enabled = false;
     const i = Q.unsure[0], d = Q.rec.digits[i];
     $('qcShown').innerHTML = Q.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
@@ -1495,6 +1522,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const qLimit = inst => { const u = C.BYID[inst.id]; return u ? C.fastLimit(u, inst.ans, mode(), INKS.speed) : S.oral ? 3000 : 3000 + (INKS.speed || 1000) * C.digits(inst.ans); };
   function qDecide(viaConfirm) {
     const inst = Q.x.inst, text = Q.picked.join(''), right = text === String(inst.ans);
+    if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) recordInk(Q.rec, Q.picked, !viaConfirm && !Q.byAnswer.length && !Q.x.asked);
     if (right && !viaConfirm) { Q.rec.digits.forEach((d, k) => { if (!Q.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }); saveInk(); }
     resolve({ok: right, fast: right && !viaConfirm && Q.ms <= qLimit(inst), typed: text});
   }
@@ -1562,7 +1590,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const x = Q.x, inst = x.inst;
     const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? OK_MS : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
-    const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked}) || {pass: r.ok, up: false};
+    const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
     if (x.seg === 'review' && out.pass) Q.passed++;
@@ -1776,6 +1804,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('lineErr').innerHTML = errs.length ? errs.join('<br>') : '数线还没练过';
     $('oralBox').checked = !!S.oral;
     renderLevels();
+    try { const hb = E.habit(S, t).now; $('habInfo').innerHTML = `熟题失误率（近 14 天）${pctOf(hb.ks, hb.k)}<br>最近 14 天作答 ${hb.a} 题`; } catch (e) { $('habInfo').textContent = '暂无数据'; }
     const n = Object.values(INKS.t || {}).map(a => a.length), ist = INKS.stats || [];
     $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${ist.length ? `<br>最近 ${ist.length} 次不用确认就认出 ${ist.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
     // 存储
@@ -1803,6 +1832,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     save(); renderParent();
   });
   $('parBack').addEventListener('click', goIsland);
+  // ---------- 10b 能力观察 ----------
+  const pctOf = (x, y) => (y ? Math.round(x / y * 100) + '%' : '--');
+  // 较前 14 天：比率之差用 pp（界面用语规范 §3）
+  const prevOf = (x, y, px, py) => { if (!y || !py) return ''; const d = Math.round(x / y * 100) - Math.round(px / py * 100); return ` · 较前 14 天 ${d === 0 ? '持平' : (d > 0 ? '▲' : '▼') + Math.abs(d) + 'pp'}`; };
+  const inkSvg = g => `<svg class="hsk" viewBox="-6 -6 112 112" aria-hidden="true">${g.map(st => `<polyline points="${st.map((v, i) => (i % 2 ? ',' : ' ') + v).join('').trim()}"></polyline>`).join('')}</svg>`;
+  function renderHabit() {
+    const h = E.habit(S, today()), a = h.now, b = h.prev, row = (k, v) => `<div class="kv">${k}：<b>${v}</b></div>`, digs = Object.keys(a.ds).sort().map(d => `${d}：${Math.round(a.ds[d][1] / a.ds[d][0])}（${a.ds[d][0]}）`).join(' · ');
+    const recent = (Array.isArray(INKS.recent) ? INKS.recent : []).filter(r => r && Array.isArray(r.g) && Array.isArray(r.s)).slice().reverse();
+    $('habBody').innerHTML = `
+      <div class="panel"><div class="ptitle">练习</div>${row('有作答的天数', a.days + ' 天')}${row('作答', a.a + ' 题')}${row('正确率', pctOf(a.r, a.a) + prevOf(a.r, a.a, b.r, b.a))}${row('「不会」占比', pctOf(a.d, a.a) + prevOf(a.d, a.a, b.d, b.a))}<div class="muted" style="font-size:12px;line-height:1.5">含秒答地图；不含摸底、Boss 关、再来一次、看过提示的题</div></div>
+      <div class="panel"><div class="ptitle">熟题</div>${row('作答', a.k + ' 题')}${row('失误', a.ks + ' 次')}${row('失误率', pctOf(a.ks, a.k) + prevOf(a.ks, a.k, b.ks, b.k))}<div class="muted" style="font-size:12px;line-height:1.5">熟题：格子已到淡红，或这道题已在不同的日子算过 2 次秒答。失误：熟题答错，不含点「不会」。写对但被识别错，也会计入</div></div>
+      <div class="panel"><div class="ptitle">书写</div><div class="kv">书写评分（试运行）：<b>${digs || '--'}</b></div>${row('免确认识别率', pctOf(a.ic, a.ia))}<div class="muted" style="font-size:12px;line-height:1.5">书写评分和规范字形比，0–100，还没有校准。不同数字之间不可比，所以按数字显示（括号里是个数），也不做前后对比。请对照下面的字判断是否准确。免确认识别率是识别的把握，不代表工整</div></div>
+      <div class="panel"><div class="ptitle">读题</div>${row('文字题平均用时', a.wn ? (a.ws / a.wn).toFixed(0) + ' 秒' : '--')}${row('朗读次数', a.say + ' 次')}</div>
+      <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${String(m.d).slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
+      <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 认定为 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
+  }
+  $('btnHabit').addEventListener('click', () => { renderHabit(); show('habit'); $('habBody').scrollTop = 0; });
+  $('habBack').addEventListener('click', () => { renderParent(); show('parent'); });
 
   // ---------- 11 家长区 · 题库（只看不改；题目来自 bank.js） ----------
   const BK = window.BANK;
@@ -1891,7 +1938,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     save(); renderLevels();
   });
   // 朗读题目（系统自带语音，没有就什么也不发生）
-  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(b.dataset.say); u.lang = 'zh-CN'; u.rate = .9; speechSynthesis.speak(u); } catch (err) {} });
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') E.noteSay(S, today()); try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(b.dataset.say); u.lang = 'zh-CN'; u.rate = .9; speechSynthesis.speak(u); } catch (err) {} });
   R.setSprite(ART.spriteURL);
   $('oralBox').addEventListener('change', e => { S.oral = e.target.checked; save(); document.body.classList.toggle('write', !S.oral); });
   $('btnRecal').addEventListener('click', () => startCal(() => { renderParent(); show('parent'); }, () => { renderParent(); show('parent'); }));
@@ -1922,7 +1969,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     try {
       if (ioKind === 'inkin') {
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
-        INKS = Object.assign(I.blankStore(), v); saveInk();
+        INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); saveInk();
       } else {
         const keep = S.testDays, ro = S.readOnly;
         S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
@@ -1933,7 +1980,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
-  $('btnResetYes').addEventListener('click', () => { S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
+  $('btnResetYes').addEventListener('click', () => { S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); INKS.recent = []; saveInk(); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
 
   // ---------- 12 异常 ----------
   // 12a 暂停：切后台 / 来电 / 锁屏 / 竖过来。还没作答的题不记录，继续后原题重出（看数重新闪）；已判完的，继续后出下一题
@@ -1983,6 +2030,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (cur === 'house') { if (!HS.back()) { HS.leave(); goIsland(); } return; }
     if (cur === 'island' && closeZone()) return;   // 首页卡片开着：右滑先关卡片
     if (cur === 'island' || cur === 'placeResult') return;
+    if (cur === 'habit') return show('parent');
     if (cur === 'bankv') { if (!$('ovQ').hidden) $('ovQ').hidden = true; else show('parent'); return; }
     goIsland();
   });

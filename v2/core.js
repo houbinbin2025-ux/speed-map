@@ -396,6 +396,16 @@
       [S.think || {}, v.think || {}].forEach(t => { for (const id in t) if (Array.isArray(t[id])) { M.think[id] = M.think[id] || []; t[id].forEach((n, i) => { M.think[id][i] = Math.max(M.think[id][i] || 0, Number(n) || 0); }); } });
     }
     if (!M.placedAt) delete M.placedAt;
+    // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
+    for (const d in v.stats || {}) {
+      const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;
+      M.stats = M.stats || {}; const day = M.stats[d] = M.stats[d] || {sec: 0, n: 0, ups: 0, over: 0, gap: 0}, h = day.h = day.h || {};
+      for (const k in vh) {
+        if (k === 'ds') { const ds = h.ds = h.ds || {}; for (const d in vh.ds) if (!ds[d] || ds[d][0] < vh.ds[d][0]) ds[d] = vh.ds[d]; }
+        else if (!(h[k] >= vh[k])) h[k] = vh[k];
+      }
+    }
+    if (S.slips || v.slips) { const seen = new Set(); M.slips = [].concat(S.slips || [], v.slips || []).filter(m => { const k = JSON.stringify(m); if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => String(a.d).localeCompare(String(b.d))).slice(-30); }
     return M;
   }
 
