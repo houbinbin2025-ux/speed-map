@@ -80,19 +80,22 @@
     return {bonus, stars: acc >= 0.95 ? 3 : acc >= 0.85 ? 2 : acc > 0.7 ? 1 : 0};
   }
 
-  // ---------- 锻造：炉子最多 12 个，一炉一颗，多的变废料；不够就退回 ----------
+  // ---------- 锻造：炉子最多 12 个，一炉一颗，多的变废料；不够也开炉，全部变废料（开炉前由界面提醒） ----------
   const sum = r => r.s * VALUE.s + r.m * VALUE.m + r.l * VALUE.l;
+  const enough = r => sum(r) >= GEM;
+  const dayFull = (st, day) => !!st.days[day] && st.days[day].forged >= DAY_MAX;
   function forge(st, r, day) {
     const bad = ['s', 'm', 'l'].some(t => !Number.isInteger(r[t]) || r[t] < 0 || r[t] > st.inv[t]);
     if (bad) return {ok: false, why: 'lack'};
     if (r.s + r.m + r.l > SLOTS) return {ok: false, why: 'full'};
     const v = sum(r);
-    if (v < GEM) return {ok: false, why: 'short', short: GEM - v};
+    if (v === 0) return {ok: false, why: 'empty'};
     const D = dayOf(st, day);
     if (D.forged >= DAY_MAX) return {ok: false, why: 'daily'};
     ['s', 'm', 'l'].forEach(t => { st.inv[t] -= r[t]; });
-    D.forged++; D.waste += v - GEM;
-    return {ok: true, gems: 1, waste: v - GEM};
+    const gems = v >= GEM ? 1 : 0, waste = gems ? v - GEM : v;
+    D.forged += gems; D.waste += waste;
+    return {ok: true, gems, waste};
   }
   // 一炉正好 100、尽量多用小碎片的配方；没有就返回 null
   function bestRecipe(inv) {
@@ -153,6 +156,6 @@
   const unsent = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, st.days[d].forged - (st.sent[d] || 0)), 0);
   function markSent(st, today) { recentDays(st, today).forEach(d => { st.sent[d] = st.days[d].forged; }); }
 
-  return {KEY, VALUE, GEM, SLOTS, DAY_MAX, CH_N, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, forge, bestRecipe,
+  return {KEY, VALUE, GEM, SLOTS, DAY_MAX, CH_N, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent};
 });

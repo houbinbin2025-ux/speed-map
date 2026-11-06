@@ -119,17 +119,22 @@ test('锻造：常见配方都正好 100', () => {
   }
 });
 
-test('锻造：12 个小碎片炼不出来，还差 40，碎片不动', () => {
-  const st = G.blank(); st.inv = {s: 12, m: 0, l: 0};
-  assert.deepEqual(G.forge(st, {s: 12, m: 0, l: 0}, DAY), {ok: false, why: 'short', short: 40});
-  assert.deepEqual(st.inv, {s: 12, m: 0, l: 0});
+test('锻造：不够 100 也能开炉，碎片全部变废料，不算炼出宝石', () => {
+  const st = G.blank(); st.inv = {s: 14, m: 1, l: 0};
+  assert.equal(G.enough({s: 12, m: 0, l: 0}), false);
+  assert.equal(G.enough({s: 0, m: 10, l: 0}), true);
+  assert.deepEqual(G.forge(st, {s: 12, m: 0, l: 0}, DAY), {ok: true, gems: 0, waste: 60});
+  assert.deepEqual(st.inv, {s: 2, m: 1, l: 0});
+  assert.equal(st.days[DAY].forged, 0, '没炼出来不算一颗，也不占每天上限');
+  assert.equal(st.days[DAY].waste, 60);
+  assert.equal(G.items(st, DAY), '', '没炼出来，领宝石没有东西可报');
 });
 
 test('锻造：超过 12 格、碎片不够、空炉都不行', () => {
   const st = G.blank(); st.inv = {s: 20, m: 20, l: 2};
   assert.equal(G.forge(st, {s: 13, m: 0, l: 0}, DAY).why, 'full');
   assert.equal(G.forge(st, {s: 0, m: 0, l: 3}, DAY).why, 'lack');
-  assert.equal(G.forge(st, {s: 0, m: 0, l: 0}, DAY).why, 'short');
+  assert.equal(G.forge(st, {s: 0, m: 0, l: 0}, DAY).why, 'empty');
   assert.equal(G.forge(st, {s: -1, m: 11, l: 0}, DAY).why, 'lack');
   assert.deepEqual(st.inv, {s: 20, m: 20, l: 2});
 });
@@ -138,6 +143,8 @@ test('锻造：一天最多 30 颗，碎片留到明天', () => {
   const st = G.blank(); st.inv = {s: 0, m: 320, l: 0};
   for (let i = 0; i < 30; i++) assert.equal(G.forge(st, {s: 0, m: 10, l: 0}, DAY).ok, true);
   assert.equal(G.forge(st, {s: 0, m: 10, l: 0}, DAY).why, 'daily');
+  assert.equal(G.dayFull(st, DAY), true); assert.equal(G.dayFull(st, '2026-11-07'), false);
+  { const n = st.inv.s; st.inv.s = n + 1; assert.equal(G.forge(st, {s: 1, m: 0, l: 0}, DAY).why, 'daily', '炼满后不够 100 也不开炉，碎片不扣'); assert.equal(st.inv.s, n + 1); st.inv.s = n; }
   assert.equal(st.inv.m, 20);
   assert.equal(G.forge(st, {s: 0, m: 10, l: 0}, '2026-11-07').ok, true);
 });
@@ -260,10 +267,12 @@ test('去重 key 和引擎的秒答编号是同一个', () => {
 
 test('碎片和锻造台的文字都有英文（单日显示英文）', () => {
   const I18N = require('../v2/i18n.js');
-  for (const s of ['小碎片', '中碎片', '大碎片', '这次的碎片', '背包', '去锻造', '锻造', '领宝石', '再领一次', '今天炼出', '挑战 · 大碎片', '挑战结束', '先放碎片', '暂时没有挑战题', '没有找到空空矿场', '再练一会', '再练一会 · 得 1 张挑战券', '认真奖励 ★★', '挑战券 +1', '挑战券 3', '大碎片 +1', '答对 5 / 5 题', '炉子最多放 12 个', '还差 40，碎片退回', '得到宝石 1，废料 30', '今天已炼 30 颗，碎片留到明天', '领 6 颗宝石', '返回', '回到岛上'])
+  for (const s of ['小碎片', '中碎片', '大碎片', '这次的碎片', '背包', '去锻造', '锻造', '领宝石', '再领一次', '今天炼出', '挑战 · 大碎片', '挑战结束', '先放碎片', '暂时没有挑战题', '没有找到空空矿场', '再练一会', '再练一会 · 得 1 张挑战券', '认真奖励 ★★', '挑战券 +1', '挑战券 3', '大碎片 +1', '答对 5 / 5 题', '炉子最多放 12 个', '没有炼出宝石，废料 60', '得到宝石 1，废料 30', '今天已炼 30 颗，碎片留到明天', '领 6 颗宝石', '返回', '回到岛上'])
     assert.ok(!I18N.ZH.test(I18N.text(s)), `没有英文：${s}`);
   assert.equal(I18N.text('挑战 · 大碎片'), 'Challenge · Big shard');
   assert.equal(I18N.text('再练一会 · 得 1 张挑战券'), 'Practice more · Earn 1 challenge ticket');
   assert.equal(I18N.text('挑战结束'), 'Challenge over');
   assert.equal(I18N.text('得到宝石 1，废料 30'), 'Got 1 gem, 30 scrap');
+  assert.equal(I18N.text('没有炼出宝石，废料 60'), 'No gem. 60 scrap');
+  for (const s of ['碎片不够，炼不出宝石', '开始锻造后，炉子里的碎片都会变成废料，不退回', '先不炼', '仍然锻造']) assert.notEqual(I18N.text(s), s, s);
 });

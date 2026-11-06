@@ -21,7 +21,9 @@
     syncNow();
     c.$('forgeList').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) add(b.dataset.add); });
     c.$('forgeSlots').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b && !busy) { slots.splice(+b.dataset.i, 1); msg = ''; blip([[260, 0, 0.05]]); draw(); } });
-    c.$('forgeGo').addEventListener('click', doForge);
+    c.$('forgeGo').addEventListener('click', () => doForge());
+    c.$('forgeWarnBack').addEventListener('click', () => { c.$('forgeWarn').hidden = true; });
+    c.$('forgeWarnGo').addEventListener('click', () => { c.$('forgeWarn').hidden = true; doForge(true); });
     c.$('forgeClaim').addEventListener('click', claim);
     c.$('forgeBack').addEventListener('click', () => { if (busy) return; if (back === 'island') c.goIsland(); else c.show(back); });
     addEventListener('resize', () => { if (c.cur() === 'forge') layoutScene(); });
@@ -192,7 +194,7 @@
 
   // ---------- 锻造台：炉子里不显示合计，要自己算 ----------
   let busy = false, hold = 0;
-  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; c.show('forge'); draw(); startScene(); }
+  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene(); }
   const placed = t => slots.filter(x => x === t).length;
   function add(t) {
     if (busy) return;
@@ -202,37 +204,43 @@
     slots.push(t); msg = ''; draw();
     const cell = c.$('forgeSlots').children[i], target = cell.querySelector('.frag');
     blip([[520 + i * 40, 0, 0.06]]);
-    if (from && target) { target.style.visibility = 'hidden'; flyImg(shardURL(t), centre(from), centre(cell), 30, 170, 24).then(() => { target.style.visibility = ''; target.classList.add('land'); }); }
+    if (from && target) { target.style.visibility = 'hidden'; flyImg(shardURL(t), centre(from), centre(cell), 30, 300, 24).then(() => { target.style.visibility = ''; target.classList.add('land'); }); }
   }
-  async function doForge() {
+  const T = {gap: 170, fly: 620, heat: 800, strike: 430, after: 190, rise: 800, stay: 650, toCount: 520, slagGap: 120, slagFly: 620};   // 锻造节奏（毫秒）：Ben 11-07 嫌快，整体放慢约 3 倍
+  async function doForge(sure) {
     if (busy) return;
     if (!slots.length) { msg = '先放碎片'; return draw(); }
-    const r = {s: placed('s'), m: placed('m'), l: placed('l')}, res = G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
-    if (!res.ok && res.why !== 'short') { if (res.why === 'daily') msg = `今天已炼 ${G.DAY_MAX} 颗，碎片留到明天`; return draw(); }
-    if (res.ok) { save(); hold = 1; }
-    const done = res.ok ? `得到宝石 1，废料 ${res.waste}` : `还差 ${res.short}，碎片退回`;
+    const r = {s: placed('s'), m: placed('m'), l: placed('l')};
+    if (!sure && !G.enough(r) && !G.dayFull(st, c.today())) { blip([[200, 0, 0.14]], 'triangle'); msg = ''; draw(); c.$('forgeWarn').hidden = false; return; }   // 不够：开炉前提醒。不说差多少，算数留给孩子
+    const res = G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
+    if (!res.ok) { if (res.why === 'daily') msg = `今天已炼 ${G.DAY_MAX} 颗，碎片留到明天`; return draw(); }
+    save(); hold = res.gems;
+    const done = res.gems ? `得到宝石 1，废料 ${res.waste}` : `没有炼出宝石，废料 ${res.waste}`;
     busy = true; msg = ''; c.$('forgeMsg').textContent = ''; const cells = [...c.$('forgeSlots').children], list = slots.slice(), root = c.$('forge');
     root.classList.add('working');
     try {
     // 碎片一个个飞进炉膛
-    await Promise.all(list.map((t, i) => wait(i * 55).then(() => { const cell = cells[i], x = centre(cell); const f = cell.querySelector('.frag'); if (f) f.style.visibility = 'hidden'; blip([[300 + i * 30, 0, 0.05]]); fire.heat = Math.min(1, fire.heat + 0.09); return flyImg(shardURL(t), x, mouth(), 30, 300).then(() => spark(3, fire.fx + 17, fire.fy + 20, ['#f2c14e', '#e0762a'], 1)); })));
+    await Promise.all(list.map((t, i) => wait(i * T.gap).then(() => { const cell = cells[i], x = centre(cell); const f = cell.querySelector('.frag'); if (f) f.style.visibility = 'hidden'; blip([[300 + i * 30, 0, 0.05]]); fire.heat = Math.min(1, fire.heat + 0.09); return flyImg(shardURL(t), x, mouth(), 30, T.fly).then(() => spark(3, fire.fx + 17, fire.fy + 20, ['#f2c14e', '#e0762a'], 1)); })));
     slots = []; draw();
-    if (!res.ok) {
-      // 不够：冒黑烟，碎片弹回背包
-      blip([[110, 0, 0.18], [80, 0.15, 0.22]], 'sawtooth'); smoke(26); fire.heat = 0.1;
-      root.classList.add('shake'); await wait(260); root.classList.remove('shake');
-      await Promise.all(list.map((t, i) => wait(i * 25).then(() => flyImg(shardURL(t), mouth(), centre(c.$('forgeList').querySelector(`[data-add="${t}"] img`)), 30, 280))));
+    // 炉火烧一会儿
+    blip([[90, 0, 0.5]], 'sawtooth'); smoke(6); fire.heat = 1; await wait(T.heat);
+    if (!res.gems) {
+      // 不够：闷响、冒黑烟，炉里的东西全成废料进桶
+      fire.work = true; await wait(T.strike); fire.hit = 12; blip([[110, 0, 0.18], [80, 0.15, 0.22]], 'sawtooth'); smoke(30); fire.work = false; fire.heat = 0.1;
+      root.classList.add('shake'); await wait(300); root.classList.remove('shake');
+      await Promise.all(list.map((t, i) => wait(i * T.slagGap).then(() => flyImg(SLAG(), mouth(), bucketPt(), 16, T.slagFly, 14))));
+      spark(10, fire.W - 12, fire.floor - 16, ['#6c6f76', '#9a9da4'], 0.8);
     } else {
       // 够：抡三锤，火星四溅，宝石蹦出来
       fire.work = true;
       for (let i = 0; i < 3; i++) {
-        await wait(200); fire.hit = 12; fire.flash = Math.min(1, fire.flash + 0.3); spark(14 + i * 8, fire.fx - 15, fire.floor - 13, ['#fff3b0', '#f2c14e', '#e0762a'], 1.8 + i * 0.4);
-        blip([[880 - i * 60, 0, 0.05], [220, 0.01, 0.08]]); root.classList.add('shake'); await wait(110); root.classList.remove('shake');
+        await wait(T.strike); fire.hit = 12; fire.flash = Math.min(1, fire.flash + 0.3); spark(14 + i * 8, fire.fx - 15, fire.floor - 13, ['#fff3b0', '#f2c14e', '#e0762a'], 1.8 + i * 0.4);
+        blip([[880 - i * 60, 0, 0.05], [220, 0.01, 0.08]]); root.classList.add('shake'); await wait(T.after); root.classList.remove('shake');
       }
       fire.work = false; fire.flash = 1; fire.heat = 1; spark(50, fire.fx + 17, fire.fy + 20, ['#c8fff4', '#1fc8b8', '#fff3b0'], 2.6);
       blip([[660, 0, 0.1], [880, 0.09, 0.1], [1320, 0.18, 0.22]]);
       await gemPop();
-      if (res.waste) { blip([[160, 0, 0.1]], 'triangle'); await Promise.all([0, 1, 2].map(i => wait(i * 70).then(() => flyImg(SLAG(), mouth(), bucketPt(), 16, 360, 14)))); spark(8, fire.W - 12, fire.floor - 16, ['#6c6f76', '#9a9da4'], 0.8); }
+      if (res.waste) { blip([[160, 0, 0.1]], 'triangle'); await Promise.all([0, 1, 2].map(i => wait(i * T.slagGap).then(() => flyImg(SLAG(), mouth(), bucketPt(), 16, T.slagFly, 14)))); spark(8, fire.W - 12, fire.floor - 16, ['#6c6f76', '#9a9da4'], 0.8); }
     }
     } catch (e) { /* 动画出错不影响结果：碎片和宝石开始前已存好 */ }
     fire.work = false; hold = 0; slots = []; msg = done; root.classList.remove('working', 'shake'); busy = false; draw();
@@ -244,9 +252,9 @@
     document.body.appendChild(e);
     const [mx, my] = mouth(), to = centre(c.$('forgeToday')), cy = Math.max(70, my - 110);
     const place = (x, y, s) => ({transform: `translate(${x - 60}px,${y - 60}px) scale(${s})`});
-    await settled(e.animate([place(mx, my, 0.2), place(mx, cy, 1.25), place(mx, cy, 1)], {duration: 520, easing: 'cubic-bezier(.2,1.5,.4,1)', fill: 'forwards'}), 520);
-    await wait(320);
-    await settled(e.animate([place(mx, cy, 1), place(to[0], to[1], 0.25)], {duration: 300, easing: 'ease-in', fill: 'forwards'}), 300);
+    await settled(e.animate([place(mx, my, 0.2), place(mx, cy, 1.25), place(mx, cy, 1)], {duration: T.rise, easing: 'cubic-bezier(.2,1.5,.4,1)', fill: 'forwards'}), T.rise);
+    await wait(T.stay);
+    await settled(e.animate([place(mx, cy, 1), place(to[0], to[1], 0.25)], {duration: T.toCount, easing: 'ease-in', fill: 'forwards'}), T.toCount);
     e.remove();
     hold = 0; draw(); const t = c.$('forgeToday'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
   }
