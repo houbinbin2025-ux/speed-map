@@ -200,7 +200,7 @@ test('示范卡用固定例题：前面出过什么题都不影响', () => {
 test('页面按 bank → hardbank → core → ink → skills → engine → render → world → home → house 的顺序加载；没有题库时 core 明确报错', () => {
   const html = require('fs').readFileSync(require('path').join(__dirname, '../v2/index.html'), 'utf8');
   const order = [...html.matchAll(/<script src="([a-z]+)\.js\?v=\d+"><\/script>/g)].map(m => m[1]);
-  assert.deepStrictEqual(order, ['bank', 'hardbank', 'placebank', 'core', 'ink', 'skills', 'engine', 'render', 'world', 'home', 'house']);
+  assert.deepStrictEqual(order, ['bank', 'hardbank', 'placebank', 'core', 'ink', 'skills', 'engine', 'render', 'world', 'home', 'house', 'kongmine', 'gems', 'gemui']);
   const src = require('fs').readFileSync(require('path').join(__dirname, '../v2/core.js'), 'utf8'), sandbox = {};
   assert.throws(() => new Function('self', 'module', src)(sandbox, undefined), /题库 bank\.js 没有加载/);
 });

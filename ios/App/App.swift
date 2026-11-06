@@ -33,6 +33,8 @@ enum ProgressBackup {
               let map = try? JSONSerialization.jsonObject(with: data) as? [String: String],
               let main = map["speedmap.v2"]?.data(using: .utf8),
               (try? JSONSerialization.jsonObject(with: main)) is [String: Any] else { return false }
+        // 碎片单独存一个键，它坏了也不能冲掉好的副本
+        if let gems = map["speedmap.gems"]?.data(using: .utf8), !((try? JSONSerialization.jsonObject(with: gems)) is [String: Any]) { return false }
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         return (try? data.write(to: url, options: .atomic)) != nil
     }
@@ -146,8 +148,10 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url, !url.isFileURL, url.scheme != "about" else { return decisionHandler(.allow) }
-        // 内容都在包内；外部链接（如 kongmine:// 上报）交给系统
-        UIApplication.shared.open(url)
+        // 内容都在包内；外部链接（如 kongmine:// 上报）交给系统。矿场没装时告诉页面
+        UIApplication.shared.open(url) { [weak webView] ok in
+            if !ok, url.scheme == "kongmine" { webView?.evaluateJavaScript("window.__kongEarnFailed && window.__kongEarnFailed(); void 0", completionHandler: nil) }
+        }
         decisionHandler(.cancel)
     }
 
@@ -172,6 +176,10 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
                 if (k === 'speedmap.v2' || localStorage.getItem(k) === null) localStorage.setItem(k, saved[k]);
               });
             }
+            // 碎片单独存：只有它缺失或损坏时也从副本恢复
+            var gems = localStorage.getItem('speedmap.gems'), gemsBad = gems === null;
+            if (gems !== null) { try { JSON.parse(gems); } catch (e) { gemsBad = true; } }
+            if (saved && gemsBad && saved['speedmap.gems']) localStorage.setItem('speedmap.gems', saved['speedmap.gems']);
           } catch (e) {}
           var last = '';
           var push = function () {

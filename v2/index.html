@@ -475,6 +475,17 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .nbrow{display:flex;align-items:center;justify-content:center;gap:20px}.nbrow .pclock{width:96px;height:96px;flex:none}.cards2 b.sm{font-size:20px;white-space:nowrap}
 .lvboxes{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.lvboxes button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--stone);border:3px solid #000;padding:5px 8px;min-height:54px;text-align:left;color:var(--ink,#ecebe4);min-width:0}.lvboxes button b{font-size:14px;font-weight:800}.lvboxes button small{font-size:11px;color:var(--mute);line-height:1.25}.lvboxes button.on{border-color:var(--warn);background:#4a3d1a}.lvboxes button.auto{min-height:48px}
 .hardboxes label{display:flex;align-items:center;gap:8px;background:var(--stone);border:2px solid #000;padding:4px 8px;min-height:48px}.hardboxes input{width:26px;height:26px;flex:none;margin:0}.hardboxes b{display:block;font-size:14px}.hardboxes small{font-size:12px;color:var(--mute);line-height:1.25;display:block}
+/* 碎片和锻造台（gemui.js） */
+.frag{display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--f-num);font-weight:900;color:#10131a;border:2px solid #000;box-shadow:inset 2px 2px 0 rgba(255,255,255,.5);width:34px;height:34px;font-size:15px;flex:none}
+.frag.s{background:#c3cbd6}.frag.m{background:#6fc3e8}.frag.l{background:#c79cf0;width:40px;height:40px;font-size:18px}
+.fragrow{display:flex;align-items:center;gap:10px;min-height:60px;padding:6px 10px;background:var(--stone-hi);border:2px solid #000;color:inherit;font-size:17px;font-weight:800;text-align:left}
+.fragrow b{margin-left:auto;font-size:26px}.fragrow[disabled]{opacity:.45}
+#forgeSlots{display:grid;grid-template-columns:repeat(4,56px);grid-auto-rows:56px;gap:6px;background:#2a1d14;border:3px solid #000;padding:8px}
+.fslot{display:flex;align-items:center;justify-content:center;background:#46301f;border:2px solid #000;padding:0}
+.gemsum{background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:none}
+.gemline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:700}
+.gemline .frag{width:26px;height:26px;font-size:12px}
+.gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
 </style>
 </head>
 <body class="write">
@@ -576,6 +587,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 <!-- 6 结算（v3：今日练习 / 自由加练 / 复习这一组） -->
 <div class="scr" id="qsum" hidden></div>
+<!-- 锻造台（gemui.js）：炉子最多 12 个碎片，满 100 炼 1 颗宝石 -->
+<div class="scr" id="forge" hidden style="flex-direction:row;gap:14px;padding:14px">
+  <div class="panel" style="width:240px;flex:none;gap:10px"><div class="ptitle">背包</div><div id="forgeList" style="display:flex;flex-direction:column;gap:10px"></div></div>
+  <div class="panel" style="flex:1;gap:10px;align-items:center"><div class="ptitle">炉子 · 满 100 炼 1 颗宝石</div><div id="forgeSlots"></div><button class="gobig" id="forgeGo" style="width:240px;height:64px;font-size:22px">锻造</button><div id="forgeMsg" style="font-size:18px;font-weight:800;min-height:26px;color:var(--warn)"></div></div>
+  <div class="panel" style="width:210px;flex:none;gap:10px;justify-content:flex-end"><div id="forgeToday" class="muted" style="font-size:15px"></div><button class="btn" id="forgeClaim" style="min-height:64px;font-size:18px" hidden>领宝石</button><button class="btn" id="forgeBack" style="min-height:56px">返回</button></div>
+</div>
 
 <!-- 7 技能组地图 -->
 <div class="scr" id="skillmap" hidden style="flex-direction:column;gap:10px">
@@ -800,7 +817,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v67:8ff6a20cf1ce -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v68:e19695372774 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -810,17 +827,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=67"></script>
-<script src="hardbank.js?v=67"></script>
-<script src="placebank.js?v=67"></script>
-<script src="core.js?v=67"></script>
-<script src="ink.js?v=67"></script>
-<script src="skills.js?v=67"></script>
-<script src="engine.js?v=67"></script>
-<script src="render.js?v=67"></script>
-<script src="world.js?v=67"></script>
-<script src="home.js?v=67"></script>
-<script src="house.js?v=67"></script>
+<script src="bank.js?v=68"></script>
+<script src="hardbank.js?v=68"></script>
+<script src="placebank.js?v=68"></script>
+<script src="core.js?v=68"></script>
+<script src="ink.js?v=68"></script>
+<script src="skills.js?v=68"></script>
+<script src="engine.js?v=68"></script>
+<script src="render.js?v=68"></script>
+<script src="world.js?v=68"></script>
+<script src="home.js?v=68"></script>
+<script src="house.js?v=68"></script>
+<script src="kongmine.js?v=68"></script>
+<script src="gems.js?v=68"></script>
+<script src="gemui.js?v=68"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -836,6 +856,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     setItem: (k, v) => { localStorage.setItem(k, v); },
     removeItem: k => { try { localStorage.removeItem(k); } catch (e) {} },
   };
+  const GM = window.GEMUI;
   const LOAD = C.load(store, CTX, Date.now());
   let S = LOAD.S, canSave = true, frozen = false;
   S.decks = C.useDecks(S.decks);   // 题库发牌进度跟着存档走：重新打开接着发同一轮，不重复
@@ -856,7 +877,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv', 'house'];
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv', 'house', 'forge'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); show('island'); };
@@ -1231,6 +1252,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   function feedback() {
     const c = P.deck[P.i];
+    GM.answerP(P, asInst(c), c);
     P.phase = 'a'; playPad.enabled = false; clearTimeout(P.submitT);
     $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`; fitQ();
     $('btnClear').hidden = true; $('btnDunno').hidden = true;
@@ -1348,12 +1370,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         ${bossLine}${gem}
       </div>
       <div class="col" style="flex:1;justify-content:center;gap:12px;overflow-y:auto">
+        ${GM.summary(P, P.gemDay || today())}
         ${P.ups.length ? `<div style="font-weight:900">这次升级的方块${P.L === 0 ? '（去墙上的地图涂上这个颜色）' : ''}</div><div class="ups">${P.ups.map(blk).join('')}</div>` : '<div class="muted">这次没有方块升级</div>'}
         <div class="panel" style="flex-direction:row;align-items:center;gap:12px"><b>错题本</b><span>新放进 <b style="color:var(--bad)">${P.newMist}</b> 道 · 今天复习过关 <b style="color:var(--ok)">${P.passed}</b> 道</span><span style="flex:1"></span><button class="btn" id="sumMist" style="background:var(--stone-hi)">去看看</button></div>
         ${slowIds.length ? `<div style="font-weight:900">这几个写对了，还不够快</div><div class="ups">${slowIds.map(blk).join('')}</div>` : ''}
         <div style="display:flex;gap:10px;align-self:flex-start">${box ? '<button class="btn go big" id="sumHouse" style="min-width:200px;font-size:20px">回家打开</button>' : ''}<button class="btn${box ? '' : ' go'} big" id="sumHome" style="min-width:${box ? 150 : 220}px;font-size:20px">回到地图</button></div>
       </div>`;
-    show('summary');
+    show('summary'); GM.bind($('summary'), 'summary');
     $('sumHome').addEventListener('click', goHome);
     if (box) $('sumHouse').addEventListener('click', () => { P = null; HS.enter(); });
     $('sumMist').addEventListener('click', () => { const L = P.L; P = null; openMist('speed:L' + (L + 1)); });
@@ -1370,13 +1393,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const timers = () => { try { speechSynthesis.cancel(); } catch (e) {} if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
   function startQ(kind, opts) {
     const day = today();
-    const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : E.placement(S, day);
+    const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : kind === 'challenge' ? opts.sess : E.placement(S, day);
     Q = {kind, opts: opts || {}, sess, day, ups: [], passed: 0, n: 0, retries: 0, wrong: 0, secs: 0, picks: [], pickDelay: 0, mist0: Object.keys(S.mistakes).length,
       before: kind === 'place' ? Object.fromEntries(R.GROUPS.map(g => [g.id, R.groupStat(S, g.id).lit])) : null};
     try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => Q && (Q.lock = l)).catch(() => {}); } catch (e) {}
     clearInterval(Q.tick); Q.tick = setInterval(qBar, 500);
     if (kind === 'free' || kind === 'review') Zone = String((opts && opts.group) || Zone || 'look').split(':')[0].replace('speedH', 'speed');
-    Q.zone = Zone || 'look'; Q.ore = 0; $('qMined').querySelector('b').textContent = 0; $('qMined').querySelector('i').style.background = ''; $('qMined').hidden = kind === 'place';
+    Q.zone = Zone || 'look'; Q.ore = 0; $('qMined').querySelector('b').textContent = 0; $('qMined').querySelector('i').style.background = ''; $('qMined').hidden = kind === 'place' || kind === 'challenge';
     const zone = Q.zone; nextQ(); requestAnimationFrame(() => WORLD.sceneBg($('qBg'), zone, innerWidth, innerHeight));   // nextQ 可能已结束练习（今天没题了），Q 变成 null
   }
   function nextQ() {
@@ -1393,7 +1416,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function qBar() {
     if (!Q) return;
     const run = Q.phase === 'q' && !Q.paused ? (performance.now() - Q.shownAt) / 1000 : 0;
-    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? (Q.n - Q.retries) / 12 : 0;   // 自由加练：12 题，当场再来一次不算
+    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? (Q.n - Q.retries) / 12 : Q.kind === 'challenge' ? Q.n / 5 : 0;   // 自由加练：12 题，当场再来一次不算
     [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
   }
   // 题面区兜底：内容比左栏宽 / 高就整体缩小，不钻到写字板下面
@@ -1546,6 +1569,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const x = Q.x, inst = x.inst;
     const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? OK_MS : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
+    GM.answerQ(Q, x, r);
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked}) || {pass: r.ok, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1559,7 +1583,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const v = Q.v;
     if (r.ok) {
       const w0 = R.okWords(inst, out, Q.wasLv), w = x.retry ? {big: w0.big, small: out.again ? '一会儿再来一次' : '明天再考你一次'} : w0, q0 = Q, n0 = Q.ore++;
-      WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
+      if (Q.kind !== 'challenge') WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
       if (v.input === 'line') drawTarget(true);
       $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
       if (v.input === 'pick') $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.add(+b.dataset.n === inst.ans ? 'right' : 'wrong'));
@@ -1633,6 +1657,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     try { Q.lock && Q.lock.release(); } catch (e) {}
     const q = Q; Q = null; save();
     if (q.kind === 'place') return showPlaceResult(q, quit);
+    if (q.kind === 'challenge') return GM.finishChallenge(q);
     if (!q.n) return goIsland();
     const full = q.kind === 'today' && S.daily && S.daily.done && S.daily.sec >= 600 && !S.daily.pearl;   // 一天只贴 1 颗珠子（「再练一会」不再提示）
     if (full) { S.daily.pearl = true; save(); }
@@ -1655,6 +1680,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       </div>
       <div class="col" style="flex:1;gap:10px;min-height:0">
         <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
+        ${GM.summary(q, q.day, {todayRun: q.kind === 'today'})}
         <div style="font-size:16px;font-weight:700;margin-top:auto">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
         <div>${q.ups.slice(0, 16).map(chip).join('')}</div>
         ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
@@ -1666,7 +1692,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
           ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">${full && !box ? '贴好珠子，回到岛上' : '回到岛上'}</button>
         </div>
       </div>`;
-    show('qsum');
+    show('qsum'); GM.bind($('qsum'), 'qsum');
     WORLD.sceneBg($('qsBg'), q.zone, innerWidth, innerHeight); WORLD.drawSprite($('qsHero'), WORLD.HERO, 'a'); WORLD.drawSprite($('qsDog'), WORLD.DOG, 'b');
     $('qsBag').querySelectorAll('i').forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 60));
     // 回到岛上：这次点亮的格子所在的木牌闪一下
@@ -1909,6 +1935,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         INKS = Object.assign(I.blankStore(), v); saveInk();
       } else {
         const keep = S.testDays, ro = S.readOnly;
+        GM.syncNow();
         S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
         S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
         if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
@@ -1917,7 +1944,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
-  $('btnResetYes').addEventListener('click', () => { S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
+  $('btnResetYes').addEventListener('click', () => { GM.syncNow(); S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
 
   // ---------- 12 异常 ----------
   // 12a 暂停：切后台 / 来电 / 锁屏 / 竖过来。还没作答的题不记录，继续后原题重出（看数重新闪）；已判完的，继续后出下一题
@@ -1990,7 +2017,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       save(); renderIsland();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  const inApp = !!(window.webkit && webkit.messageHandlers && webkit.messageHandlers.backup) && !TEST && !PREVIEW;
+  GM.init({enabled: inApp || (TEST && /[?&]gems=1/.test(location.search)), enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
+    canWrite: () => !frozen && !S.readOnly && !S.stopped});
+  window.__sm = {resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();
