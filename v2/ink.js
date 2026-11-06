@@ -130,6 +130,44 @@
     return {picked: fixed, unsure: [], byAnswer: unsure};
   }
 
+  // ---------- 书写评分（试运行，只记录）：和内置规范字形比，0–100；没用真实笔迹校准过 ----------
+  const arc = (cx, cy, rx, ry, a0, a1, n = 18) => Array.from({length: n}, (_, i) => { const a = (a0 + (a1 - a0) * i / (n - 1)) * Math.PI / 180; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; });
+  const STD = {   // 每个数字若干种规范写法；每种写法若干笔；坐标约 0.6 × 1
+    0: [[arc(.3, .5, .3, .5, -90, 270, 30)]],
+    1: [[[[.3, 0], [.3, 1]]], [[[.05, .2], [.3, 0], [.3, 1]]]],
+    2: [[arc(.3, .27, .3, .27, 190, 390, 14).concat([[0, 1], [.6, 1]])]],
+    3: [[arc(.28, .25, .28, .25, 210, 450, 14).concat(arc(.28, .73, .32, .27, 270, 510, 16))]],
+    4: [[[[.45, 0], [0, .68], [.6, .68]], [[.45, 0], [.45, 1]]], [[[.1, 0], [0, .55], [.6, .55]], [[.48, 0], [.48, 1]]]],
+    5: [[[[.55, 0], [.08, 0], [.04, .42]].concat(arc(.28, .7, .32, .3, 230, 510, 16).slice(1))]],
+    6: [[arc(.42, .35, .42, .35, 290, 180, 8).concat(arc(.3, .72, .3, .28, 180, 540, 18))]],
+    7: [[[[0, 0], [.6, 0], [.2, 1]]], [[[0, 0], [.6, 0], [.2, 1]], [[.1, .5], [.5, .5]]]],
+    8: [[arc(.3, .24, .24, .24, 90, 450, 16).concat(arc(.3, .74, .3, .26, -90, 270, 18))]],
+    9: [[arc(.3, .28, .3, .28, 0, 360, 18).concat([[.6, .28], [.5, 1]])]],
+  };
+  const LEG_MAX = 3;   // 距离到这个值算 0 分：实测不同数字之间的距离约 1–3
+  const pts = st => st.map(([x, y]) => ({x: x * 100, y: y * 100, t: 0}));
+  const fine = st => { const o = []; for (let i = 0; i + 1 < st.length; i++) for (let k = 0; k < 8; k++) { const t = k / 8; o.push([st[i][0] + t * (st[i + 1][0] - st[i][0]), st[i][1] + t * (st[i + 1][1] - st[i][1])]); } o.push(st[st.length - 1]); return o; };
+  const stdClouds = {};
+  const stdOf = d => stdClouds[d] || (stdClouds[d] = STD[d].map(form => cloud(form.map(st => pts(fine(st))))));
+  function legibility(strokes, d) {
+    if (!STD[d]) return null;
+    const c = cloud(strokes || []); if (!c) return null;
+    const dist = Math.min(...stdOf(d).map(t => match(c, t)));
+    return Math.round(100 * Math.max(0, 1 - dist / LEG_MAX));
+  }
+  // 最近写的字：笔画简化成整数（0–100），每笔最多 16 个点；只留 24 个答案
+  const RECENT_MAX = 24, SKETCH_PTS = 16;
+  function sketch(strokes) {
+    const all = [].concat(...(strokes || [])); if (!all.length) return [];
+    const b = box(all), s = Math.max(b.x1 - b.x0, b.y1 - b.y0) || 1;
+    return strokes.filter(st => st.length).map(st => {
+      const step = Math.max(1, (st.length - 1) / (SKETCH_PTS - 1)), o = [];
+      for (let i = 0; Math.round(i) < st.length && o.length < SKETCH_PTS * 2; i += step) { const p = st[Math.round(i)]; o.push(Math.round((p.x - b.x0) / s * 100), Math.round((p.y - b.y0) / s * 100)); }
+      return o;
+    });
+  }
+  const pushRecent = (list, item) => (list || []).concat(item).slice(-RECENT_MAX);
+
   // ---------- 书写速度：写一个数字用时的中位数 ----------
   const writeMs = strokes => { const p = [].concat(...strokes); return p.length ? p[p.length - 1].t - p[0].t : 0; };
   function medianSpeed(samples) {
@@ -138,5 +176,5 @@
     return s[Math.floor(s.length / 2)];
   }
 
-  return {groupStrokes, recognize, resolveWith, rankGroup, addTemplate, blankStore, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
+  return {STD, legibility, sketch, pushRecent, groupStrokes, recognize, resolveWith, rankGroup, addTemplate, blankStore, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
 });
