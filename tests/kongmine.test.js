@@ -20,3 +20,11 @@ test('链接里没有一次性编号：矿场按天补差额，重发安全', as
   assert.equal(a, b);
   assert.ok(!a.includes('nonce'));
 });
+
+test('纯 JS 的 HMAC 和标准库一致（长短 key、长消息、中文）', () => {
+  const c = require('node:crypto');
+  for (const [k, m] of [['k', ''], ['test-key', 'x'.repeat(55)], ['test-key', 'x'.repeat(56)], ['test-key', 'x'.repeat(64)], ['k'.repeat(65), 'y'.repeat(1000)], ['钥匙', '宝石|碎片']]) {
+    const want = c.createHmac('sha256', k).update(`a|${m}|1`).digest('hex');
+    assert.equal(KM.sign('a', m, 1, k), want);
+  }
+});

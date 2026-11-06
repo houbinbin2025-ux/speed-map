@@ -552,7 +552,7 @@
     };
   }
 
-  return {BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
+  return {qkey, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
     prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,

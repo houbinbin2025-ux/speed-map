@@ -44,6 +44,8 @@
     小狗藏在哪个木箱: 'Which crate is the dog hiding in?', '想好了，点那个木箱': 'When you know, tap that crate', '红线是镜子，补出右边的影子': 'The red line is a mirror. Fill in the reflection on the right', '红线是镜子，补出下面的影子': 'The red line is a mirror. Fill in the reflection below',
     '红色的方块对不上，要和另一边离红线一样远': "The red blocks don't match. They must be as far from the line as the other side", 两边对上了: 'Both sides match', '离红线多远，另一边也离多远': 'As far from the red line on one side as on the other',
     哪一个是它转过来的样子: 'Which one is this shape turned around?', '只能转，不能翻面': 'You can turn it, but not flip it', 这个要翻面才对得上: 'That one only matches if you flip it', '对，就是转过来的': "Yes, that's it turned around", '绿框是转过来的，另外两个要翻面': 'The green box is the turned shape. The other two need a flip',
+    // 碎片和锻造台（gemui.js）
+    小碎片: 'Small shard', 中碎片: 'Medium shard', 大碎片: 'Big shard', 这次的碎片: 'Shards this round', 背包: 'Backpack', 去锻造: 'Go to forge', 锻造: 'Forge', 领宝石: 'Claim gems', 再领一次: 'Claim again', 今天炼出: 'Forged today', 挑战: 'Challenge', 挑战结束: 'Challenge over', 先放碎片: 'Add shards first', 暂时没有挑战题: 'No challenge right now', 没有找到空空矿场: 'KongMine not found', 再练一会: 'Practice more', 返回: 'Back', 回到岛上: 'Back to the island',
     // 名字和地方
     空空数学岛: 'Kongkong Math Island', 空空: 'Kongkong', 空空的家: "Kongkong's Home", 家: 'Home',
     看数草原: 'Counting Meadow', 分合矿洞: 'Number Bond Mine', 数位村庄: 'Place Value Village', 比大小双塔: 'Compare Towers', 数线铁轨: 'Number Line Railway', 秒答高塔: 'Speed Tower', 规律花园: 'Pattern Garden', 钟楼集市: 'Clock Tower Market', 故事码头: 'Story Dock',
@@ -144,6 +146,7 @@
       const tail = D[b] || (/加|等于|和 /.test(b) && /\d|空格/.test(b) ? b.replace(/空格/g, 'blank').replace(/ 加 /g, ' plus ').replace(/ 等于 /g, ' equals ').replace(/ 和 /g, ' and ') : b.split('，').every(THINK_CLUE) ? b.split('，').map(THINK_CLUE).join('. ') : null);
       return tail ? `${head}. ${tail}` : null;
     }],
+    [/^得 1 张挑战券$/, () => 'Earn 1 challenge ticket'], [/^认真奖励 (★+)$/, (m, a) => `Careful bonus ${a}`], [/^挑战券 (\+?\d+)$/, (m, a) => `Challenge tickets ${a}`], [/^大碎片 \+(\d+)$/, (m, a) => `Big shard +${a}`], [/^答对 (\d+) \/ (\d+) 题$/, (m, a, b) => `${a} / ${b} correct`], [/^炉子最多放 (\d+) 个$/, (m, a) => `The furnace holds ${a}`], [/^还差 (\d+)，碎片退回$/, (m, a) => `Short by ${a}. Shards returned`], [/^得到宝石 (\d+)，废料 (\d+)$/, (m, a, b) => `Got ${pl(a, 'gem')}, ${b} scrap`], [/^今天已炼 (\d+) 颗，碎片留到明天$/, (m, a) => `${pl(a, 'gem')} forged today. Shards keep for tomorrow`], [/^领 (\d+) 颗宝石$/, (m, a) => `Claim ${pl(a, 'gem')}`],
     // 应用题
     [new RegExp(`^${WHO}有 (\\d+) ${M}${THG}，又得到 (\\d+) ${M}。一共几${M}？$`), (m, w, a, t, b) => `${NAME[w]} has ${thing(a, t)} and gets ${b} more. How many in all?`],
     [new RegExp(`^${WHO}有 (\\d+) ${M}${THG}，送出 (\\d+) ${M}。还剩几${M}？$`), (m, w, a, t, b) => `${NAME[w]} has ${thing(a, t)} and gives away ${b}. How many are left?`],
@@ -266,7 +269,7 @@
     [/^ 分$/, o => (o ? ' minute' : ' minutes')],
   ];
   // 带空格才有意义的片段（前后接着一个数字节点）
-  const RAW = {
+  const RAW = { '挑战 · 大碎片': 'Challenge · Big shard', '再练一会 · 得 1 张挑战券': 'Practice more · Earn 1 challenge ticket',
     '比 ': 'Start at ', ' 多 ': ', count on ', ' 少 ': ', count back ', '是 ': 'You land on ', '把旗子插到 ': 'Put the flag on ', ' 的位置': '', ' 里有几个十？': ': how many tens?', ' 里有几个一？': ': how many ones?',
     ' 分钟 · 点亮 ': ' min · lit ', '练了 ': 'Practiced ', '新放进 ': 'Added: ', ' 道 · 今天复习过关 ': ' · Passed review today: ', ' 道': '', '点亮了 ': 'Lit ', '已解锁 ': 'Unlocked ', ' 块': '', '矿石 ': 'Ore ', '奖状 ': 'Awards ', '伙伴 ': 'Pals ', '钻石 ': 'Diamonds ',
     ' ？': '?', '你写的是 ': 'You wrote ', '今天要复习 ': 'To review today: ', ' 点': " o'clock", ' 更大': ' is bigger', '，全部隔 3 天还做对': ', still right 3 days later', ' · 附魔': ' · Enchanted',

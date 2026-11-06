@@ -467,6 +467,7 @@
     near(s.x, () => {
       sheet(head(i.name) + `<div class="sh-b">${i.text}${i.id === 'armor' ? '<br>盔甲件数：' + parts().length + ' / 4' : ''}</div><div class="muted">得到日期：${dateCN(S.home.got[i.id])}</div>${i.id === 'armor' ? armorRows() : ''}${i.id === 'furnace' ? `<div class="sh-b muted">已复习做对 ${E0.t.passed} 道错题</div>` : ''}${i.id === 'jukebox' ? '<div class="sh-f"><button class="btn go" id="h_play">播放</button></div>' : ''}`);
       setIcon(i.id);
+      if (i.id === 'furnace' && window.GEMUI && GEMUI.enabled()) { const b = document.createElement('button'); b.className = 'btn go'; b.style.minHeight = '56px'; b.textContent = '去锻造'; b.onclick = () => { closeSheet(); stopClock(); hideAll(); o.leave(); GEMUI.openForge('island'); }; el('h_sheet').appendChild(b); }
       if (i.id === 'jukebox') el('h_play').onclick = () => { playing = !playing; el('h_play').textContent = playing ? '停止' : '播放'; };
     });
   }
