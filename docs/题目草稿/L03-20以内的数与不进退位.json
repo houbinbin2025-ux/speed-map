@@ -1,0 +1,673 @@
+{
+ "level": 3,
+ "name": "20 以内的数与不进退位",
+ "items": [
+  {
+   "id": "L03-001",
+   "pool": "speed:g3:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "12 + 3 + 4 =",
+    "why": "12 + 3 = 15，再加 4，是 19"
+   },
+   "ans": 19,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加",
+   "fun": false
+  },
+  {
+   "id": "L03-002",
+   "pool": "speed:g3:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "11 + 5 + 2 =",
+    "why": "11 + 5 = 16，再加 2，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加",
+   "fun": false
+  },
+  {
+   "id": "L03-003",
+   "pool": "speed:g3:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "13 + 2 + 4 =",
+    "why": "13 + 2 = 15，再加 4，是 19"
+   },
+   "ans": 19,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加",
+   "fun": false
+  },
+  {
+   "id": "L03-004",
+   "pool": "speed:g3:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "10 + 6 + 3 =",
+    "why": "10 + 6 = 16，再加 3，是 19"
+   },
+   "ans": 19,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加",
+   "fun": false
+  },
+  {
+   "id": "L03-005",
+   "pool": "speed:g3:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "14 + 1 + 3 =",
+    "why": "14 + 1 = 15，再加 3，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加",
+   "fun": false
+  },
+  {
+   "id": "L03-006",
+   "pool": "speed:g3:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "11 + 4 + 3 =",
+    "why": "11 + 4 = 15，再加 3，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加",
+   "fun": false
+  },
+  {
+   "id": "L03-007",
+   "pool": "speed:g3:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "18 − 3 − 2 =",
+    "why": "18 − 3 = 15，再减 2，是 13"
+   },
+   "ans": 13,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减",
+   "fun": false
+  },
+  {
+   "id": "L03-008",
+   "pool": "speed:g3:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "19 − 5 − 4 =",
+    "why": "19 − 5 = 14，再减 4，是 10"
+   },
+   "ans": 10,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减",
+   "fun": false
+  },
+  {
+   "id": "L03-009",
+   "pool": "speed:g3:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "17 − 4 − 2 =",
+    "why": "17 − 4 = 13，再减 2，是 11"
+   },
+   "ans": 11,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减",
+   "fun": false
+  },
+  {
+   "id": "L03-010",
+   "pool": "speed:g3:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "16 − 3 − 3 =",
+    "why": "16 − 3 = 13，再减 3，是 10"
+   },
+   "ans": 10,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减",
+   "fun": false
+  },
+  {
+   "id": "L03-011",
+   "pool": "speed:g3:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "19 − 4 − 3 =",
+    "why": "19 − 4 = 15，再减 3，是 12"
+   },
+   "ans": 12,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减",
+   "fun": false
+  },
+  {
+   "id": "L03-012",
+   "pool": "bond:g3:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ + 5 = 17",
+    "why": "17 − 5 = 12"
+   },
+   "ans": 12,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L03-013",
+   "pool": "bond:g3:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "13 + □ = 19",
+    "why": "19 − 13 = 6"
+   },
+   "ans": 6,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L03-014",
+   "pool": "bond:g3:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "18 − □ = 12",
+    "why": "18 − 12 = 6"
+   },
+   "ans": 6,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L03-015",
+   "pool": "bond:g3:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 4 = 14",
+    "why": "14 + 4 = 18"
+   },
+   "ans": 18,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L03-016",
+   "pool": "bond:g3:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ + 7 = 19",
+    "why": "19 − 7 = 12"
+   },
+   "ans": 12,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L03-017",
+   "pool": "bond:g3:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "19 − □ = 14",
+    "why": "19 − 14 = 5"
+   },
+   "ans": 5,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L03-018",
+   "pool": "garden:g3:seq",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "11、13、15、□",
+    "why": "每次多 2，是 17"
+   },
+   "ans": 17,
+   "kind": "规律",
+   "source": "新加坡 P1 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "15+2"
+   }
+  },
+  {
+   "id": "L03-019",
+   "pool": "garden:g3:seq",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "20、18、16、□",
+    "why": "每次少 2，是 14"
+   },
+   "ans": 14,
+   "kind": "规律",
+   "source": "新加坡 P1 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "16-2"
+   }
+  },
+  {
+   "id": "L03-020",
+   "pool": "garden:g3:seq",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "5、10、15、□",
+    "why": "每次多 5，是 20"
+   },
+   "ans": 20,
+   "kind": "规律",
+   "source": "新加坡 P1 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "15+5"
+   }
+  },
+  {
+   "id": "L03-021",
+   "pool": "garden:g3:seq",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "19、17、15、□",
+    "why": "每次少 2，是 13"
+   },
+   "ans": 13,
+   "kind": "规律",
+   "source": "新加坡 P1 · 数列规律",
+   "fun": false,
+   "check": {
+    "expr": "15-2"
+   }
+  },
+  {
+   "id": "L03-022",
+   "pool": "dock:g3:add",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "码头有 12 箱鱼，又运来 5 箱。现在有几箱？",
+    "text": "□",
+    "why": "12 + 5 = 17"
+   },
+   "ans": 17,
+   "kind": "应用题",
+   "source": "台湾 N-1-2 · 添加型",
+   "fun": false,
+   "check": {
+    "expr": "12+5"
+   }
+  },
+  {
+   "id": "L03-023",
+   "pool": "dock:g3:sub",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "集市有 18 个南瓜，卖掉 6 个。还剩几个？",
+    "text": "□",
+    "why": "18 − 6 = 12"
+   },
+   "ans": 12,
+   "kind": "应用题",
+   "source": "台湾 N-1-2 · 拿走型",
+   "fun": false,
+   "check": {
+    "expr": "18-6"
+   }
+  },
+  {
+   "id": "L03-024",
+   "pool": "dock:g3:cmp",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小猫跳了 16 下，小狗跳了 11 下。小猫多跳几下？",
+    "text": "□",
+    "why": "16 − 11 = 5"
+   },
+   "ans": 5,
+   "kind": "应用题",
+   "source": "台湾 N-1-2 · 比较型",
+   "fun": false,
+   "check": {
+    "expr": "16-11"
+   }
+  },
+  {
+   "id": "L03-025",
+   "pool": "dock:g3:start",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小羊吃了 4 个苹果，还剩 13 个。原来有几个？",
+    "text": "□",
+    "why": "13 + 4 = 17"
+   },
+   "ans": 17,
+   "kind": "应用题",
+   "source": "台湾 N-2-3 · 被减数未知",
+   "fun": false,
+   "check": {
+    "expr": "13+4"
+   }
+  },
+  {
+   "id": "L03-026",
+   "pool": "market:g3:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "木棍 15 厘米，锯掉 3 厘米。还剩几厘米？",
+    "text": "□",
+    "why": "15 − 3 = 12"
+   },
+   "ans": 12,
+   "kind": "长度重量",
+   "source": "台湾 N-2-11 · 长度加减",
+   "fun": false,
+   "check": {
+    "expr": "15-3"
+   }
+  },
+  {
+   "id": "L03-027",
+   "pool": "market:g3:ruler",
+   "input": "write",
+   "q": {
+    "view": "ruler",
+    "say": "尺子上，铅笔从 0 量到 13。铅笔长几厘米？",
+    "text": "□",
+    "data": {
+     "from": 0,
+     "to": 13
+    },
+    "why": "从 0 开始，读 13"
+   },
+   "ans": 13,
+   "kind": "长度重量",
+   "source": "美国 2.MD.A.1 · 量长度",
+   "fun": false,
+   "newView": "ruler",
+   "check": {
+    "expr": "13"
+   }
+  },
+  {
+   "id": "L03-028",
+   "pool": "market:g3:ruler",
+   "input": "write",
+   "q": {
+    "view": "ruler",
+    "say": "尺子上，铅笔从 2 量到 12。铅笔长几厘米？",
+    "text": "□",
+    "data": {
+     "from": 2,
+     "to": 12
+    },
+    "why": "12 − 2 = 10"
+   },
+   "ans": 10,
+   "kind": "长度重量",
+   "source": "美国 2.MD.A.1 · 不从 0 开始量",
+   "fun": false,
+   "newView": "ruler",
+   "check": {
+    "expr": "12-2"
+   }
+  },
+  {
+   "id": "L03-029",
+   "pool": "market:g3:money",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "有 1 张 10 元和 1 张 5 元。一共几元？",
+    "text": "□",
+    "why": "10 + 5 = 15"
+   },
+   "ans": 15,
+   "kind": "钱",
+   "source": "台湾 N-1-4 · 数钱",
+   "fun": false,
+   "check": {
+    "expr": "10+5"
+   }
+  },
+  {
+   "id": "L03-030",
+   "pool": "garden:g3:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "6 只鸡一共几条腿？",
+    "text": "□",
+    "why": "每只 2 条，2 + 2 + 2 + 2 + 2 + 2 = 12"
+   },
+   "ans": 12,
+   "kind": "趣味",
+   "source": "趣味结构 · 同数连加",
+   "fun": true,
+   "check": {
+    "expr": "2+2+2+2+2+2"
+   }
+  },
+  {
+   "id": "L03-031",
+   "pool": "garden:g3:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "路边一排 6 棵树，相邻两棵之间停 1 只鸟。一共几只鸟？",
+    "text": "□",
+    "why": "6 棵树有 5 个空，是 5"
+   },
+   "ans": 5,
+   "kind": "趣味",
+   "source": "思维专题 · 植树（两端都种）",
+   "fun": true,
+   "check": {
+    "expr": "6-1"
+   }
+  },
+  {
+   "id": "L03-032",
+   "pool": "garden:g3:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "姐姐今年 7 岁，弟弟比她小 2 岁。2 年后弟弟几岁？",
+    "text": "□",
+    "why": "7 − 2 = 5，5 + 2 = 7"
+   },
+   "ans": 7,
+   "kind": "趣味",
+   "source": "思维专题 · 年龄",
+   "fun": true,
+   "check": {
+    "expr": "7-2+2"
+   }
+  },
+  {
+   "id": "L03-033",
+   "pool": "garden:g3:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小狗每天吃 2 根骨头。5 天吃几根？",
+    "text": "□",
+    "why": "2 + 2 + 2 + 2 + 2 = 10"
+   },
+   "ans": 10,
+   "kind": "趣味",
+   "source": "趣味结构 · 同数连加",
+   "fun": true,
+   "check": {
+    "expr": "2+2+2+2+2"
+   }
+  },
+  {
+   "id": "L03-034",
+   "pool": "garden:g3:sudoku",
+   "input": "write",
+   "q": {
+    "view": "grid4",
+    "say": "每行、每列、每个粗线框里 6、7、8、9 各一个。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       0,
+       7,
+       8,
+       9
+      ],
+      [
+       8,
+       0,
+       6,
+       7
+      ],
+      [
+       7,
+       6,
+       9,
+       8
+      ],
+      [
+       9,
+       8,
+       0,
+       6
+      ]
+     ],
+     "r": 1,
+     "c": 1
+    },
+    "why": "这一行还缺 9，是 9"
+   },
+   "ans": 9,
+   "kind": "谜题",
+   "source": "思维 · 数独入门",
+   "fun": true,
+   "newView": "grid4",
+   "check": {
+    "grid4": 1
+   }
+  },
+  {
+   "id": "L03-035",
+   "pool": "garden:g3:sudoku",
+   "input": "write",
+   "q": {
+    "view": "grid4",
+    "say": "每行、每列、每个粗线框里 6、7、8、9 各一个。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       7,
+       9,
+       6,
+       0
+      ],
+      [
+       6,
+       8,
+       7,
+       9
+      ],
+      [
+       9,
+       0,
+       8,
+       6
+      ],
+      [
+       0,
+       6,
+       9,
+       7
+      ]
+     ],
+     "r": 2,
+     "c": 1
+    },
+    "why": "这一行还缺 7，是 7"
+   },
+   "ans": 7,
+   "kind": "谜题",
+   "source": "思维 · 数独入门",
+   "fun": true,
+   "newView": "grid4",
+   "check": {
+    "grid4": 1
+   }
+  },
+  {
+   "id": "L03-036",
+   "pool": "garden:g3:order",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "三个袋子：红袋比蓝袋重，蓝袋比黄袋重。哪个最轻？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "黄袋",
+     "红袋",
+     "蓝袋"
+    ],
+    "why": "黄袋最轻"
+   },
+   "ans": 1,
+   "kind": "逻辑",
+   "source": "思维 · 简单推理",
+   "fun": true,
+   "check": {
+    "order": [
+     [
+      "红袋",
+      "蓝袋"
+     ],
+     [
+      "蓝袋",
+      "黄袋"
+     ]
+    ],
+    "ask": "min"
+   }
+  }
+ ]
+}

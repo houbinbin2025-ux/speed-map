@@ -1,0 +1,811 @@
+{
+ "level": 14,
+ "name": "运算律与小数",
+ "items": [
+  {
+   "id": "L14-001",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "25 × 37 × 4 =",
+    "why": "25 × 4 = 100，是 3700"
+   },
+   "ans": 3700,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-002",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "125 × 13 × 8 =",
+    "why": "125 × 8 = 1000，是 13000"
+   },
+   "ans": 13000,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-003",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "48 + 76 + 52 =",
+    "why": "48 + 52 = 100，是 176"
+   },
+   "ans": 176,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-004",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "163 − 47 − 53 =",
+    "why": "47 + 53 = 100，是 63"
+   },
+   "ans": 63,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-005",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "99 × 26 =",
+    "why": "100 × 26 − 26，是 2574"
+   },
+   "ans": 2574,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-006",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "34 × 28 + 66 × 28 =",
+    "why": "(34 + 66) × 28，是 2800"
+   },
+   "ans": 2800,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-007",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "102 × 45 =",
+    "why": "100 × 45 + 2 × 45，是 4590"
+   },
+   "ans": 4590,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-008",
+   "pool": "speed:g14:law",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "720 ÷ 8 ÷ 9 =",
+    "why": "8 × 9 = 72，是 10"
+   },
+   "ans": 10,
+   "kind": "计算",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-009",
+   "pool": "speed:g14:lawfill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "25 × □ = 8 × 25",
+    "why": "换位置或换括号，得数不变，是 8"
+   },
+   "ans": 8,
+   "kind": "填空",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-010",
+   "pool": "speed:g14:lawfill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ + 58 = 58 + 73",
+    "why": "换位置或换括号，得数不变，是 73"
+   },
+   "ans": 73,
+   "kind": "填空",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-011",
+   "pool": "speed:g14:lawfill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "(36 + 19) + 81 = 36 + (19 + □)",
+    "why": "换位置或换括号，得数不变，是 81"
+   },
+   "ans": 81,
+   "kind": "填空",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-012",
+   "pool": "speed:g14:lawfill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "46 × 7 + 54 × 7 = (46 + □) × 7",
+    "why": "两个积的另一个因数相加，是 54"
+   },
+   "ans": 54,
+   "kind": "填空",
+   "source": "中国大陆 · 运算律",
+   "fun": false
+  },
+  {
+   "id": "L14-013",
+   "pool": "frac:g14:decsum",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "3.25 + 1.4 等于几？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "3.39",
+     "4.55",
+     "4.65"
+    ],
+    "why": "小数点对齐计算，是 4.65"
+   },
+   "ans": 3,
+   "kind": "小数",
+   "source": "新加坡 P4 · 两位小数加减",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "value": "3.25 + 1.4",
+    "of": [
+     "3.39",
+     "4.55",
+     "4.65"
+    ]
+   }
+  },
+  {
+   "id": "L14-014",
+   "pool": "frac:g14:decsum",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "7.6 − 2.35 等于几？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "5.25",
+     "5.45",
+     "5.35"
+    ],
+    "why": "小数点对齐计算，是 5.25"
+   },
+   "ans": 1,
+   "kind": "小数",
+   "source": "新加坡 P4 · 两位小数加减",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "value": "7.6 − 2.35",
+    "of": [
+     "5.25",
+     "5.45",
+     "5.35"
+    ]
+   }
+  },
+  {
+   "id": "L14-015",
+   "pool": "frac:g14:decsum",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "0.48 + 0.52 等于几？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "0.9",
+     "1.1",
+     "1"
+    ],
+    "why": "小数点对齐计算，是 1"
+   },
+   "ans": 3,
+   "kind": "小数",
+   "source": "新加坡 P4 · 两位小数加减",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "value": "0.48 + 0.52",
+    "of": [
+     "0.9",
+     "1.1",
+     "1"
+    ]
+   }
+  },
+  {
+   "id": "L14-016",
+   "pool": "frac:g14:decsum",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "10 − 3.75 等于几？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "7.35",
+     "6.25",
+     "6.35"
+    ],
+    "why": "小数点对齐计算，是 6.25"
+   },
+   "ans": 2,
+   "kind": "小数",
+   "source": "新加坡 P4 · 两位小数加减",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "value": "10 − 3.75",
+    "of": [
+     "7.35",
+     "6.25",
+     "6.35"
+    ]
+   }
+  },
+  {
+   "id": "L14-017",
+   "pool": "frac:g14:move",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "3.6 × 10 =",
+    "why": "乘 10，小数点右移 1 位，是 36"
+   },
+   "ans": 36,
+   "kind": "小数",
+   "source": "新加坡 P5（中国大陆四下）· 小数点移动",
+   "fun": false
+  },
+  {
+   "id": "L14-018",
+   "pool": "frac:g14:move",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "0.75 × 100 =",
+    "why": "乘 100，小数点右移 2 位，是 75"
+   },
+   "ans": 75,
+   "kind": "小数",
+   "source": "新加坡 P5（中国大陆四下）· 小数点移动",
+   "fun": false
+  },
+  {
+   "id": "L14-019",
+   "pool": "frac:g14:move",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "4.2 × 100 =",
+    "why": "乘 100，小数点右移 2 位，补 0，是 420"
+   },
+   "ans": 420,
+   "kind": "小数",
+   "source": "新加坡 P5（中国大陆四下）· 小数点移动",
+   "fun": false
+  },
+  {
+   "id": "L14-020",
+   "pool": "frac:g14:move",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "67 ÷ 10 = 6.□",
+    "why": "除以 10，小数点左移 1 位，是 7"
+   },
+   "ans": 7,
+   "kind": "小数",
+   "source": "新加坡 P5（中国大陆四下）· 小数点移动",
+   "fun": false
+  },
+  {
+   "id": "L14-021",
+   "pool": "frac:g14:move",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "185 ÷ 100 = 1.8□",
+    "why": "除以 100，小数点左移 2 位，是 5"
+   },
+   "ans": 5,
+   "kind": "小数",
+   "source": "新加坡 P5（中国大陆四下）· 小数点移动",
+   "fun": false
+  },
+  {
+   "id": "L14-022",
+   "pool": "frac:g14:move",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "9.4 × 10 =",
+    "why": "乘 10，小数点右移 1 位，是 94"
+   },
+   "ans": 94,
+   "kind": "小数",
+   "source": "新加坡 P5（中国大陆四下）· 小数点移动",
+   "fun": false
+  },
+  {
+   "id": "L14-023",
+   "pool": "frac:g14:cmp",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个最大？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "0.85",
+     "0.9",
+     "0.79"
+    ],
+    "why": "先比十分位，0.9 最大"
+   },
+   "ans": 2,
+   "kind": "小数",
+   "source": "美国 4.NF.C.7 · 小数比大小",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "vals": [
+     "0.85",
+     "0.9",
+     "0.79"
+    ],
+    "rule": "max"
+   }
+  },
+  {
+   "id": "L14-024",
+   "pool": "frac:g14:cmp",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个最小？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "0.5",
+     "0.47",
+     "0.6"
+    ],
+    "why": "先比十分位，0.47 最小"
+   },
+   "ans": 2,
+   "kind": "小数",
+   "source": "美国 4.NF.C.7 · 小数比大小",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "vals": [
+     "0.5",
+     "0.47",
+     "0.6"
+    ],
+    "rule": "min"
+   }
+  },
+  {
+   "id": "L14-025",
+   "pool": "market:g14:unit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "3.5 米是几厘米？",
+    "text": "3.5 米 = □ 厘米",
+    "why": "3.5 × 100 = 350"
+   },
+   "ans": 350,
+   "kind": "长度重量",
+   "source": "新加坡 P5 · 小数换算单位",
+   "fun": false,
+   "check": {
+    "expr": "3.5*100"
+   }
+  },
+  {
+   "id": "L14-026",
+   "pool": "market:g14:unit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "2.4 千克是几克？",
+    "text": "2.4 千克 = □ 克",
+    "why": "2.4 × 1000 = 2400"
+   },
+   "ans": 2400,
+   "kind": "长度重量",
+   "source": "新加坡 P5 · 小数换算单位",
+   "fun": false,
+   "check": {
+    "expr": "2.4*1000"
+   }
+  },
+  {
+   "id": "L14-027",
+   "pool": "market:g14:cash",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "书 18.5 元，笔 6.5 元。付 50 元，找回几元？",
+    "text": "□",
+    "why": "18.5 + 6.5 = 25，50 − 25 = 25"
+   },
+   "ans": 25,
+   "kind": "钱",
+   "source": "新加坡 P3 · 小数记钱",
+   "fun": false,
+   "check": {
+    "expr": "50-(18.5+6.5)"
+   }
+  },
+  {
+   "id": "L14-028",
+   "pool": "shape:g14:tri",
+   "input": "write",
+   "q": {
+    "view": "angle",
+    "say": "三角形两个角是 50 度和 60 度。第三个角几度？",
+    "text": "□",
+    "data": {
+     "tri": [
+      50,
+      60
+     ]
+    },
+    "why": "180 − 50 − 60 = 70"
+   },
+   "ans": 70,
+   "kind": "几何",
+   "source": "韩国 [4수03-25] · 内角和",
+   "fun": false,
+   "newView": "angle",
+   "check": {
+    "expr": "180-50-60"
+   }
+  },
+  {
+   "id": "L14-029",
+   "pool": "shape:g14:tri",
+   "input": "write",
+   "q": {
+    "view": "angle",
+    "say": "等腰三角形顶角 40 度。每个底角几度？",
+    "text": "□",
+    "data": {
+     "tri": [
+      40
+     ]
+    },
+    "why": "(180 − 40) ÷ 2 = 70"
+   },
+   "ans": 70,
+   "kind": "几何",
+   "source": "韩国 [4수03-08] · 等腰三角形",
+   "fun": false,
+   "newView": "angle",
+   "check": {
+    "expr": "(180-40)/2"
+   }
+  },
+  {
+   "id": "L14-030",
+   "pool": "shape:g14:quad",
+   "input": "write",
+   "q": {
+    "view": "angle",
+    "say": "四边形内角和 360 度。三个角是 90、80、110 度，第四个几度？",
+    "text": "□",
+    "data": {
+     "quad": [
+      90,
+      80,
+      110
+     ]
+    },
+    "why": "360 − 90 − 80 − 110 = 80"
+   },
+   "ans": 80,
+   "kind": "几何",
+   "source": "韩国 [4수03-25] · 内角和",
+   "fun": false,
+   "newView": "angle",
+   "check": {
+    "expr": "360-90-80-110"
+   }
+  },
+  {
+   "id": "L14-031",
+   "pool": "shape:g14:combo",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "L 形由长 8 厘米宽 5 厘米、长 4 厘米宽 3 厘米的两块拼成。面积几平方厘米？",
+    "text": "□",
+    "data": {
+     "parts": [
+      [
+       8,
+       5
+      ],
+      [
+       3,
+       4
+      ]
+     ]
+    },
+    "why": "8 × 5 + 4 × 3 = 52"
+   },
+   "ans": 52,
+   "kind": "几何",
+   "source": "新加坡 P4 · 组合图形面积",
+   "fun": false,
+   "newView": "rect",
+   "check": {
+    "expr": "8*5+4*3"
+   }
+  },
+  {
+   "id": "L14-032",
+   "pool": "chart:g14:avg",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "三次得 84、90、96 分。平均几分？",
+    "text": "□",
+    "why": "(84 + 90 + 96) ÷ 3 = 90"
+   },
+   "ans": 90,
+   "kind": "图表",
+   "source": "中国大陆 · 平均数",
+   "fun": false,
+   "check": {
+    "expr": "(84+90+96)/3"
+   }
+  },
+  {
+   "id": "L14-033",
+   "pool": "chart:g14:avg",
+   "input": "write",
+   "q": {
+    "view": "chart",
+    "say": "看图表：小猫四天平均每天钓几条？",
+    "text": "□",
+    "data": {
+     "labels": [
+      "一",
+      "二",
+      "三",
+      "四"
+     ],
+     "vals": [
+      12,
+      15,
+      9,
+      20
+     ]
+    },
+    "why": "(12 + 15 + 9 + 20) ÷ 4 = 14"
+   },
+   "ans": 14,
+   "kind": "图表",
+   "source": "中国大陆 · 平均数",
+   "fun": false,
+   "newView": "chart",
+   "check": {
+    "expr": "(12+15+9+20)/4"
+   }
+  },
+  {
+   "id": "L14-034",
+   "pool": "dock:g14:avg",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "前 4 次平均 85 分，第 5 次 95 分。5 次平均几分？",
+    "text": "□",
+    "why": "85 × 4 = 340，(340 + 95) ÷ 5 = 87"
+   },
+   "ans": 87,
+   "kind": "应用题",
+   "source": "中国大陆 · 平均数应用",
+   "fun": false,
+   "check": {
+    "expr": "(85*4+95)/5"
+   }
+  },
+  {
+   "id": "L14-035",
+   "pool": "dock:g14:meet",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "甲每时行 45 千米，乙每时行 35 千米，相向走 3 小时相遇。全程几千米？",
+    "text": "□",
+    "why": "(45 + 35) × 3 = 240"
+   },
+   "ans": 240,
+   "kind": "长度重量",
+   "source": "中国大陆 · 相遇（四上加法模型）",
+   "fun": false,
+   "check": {
+    "expr": "(45+35)*3"
+   }
+  },
+  {
+   "id": "L14-036",
+   "pool": "garden:g14:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "101 × 37 − 37 等于几？",
+    "text": "□",
+    "why": "100 个 37 是 3700"
+   },
+   "ans": 3700,
+   "kind": "趣味",
+   "source": "思维专题 · 速算巧算",
+   "fun": true,
+   "check": {
+    "expr": "101*37-37"
+   }
+  },
+  {
+   "id": "L14-037",
+   "pool": "garden:g14:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "笼里鸡比兔多 6 只，一共 42 条腿。兔几只？",
+    "text": "□",
+    "why": "6 只鸡 12 条腿，余 30 条，每对 6 条，是 5"
+   },
+   "ans": 5,
+   "kind": "趣味",
+   "source": "思维专题 · 鸡兔同笼变式",
+   "fun": true,
+   "check": {
+    "expr": "(42-6*2)/(2+4)"
+   }
+  },
+  {
+   "id": "L14-038",
+   "pool": "garden:g14:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "操场长 80 米，宽 50 米。每隔 10 米插旗，四周共几面？",
+    "text": "□",
+    "why": "周长 260 米，260 ÷ 10 = 26"
+   },
+   "ans": 26,
+   "kind": "趣味",
+   "source": "思维专题 · 植树（封闭）",
+   "fun": true,
+   "check": {
+    "expr": "(80+50)*2/10"
+   }
+  },
+  {
+   "id": "L14-039",
+   "pool": "garden:g14:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "妈妈给的钱，买书用一半，又用 15 元，还剩 25 元。原来几元？",
+    "text": "□",
+    "why": "倒着算：(25 + 15) × 2 = 80"
+   },
+   "ans": 80,
+   "kind": "趣味",
+   "source": "思维专题 · 逆推",
+   "fun": true,
+   "check": {
+    "expr": "(25+15)*2"
+   }
+  },
+  {
+   "id": "L14-040",
+   "pool": "garden:g14:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 + 3 + 5 + 7 + 9 + 11 + 13 + 15 等于几？",
+    "text": "□",
+    "why": "8 个单数，8 × 8 = 64"
+   },
+   "ans": 64,
+   "kind": "趣味",
+   "source": "思维专题 · 配对求和",
+   "fun": true,
+   "check": {
+    "expr": "1+3+5+7+9+11+13+15"
+   }
+  },
+  {
+   "id": "L14-041",
+   "pool": "garden:g14:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "4.2 的小数点向右移一位，变成几？",
+    "text": "□",
+    "why": "右移一位，变成 10 倍，是 42"
+   },
+   "ans": 42,
+   "kind": "趣味",
+   "source": "思维 · 小数点移动",
+   "fun": true,
+   "check": {
+    "expr": "4.2*10"
+   }
+  }
+ ]
+}

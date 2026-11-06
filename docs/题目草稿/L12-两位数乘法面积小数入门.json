@@ -1,0 +1,749 @@
+{
+ "level": 12,
+ "name": "两位数乘法、面积、小数入门",
+ "items": [
+  {
+   "id": "L12-001",
+   "pool": "speed:g12:mul2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "23 × 14 =",
+    "why": "拆开乘再相加，是 322"
+   },
+   "ans": 322,
+   "kind": "计算",
+   "source": "美国 4.NBT.B.5 · 两位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L12-002",
+   "pool": "speed:g12:mul2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "35 × 12 =",
+    "why": "拆开乘再相加，是 420"
+   },
+   "ans": 420,
+   "kind": "计算",
+   "source": "美国 4.NBT.B.5 · 两位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L12-003",
+   "pool": "speed:g12:mul2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "48 × 25 =",
+    "why": "拆开乘再相加，是 1200"
+   },
+   "ans": 1200,
+   "kind": "计算",
+   "source": "美国 4.NBT.B.5 · 两位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L12-004",
+   "pool": "speed:g12:mul2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "67 × 32 =",
+    "why": "拆开乘再相加，是 2144"
+   },
+   "ans": 2144,
+   "kind": "计算",
+   "source": "美国 4.NBT.B.5 · 两位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L12-005",
+   "pool": "speed:g12:mul2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "56 × 78 =",
+    "why": "拆开乘再相加，是 4368"
+   },
+   "ans": 4368,
+   "kind": "计算",
+   "source": "美国 4.NBT.B.5 · 两位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L12-006",
+   "pool": "speed:g12:mul2",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "99 × 11 =",
+    "why": "拆开乘再相加，是 1089"
+   },
+   "ans": 1089,
+   "kind": "计算",
+   "source": "美国 4.NBT.B.5 · 两位数乘两位数",
+   "fun": false
+  },
+  {
+   "id": "L12-007",
+   "pool": "frac:g12:dec",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "2.4 + 1.3 = 3.□",
+    "why": "十分位 4 + 3 = 7"
+   },
+   "ans": 7,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 一位小数加减",
+   "fun": false
+  },
+  {
+   "id": "L12-008",
+   "pool": "frac:g12:dec",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "5.6 − 2.1 = 3.□",
+    "why": "十分位 6 − 1 = 5"
+   },
+   "ans": 5,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 一位小数加减",
+   "fun": false
+  },
+  {
+   "id": "L12-009",
+   "pool": "frac:g12:dec",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "1.8 + 0.6 = 2.□",
+    "why": "8 + 6 = 14，进一，是 2.4"
+   },
+   "ans": 4,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 一位小数加减",
+   "fun": false
+  },
+  {
+   "id": "L12-010",
+   "pool": "frac:g12:dec",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "4.2 − 1.5 = 2.□",
+    "why": "12 − 5 = 7，向个位借一"
+   },
+   "ans": 7,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 一位小数加减",
+   "fun": false
+  },
+  {
+   "id": "L12-011",
+   "pool": "frac:g12:dec",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "6.5 + 2.7 = 9.□",
+    "why": "5 + 7 = 12，进一，是 9.2"
+   },
+   "ans": 2,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 一位小数加减",
+   "fun": false
+  },
+  {
+   "id": "L12-012",
+   "pool": "frac:g12:dec",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "8.1 − 3.4 = 4.□",
+    "why": "11 − 4 = 7，向个位借一"
+   },
+   "ans": 7,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 一位小数加减",
+   "fun": false
+  },
+  {
+   "id": "L12-013",
+   "pool": "frac:g12:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "3/8 + 2/8 = □/8",
+    "why": "分母不变，分子相加减，是 5"
+   },
+   "ans": 5,
+   "kind": "分数",
+   "source": "台湾 N-3-9 · 同分母分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L12-014",
+   "pool": "frac:g12:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "5/9 + 3/9 = □/9",
+    "why": "分母不变，分子相加减，是 8"
+   },
+   "ans": 8,
+   "kind": "分数",
+   "source": "台湾 N-3-9 · 同分母分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L12-015",
+   "pool": "frac:g12:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "7/10 − 4/10 = □/10",
+    "why": "分母不变，分子相加减，是 3"
+   },
+   "ans": 3,
+   "kind": "分数",
+   "source": "台湾 N-3-9 · 同分母分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L12-016",
+   "pool": "frac:g12:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "6/7 − 2/7 = □/7",
+    "why": "分母不变，分子相加减，是 4"
+   },
+   "ans": 4,
+   "kind": "分数",
+   "source": "台湾 N-3-9 · 同分母分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L12-017",
+   "pool": "frac:g12:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "1/6 + 4/6 = □/6",
+    "why": "分母不变，分子相加减，是 5"
+   },
+   "ans": 5,
+   "kind": "分数",
+   "source": "台湾 N-3-9 · 同分母分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L12-018",
+   "pool": "frac:g12:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "11/12 − 5/12 = □/12",
+    "why": "分母不变，分子相加减，是 6"
+   },
+   "ans": 6,
+   "kind": "分数",
+   "source": "台湾 N-3-9 · 同分母分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L12-019",
+   "pool": "frac:g12:deccmp",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个大？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "0.6",
+     "0.5",
+     "0.7"
+    ],
+    "why": "都是几个十分之一，0.7 大"
+   },
+   "ans": 3,
+   "kind": "小数",
+   "source": "台湾 N-3-10 · 小数比大小",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "vals": [
+     "0.6",
+     "0.5",
+     "0.7"
+    ],
+    "rule": "max"
+   }
+  },
+  {
+   "id": "L12-020",
+   "pool": "frac:g12:deccmp",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个等于 7/10？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "7.1",
+     "0.7",
+     "1.7"
+    ],
+    "why": "7 个十分之一是 0.7"
+   },
+   "ans": 2,
+   "kind": "小数",
+   "source": "韩国 [4수01-12] · 分母是 10 的分数和小数",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "value": "7/10",
+    "of": [
+     "7.1",
+     "0.7",
+     "1.7"
+    ]
+   }
+  },
+  {
+   "id": "L12-021",
+   "pool": "shape:g12:area",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "长方形长 8 厘米，宽 6 厘米。面积几平方厘米？",
+    "text": "□",
+    "data": {
+     "w": 8,
+     "h": 6
+    },
+    "why": "8 × 6 = 48"
+   },
+   "ans": 48,
+   "kind": "几何",
+   "source": "新加坡 P3 · 长方形面积",
+   "fun": false,
+   "newView": "rect",
+   "check": {
+    "expr": "8*6"
+   }
+  },
+  {
+   "id": "L12-022",
+   "pool": "shape:g12:area",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "正方形边长 9 米。面积几平方米？",
+    "text": "□",
+    "data": {
+     "w": 9,
+     "h": 9
+    },
+    "why": "9 × 9 = 81"
+   },
+   "ans": 81,
+   "kind": "几何",
+   "source": "新加坡 P3 · 正方形面积",
+   "fun": false,
+   "newView": "rect",
+   "check": {
+    "expr": "9*9"
+   }
+  },
+  {
+   "id": "L12-023",
+   "pool": "shape:g12:area",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "长方形面积 56 平方厘米，长 8 厘米。宽几厘米？",
+    "text": "□",
+    "data": {
+     "w": 8,
+     "area": 56
+    },
+    "why": "56 ÷ 8 = 7"
+   },
+   "ans": 7,
+   "kind": "几何",
+   "source": "新加坡 P4 · 由面积求边（提前）",
+   "fun": false,
+   "newView": "rect",
+   "check": {
+    "expr": "56/8"
+   }
+  },
+  {
+   "id": "L12-024",
+   "pool": "shape:g12:count",
+   "input": "write",
+   "q": {
+    "view": "grid",
+    "say": "方格图每格 1 平方厘米。涂了 4 行，每行 7 格。面积几平方厘米？",
+    "text": "□",
+    "rows": 4,
+    "cols": 7,
+    "why": "4 × 7 = 28"
+   },
+   "ans": 28,
+   "kind": "几何",
+   "source": "台湾 N-3-14 · 平方公分",
+   "fun": false,
+   "check": {
+    "expr": "4*7"
+   }
+  },
+  {
+   "id": "L12-025",
+   "pool": "shape:g12:angle",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个是直角？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "书本封面的角",
+     "三角尺最尖的角",
+     "张得很开的剪刀口"
+    ],
+    "why": "书本封面的角是直角"
+   },
+   "ans": 1,
+   "kind": "几何",
+   "source": "台湾 N-3-13 · 认识直角",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "manual": "书角是直角，尖角小于直角，张开的剪刀口没有确定为直角"
+   }
+  },
+  {
+   "id": "L12-026",
+   "pool": "market:g12:date",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 年 365 天，每周 7 天。1 年有几个整周？",
+    "text": "□",
+    "why": "365 ÷ 7 = 52 余 1，是 52"
+   },
+   "ans": 52,
+   "kind": "时间",
+   "source": "台湾 N-2-14 · 年月日",
+   "fun": false,
+   "check": {
+    "expr": "(365-1)/7"
+   }
+  },
+  {
+   "id": "L12-027",
+   "pool": "market:g12:24",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "下午 3 点用 24 时记时是几点？",
+    "text": "□",
+    "why": "12 + 3 = 15"
+   },
+   "ans": 15,
+   "kind": "时间",
+   "source": "新加坡 P3 · 24 时记时",
+   "fun": false,
+   "check": {
+    "expr": "12+3"
+   }
+  },
+  {
+   "id": "L12-028",
+   "pool": "market:g12:24",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "21 点是晚上几点？",
+    "text": "□",
+    "why": "21 − 12 = 9"
+   },
+   "ans": 9,
+   "kind": "时间",
+   "source": "新加坡 P3 · 24 时记时",
+   "fun": false,
+   "check": {
+    "expr": "21-12"
+   }
+  },
+  {
+   "id": "L12-029",
+   "pool": "market:g12:yuan",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "笔 3.5 元，本子 2.5 元。一共几元？",
+    "text": "□",
+    "why": "3.5 + 2.5 = 6"
+   },
+   "ans": 6,
+   "kind": "钱",
+   "source": "新加坡 P3 · 小数记钱加减",
+   "fun": false,
+   "check": {
+    "expr": "3.5+2.5"
+   }
+  },
+  {
+   "id": "L12-030",
+   "pool": "market:g12:unit",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 平方米的地砖 45 元。铺 12 平方米要几元？",
+    "text": "□",
+    "why": "45 × 12 = 540"
+   },
+   "ans": 540,
+   "kind": "钱",
+   "source": "中国大陆 · 总价 = 单价 × 数量",
+   "fun": false,
+   "check": {
+    "expr": "45*12"
+   }
+  },
+  {
+   "id": "L12-031",
+   "pool": "dock:g12:speed",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "船每小时行 24 千米，行了 15 小时。一共几千米？",
+    "text": "□",
+    "why": "24 × 15 = 360"
+   },
+   "ans": 360,
+   "kind": "长度重量",
+   "source": "中国大陆 · 路程 = 速度 × 时间",
+   "fun": false,
+   "check": {
+    "expr": "24*15"
+   }
+  },
+  {
+   "id": "L12-032",
+   "pool": "dock:g12:two",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "每排 18 人，坐 25 排，走了 36 人。还有几人？",
+    "text": "□",
+    "why": "18 × 25 = 450，450 − 36 = 414"
+   },
+   "ans": 414,
+   "kind": "应用题",
+   "source": "台湾 N-3-7 · 两步应用题",
+   "fun": false,
+   "check": {
+    "expr": "18*25-36"
+   }
+  },
+  {
+   "id": "L12-033",
+   "pool": "chart:g12:bar",
+   "input": "write",
+   "q": {
+    "view": "chart",
+    "say": "看条形图：贝的数量是矿的几倍？",
+    "text": "□",
+    "data": {
+     "labels": [
+      "鱼",
+      "贝",
+      "矿"
+     ],
+     "vals": [
+      36,
+      48,
+      24
+     ]
+    },
+    "why": "48 ÷ 24 = 2"
+   },
+   "ans": 2,
+   "kind": "图表",
+   "source": "美国 3.MD.B.3 · 比例条形图",
+   "fun": false,
+   "newView": "chart",
+   "check": {
+    "expr": "48/24"
+   }
+  },
+  {
+   "id": "L12-034",
+   "pool": "garden:g12:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "4 × 25 可以凑整。4 × 37 × 25 等于几？",
+    "text": "□",
+    "why": "4 × 25 = 100，100 × 37 = 3700"
+   },
+   "ans": 3700,
+   "kind": "趣味",
+   "source": "思维专题 · 速算巧算",
+   "fun": true,
+   "check": {
+    "expr": "4*37*25"
+   }
+  },
+  {
+   "id": "L12-035",
+   "pool": "garden:g12:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "从 1 加到 10 等于几？",
+    "text": "□",
+    "why": "1 + 10、2 + 9 … 5 对 11，是 55"
+   },
+   "ans": 55,
+   "kind": "趣味",
+   "source": "思维专题 · 配对求和",
+   "fun": true,
+   "check": {
+    "expr": "(1+10)*10/2"
+   }
+  },
+  {
+   "id": "L12-036",
+   "pool": "garden:g12:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "正方形每边放 6 个石子，四个角都放。一共几个石子？",
+    "text": "□",
+    "why": "每边算 5 个，5 × 4 = 20"
+   },
+   "ans": 20,
+   "kind": "趣味",
+   "source": "思维专题 · 植树（封闭图形）",
+   "fun": true,
+   "check": {
+    "expr": "(6-1)*4"
+   }
+  },
+  {
+   "id": "L12-037",
+   "pool": "garden:g12:fun",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "两块地不重叠，拼成长 12 厘米、宽 5 厘米的长方形。面积几平方厘米？",
+    "text": "□",
+    "data": {
+     "w": 12,
+     "h": 5,
+     "split": 2
+    },
+    "why": "12 × 5 = 60"
+   },
+   "ans": 60,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 图形拼接",
+   "fun": true,
+   "newView": "rect",
+   "check": {
+    "expr": "12*5"
+   }
+  },
+  {
+   "id": "L12-038",
+   "pool": "garden:g12:fun",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "甲比乙多 18，甲是乙的 3 倍，两数的和是几？",
+    "text": "□",
+    "data": {
+     "times": [
+      3,
+      1
+     ],
+     "diff": 18
+    },
+    "why": "差 18 是 2 份，每份 9，和是 4 份，是 36"
+   },
+   "ans": 36,
+   "kind": "趣味",
+   "source": "思维专题 · 差倍",
+   "fun": true,
+   "newView": "bar",
+   "check": {
+    "expr": "18/(3-1)*(3+1)"
+   }
+  },
+  {
+   "id": "L12-039",
+   "pool": "garden:g12:magic",
+   "input": "write",
+   "q": {
+    "view": "magic",
+    "say": "幻方：每行、每列、每条斜线的和都是 30。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       16,
+       2,
+       0
+      ],
+      [
+       6,
+       10,
+       14
+      ],
+      [
+       8,
+       18,
+       4
+      ]
+     ],
+     "sum": 30,
+     "r": 0,
+     "c": 2
+    },
+    "why": "第一行 16 + 2 + 12 = 30，是 12"
+   },
+   "ans": 12,
+   "kind": "谜题",
+   "source": "思维 · 幻方",
+   "fun": true,
+   "newView": "magic",
+   "check": {
+    "magic": 1
+   }
+  }
+ ]
+}

@@ -1,0 +1,725 @@
+{
+ "level": 15,
+ "name": "分数进阶与综合应用",
+ "items": [
+  {
+   "id": "L15-001",
+   "pool": "frac:g15:equal",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "6/8 = □/4",
+    "why": "分子分母同乘或同除一个数，是 3"
+   },
+   "ans": 3,
+   "kind": "分数",
+   "source": "新加坡 P3 · 等值分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-002",
+   "pool": "frac:g15:equal",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "2/3 = □/9",
+    "why": "分子分母同乘或同除一个数，是 6"
+   },
+   "ans": 6,
+   "kind": "分数",
+   "source": "新加坡 P3 · 等值分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-003",
+   "pool": "frac:g15:equal",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "10/15 = □/3",
+    "why": "分子分母同乘或同除一个数，是 2"
+   },
+   "ans": 2,
+   "kind": "分数",
+   "source": "新加坡 P3 · 等值分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-004",
+   "pool": "frac:g15:equal",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "5/6 = □/12",
+    "why": "分子分母同乘或同除一个数，是 10"
+   },
+   "ans": 10,
+   "kind": "分数",
+   "source": "新加坡 P3 · 等值分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-005",
+   "pool": "frac:g15:equal",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "8/12 = □/3",
+    "why": "分子分母同乘或同除一个数，是 2"
+   },
+   "ans": 2,
+   "kind": "分数",
+   "source": "新加坡 P3 · 等值分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-006",
+   "pool": "frac:g15:equal",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "3/4 = □/8",
+    "why": "分子分母同乘或同除一个数，是 6"
+   },
+   "ans": 6,
+   "kind": "分数",
+   "source": "新加坡 P3 · 等值分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-007",
+   "pool": "frac:g15:mixed",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "7/4 = 1 + □/4",
+    "why": "假分数和带分数互化，分子是 3"
+   },
+   "ans": 3,
+   "kind": "分数",
+   "source": "台湾 N-4-5 · 假分数和带分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-008",
+   "pool": "frac:g15:mixed",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "11/3 = 3 + □/3",
+    "why": "假分数和带分数互化，分子是 2"
+   },
+   "ans": 2,
+   "kind": "分数",
+   "source": "台湾 N-4-5 · 假分数和带分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-009",
+   "pool": "frac:g15:mixed",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "19/6 = 3 + □/6",
+    "why": "假分数和带分数互化，分子是 1"
+   },
+   "ans": 1,
+   "kind": "分数",
+   "source": "台湾 N-4-5 · 假分数和带分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-010",
+   "pool": "frac:g15:mixed",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "23/5 = 4 + □/5",
+    "why": "假分数和带分数互化，分子是 3"
+   },
+   "ans": 3,
+   "kind": "分数",
+   "source": "台湾 N-4-5 · 假分数和带分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-011",
+   "pool": "frac:g15:mixed",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "2 + 3/8 = □/8",
+    "why": "假分数和带分数互化，分子是 19"
+   },
+   "ans": 19,
+   "kind": "分数",
+   "source": "台湾 N-4-5 · 假分数和带分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-012",
+   "pool": "frac:g15:mixed",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "3 + 2/7 = □/7",
+    "why": "假分数和带分数互化，分子是 23"
+   },
+   "ans": 23,
+   "kind": "分数",
+   "source": "台湾 N-4-5 · 假分数和带分数",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-013",
+   "pool": "frac:g15:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "1/2 + 1/4 = □/4",
+    "why": "先化成同分母，分子是 3"
+   },
+   "ans": 3,
+   "kind": "分数",
+   "source": "新加坡 P4 · 不同分母加减",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-014",
+   "pool": "frac:g15:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "2/3 + 1/6 = □/6",
+    "why": "先化成同分母，分子是 5"
+   },
+   "ans": 5,
+   "kind": "分数",
+   "source": "新加坡 P4 · 不同分母加减",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-015",
+   "pool": "frac:g15:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "5/8 − 1/4 = □/8",
+    "why": "先化成同分母，分子是 3"
+   },
+   "ans": 3,
+   "kind": "分数",
+   "source": "新加坡 P4 · 不同分母加减",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-016",
+   "pool": "frac:g15:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "3/4 − 1/2 = □/4",
+    "why": "先化成同分母，分子是 1"
+   },
+   "ans": 1,
+   "kind": "分数",
+   "source": "新加坡 P4 · 不同分母加减",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-017",
+   "pool": "frac:g15:add",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "7/8 + 3/8 = □/8",
+    "why": "分母相同，分子相加，是 10"
+   },
+   "ans": 10,
+   "kind": "分数",
+   "source": "新加坡 P4 · 不同分母加减",
+   "fun": false,
+   "newView": "frac"
+  },
+  {
+   "id": "L15-018",
+   "pool": "frac:g15:ofset",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "48 块矿的 3/8 是几块？",
+    "text": "□",
+    "why": "48 ÷ 8 = 6，6 × 3 = 18"
+   },
+   "ans": 18,
+   "kind": "分数",
+   "source": "新加坡 P4 · 分数是一组的一部分",
+   "fun": false,
+   "check": {
+    "expr": "48/8*3"
+   }
+  },
+  {
+   "id": "L15-019",
+   "pool": "frac:g15:ofset",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小猫吃了 24 条鱼的 5/6。吃了几条？",
+    "text": "□",
+    "why": "24 ÷ 6 = 4，4 × 5 = 20"
+   },
+   "ans": 20,
+   "kind": "分数",
+   "source": "新加坡 P4 · 分数是一组的一部分",
+   "fun": false,
+   "check": {
+    "expr": "24/6*5"
+   }
+  },
+  {
+   "id": "L15-020",
+   "pool": "frac:g15:left",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "一根绳 36 米，用去 2/9。还剩几米？",
+    "text": "□",
+    "data": {
+     "total": 36,
+     "frac": "2/9"
+    },
+    "why": "用去 8 米，36 − 8 = 28"
+   },
+   "ans": 28,
+   "kind": "分数",
+   "source": "新加坡 P4 · 分数应用题",
+   "fun": false,
+   "newView": "bar",
+   "check": {
+    "expr": "36-36/9*2"
+   }
+  },
+  {
+   "id": "L15-021",
+   "pool": "frac:g15:cmp",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个大？",
+    "opts": [
+     1,
+     2
+    ],
+    "optText": [
+     "3/4",
+     "5/8"
+    ],
+    "why": "3/4 = 6/8，比 5/8 大，3/4 大"
+   },
+   "ans": 1,
+   "kind": "分数",
+   "source": "新加坡 P3 · 不同分母比较",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "vals": [
+     "3/4",
+     "5/8"
+    ],
+    "rule": "max"
+   }
+  },
+  {
+   "id": "L15-022",
+   "pool": "frac:g15:dec",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个等于 3/4？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "0.34",
+     "0.75",
+     "0.43"
+    ],
+    "why": "3/4 = 75/100，是 0.75"
+   },
+   "ans": 2,
+   "kind": "分数",
+   "source": "新加坡 P4 · 分数化小数",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "value": "3/4",
+    "of": [
+     "0.34",
+     "0.75",
+     "0.43"
+    ]
+   }
+  },
+  {
+   "id": "L15-023",
+   "pool": "place:g15:factor",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "36 的因数一共有几个？",
+    "text": "□",
+    "why": "1、2、3、4、6、9、12、18、36，是 9 个"
+   },
+   "ans": 9,
+   "kind": "填空",
+   "source": "新加坡 P4 · 因数",
+   "fun": false,
+   "check": {
+    "manual": "36 的因数逐个列出"
+   }
+  },
+  {
+   "id": "L15-024",
+   "pool": "place:g15:common",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "6 和 8 最小的公倍数是几？",
+    "text": "□",
+    "why": "6 的倍数：6、12、18、24，是 24"
+   },
+   "ans": 24,
+   "kind": "填空",
+   "source": "新加坡 P4 · 公倍数",
+   "fun": false,
+   "check": {
+    "manual": "24 是 6 和 8 的最小公倍数"
+   }
+  },
+  {
+   "id": "L15-025",
+   "pool": "place:g15:common",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "12 和 18 最大的公因数是几？",
+    "text": "□",
+    "why": "12、18 都能被 6 整除，是 6"
+   },
+   "ans": 6,
+   "kind": "填空",
+   "source": "新加坡 P4 · 公因数",
+   "fun": false,
+   "check": {
+    "manual": "6 是最大公因数"
+   }
+  },
+  {
+   "id": "L15-026",
+   "pool": "dock:g15:three",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "买 8 本 15 元的书，又买 6 支 12 元的笔。付 200 元，找回几元？",
+    "text": "□",
+    "why": "120 + 72 = 192，200 − 192 = 8"
+   },
+   "ans": 8,
+   "kind": "钱",
+   "source": "台湾 N-5-2 · 多步骤",
+   "fun": false,
+   "check": {
+    "expr": "200-(8*15+6*12)"
+   }
+  },
+  {
+   "id": "L15-027",
+   "pool": "dock:g15:meet",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "两船相距 360 千米，相向而行，每时 50 和 40 千米。几小时相遇？",
+    "text": "□",
+    "why": "360 ÷ (50 + 40) = 4"
+   },
+   "ans": 4,
+   "kind": "长度重量",
+   "source": "中国大陆 · 相遇问题",
+   "fun": false,
+   "check": {
+    "expr": "360/(50+40)"
+   }
+  },
+  {
+   "id": "L15-028",
+   "pool": "dock:g15:bar",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "甲乙共 450 元，甲比乙的 2 倍多 30 元。乙有几元？",
+    "text": "□",
+    "data": {
+     "times": [
+      2,
+      1
+     ],
+     "total": 450,
+     "extra": 30
+    },
+    "why": "(450 − 30) ÷ 3 = 140"
+   },
+   "ans": 140,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 和倍变式",
+   "fun": false,
+   "newView": "bar",
+   "check": {
+    "expr": "(450-30)/(2+1)"
+   }
+  },
+  {
+   "id": "L15-029",
+   "pool": "dock:g15:bar",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "红旗比蓝旗多 60 面。红旗送出 15 面后，是蓝旗的 2 倍。蓝旗几面？",
+    "text": "□",
+    "data": {
+     "times": [
+      2,
+      1
+     ],
+     "diff": 60,
+     "change": 15
+    },
+    "why": "差变 45，是 1 份，蓝旗是 45"
+   },
+   "ans": 45,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 变化后的差倍",
+   "fun": false,
+   "newView": "bar",
+   "check": {
+    "expr": "60-15"
+   }
+  },
+  {
+   "id": "L15-030",
+   "pool": "dock:g15:bar",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "书架 3 层共 90 本，中层比上层多 6 本，下层比中层多 6 本。中层几本？",
+    "text": "□",
+    "data": {
+     "total": 90
+    },
+    "why": "三层平均，中层是 90 ÷ 3 = 30"
+   },
+   "ans": 30,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 等差",
+   "fun": false,
+   "newView": "bar",
+   "check": {
+    "expr": "90/3"
+   }
+  },
+  {
+   "id": "L15-031",
+   "pool": "shape:g15:combo",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "长 12 厘米、宽 8 厘米的长方形，挖去边长 3 厘米的正方形。剩几平方厘米？",
+    "text": "□",
+    "data": {
+     "w": 12,
+     "h": 8,
+     "hole": 3
+    },
+    "why": "96 − 9 = 87"
+   },
+   "ans": 87,
+   "kind": "几何",
+   "source": "新加坡 P4 · 组合图形面积",
+   "fun": false,
+   "newView": "rect",
+   "check": {
+    "expr": "12*8-3*3"
+   }
+  },
+  {
+   "id": "L15-032",
+   "pool": "shape:g15:combo",
+   "input": "write",
+   "q": {
+    "view": "rect",
+    "say": "长方形周长 36 厘米，长 11 厘米。面积几平方厘米？",
+    "text": "□",
+    "data": {
+     "w": 11,
+     "perim": 36
+    },
+    "why": "宽 = 18 − 11 = 7，11 × 7 = 77"
+   },
+   "ans": 77,
+   "kind": "几何",
+   "source": "新加坡 P4 · 由周长求边再求面积",
+   "fun": false,
+   "newView": "rect",
+   "check": {
+    "expr": "11*(36/2-11)"
+   }
+  },
+  {
+   "id": "L15-033",
+   "pool": "chart:g15:line",
+   "input": "write",
+   "q": {
+    "view": "chart",
+    "say": "看折线图：7 月比 1 月高几度？",
+    "text": "□",
+    "data": {
+     "labels": [
+      "1 月",
+      "4 月",
+      "7 月"
+     ],
+     "vals": [
+      20,
+      26,
+      34
+     ],
+     "line": 1
+    },
+    "why": "34 − 20 = 14"
+   },
+   "ans": 14,
+   "kind": "图表",
+   "source": "台湾 D-4-1 · 折线图",
+   "fun": false,
+   "newView": "chart",
+   "check": {
+    "expr": "34-20"
+   }
+  },
+  {
+   "id": "L15-034",
+   "pool": "garden:g15:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "一项工作，甲做前一半用 3 天，乙接着做后一半用 6 天。一共几天？",
+    "text": "□",
+    "why": "3 + 6 = 9"
+   },
+   "ans": 9,
+   "kind": "趣味",
+   "source": "趣味 · 分数意义",
+   "fun": true,
+   "check": {
+    "expr": "3+6"
+   }
+  },
+  {
+   "id": "L15-035",
+   "pool": "garden:g15:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "从 1 到 100 里，6 的倍数有几个？",
+    "text": "□",
+    "why": "100 ÷ 6 = 16 余 4，是 16"
+   },
+   "ans": 16,
+   "kind": "趣味",
+   "source": "思维专题 · 倍数计数",
+   "fun": true,
+   "check": {
+    "expr": "(100-4)/6",
+    "from": "6 100 4"
+   }
+  },
+  {
+   "id": "L15-036",
+   "pool": "garden:g15:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "两盏灯，一盏 6 秒闪一次，一盏 8 秒闪一次。同时闪后，几秒再同时闪？",
+    "text": "□",
+    "why": "6 和 8 的最小公倍数是 24"
+   },
+   "ans": 24,
+   "kind": "趣味",
+   "source": "思维专题 · 公倍数应用",
+   "fun": true,
+   "check": {
+    "manual": "最小公倍数 24"
+   }
+  },
+  {
+   "id": "L15-037",
+   "pool": "garden:g15:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "笼里 50 个头、140 条腿，有鸡有兔。鸡有几只？",
+    "text": "□",
+    "why": "都当兔是 200 条，少 60 条，60 ÷ 2 = 30"
+   },
+   "ans": 30,
+   "kind": "趣味",
+   "source": "思维专题 · 鸡兔同笼",
+   "fun": true,
+   "check": {
+    "legs": {
+     "heads": 50,
+     "legs": 140,
+     "a": 2,
+     "b": 4,
+     "ask": "a"
+    }
+   }
+  },
+  {
+   "id": "L15-038",
+   "pool": "garden:g15:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "用 3、5、7、9 组成两个两位数，和最大是几？",
+    "text": "□",
+    "why": "十位放 9 和 7，个位放 5 和 3，是 168"
+   },
+   "ans": 168,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 组数",
+   "fun": true,
+   "check": {
+    "manual": "穷举 24 种排法，最大 95 + 73 = 168"
+   }
+  }
+ ]
+}

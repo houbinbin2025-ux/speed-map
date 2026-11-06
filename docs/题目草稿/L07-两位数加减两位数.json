@@ -1,0 +1,684 @@
+{
+ "level": 7,
+ "name": "两位数加减两位数",
+ "items": [
+  {
+   "id": "L07-001",
+   "pool": "speed:g7:bigadd",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 45 = 32",
+    "why": "32 + 45 = 77，方框里是 77"
+   },
+   "ans": 77,
+   "kind": "填空",
+   "source": "韩国 [2수01-07] · 加减互逆",
+   "fun": false
+  },
+  {
+   "id": "L07-002",
+   "pool": "speed:g7:bigadd",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 28 = 56",
+    "why": "56 + 28 = 84，方框里是 84"
+   },
+   "ans": 84,
+   "kind": "填空",
+   "source": "韩国 [2수01-07] · 加减互逆",
+   "fun": false
+  },
+  {
+   "id": "L07-003",
+   "pool": "speed:g7:bigadd",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 36 = 47",
+    "why": "47 + 36 = 83，方框里是 83"
+   },
+   "ans": 83,
+   "kind": "填空",
+   "source": "韩国 [2수01-07] · 加减互逆",
+   "fun": false
+  },
+  {
+   "id": "L07-004",
+   "pool": "speed:g7:bigadd",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 64 = 29",
+    "why": "29 + 64 = 93，方框里是 93"
+   },
+   "ans": 93,
+   "kind": "填空",
+   "source": "韩国 [2수01-07] · 加减互逆",
+   "fun": false
+  },
+  {
+   "id": "L07-005",
+   "pool": "speed:g7:bigadd",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 57 = 18",
+    "why": "18 + 57 = 75，方框里是 75"
+   },
+   "ans": 75,
+   "kind": "填空",
+   "source": "韩国 [2수01-07] · 加减互逆",
+   "fun": false
+  },
+  {
+   "id": "L07-006",
+   "pool": "speed:g7:bigadd",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 19 = 63",
+    "why": "63 + 19 = 82，方框里是 82"
+   },
+   "ans": 82,
+   "kind": "填空",
+   "source": "韩国 [2수01-07] · 加减互逆",
+   "fun": false
+  },
+  {
+   "id": "L07-007",
+   "pool": "speed:g7:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "25 + 18 + 12 =",
+    "why": "25 + 18 = 43，再加 12，是 55"
+   },
+   "ans": 55,
+   "kind": "计算",
+   "source": "香港 2N2 · 不多于三个数相加",
+   "fun": false
+  },
+  {
+   "id": "L07-008",
+   "pool": "speed:g7:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "34 + 27 + 16 =",
+    "why": "34 + 27 = 61，再加 16，是 77"
+   },
+   "ans": 77,
+   "kind": "计算",
+   "source": "香港 2N2 · 不多于三个数相加",
+   "fun": false
+  },
+  {
+   "id": "L07-009",
+   "pool": "speed:g7:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "41 + 22 + 19 =",
+    "why": "41 + 22 = 63，再加 19，是 82"
+   },
+   "ans": 82,
+   "kind": "计算",
+   "source": "香港 2N2 · 不多于三个数相加",
+   "fun": false
+  },
+  {
+   "id": "L07-010",
+   "pool": "speed:g7:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "13 + 26 + 38 =",
+    "why": "13 + 26 = 39，再加 38，是 77"
+   },
+   "ans": 77,
+   "kind": "计算",
+   "source": "香港 2N2 · 不多于三个数相加",
+   "fun": false
+  },
+  {
+   "id": "L07-011",
+   "pool": "bond:g7:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "100 − □ = 46",
+    "why": "100 − 46 = 54"
+   },
+   "ans": 54,
+   "kind": "填空",
+   "source": "台湾 N-2-3 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L07-012",
+   "pool": "bond:g7:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ + 27 = 90",
+    "why": "90 − 27 = 63"
+   },
+   "ans": 63,
+   "kind": "填空",
+   "source": "台湾 N-2-3 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L07-013",
+   "pool": "bond:g7:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "75 − □ = 38",
+    "why": "75 − 38 = 37"
+   },
+   "ans": 37,
+   "kind": "填空",
+   "source": "台湾 N-2-3 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L07-014",
+   "pool": "bond:g7:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 25 = 48",
+    "why": "48 + 25 = 73"
+   },
+   "ans": 73,
+   "kind": "填空",
+   "source": "台湾 N-2-3 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L07-015",
+   "pool": "bond:g7:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "33 + □ = 71",
+    "why": "71 − 33 = 38"
+   },
+   "ans": 38,
+   "kind": "填空",
+   "source": "台湾 N-2-3 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L07-016",
+   "pool": "dock:g7:add",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "上午卖出 38 个面包，下午卖出 45 个。一共几个？",
+    "text": "□",
+    "why": "38 + 45 = 83"
+   },
+   "ans": 83,
+   "kind": "应用题",
+   "source": "美国 G2 · 100 以内加减",
+   "fun": false,
+   "check": {
+    "expr": "38+45"
+   }
+  },
+  {
+   "id": "L07-017",
+   "pool": "dock:g7:sub",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "船载 92 箱货，卸下 57 箱。还剩几箱？",
+    "text": "□",
+    "why": "92 − 57 = 35"
+   },
+   "ans": 35,
+   "kind": "应用题",
+   "source": "美国 G2 · 100 以内加减",
+   "fun": false,
+   "check": {
+    "expr": "92-57"
+   }
+  },
+  {
+   "id": "L07-018",
+   "pool": "dock:g7:cmp",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "小猫有 64 块矿，小狐狸比它少 28 块。小狐狸有几块？",
+    "text": "□",
+    "data": {
+     "parts": [
+      "小猫",
+      "小狐狸"
+     ],
+     "vals": [
+      64,
+      null
+     ],
+     "diff": 28
+    },
+    "why": "64 − 28 = 36"
+   },
+   "ans": 36,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 比较",
+   "fun": false,
+   "newView": "bar",
+   "check": {
+    "expr": "64-28"
+   }
+  },
+  {
+   "id": "L07-019",
+   "pool": "dock:g7:cmp",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "红旗 37 面，蓝旗比红旗多 26 面。两种一共几面？",
+    "text": "□",
+    "data": {
+     "parts": [
+      "红旗",
+      "蓝旗"
+     ],
+     "vals": [
+      37,
+      null
+     ],
+     "diff": 26
+    },
+    "why": "蓝旗 63 面，37 + 63 = 100"
+   },
+   "ans": 100,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 比较两步",
+   "fun": false,
+   "newView": "bar",
+   "check": {
+    "expr": "37+37+26"
+   }
+  },
+  {
+   "id": "L07-020",
+   "pool": "dock:g7:two",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "集市有 50 个瓜，卖掉 18 个，又运来 25 个。现在几个？",
+    "text": "□",
+    "why": "50 − 18 = 32，32 + 25 = 57"
+   },
+   "ans": 57,
+   "kind": "应用题",
+   "source": "台湾 N-2-8 · 两步应用题",
+   "fun": false,
+   "check": {
+    "expr": "50-18+25"
+   }
+  },
+  {
+   "id": "L07-021",
+   "pool": "market:g7:price",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "书 36 元，笔 18 元。付 60 元，找回几元？",
+    "text": "□",
+    "why": "36 + 18 = 54，60 − 54 = 6"
+   },
+   "ans": 6,
+   "kind": "钱",
+   "source": "美国 2.MD.C.8 · 钱的两步题",
+   "fun": false,
+   "check": {
+    "expr": "60-(36+18)"
+   }
+  },
+  {
+   "id": "L07-022",
+   "pool": "market:g7:price",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "书包 78 元，帽子比书包便宜 39 元。帽子几元？",
+    "text": "□",
+    "why": "78 − 39 = 39"
+   },
+   "ans": 39,
+   "kind": "钱",
+   "source": "美国 2.MD.C.8 · 钱",
+   "fun": false,
+   "check": {
+    "expr": "78-39"
+   }
+  },
+  {
+   "id": "L07-023",
+   "pool": "market:g7:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "绳子 85 厘米，剪掉 37 厘米。还剩几厘米？",
+    "text": "□",
+    "why": "85 − 37 = 48"
+   },
+   "ans": 48,
+   "kind": "长度重量",
+   "source": "美国 2.MD.B.5 · 长度加减",
+   "fun": false,
+   "check": {
+    "expr": "85-37"
+   }
+  },
+  {
+   "id": "L07-024",
+   "pool": "market:g7:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "长的木棍 72 厘米，短的比它短 25 厘米。短的几厘米？",
+    "text": "□",
+    "why": "72 − 25 = 47"
+   },
+   "ans": 47,
+   "kind": "长度重量",
+   "source": "美国 2.MD.A.4 · 长度比较",
+   "fun": false,
+   "check": {
+    "expr": "72-25"
+   }
+  },
+  {
+   "id": "L07-025",
+   "pool": "market:g7:clock",
+   "input": "write",
+   "q": {
+    "view": "clock5",
+    "say": "钟上 3 点 25 分。再过 20 分钟是 3 点几分？",
+    "text": "3 点 □ 分",
+    "h": 3,
+    "m": 25,
+    "why": "25 + 20 = 45"
+   },
+   "ans": 45,
+   "kind": "时间",
+   "source": "美国 3.MD.A.1 · 时间间隔",
+   "fun": false,
+   "check": {
+    "expr": "25+20"
+   }
+  },
+  {
+   "id": "L07-026",
+   "pool": "market:g7:hour",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 小时是 60 分钟。1 小时比 35 分钟多几分钟？",
+    "text": "□",
+    "why": "60 − 35 = 25"
+   },
+   "ans": 25,
+   "kind": "时间",
+   "source": "新加坡 P2 · 时和分",
+   "fun": false,
+   "check": {
+    "expr": "60-35"
+   }
+  },
+  {
+   "id": "L07-027",
+   "pool": "market:g7:hour",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 小时 15 分钟是几分钟？",
+    "text": "□",
+    "why": "60 + 15 = 75"
+   },
+   "ans": 75,
+   "kind": "时间",
+   "source": "新加坡 P2 · 时分换算",
+   "fun": false,
+   "check": {
+    "expr": "60+15"
+   }
+  },
+  {
+   "id": "L07-028",
+   "pool": "garden:g7:cycle",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "彩旗按红、蓝、绿、黄循环排。第 23 面是什么颜色？",
+    "opts": [
+     1,
+     2,
+     3,
+     4
+    ],
+    "optText": [
+     "黄",
+     "绿",
+     "蓝",
+     "红"
+    ],
+    "why": "4 个一组，23 比 20 多 3，是绿"
+   },
+   "ans": 2,
+   "kind": "趣味",
+   "source": "思维专题 · 周期",
+   "fun": true,
+   "newView": "choice",
+   "check": {
+    "cycle": {
+     "list": [
+      "红",
+      "蓝",
+      "绿",
+      "黄"
+     ],
+     "n": 23
+    }
+   }
+  },
+  {
+   "id": "L07-029",
+   "pool": "garden:g7:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "12 点起每 15 分钟敲一次钟。到 1 点共敲几次？12 点和 1 点都算。",
+    "text": "□",
+    "why": "12:00、15、30、45、1:00，是 5 次"
+   },
+   "ans": 5,
+   "kind": "趣味",
+   "source": "思维专题 · 植树（时间）",
+   "fun": true,
+   "check": {
+    "expr": "60/15+1"
+   }
+  },
+  {
+   "id": "L07-030",
+   "pool": "garden:g7:fun",
+   "input": "write",
+   "q": {
+    "view": "bar",
+    "say": "两队一共 80 人，甲队比乙队多 14 人。甲队几人？",
+    "text": "□",
+    "data": {
+     "parts": [
+      "甲队",
+      "乙队"
+     ],
+     "total": 80,
+     "diff": 14
+    },
+    "why": "(80 + 14) 的一半是 47"
+   },
+   "ans": 47,
+   "kind": "趣味",
+   "source": "思维专题 · 和差",
+   "fun": true,
+   "newView": "bar",
+   "check": {
+    "expr": "(80+14)/2"
+   }
+  },
+  {
+   "id": "L07-031",
+   "pool": "garden:g7:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "从 1 写到 20，数字 2 一共写了几次？",
+    "text": "□",
+    "why": "2、12、20，是 3 次"
+   },
+   "ans": 3,
+   "kind": "趣味",
+   "source": "袋鼠数学结构 · 计数",
+   "fun": true,
+   "check": {
+    "manual": "2、12、20 各一次"
+   }
+  },
+  {
+   "id": "L07-032",
+   "pool": "garden:g7:pyr",
+   "input": "write",
+   "q": {
+    "view": "pyr",
+    "say": "数塔：上面的数 = 下面两个数相加。□ 是几？",
+    "text": "□",
+    "data": {
+     "rows": [
+      [
+       0
+      ],
+      [
+       34,
+       41
+      ],
+      [
+       16,
+       18,
+       23
+      ]
+     ]
+    },
+    "why": "34 + 41 = 75"
+   },
+   "ans": 75,
+   "kind": "谜题",
+   "source": "思维 · 数塔",
+   "fun": true,
+   "newView": "pyr",
+   "check": {
+    "pyr": 1
+   }
+  },
+  {
+   "id": "L07-033",
+   "pool": "garden:g7:magic",
+   "input": "write",
+   "q": {
+    "view": "magic",
+    "say": "幻方：每行、每列、每条斜线的和都是 15。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       8,
+       1,
+       6
+      ],
+      [
+       3,
+       5,
+       0
+      ],
+      [
+       4,
+       9,
+       2
+      ]
+     ],
+     "sum": 15,
+     "r": 1,
+     "c": 2
+    },
+    "why": "第二行 3 + 5 + 7 = 15，是 7"
+   },
+   "ans": 7,
+   "kind": "谜题",
+   "source": "思维 · 幻方",
+   "fun": true,
+   "newView": "magic",
+   "check": {
+    "magic": 1
+   }
+  },
+  {
+   "id": "L07-034",
+   "pool": "garden:g7:sudoku",
+   "input": "write",
+   "q": {
+    "view": "grid4",
+    "say": "每行、每列、每个粗线框里 6、7、8、9 各一个。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       0,
+       6,
+       7,
+       8
+      ],
+      [
+       7,
+       8,
+       9,
+       0
+      ],
+      [
+       6,
+       9,
+       0,
+       7
+      ],
+      [
+       8,
+       0,
+       6,
+       9
+      ]
+     ],
+     "r": 1,
+     "c": 3
+    },
+    "why": "这一行还缺 6，是 6"
+   },
+   "ans": 6,
+   "kind": "谜题",
+   "source": "思维 · 数独入门",
+   "fun": true,
+   "newView": "grid4",
+   "check": {
+    "grid4": 1
+   }
+  }
+ ]
+}

@@ -1,0 +1,633 @@
+{
+ "level": 4,
+ "name": "20 以内进位退位",
+ "items": [
+  {
+   "id": "L04-001",
+   "pool": "speed:g4:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "9 + 6 + 2 =",
+    "why": "9 + 6 = 15，再加 2，是 17"
+   },
+   "ans": 17,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加进位",
+   "fun": false
+  },
+  {
+   "id": "L04-002",
+   "pool": "speed:g4:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "8 + 7 + 3 =",
+    "why": "8 + 7 = 15，再加 3，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加进位",
+   "fun": false
+  },
+  {
+   "id": "L04-003",
+   "pool": "speed:g4:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "7 + 5 + 6 =",
+    "why": "7 + 5 = 12，再加 6，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加进位",
+   "fun": false
+  },
+  {
+   "id": "L04-004",
+   "pool": "speed:g4:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "6 + 8 + 4 =",
+    "why": "6 + 8 = 14，再加 4，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加进位",
+   "fun": false
+  },
+  {
+   "id": "L04-005",
+   "pool": "speed:g4:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "9 + 4 + 5 =",
+    "why": "9 + 4 = 13，再加 5，是 18"
+   },
+   "ans": 18,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加进位",
+   "fun": false
+  },
+  {
+   "id": "L04-006",
+   "pool": "speed:g4:chain",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "8 + 5 + 7 =",
+    "why": "8 + 5 = 13，再加 7，是 20"
+   },
+   "ans": 20,
+   "kind": "计算",
+   "source": "新加坡 P1 · 连加进位",
+   "fun": false
+  },
+  {
+   "id": "L04-007",
+   "pool": "speed:g4:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "13 − 5 − 2 =",
+    "why": "13 − 5 = 8，再减 2，是 6"
+   },
+   "ans": 6,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减退位",
+   "fun": false
+  },
+  {
+   "id": "L04-008",
+   "pool": "speed:g4:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "15 − 7 − 3 =",
+    "why": "15 − 7 = 8，再减 3，是 5"
+   },
+   "ans": 5,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减退位",
+   "fun": false
+  },
+  {
+   "id": "L04-009",
+   "pool": "speed:g4:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "17 − 9 − 2 =",
+    "why": "17 − 9 = 8，再减 2，是 6"
+   },
+   "ans": 6,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减退位",
+   "fun": false
+  },
+  {
+   "id": "L04-010",
+   "pool": "speed:g4:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "14 − 6 − 5 =",
+    "why": "14 − 6 = 8，再减 5，是 3"
+   },
+   "ans": 3,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减退位",
+   "fun": false
+  },
+  {
+   "id": "L04-011",
+   "pool": "speed:g4:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "12 − 4 − 3 =",
+    "why": "12 − 4 = 8，再减 3，是 5"
+   },
+   "ans": 5,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减退位",
+   "fun": false
+  },
+  {
+   "id": "L04-012",
+   "pool": "speed:g4:chainsub",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "16 − 8 − 2 =",
+    "why": "16 − 8 = 8，再减 2，是 6"
+   },
+   "ans": 6,
+   "kind": "计算",
+   "source": "韩国 [2수01-08] · 连减退位",
+   "fun": false
+  },
+  {
+   "id": "L04-013",
+   "pool": "bond:g4:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "8 + □ = 15",
+    "why": "15 − 8 = 7"
+   },
+   "ans": 7,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L04-014",
+   "pool": "bond:g4:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ + 6 = 13",
+    "why": "13 − 6 = 7"
+   },
+   "ans": 7,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L04-015",
+   "pool": "bond:g4:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "□ − 7 = 6",
+    "why": "6 + 7 = 13"
+   },
+   "ans": 13,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L04-016",
+   "pool": "bond:g4:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "14 − □ = 8",
+    "why": "14 − 8 = 6"
+   },
+   "ans": 6,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L04-017",
+   "pool": "bond:g4:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "9 + □ = 17",
+    "why": "17 − 9 = 8"
+   },
+   "ans": 8,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L04-018",
+   "pool": "bond:g4:fill",
+   "input": "write",
+   "q": {
+    "view": "eq",
+    "text": "11 − □ = 3",
+    "why": "11 − 3 = 8"
+   },
+   "ans": 8,
+   "kind": "填空",
+   "source": "美国 G1 · 未知数在不同位置",
+   "fun": false
+  },
+  {
+   "id": "L04-019",
+   "pool": "dock:g4:add",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小猫钓了 8 条鱼，小狗钓了 7 条。一共几条？",
+    "text": "□",
+    "why": "8 + 7 = 15"
+   },
+   "ans": 15,
+   "kind": "应用题",
+   "source": "台湾 N-1-2 · 合并型",
+   "fun": false,
+   "check": {
+    "expr": "8+7"
+   }
+  },
+  {
+   "id": "L04-020",
+   "pool": "dock:g4:sub",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "矿车里 14 块矿，运走 6 块。还剩几块？",
+    "text": "□",
+    "why": "14 − 6 = 8"
+   },
+   "ans": 8,
+   "kind": "应用题",
+   "source": "台湾 N-1-2 · 拿走型",
+   "fun": false,
+   "check": {
+    "expr": "14-6"
+   }
+  },
+  {
+   "id": "L04-021",
+   "pool": "dock:g4:cmp",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小狐狸有 13 张卡，小狼比它少 5 张。小狼有几张？",
+    "text": "□",
+    "why": "13 − 5 = 8"
+   },
+   "ans": 8,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 比较",
+   "fun": false,
+   "check": {
+    "expr": "13-5"
+   }
+  },
+  {
+   "id": "L04-022",
+   "pool": "dock:g4:cmp",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小羊跑了 9 圈，小猫比它多 4 圈。小猫跑了几圈？",
+    "text": "□",
+    "why": "9 + 4 = 13"
+   },
+   "ans": 13,
+   "kind": "应用题",
+   "source": "新加坡线段图 · 比较",
+   "fun": false,
+   "check": {
+    "expr": "9+4"
+   }
+  },
+  {
+   "id": "L04-023",
+   "pool": "dock:g4:two",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "船上 12 人，下去 5 人，又上来 6 人。现在几人？",
+    "text": "□",
+    "why": "12 − 5 = 7，7 + 6 = 13"
+   },
+   "ans": 13,
+   "kind": "应用题",
+   "source": "台湾 N-2-8 · 两步应用题",
+   "fun": false,
+   "check": {
+    "expr": "12-5+6"
+   }
+  },
+  {
+   "id": "L04-024",
+   "pool": "dock:g4:two",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "小猫有 7 个贝壳，捡到 8 个，送人 6 个。现在几个？",
+    "text": "□",
+    "why": "7 + 8 = 15，15 − 6 = 9"
+   },
+   "ans": 9,
+   "kind": "应用题",
+   "source": "台湾 N-2-8 · 两步应用题",
+   "fun": false,
+   "check": {
+    "expr": "7+8-6"
+   }
+  },
+  {
+   "id": "L04-025",
+   "pool": "market:g4:change",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "东西 13 元，付了 20 元。找回几元？",
+    "text": "□",
+    "why": "20 − 13 = 7"
+   },
+   "ans": 7,
+   "kind": "钱",
+   "source": "台湾 N-1-4 · 找钱",
+   "fun": false,
+   "check": {
+    "expr": "20-13"
+   }
+  },
+  {
+   "id": "L04-026",
+   "pool": "market:g4:change",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "东西 16 元，付了 20 元。找回几元？",
+    "text": "□",
+    "why": "20 − 16 = 4"
+   },
+   "ans": 4,
+   "kind": "钱",
+   "source": "台湾 N-1-4 · 找钱",
+   "fun": false,
+   "check": {
+    "expr": "20-16"
+   }
+  },
+  {
+   "id": "L04-027",
+   "pool": "market:g4:jiao",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "1 元是 10 角。1 元 6 角是几角？",
+    "text": "□",
+    "why": "10 + 6 = 16"
+   },
+   "ans": 16,
+   "kind": "钱",
+   "source": "中国大陆 · 元角换算",
+   "fun": false,
+   "check": {
+    "expr": "10+6"
+   }
+  },
+  {
+   "id": "L04-028",
+   "pool": "market:g4:time",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "上午 9 点上船，过 2 小时到岛上。上午几点到？",
+    "text": "□",
+    "why": "9 + 2 = 11"
+   },
+   "ans": 11,
+   "kind": "时间",
+   "source": "台湾 N-1-6 · 上午下午",
+   "fun": false,
+   "check": {
+    "expr": "9+2"
+   }
+  },
+  {
+   "id": "L04-029",
+   "pool": "market:g4:len",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "绳子 9 米，再接 8 米。现在几米？",
+    "text": "□",
+    "why": "9 + 8 = 17"
+   },
+   "ans": 17,
+   "kind": "长度重量",
+   "source": "韩国 [2수03-13] · 长度加减",
+   "fun": false,
+   "check": {
+    "expr": "9+8"
+   }
+  },
+  {
+   "id": "L04-030",
+   "pool": "garden:g4:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "楼梯每层 8 级。从 1 楼到 3 楼走几级？",
+    "text": "□",
+    "why": "走了 2 层：8 + 8 = 16"
+   },
+   "ans": 16,
+   "kind": "趣味",
+   "source": "思维专题 · 植树（楼层间隔）",
+   "fun": true,
+   "check": {
+    "expr": "8+8"
+   }
+  },
+  {
+   "id": "L04-031",
+   "pool": "garden:g4:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "锯 1 根木头成 4 段，每锯一次 5 分钟。一共几分钟？",
+    "text": "□",
+    "why": "要锯 3 次：5 + 5 + 5 = 15"
+   },
+   "ans": 15,
+   "kind": "趣味",
+   "source": "思维专题 · 植树（锯木）",
+   "fun": true,
+   "check": {
+    "expr": "5+5+5"
+   }
+  },
+  {
+   "id": "L04-032",
+   "pool": "garden:g4:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "哥哥比弟弟大 3 岁。弟弟 9 岁时，哥哥几岁？",
+    "text": "□",
+    "why": "9 + 3 = 12"
+   },
+   "ans": 12,
+   "kind": "趣味",
+   "source": "思维专题 · 年龄",
+   "fun": true,
+   "check": {
+    "expr": "9+3"
+   }
+  },
+  {
+   "id": "L04-033",
+   "pool": "garden:g4:fun",
+   "input": "write",
+   "q": {
+    "view": "story",
+    "say": "两袋糖一样多，一共 16 颗。每袋几颗？",
+    "text": "□",
+    "why": "8 + 8 = 16，是 8"
+   },
+   "ans": 8,
+   "kind": "趣味",
+   "source": "趣味结构 · 拆成相同的数",
+   "fun": true,
+   "check": {
+    "expr": "16/2"
+   }
+  },
+  {
+   "id": "L04-034",
+   "pool": "garden:g4:scale",
+   "input": "write",
+   "q": {
+    "view": "scale",
+    "say": "天平一样重。左边 7 + 8，右边 9 + □。□ 是几？",
+    "text": "7 + 8 = 9 + □",
+    "data": {
+     "l": "7 + 8",
+     "r": "9 + □"
+    },
+    "why": "7 + 8 = 15，15 − 9 = 6"
+   },
+   "ans": 6,
+   "kind": "谜题",
+   "source": "韩国 [4수02-03] · 等号两边相等（提前）",
+   "fun": true,
+   "newView": "scale",
+   "check": {
+    "expr": "7+8-9"
+   }
+  },
+  {
+   "id": "L04-035",
+   "pool": "garden:g4:sudoku",
+   "input": "write",
+   "q": {
+    "view": "grid4",
+    "say": "每行、每列、每个粗线框里 6、7、8、9 各一个。□ 是几？",
+    "text": "□",
+    "data": {
+     "g": [
+      [
+       6,
+       0,
+       7,
+       9
+      ],
+      [
+       7,
+       9,
+       6,
+       0
+      ],
+      [
+       0,
+       6,
+       9,
+       7
+      ],
+      [
+       9,
+       7,
+       8,
+       6
+      ]
+     ],
+     "r": 2,
+     "c": 0
+    },
+    "why": "这一行还缺 8，是 8"
+   },
+   "ans": 8,
+   "kind": "谜题",
+   "source": "思维 · 数独入门",
+   "fun": true,
+   "newView": "grid4",
+   "check": {
+    "grid4": 1
+   }
+  },
+  {
+   "id": "L04-036",
+   "pool": "garden:g4:expr",
+   "input": "pick",
+   "q": {
+    "view": "choice",
+    "say": "哪个得数大？",
+    "opts": [
+     1,
+     2,
+     3
+    ],
+    "optText": [
+     "9 + 8",
+     "7 + 9",
+     "8 + 7"
+    ],
+    "why": "9 + 8 = 17，最大"
+   },
+   "ans": 1,
+   "kind": "计算",
+   "source": "中国大陆 · 算式比大小",
+   "fun": false,
+   "newView": "choice",
+   "check": {
+    "vals": [
+     "9+8",
+     "7+9",
+     "8+7"
+    ],
+    "rule": "max"
+   }
+  }
+ ]
+}
