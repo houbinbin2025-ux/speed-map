@@ -7,7 +7,7 @@ fails = []
 def check(ok, msg):
     if not ok: fails.append(msg)
 W = int(sys.argv[3]) if len(sys.argv) > 3 else 844; H = int(sys.argv[4]) if len(sys.argv) > 4 else 390
-OUT = "(g=>{const {K,E,S}=__sm;K.SKILLS.filter(s=>s.group===g||(g==='ALL')||(g==='speed'&&s.speed)).forEach(s=>s.items.forEach(i=>{const q=E.prog(S,i.id);q.lv=3;q.d=['2026-09-01','2026-09-02','2026-09-06'];if(i.gen)q.out=1;}));})"
+OUT = "(g=>{const {K,E,S}=__sm;K.SKILLS.concat(K.HARD).filter(s=>s.group===g||(g==='ALL')||(g==='speed'&&s.speed)).forEach(s=>s.items.forEach(i=>{const q=E.prog(S,i.id);q.lv=3;q.d=['2026-09-01','2026-09-02','2026-09-06'];if(i.gen)q.out=1;}));})"
 with sync_playwright() as p:
     b = p.chromium.launch(); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
@@ -24,7 +24,7 @@ with sync_playwright() as p:
     check(pg.evaluate("Object.keys(__sm.S.fast||{}).length") > n0, '秒答地图答快了没计数')
     pg.goto(url); pg.reload(); pg.wait_for_timeout(500); pg.evaluate("__sm.S.oral = true")
     # 只靠真实次数全部下架（没有 out 标记）：不许崩，回地图显示全部通关
-    pg.evaluate("""(()=>{const {K,S}=__sm,C=window.SM;S.fast=S.fast||{};K.speed.filter(s=>s.L===2).forEach(s=>s.items.forEach(it=>{const E=__sm.E;if(!it.gen){const q=E.prog(S,it.id);q.lv=3;q.d=['2026-09-01','2026-09-02','2026-09-06'];}else{const seen={};for(let k=0;k<4000;k++){const x=K.make(it.id);const key=it.id+'|'+x.q.a+','+x.q.b;if(!seen[key]){seen[key]=1;S.fast[key]=[4,'2026-09-01',0];}}}}));})()""")
+    pg.evaluate("""(()=>{const {K,S}=__sm,C=window.SM;S.settings.levels=[8,9,10,11];S.fast=S.fast||{};K.speed.filter(s=>s.L===2).forEach(s=>s.items.forEach(it=>{const E=__sm.E;if(!it.gen){const q=E.prog(S,it.id);q.lv=3;q.d=['2026-09-01','2026-09-02','2026-09-06'];}else{const seen={};for(let k=0;k<4000;k++){const x=K.make(it.id);const key=it.id+'|'+x.q.a+','+x.q.b;if(!seen[key]){seen[key]=1;S.fast[key]=[4,'2026-09-01',0];}}}}));})()""")
     pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(500); pg.click('#zGo'); pg.wait_for_timeout(400); pg.click('.lvtab[data-level="2"]'); pg.wait_for_timeout(300); check(pg.is_enabled('[data-series="add"]'), '第 3 级题型还没标记时按钮应可点（这条路曾经崩）'); pg.click('[data-series="add"]'); pg.wait_for_timeout(800)
     check(cur(pg) in ('home', 'island'), '真实次数全下架后点练习，停在 ' + str(cur(pg))); check(pg.is_disabled('[data-series="add"]'), '加法练习应不可点'); check('全部通关' in pg.inner_text('[data-series="add"]'), '加法练习应显示全部通关'); shot(pg, 'a0-speed-out')
     pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.goto(url); pg.reload(); pg.wait_for_timeout(500); pg.evaluate("__sm.S.oral = true")

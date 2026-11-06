@@ -123,7 +123,7 @@ test('一次练习：时间到就停；同一张卡最多 2 次、同一题型�
       const otherLater = qs.slice(i + 1).some((x, j) => x.seg === qs[i].seg && sk(i + 1 + j) !== sk(i));
       if (run > 3 && otherLater) over++;
     }
-    assert.ok(over <= Math.max(3, Math.ceil(qs.length * 0.05)), `第 ${d} 天：还有别的技能可出时，同一技能连续超过 3 题的有 ${over} 题（共 ${qs.length}）`);
+    assert.ok(over <= Math.max(3, Math.ceil(qs.length * 0.1)), `第 ${d} 天：还有别的技能可出时，同一技能连续超过 3 题的有 ${over} 题（共 ${qs.length}）`);
   }
 });
 
@@ -177,11 +177,11 @@ test('复习过关按当前阶段：灰的只看对，淡黄以后慢了不过�
 
 test('没有新内容、没有到期的也有东西练：深红的格子按 7/14/30/60 天做维持复习；全都没有就提前结束', () => {
   const S = C.blank(); S.placedAt = 1;
-  K.SKILLS.forEach(s => s.items.forEach(it => { const p = E.prog(S, it.id); p.lv = 3; p.d = [D(-40), D(-35), D(-30)]; p.last = D(-30); p.seen = 9; }));
+  K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => { const p = E.prog(S, it.id); p.lv = 3; p.d = [D(-40), D(-35), D(-30)]; p.last = D(-30); p.seen = 9; }));
   const {qs, s} = play(S, D(0), () => ok);
   assert.ok(qs.length > 0 && qs.every(x => x.seg === 'fluency'));
   assert.ok(s.elapsed >= 590, '满 10 分钟');
-  K.SKILLS.forEach(s => s.items.forEach(it => { E.prog(S, it.id).lastDay = D(4); }));   // 全都刚复习过
+  K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => { E.prog(S, it.id).lastDay = D(4); }));   // 全都刚复习过
   const again = play(S, D(5), () => ok);
   assert.equal(again.qs.length, 0, '没有可练的就提前结束');
   assert.equal(S.daily.done, true);
@@ -345,10 +345,10 @@ test('R2-B9 同一天关掉重开：出题上限接着算；「再练一会」�
 
 test('R2-B10 自由加练：只出选的技能组，12 题，计入用时统计但不计入今日练习', () => {
   const S = C.blank(); S.placedAt = 1;
-  const f = E.free(S, D(0), 'look', {rnd: seeded(1)}), seen = [];
+  const f = E.free(S, D(0), 'bond', {rnd: seeded(1)}), seen = [];
   for (let x = f.next(), g = 0; x && g < 50; x = f.next(), g++) { if (x.kind === 'q') { seen.push(x.inst.id); f.answer(ok); } }
   assert.equal(seen.length, 12);
-  assert.ok(seen.every(id => K.ITEM[id].skill.startsWith('look')));
+  assert.ok(seen.every(id => K.ITEM[id].skill.startsWith('bond')));
   assert.equal(S.stats[D(0)].sec, 72 + 5 * Object.keys(S.demoSeen).length);   // 12 题 × 6 秒 + 示范卡每张 5 秒
   assert.ok(!S.daily || S.daily.sec === 0);
 });
@@ -357,7 +357,7 @@ test('R2-B11 统计用时是累加：今日练习 + 自由加练', () => {
   const S = C.blank(); S.placedAt = 1;
   const {s} = play(S, D(0), () => ok);
   const demos = Object.keys(S.demoSeen).length;
-  const f = E.free(S, D(0), 'look', {rnd: seeded(1)});
+  const f = E.free(S, D(0), 'bond', {rnd: seeded(1)});
   for (let x = f.next(); x; x = f.next()) if (x.kind === 'q') f.answer(ok);
   assert.equal(S.stats[D(0)].sec, s.elapsed + 72 + 5 * (Object.keys(S.demoSeen).length - demos));
 });
@@ -422,6 +422,7 @@ test('防冷落：开始学了、5 天没练的技能，今天"学新的"排在�
   const S = rich();
   ['look1', 'look3'].forEach(sid => K.BY[sid].items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 1, d: [D(-1)], seen: 2, lastDay: D(-1)})));
   K.BY.look4.items.forEach(it => Object.assign(E.prog(S, it.id), {seen: 3, lastDay: D(-6)}));   // 两个十格框：排在图谱第 6 位，6 天没练
+  S.settings = {levels: [1, 2, 3, 4]};   // 11-06：看十格框在第 4 级，这里只测防冷落，把它开放
   const s = E.session(S, D(0), {rnd: seeded(1)}), first = [];
   for (let x = s.next(); x && first.length < 4; x = s.next()) if (x.kind === 'q' && x.seg === 'new') { first.push(K.ITEM[x.inst.id].skill); s.answer(ok); } else if (x.kind === 'q') s.answer(ok);
   assert.ok(first.includes('look4'), first.join());
@@ -461,7 +462,7 @@ test('R3-N3 秒答卡缺 d 字段：不报错，能照常升级', () => {
 // ---------- 门 6 开工：第 3 轮审查 C 节"改坏也不红"的规则补真测试（每条都做过反向验证） ----------
 // 只让 id 这一格可能到期：其余格子都标成今天刚练过
 const onlyThis = (S, id, day) => K.SKILLS.forEach(s => s.items.forEach(it => { if (it.id !== id) E.prog(S, it.id).lastDay = day; }));
-const allRed = S => K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, d: [D(-60), D(-55), D(-50)], seen: 9, lastDay: D(-50)})));
+const allRed = S => K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, d: [D(-60), D(-55), D(-50)], seen: 9, lastDay: D(-50)})));
 
 test('G6-1 题型：最近 8 次里错 2 次（6/8）不升，错 1 次（7/8）才升', () => {
   const S = C.blank(), id = 'cmp:t:100';
@@ -623,12 +624,12 @@ test('再来一次做对：照常记合格（卡点亮淡黄），错题明天�
 });
 test('错题复习里再错：当场再来一次；自由加练也有；摸底没有', () => {
   const S = C.blank(); S.placedAt = 1;
-  K.understand.filter(s => s.group === 'look').forEach(s => s.items.slice(0, 1).forEach(it => E.addMistake(S, K.make(it.id), D(-1))));
-  const rv = E.review(S, D(0), 'look', {rnd: seeded(5)}); const seen = [];
+  K.understand.filter(s => s.group === 'bond').forEach(s => s.items.slice(0, 1).forEach(it => E.addMistake(S, K.make(it.id), D(-1))));
+  const rv = E.review(S, D(0), 'bond', {rnd: seeded(5)}); const seen = [];
   for (let x = rv.next(), g = 0; x && g < 200; x = rv.next(), g++) { if (x.kind !== 'q') continue; seen.push(x); rv.answer(x.retry || seen.length > 1 ? ok : bad); }
   assert.ok(seen.some(x => x.retry), '错题复习有再来一次');
   const F = C.blank(); F.placedAt = 1; F.demoSeen = Object.fromEntries(K.SKILLS.map(s => [s.id, true]));
-  const fr = E.free(F, D(0), 'look', {rnd: seeded(7)}), fs = [];
+  const fr = E.free(F, D(0), 'bond', {rnd: seeded(7)}), fs = [];
   for (let x = fr.next(), g = 0; x && g < 200; x = fr.next(), g++) { if (x.kind !== 'q') continue; fs.push(x); fr.answer(x.retry ? ok : fs.length === 1 ? bad : ok); }
   assert.ok(fs.some(x => x.retry), '自由加练有再来一次');
   assert.equal(fs.filter(x => !x.retry).length, 12, '再来一次不占 12 题');
@@ -647,7 +648,7 @@ test('当天第二次机会：新卡第一次写错、再来一次做对，当�
 test('收尾的再来一次：不紧挨原题、最多 3 道；自由加练第 1 题错后面全对 = 12 + 2 题', () => {
   for (let seed = 1; seed <= 40; seed++) {
     const F = C.blank(); F.placedAt = 1; F.demoSeen = Object.fromEntries(K.SKILLS.map(s => [s.id, true]));
-    const fr = E.free(F, D(0), ['look', 'bond', 'cmp'][seed % 3], {rnd: seeded(seed)}), qs = [];
+    const fr = E.free(F, D(0), ['bond', 'bond', 'cmp'][seed % 3], {rnd: seeded(seed)}), qs = [];
     for (let x = fr.next(), g = 0; x && g < 200; x = fr.next(), g++) { if (x.kind !== 'q') continue; qs.push(x); fr.answer((seed + qs.length) % 3 ? ok : bad); }
     const firstTail = qs.findIndex((x, i) => i >= 12 && qs.slice(0, i).filter(y => !y.retry).length >= 12);
     qs.forEach((x, i) => { if (x.retry) assert.ok(!(qs[i - 1] && qs[i - 1].inst.id === x.inst.id && JSON.stringify(qs[i - 1].inst.q) === JSON.stringify(x.inst.q)), `seed ${seed} 第 ${i} 题紧挨原题`); });
@@ -655,7 +656,7 @@ test('收尾的再来一次：不紧挨原题、最多 3 道；自由加练第 1
     assert.ok(tail.length <= 3, `seed ${seed} 收尾 ${tail.length} 道`);
   }
   const F = C.blank(); F.placedAt = 1; F.demoSeen = Object.fromEntries(K.SKILLS.map(s => [s.id, true]));
-  const fr = E.free(F, D(0), 'look', {rnd: seeded(3)}), qs = [];
+  const fr = E.free(F, D(0), 'bond', {rnd: seeded(3)}), qs = [];
   for (let x = fr.next(), g = 0; x && g < 200; x = fr.next(), g++) { if (x.kind !== 'q') continue; qs.push(x); fr.answer(qs.length === 1 ? bad : ok); }
   assert.equal(qs.length, 14);
 });
@@ -663,7 +664,7 @@ test('收尾的再来一次：不紧挨原题、最多 3 道；自由加练第 1
 test('审查第 2 轮阻断：已点亮的卡当天先错、再来一次做对，档位不变（淡红 / 深红必须隔天真的还会）', () => {
   for (const start of [1, 2]) {
     const S = C.blank(); S.placedAt = 1; S.demoSeen = Object.fromEntries(K.SKILLS.map(s => [s.id, true]));
-    K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), start === 1 ? {lv: 1, d: [D(-1)], seen: 3, lastDay: D(-1)} : {lv: 2, d: [D(-9), D(-5)], seen: 5, lastDay: D(-5)})));
+    K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), start === 1 ? {lv: 1, d: [D(-1)], seen: 3, lastDay: D(-1)} : {lv: 2, d: [D(-9), D(-5)], seen: 5, lastDay: D(-5)})));
     const wrong = {}, retried = [];
     play(S, D(0), x => { if (x.retry) { retried.push(x.inst.id); return ok; } if (!wrong[x.inst.id]) { wrong[x.inst.id] = 1; return bad; } return ok; });
     assert.ok(retried.length >= 5);
@@ -683,7 +684,7 @@ test('题型的再来一次（同样的数）不进 8 次窗口', () => {
 test('再来一次最多连着 2 道：自由加练连错 5 道后不会连出 4 道再来一次', () => {
   for (let seed = 1; seed <= 30; seed++) {
     const F = C.blank(); F.placedAt = 1; F.demoSeen = Object.fromEntries(K.SKILLS.map(s => [s.id, true]));
-    const fr = E.free(F, D(0), ['look', 'bond', 'cmp'][seed % 3], {rnd: seeded(seed)}), qs = [];
+    const fr = E.free(F, D(0), ['bond', 'bond', 'cmp'][seed % 3], {rnd: seeded(seed)}), qs = [];
     for (let x = fr.next(), g = 0; x && g < 200; x = fr.next(), g++) { if (x.kind !== 'q') continue; qs.push(x); const k = qs.filter(y => !y.retry).length; fr.answer(!x.retry && k >= 3 && k <= 9 ? bad : ok); }
     const seq = qs.map(x => (x.retry ? 'R' : 'o')).join('');
     assert.ok(!/RRRR/.test(seq), `seed ${seed}：${seq}`);

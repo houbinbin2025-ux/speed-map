@@ -76,7 +76,7 @@
   // Ben 11-05：题里所有数字都不超过 5 的题不再出（1+1、5−4、骰子 3 点、5 以内分合……）。编号和旧进度保留，只是不出、不计
   const isLow = q => { if (q && q.view) return false; const ns =   // 带 view 的是新关卡和挑战题，题库生成时已经把简单题剔除；它们的答案不在字段里，不能这样判
      Object.values(q || {}).filter(v => typeof v === 'number'); return ns.length > 0 && ns.every(v => v <= 5); };
-  UNITS.forEach(u => { if (!u.gen && isLow({a: u.a, b: u.b, ans: u.ans})) u.retired = true; });
+  UNITS.forEach(u => { if (!u.gen && (isLow({a: u.a, b: u.b, ans: u.ans}) || u.a === 0 || u.b === 0 || (u.op === '-' && u.a === u.b))) u.retired = true; });   // 11-06：6 + 0、10 − 0、7 − 7 也算最简单
   const BYID = Object.fromEntries(UNITS.map(u => [u.id, u]));
   const unitsOf = L => UNITS.filter(u => u.L === L && !u.retired);
   const worldUnits = (L, w) => UNITS.filter(u => u.L === L && u.w === w && !u.retired);

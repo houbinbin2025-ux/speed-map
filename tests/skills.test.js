@@ -19,7 +19,7 @@ test('理解技能数量与编号（已剔除所有数字 ≤ 5 的题）：看�
 test('秒答地图每个世界 / 题型组都接进了图谱，题目编号和 v1 完全一样', () => {
   const ids = K.speed.flatMap(s => s.items.map(i => i.id)).sort();
   assert.deepEqual(ids, C.UNITS.filter(u => !u.retired).map(u => u.id).sort());
-  assert.equal(K.speed.length, 6 + 8 + 2 + 2);   // 世界 1 全是 5 以内，已剔除
+  assert.equal(K.speed.length, 5 + 8 + 2 + 2);   // 世界 1 全是 5 以内、世界 7 全是 +0 −0，已剔除
 });
 
 test('全部编号不重复，也不和秒答的 Boss 键撞', () => {

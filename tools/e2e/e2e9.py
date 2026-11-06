@@ -37,7 +37,8 @@ with sync_playwright() as p:
             sk = pg.evaluate("__sm.K.ITEM[__sm.Q.x.inst.id].skill"); isNew = sk not in seen; seen[sk] = True
             shot(pg, 'q-' + sk)
             lf = pg.evaluate("(()=>{const e=document.getElementById('qBody');return e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2})()"); check(not lf, sk + ' 题面溢出')
-            check(pg.locator('#qBody .spk').count() == 1, sk + ' 没有朗读按钮'); pg.locator('#qBody .spk').click()
+            if pg.evaluate(f"__sm.K.BY['{sk}'].nb"):   # 高级别题（看图、算式）不一定有朗读
+                check(pg.locator('#qBody .spk').count() == 1, sk + ' 没有朗读按钮'); pg.locator('#qBody .spk').click()
             wrong = sk not in wrongDone
             if wrong: wrongDone.add(sk)
             if st['input'] == 'pick':
@@ -71,7 +72,7 @@ with sync_playwright() as p:
     for g in ['garden', 'market', 'dock']:
         na = pg.evaluate(f"Object.values(__sm.S.mistakes).filter(m=>m.src==='{g}'&&m.due!==null).length"); nb = pg.evaluate(f"__sm.E.dueMistakes(__sm.S,'2026-12-01',id=>__sm.K.ITEM[id].skill&&__sm.K.BY[__sm.K.ITEM[id].skill].group==='{g}').length"); check(na == nb, f'{g} 错题 {na} 道，回炉 {nb} 道')
     want = pg.evaluate("__sm.K.SKILLS.filter(s=>s.nb).map(s=>s.id)")
-    check(sorted(seen) == sorted(want), '没练到：' + str(set(want) - set(seen)))
+    check(set(want) <= set(seen), '没练到：' + str(set(want) - set(seen)))
     pg.evaluate("__sm.K.SKILLS.filter(s=>s.nb).forEach(s=>s.items.forEach(i=>{const q=__sm.E.prog(__sm.S,i.id);q.lv=3;q.d=['2026-09-01','2026-09-02','2026-09-06'];}))")
     pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2800); check(pg.is_visible('#h_btnOut'), '进不了家'); shot(pg, 'e-home')
     for c in ['c:dock:3', 'c:garden:1', 'c:market:3']:
