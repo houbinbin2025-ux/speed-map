@@ -4,7 +4,7 @@ from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 url = (root / 'v2' / 'index.html').as_uri() + '#test'
 known = {k: True for k in ['look1', 'look2', 'look3', 'look4', 'bond1', 'cmp1']}
-seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'known': known}
+seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'known': known, 'settings': {'bilingual': False}}
 # 0–9 的笔画（单位方框 0..1 × 0..1.4，可多笔）
 def arc(cx, cy, rx, ry, a0, a1, n=14): return [(cx + rx * math.cos(math.radians(a0 + (a1 - a0) * i / n)), cy + ry * math.sin(math.radians(a0 + (a1 - a0) * i / n))) for i in range(n + 1)]
 D = {

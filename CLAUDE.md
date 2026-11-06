@@ -29,10 +29,11 @@
 - **审改循环上限 3 轮**：任何一个环节"审出问题 → 修改 → 再验收"最多 3 轮；第 3 轮还不过 = 方案本身有问题，**回到方案研究 / 风险验证换方案**，不许硬磨第 4 轮；只有方案和 Ben 的意图冲突时才停下问 Ben。审查记录写 `docs/审查/`。
 - **提报格式**：我的建议 → 为什么 → 不这样做的后果。技术选择我自己定，只问 Ben 本人才知道的事实（孩子的情况、使用场景）。
 - **完成必须有证据**：测试输出 + 真访问截图；收尾推送 GitHub（注意第三条硬约束：推 main = 上线）。
-- **改了 `v2/` 下任何一个脚本（bank / hardbank / placebank / core / ink / skills / engine / render / world / home / house），跑 `node tools/bump-version.js`**，它把 `v2/index.html` 里 11 个 `?v=N` 一起加 1 并更新指纹（10-26 踩坑：手机缓存旧脚本配新页面，一写字就报错；`npm test` 的脚本指纹测试会拦住忘加的情况）。
+- **改了 `v2/` 下任何一个脚本（i18n / bank / hardbank / placebank / core / ink / skills / engine / render / world / home / house），跑 `node tools/bump-version.js`**，它把 `v2/index.html` 里全部 12 个 `?v=N` 一起加 1 并更新指纹（10-26 踩坑：手机缓存旧脚本配新页面，一写字就报错；`npm test` 的脚本指纹测试会拦住忘加的情况）。
 - **iPad 同步（Ben 11-06）**：App 的题是打包进去的。凡是改了 `v2/`（题库、页面、脚本）并推送，**同一次收尾必须跑 `bash ios/release.sh`** 装到 iPad，并在交付说明里写「iPad 已更新到 vN」；iPad 没连上就明说没同步，不许略过。只同步内容，进度两边各存各的。
 - **改题只改题库数据（`v2/bank.js`、`hardbank.js`、`placebank.js`）**：卡和题型编号只增不删、卡的题目不改（要改换新编号）、题型的题可增删；改完跑 `node tools/bump-version.js` 和 `npm test`（`tests/bank.test.js` 查答案、覆盖、左右平衡、旧进度）。规则和标准见 `docs/说明书-题库.md`。
 - **改了题面、图解或页面排版（`v2/render.js`、`v2/index.html` 样式），跑 `python3 tools/e2e/overflow.py . 30`**，6 种 iPhone 横屏尺寸下每种题都不许超出左栏、钻到写字板下（10-28 踩坑：两个十格框被写字板盖住半边）。
+- **新增孩子能看到的文字，必须在 `v2/i18n.js` 加英文**（单日英文、双日中文，家长区可关；家长区、题库预览和崩溃页不翻译）。`npm test` 的 `tests/i18n.test.js` 查题库和页面，`python3 tools/e2e/e2e-en.py . <截图目录>` 真点一遍；英文长了跑 `overflow.py . 10 en`、`demofit.py . <目录> en`。现有回归的种子默认 `settings.bilingual=false`，新回归脚本照此写，不然单日会挂。
 - **交给 Ben 真机试之前**，先派一个新上下文审查员按「空空真用」把整个流程走一遍（每个按钮、每类题、答错、结算、回到首页、再练一次、连点、竖屏），只报告不改；按清单修完写成回归脚本放 `tools/e2e/` 再交（10-28 踩坑：只查「点了有没有反应」，漏了题目不换、两位数写不完、结算文字写死等 Ben 一眼能看出的问题）。
 - 派子代理时 prompt 末尾必须注入 `docs/子代理注入模板.md`。
 - 始终中文；英文术语第一次出现带括号白话。

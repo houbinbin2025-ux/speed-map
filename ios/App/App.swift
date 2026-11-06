@@ -1,5 +1,6 @@
 import UIKit
 import WebKit
+import AVFoundation
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {}
@@ -29,10 +30,17 @@ enum ProgressBackup {
 
     /// 主存档缺失或损坏的快照不写入：好的副本不能被坏数据冲掉。返回是否写入
     static func save(_ json: String) -> Bool {
-        guard let data = json.data(using: .utf8),
-              let map = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+        guard var data = json.data(using: .utf8),
+              var map = try? JSONSerialization.jsonObject(with: data) as? [String: String],
               let main = map["speedmap.v2"]?.data(using: .utf8),
               (try? JSONSerialization.jsonObject(with: main)) is [String: Any] else { return false }
+        // 碎片单独存一个键：它坏了不能冲掉副本里好的那份，也不能让主进度停更
+        if let gems = map["speedmap.gems"]?.data(using: .utf8), !((try? JSONSerialization.jsonObject(with: gems)) is [String: Any]) {
+            let old = (try? Data(contentsOf: url)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: String] }
+            map["speedmap.gems"] = old?["speedmap.gems"]
+            guard let fixed = try? JSONSerialization.data(withJSONObject: map) else { return false }
+            data = fixed
+        }
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         return (try? data.write(to: url, options: .atomic)) != nil
     }
@@ -47,6 +55,7 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
         config.mediaTypesRequiringUserActionForPlayback = []
         config.userContentController.add(self, name: "backup")
         config.userContentController.add(self, name: "clip")
+        config.userContentController.add(self, name: "speak")
         web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
         installBootScript()
@@ -139,15 +148,33 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
         switch message.name {
         case "backup": if ProgressBackup.save(text) { installBootScript() }
         case "clip": UIPasteboard.general.string = text
+        case "speak": speak(text)
         default: break
         }
+    }
+
+    /// 朗读题目：内嵌网页的语音不可靠，用系统语音（离线可用、不受静音键影响）。空字符串 = 停止
+    private let speech = AVSpeechSynthesizer()
+    private func speak(_ json: String) {
+        speech.stopSpeaking(at: .immediate)
+        guard let data = json.data(using: .utf8),
+              let m = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+              let text = m["text"], !text.isEmpty else { return }
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
+        let u = AVSpeechUtterance(string: text)
+        u.voice = AVSpeechSynthesisVoice(language: m["lang"] ?? "zh-CN")
+        u.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
+        speech.speak(u)
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url, !url.isFileURL, url.scheme != "about" else { return decisionHandler(.allow) }
-        // 内容都在包内；外部链接（如 kongmine:// 上报）交给系统
-        UIApplication.shared.open(url)
+        // 内容都在包内；外部链接（如 kongmine:// 上报）交给系统。矿场没装时告诉页面
+        UIApplication.shared.open(url) { [weak webView] ok in
+            if !ok, url.scheme == "kongmine" { webView?.evaluateJavaScript("window.__kongEarnFailed && window.__kongEarnFailed(); void 0", completionHandler: nil) }
+        }
         decisionHandler(.cancel)
     }
 
@@ -172,6 +199,10 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
                 if (k === 'speedmap.v2' || localStorage.getItem(k) === null) localStorage.setItem(k, saved[k]);
               });
             }
+            // 碎片单独存：只有它缺失或损坏时也从副本恢复
+            var gems = localStorage.getItem('speedmap.gems'), gemsBad = gems === null;
+            if (gems !== null) { try { var g = JSON.parse(gems); gemsBad = !g || typeof g !== 'object' || Array.isArray(g); } catch (e) { gemsBad = true; } }
+            if (saved && gemsBad && saved['speedmap.gems']) localStorage.setItem('speedmap.gems', saved['speedmap.gems']);
           } catch (e) {}
           var last = '';
           var push = function () {
