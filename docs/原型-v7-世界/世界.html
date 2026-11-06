@@ -1,0 +1,1238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>空空数学岛 · 方块世界原型</title>
+<style>
+:root{--cave:#1b1d22;--ink:#ecebe4;--mute:#a9a79c;--panel:#2a2c32;--panel2:#363941;--grass:#6fae3a;--gold:#f2c14e;--dia:#5fd9e6;--red:#d9534a}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--cave);color:var(--ink);font-family:"PingFang SC",system-ui,sans-serif;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+canvas{display:block}.px{image-rendering:pixelated}
+.btn{min-height:46px;padding:0 16px;background:var(--panel2);border:3px solid #000;box-shadow:inset 2px 2px 0 rgba(255,255,255,.14),inset -2px -2px 0 rgba(0,0,0,.3);font-weight:800;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:active{transform:translateY(1px)}.btn.main{background:var(--grass);color:#10140c}.btn.warn{background:var(--gold);color:#241a06}.btn[disabled]{opacity:.45;background:var(--panel2);color:var(--ink)}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+#hud{height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 8px;background:#14151a;border-bottom:3px solid #000;overflow:hidden}
+#hud.off{display:none}
+.res{display:flex;align-items:center;gap:3px;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;min-height:38px}
+.res img{width:22px;height:22px;background:#3a3d45;border-radius:2px}
+.res em{display:none;font-style:normal;font-size:13px;color:var(--mute);font-weight:700}
+#date{margin-left:auto;font-size:13px;color:var(--mute);white-space:nowrap}
+#sunTxt{font-size:13px;font-weight:800;color:var(--gold);white-space:nowrap}
+#demoBtn{min-height:34px;padding:0 10px;font-size:13px}
+#stage{flex:1;position:relative;min-height:0}
+#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#hint{position:absolute;left:8px;top:8px;max-width:60%;background:rgba(20,21,26,.9);border:2px solid #000;padding:5px 10px;font-size:14px;font-weight:700;line-height:1.35;pointer-events:none}
+#rail{position:absolute;right:8px;top:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;width:82px;justify-content:flex-end;pointer-events:none}
+#rail .btn{width:100%;padding:0;font-size:15px;min-height:48px;pointer-events:auto;white-space:normal;line-height:1.1}
+#start{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);min-height:58px;padding:0 26px;font-size:20px}
+.page{position:absolute;inset:0;background:var(--cave);display:none;flex-direction:column}.page.on{display:flex}
+.phead{height:50px;flex:none;display:flex;align-items:center;gap:10px;padding:0 10px;background:#14151a;border-bottom:3px solid #000;font-weight:900;font-size:18px}.phead .sp{flex:1}
+.pbody{flex:1;min-height:0;overflow:auto;padding:10px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.pfoot{flex:none;padding:6px 10px;display:flex;gap:8px;background:#14151a;border-top:3px solid #000}.pfoot .btn{flex:1}
+.modalwrap{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:30;padding:8px}.modalwrap.on{display:flex}
+.modal{background:var(--panel);border:4px solid #000;box-shadow:inset 3px 3px 0 rgba(255,255,255,.1);padding:12px 16px;max-width:560px;width:100%;max-height:100%;overflow:auto;touch-action:pan-y}
+.modal h2{font-size:20px;margin-bottom:6px}.modal p{font-size:15px;line-height:1.5;color:#d6d4c8}
+.mact{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.mact .btn{flex:1}
+#toast{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:#000;color:var(--gold);padding:6px 14px;font-weight:800;font-size:15px;z-index:40;display:none;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+/* 答题 */
+.qwrap{flex:1;min-height:0;display:flex}
+.qleft{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;padding:6px;overflow:hidden}
+#qtag{height:26px;font-size:14px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:4px}#qtag img{width:20px;height:20px}
+.qtext{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap;max-width:100%}
+#qans,#bossA{min-width:120px;height:62px;background:#000;border:3px solid #555;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;font-variant-numeric:tabular-nums;padding:0 10px;white-space:nowrap}
+#qans.ok{border-color:var(--grass);color:var(--grass)}#qans.no{border-color:var(--red);color:var(--red)}
+#qmine{width:min(190px,40vh);height:min(100px,21vh)}
+#qore{position:absolute;left:8px;top:6px;display:flex;align-items:center;gap:4px;font-size:22px;font-weight:900}#qore img{width:26px;height:26px}
+#qpause{position:absolute;right:8px;top:6px;min-height:40px;font-size:14px;padding:0 10px}
+.pad{width:min(46vw,300px);flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:6px;background:#14151a;border-left:3px solid #000}
+.pad button{background:var(--panel2);border:3px solid #000;font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;min-height:44px}.pad button:active{background:#555}
+#qpick{display:none;gap:14px}#qpick button{width:150px;height:96px;background:var(--panel2);border:4px solid #000;font-size:46px;font-weight:900}
+.bar{height:10px;background:#000;border:2px solid #000;width:100%}.bar i{display:block;height:100%;background:var(--grass)}
+/* 工作台 / 图鉴 */
+.tabs{display:flex;gap:6px}.tabs .btn{min-height:44px;font-size:15px;padding:0 12px}.tabs .btn.on{background:var(--gold);color:#241a06}
+.note{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.card{background:var(--panel);border:3px solid #000;padding:8px;display:flex;flex-direction:column;gap:5px;min-height:112px}
+.card .ct{display:flex;align-items:center;gap:6px;font-weight:900;font-size:15px}.card .ct img{width:34px;height:34px;flex:none}
+.card .cd{font-size:13px;color:var(--mute);line-height:1.35;flex:1}.card .btn{min-height:44px;font-size:14px}
+.card .why{font-size:13px;font-weight:700;color:var(--gold);min-height:44px;display:flex;align-items:center}
+.cost{display:flex;flex-wrap:wrap;gap:6px;font-size:13px;font-weight:700}.cost span{display:flex;align-items:center;gap:2px}.cost img{width:18px;height:18px}.cost .lack{color:var(--red)}
+.card.dark{background:#17181c}.card.dark .ct{color:var(--mute)}.card.on{outline:3px solid var(--gold);outline-offset:-3px}
+/* 地块卡片 */
+.bound{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:2px solid #000;font-size:15px;font-weight:700}
+.dots{display:flex;gap:3px;margin-left:auto}.dots i{width:18px;height:18px;border:2px solid #000;background:#111;display:block}.dots i.d1{background:#d9d9d9}.dots i.d2{background:var(--gold)}.dots i.d3{background:var(--dia)}
+.torches{display:flex;gap:2px;align-items:center;margin:4px 0}.torches img{width:22px;height:22px}.torches img.off{opacity:.2;filter:grayscale(1)}
+/* 建造 */
+#bwrap{flex:1;min-height:0;display:flex;gap:8px;padding:6px}#bcv{touch-action:none;flex:none;align-self:center}
+#bside{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;min-height:0}
+#bbar{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:5px;align-content:start;touch-action:pan-y}
+.bk{height:60px;background:var(--panel);border:3px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative}.bk img{width:26px;height:26px}.bk.on{outline:3px solid var(--gold);outline-offset:-3px}.bk b{position:absolute;right:3px;top:1px;font-size:12px}
+#bsay{min-height:40px;font-size:13px;line-height:1.35;color:#d6d4c8;background:#14151a;padding:4px 8px;border:2px solid #000}
+#sunRow{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--gold)}#sun{height:12px;background:#000;border:2px solid #000;flex:1}#sun i{display:block;height:100%;background:var(--gold)}
+#bossBox{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:0;padding:6px;overflow:hidden}
+#demo .btn{min-height:44px;font-size:14px;flex:1 1 44%}.demoL{font-size:13px;color:var(--mute);margin:6px 0 2px}
+#rotate{position:fixed;inset:0;background:var(--cave);display:none;align-items:center;justify-content:center;font-size:26px;font-weight:900;z-index:99}
+@media (orientation:portrait) and (max-width:700px){#rotate{display:flex}}
+@media (max-height:400px){#hud{height:40px}.res{font-size:14px}.res img{width:20px;height:20px}#rail .btn{min-height:44px}#start{min-height:50px;font-size:18px}.phead{height:46px}#qans,#bossA{height:50px;font-size:30px}}
+@media (min-width:900px) and (min-height:600px){#hint{font-size:16px}.res{font-size:17px}.res em{display:inline}.res img{width:26px;height:26px}#rail{width:100px}#rail .btn{font-size:17px;min-height:60px}.pad{width:360px}.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="rotate">把设备横过来</div>
+<div id="app">
+  <div id="hud"></div>
+  <div id="stage">
+    <canvas id="map"></canvas>
+    <div id="hint"></div>
+    <div id="rail">
+      <button class="btn warn" id="bBoss" style="display:none">挑战</button>
+      <button class="btn" id="bHome">回家</button>
+      <button class="btn" id="bWork">工作台</button>
+      <button class="btn" id="bBook">图鉴</button>
+    </div>
+    <button class="btn main" id="start">开始今天的探险</button>
+
+    <div class="page" id="pQ">
+      <div class="bar" style="flex:none"><i id="qfill" style="width:0"></i></div>
+      <div class="qwrap">
+        <div class="qleft" id="qleft">
+          <div id="qore"></div>
+          <button class="btn" id="qpause">暂停</button>
+          <div id="qtag"></div>
+          <canvas id="qmine" class="px" width="80" height="42"></canvas>
+          <div class="qtext" id="qtext"></div>
+          <div id="qans"></div>
+          <div id="qpick"></div>
+        </div>
+        <div class="pad" id="qright"></div>
+      </div>
+    </div>
+
+    <div class="page" id="pEnd">
+      <div class="phead">今天的探险结束</div>
+      <div class="pbody" id="endBody"></div>
+      <div class="pfoot"><button class="btn main" id="endGo"></button><button class="btn" id="endGem">去锻造</button></div>
+    </div>
+
+    <div class="page" id="pWork">
+      <div class="phead"><span>工作台</span><span class="tabs" id="workTabs"></span><span class="sp"></span><button class="btn" id="workBack">回到世界</button></div>
+      <div class="pbody"><div class="note" id="workNote"></div><div class="grid" id="workGrid"></div></div>
+    </div>
+
+    <div class="page" id="pBook">
+      <div class="phead"><span>图鉴</span><span class="tabs" id="bookTabs"></span><span class="sp"></span><button class="btn" id="bookBack">回到世界</button></div>
+      <div class="pbody"><div class="grid" id="bookGrid"></div></div>
+    </div>
+
+    <div class="page" id="pBuild">
+      <div class="phead"><span id="bTitle">建造</span><span class="sp"></span><button class="btn" id="buildBack">回到世界</button></div>
+      <div id="bwrap">
+        <canvas id="bcv" class="px"></canvas>
+        <div id="bside">
+          <div id="sunRow"><span id="sunLeft"></span><div id="sun"><i id="sunI"></i></div></div>
+          <div id="bsay"></div>
+          <div id="bbar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="pBoss">
+      <div class="phead"><span id="bossName"></span><span class="sp"></span><button class="btn" id="bossLeave">结束挑战</button></div>
+      <div class="qwrap">
+        <div id="bossBox">
+          <canvas id="bossCv" class="px" width="48" height="32" style="width:120px;height:80px"></canvas>
+          <div class="bar" style="width:220px;flex:none"><i id="bossHp" style="width:100%;background:var(--red)"></i></div>
+          <div class="qtext" id="bossQ"></div>
+          <div id="bossA"></div>
+        </div>
+        <div class="pad" id="bossPad"></div>
+      </div>
+    </div>
+
+    <div class="modalwrap" id="mw"><div class="modal" id="modal"></div></div>
+    <div id="toast"></div>
+  </div>
+</div>
+<script>// 空空数学岛 · 方块世界规则（纯逻辑，无 DOM，不依赖 v2 代码）。原型和模拟共用这一份，落地时搬到 v2/worldcore.js。
+// 说明书：docs/说明书-v7-方块世界.md。全部名称、生物原创，不用任何现成游戏的名称和素材。测试：world-core.test.js
+// 浏览器里挂到 window.WORLDCORE，node 里 require。
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.WORLDCORE = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  const dayNum = d => Math.round(Date.parse(d + 'T00:00:00Z') / 86400000);
+  const dayDiff = (a, b) => dayNum(b) - dayNum(a);
+
+  // ---------- 真实擅长：每道题一条证明链 ----------
+  // 第 0→1 步当天证明；1→2 隔 ≥ 1 天；2→3 再隔 ≥ 3 天（永久的条件）；3→4 再隔 ≥ 14 天（附魔）
+  const GAPS = [0, 1, 3], ENCH_GAP = 14;
+  const needOf = it => (it.pick ? 3 : it.gen ? 2 : 1);   // 当天前几次都对才算证明：固定题 1、题型 2（数字不同）、选择题 3（防蒙）
+  const creditOf = it => (it.gen ? 3 : 1);               // 题型一格抵 3 道固定题
+  const BACK_MAX = 4;                                    // 已下架的题，为地块最多再回来几次（硬上限）
+
+  // ---------- 六个地带：和 15 级难度对应；新增级别往后加一行 ----------
+  const BANDS = [
+    {id: 'meadow', name: '青草原', levels: [1, 3], rings: [1, 3], boss: '苔藓石人', tool: 0},
+    {id: 'pine', name: '松木林', levels: [4, 6], rings: [4, 4], boss: '树根巨人', tool: 1},
+    {id: 'sand', name: '赤沙地', levels: [7, 9], rings: [5, 5], boss: '沙鳞蝎王', tool: 2},
+    {id: 'frost', name: '白霜岭', levels: [10, 11], rings: [6, 6], boss: '霜角巨鹿', tool: 3},
+    {id: 'lava', name: '熔岩谷', levels: [12, 13], rings: [7, 7], boss: '熔壳巨龟', tool: 3},
+    {id: 'cloud', name: '云顶岛', levels: [14, 15], rings: [8, 8], boss: '雷云巨鲸', tool: 4},
+  ];
+  const ring = (x, y) => Math.max(Math.abs(x), Math.abs(y));
+  const bandOfRing = r => BANDS.find(b => r >= b.rings[0] && r <= b.rings[1]) || BANDS[BANDS.length - 1];
+  const BOSS_SHARE = 0.4, BOSS_N = 12, BOSS_PASS = 9, BOSS_HP = 24;    // 这一带 40% 的题到第 2 步可以挑战（达到一次就一直开放）；12 题对 9 题赢，或累计打中 24 下（血量不回）；一天一次；不扣任何东西；不算当天练习
+
+  // ---------- 技能：八个地方各对应一项世界能力（这个地方的题 50% 到第 1 步点亮） ----------
+  const SKILLS = [
+    {id: 'look', name: '望远', place: '看数草原', does: '迷雾外能看出地块里有什么'},
+    {id: 'bond', name: '下矿', place: '分合矿洞', does: '能挖地块里的矿脉'},
+    {id: 'place', name: '盖房', place: '数位村庄', does: '能合成村民屋'},
+    {id: 'cmp', name: '守塔', place: '比大小双塔', does: '能合成瞭望塔'},
+    {id: 'line', name: '架桥', place: '数线铁轨', does: '能拓水面地块'},
+    {id: 'garden', name: '种田', place: '规律花园', does: '能合成田地'},
+    {id: 'market', name: '交易', place: '钟楼集市', does: '能合成集市摊'},
+    {id: 'dock', name: '造船', place: '故事码头', does: '能拓远处的小岛'},
+  ];
+
+  // ---------- 工具：看累计材料解锁（need 不消耗），只消耗 cost。盖城堡花光钻石也不会锁死工具 ----------
+  const TOOLS = [
+    {id: 'pick0', name: '木镐', tier: 0, need: {}, cost: {wood: 3}},
+    {id: 'pick00', name: '石镐', tier: 1, need: {}, cost: {ore: 30, wood: 2}},
+    {id: 'pick1', name: '铁镐', tier: 2, need: {iron: 80}, cost: {wood: 5}},
+    {id: 'pick2', name: '金镐', tier: 3, need: {gold: 150}, cost: {wood: 5}},
+    {id: 'pick3', name: '钻石镐', tier: 4, need: {diamond: 200}, cost: {wood: 5}},
+  ];
+  // 建造方块：材料 → 一份（count 块）。skill = 要点亮对应技能才能合成
+  const BLOCKS = [
+    {id: 'plank', name: '木板', cost: {wood: 1}, count: 4},
+    {id: 'stone', name: '石砖', cost: {ore: 2}, count: 4},
+    {id: 'yellow', name: '黄墙砖', cost: {ore: 3}, count: 4},
+    {id: 'purple', name: '紫墙砖', cost: {ore: 3}, count: 4},
+    {id: 'glass', name: '玻璃', cost: {ore: 2, coal: 1}, count: 4},
+    {id: 'torch', name: '火把', cost: {wood: 1, coal: 1}, count: 4},
+    {id: 'water', name: '水', cost: {ore: 2}, count: 4},
+    {id: 'lava', name: '岩浆', cost: {ore: 3, coal: 1}, count: 2},
+    {id: 'bridge', name: '吊桥', cost: {wood: 2, iron: 1}, count: 2},
+    {id: 'lever', name: '拉杆', cost: {wood: 1, iron: 1}, count: 1},
+    {id: 'door', name: '门', cost: {wood: 2}, count: 1},
+    {id: 'bed', name: '床', cost: {wood: 3, ore: 2}, count: 1},
+    {id: 'chair', name: '椅子', cost: {wood: 2}, count: 2},
+    {id: 'paint', name: '暗门画', cost: {wood: 2, gold: 1}, count: 1},
+    {id: 'chest', name: '箱子', cost: {wood: 3}, count: 1},
+    {id: 'trap', name: '陷阱', cost: {ore: 5, iron: 1}, count: 1},
+    {id: 'ironb', name: '铁块', cost: {iron: 1}, count: 1},
+    {id: 'goldb', name: '金块', cost: {gold: 1}, count: 1},
+    {id: 'diamondb', name: '钻石块', cost: {diamond: 1}, count: 1, gem: true},
+    {id: 'hut', name: '村民屋', cost: {wood: 4, ore: 4}, count: 1, skill: 'place'},
+    {id: 'tower', name: '瞭望塔', cost: {ore: 8, wood: 2}, count: 1, skill: 'cmp'},
+    {id: 'farm', name: '田地', cost: {wood: 1, ore: 1}, count: 4, skill: 'garden'},
+    {id: 'stall', name: '集市摊', cost: {wood: 3, iron: 1}, count: 1, skill: 'market'},
+  ];
+  const TEMP_CAP = 5, TEMP_CAP_LOW = 3, TORCH = 5, TORCH_EASY = 7, WILD_MAX = 3, GUARD_SEC = 40, GUARD_MAX = 8, ENCH_MAX = 3, COAL_DAY = 5, AGE_MAX = 10, BOSS_GOLD = 6;
+  const TUNE = {torch: TORCH};
+  const flagRing = W => 1 + Math.max(0, ...Object.values(W.plots).filter(p => p.st !== 'wild').map(p => ring(p.x, p.y)));   // 旗价看地盘大小
+  const flagCost = r => ({wood: 2, ore: Math.min(70, 15 + 5 * r)});   // 拓荒旗（1 旗 = 拓 1 块地）
+
+  // ---------- 地图：坐标决定一切，固定不随机（走到哪里都有惊喜，但不是抽奖） ----------
+  const hash = (x, y, k) => { let h = Math.imul(x * 73856093 ^ y * 19349663 ^ k * 83492791, 0x5bd1e995); h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); return ((h ^ h >>> 15) >>> 0) / 4294967296; };
+  function terrain(x, y) {
+    if (!x && !y) return 'home';
+    if (ring(x, y) <= 1) return 'land';   // 家门口一圈都是陆地
+    const h = hash(x, y, 1);
+    return h < 0.12 ? 'water' : h < 0.2 ? 'island' : 'land';
+  }
+  const TERRAIN_NEED = {water: 'line', island: 'dock'};
+  function feature(x, y) {
+    if (!x && !y) return null;
+    const h = hash(x, y, 2), r = ring(x, y);
+    if (h < 0.34) return {kind: 'tree', wood: 3 + Math.floor(hash(x, y, 3) * 4)};
+    if (h < 0.62) return {kind: 'vein', tier: Math.min(4, Math.floor(r / 2)), ore: 6 + Math.floor(hash(x, y, 4) * 6)};
+    if (h < 0.72) return {kind: 'chest', block: 'glass', n: 8};
+    if (h < 0.80) return {kind: 'village'};
+    if (h < 0.86) return {kind: 'ruin', block: 'stone', n: 12};
+    return {kind: 'none'};
+  }
+
+  // ---------- 存档 S.world ----------
+  // 世界不跨设备合并（说明书 §6.2），所以材料就是简单余额；累计量 total 由证明链算出
+  function blank() {
+    const W = {v: 3, proof: {}, evs: {}, bag: {ore: 0, wood: 6, coal: 0, flag: 1, iron: 0, gold: 0, diamond: 0}, blocks: {}, total: {iron: 0, gold: 0, diamond: 0},
+      gemQ: [], built: {}, tools: {}, boss: {}, bossHp: {}, bossOpen: {}, bossDay: '', plots: {'0,0': {x: 0, y: 0, st: 'perm', bound: [], born: '', torch: 0, dug: 1}}, burned: '', log: [], settings: {expire: true}, migrated: ''};
+    return W;
+  }
+  const MATERIAL = [null, 'iron', 'gold', 'diamond'];   // 第 1、2、3 步各发一次；第 4 步不发材料，只让地块附魔
+  const bump = (W, k, n) => { if (k.startsWith('b:')) W.blocks[k.slice(2)] = (W.blocks[k.slice(2)] || 0) + n; else W.bag[k] = (W.bag[k] || 0) + n; };
+  const gain = (W, k, n) => bump(W, k, n);
+  const spendOne = (W, k, n) => bump(W, k, -n);
+  const logPush = (W, e) => { W.log.push(e); if (W.log.length > 300) W.log.splice(0, W.log.length - 300); };
+  const canPay = (W, cost) => Object.entries(cost).every(([k, v]) => (W.bag[k] || 0) >= v);
+  const pay = (W, cost) => Object.entries(cost).forEach(([k, v]) => spendOne(W, k, v));
+  const pkey = (x, y) => x + ',' + y;
+  const proofOf = (W, id) => W.proof[id] || (W.proof[id] = {s: 0, top: 0, last: '', days: [], back: 0});
+  const stepOf = (W, id) => (W.proof[id] ? W.proof[id].s : 0);
+  const count = (W, st) => Object.values(W.plots).filter(p => p.st === st).length;
+  function dayEv(W, day) {
+    if (!W.evs[day]) { W.evs[day] = {}; Object.keys(W.evs).sort().filter(k => k !== day).slice(0, -2).forEach(k => delete W.evs[k]); }   // 最多留 3 天，当天不删
+    return W.evs[day];
+  }
+
+  // 记一次作答。it = {id, gen, pick}；r = {ok, fast, needFast, peeked, retry}。返回 {advanced, step, events}
+  function onAttempt(W, it, r, day) {
+    const out = {advanced: false, step: stepOf(W, it.id), events: []};
+    if (r.retry) return out;                               // 当场再来一次：不算
+    const ev = dayEv(W, day), e = ev[it.id] || (ev[it.id] = {n: 0, p: 0, done: 0});
+    if (e.done) return out;                                // 今天这道题已经判过了
+    if (r.peeked) { e.done = 1; return out; }              // 今天看过答案：今天不再算
+    e.n++;
+    const p = proofOf(W, it.id);
+    if (p.last && p.last > day) p.last = day;              // 记录里的日期在未来（改过系统日期）：夹回今天，间隔重新算，证明链不冻结
+    const due = p.s === 0 || (p.last && dayDiff(p.last, day) >= (p.s >= GAPS.length ? ENCH_GAP : GAPS[p.s]));
+    if (!r.ok) {                                           // 写错：第 3 步以前退一步，间隔从今天重新算；第 3 步以后不退
+      e.done = 1; e.bad = 1;
+      if (p.s === 3 && due && !p.chk) p.chk = {day, ok: 0};  // 复查第一次的结果，主指标用
+      if (p.s > 0 && p.s < 3) p.s--;
+      if (p.s > 0) p.last = day;
+      out.step = p.s; return out;
+    }
+    if (r.needFast && !r.fast) { e.done = 1; e.slow = 1; return out; } // 对了但不够快：今天不进不退
+    e.p++;
+    if (e.p < needOf(it)) return out;
+    e.done = 1; e.ok = 1;
+    if (p.s > GAPS.length || !due) return out;
+    if (p.s === 3 && !p.chk) p.chk = {day, ok: 1};
+    p.s++; p.last = day; p.days.push(day); e.adv = 1;
+    if (p.s <= GAPS.length && p.s > (p.top || 0)) {        // 每一步只发一次：退一步再升回来不重复发
+      p.top = p.s; p.cr = creditOf(it); if (p.s === 3) p.d3 = day;
+      const m = MATERIAL[p.s]; W.bag[m] += p.cr; W.total[m] += p.cr;
+    }
+    out.advanced = true; out.step = p.s;
+    out.events = settlePlots(W, day);
+    return out;
+  }
+
+  // 绑定的题全到第 3 步 → 永久（临时的、迷雾里的都一样，迷雾里的自动回来，不花东西）；全到第 4 步 → 附魔
+  function settlePlots(W, day) {
+    const ev = [];
+    Object.values(W.plots).forEach(pl => {
+      if ((pl.st === 'temp' || pl.st === 'wild') && pl.bound.length && pl.bound.every(id => stepOf(W, id) >= 3)) {
+        ev.push({type: pl.st === 'wild' ? 'back' : 'perm', x: pl.x, y: pl.y});
+        pl.st = 'perm'; pl.permDay = day; pl.torch = 0;
+        logPush(W, {day, type: 'perm', x: pl.x, y: pl.y});
+      }
+      if (pl.st === 'perm' && !pl.ench && pl.bound.length && pl.bound.every(id => stepOf(W, id) >= 4)) {
+        pl.ench = day; ev.push({type: 'ench', x: pl.x, y: pl.y});
+        logPush(W, {day, type: 'ench', x: pl.x, y: pl.y});
+      }
+    });
+    return ev;
+  }
+
+  // 练完一天（当天练满 5 分钟或题做完）调用一次。火把只在下面几种情况烧：
+  // 绑定的题今天只有写错；地块超过 10 个练习日今天还没有前进。
+  // 今天答对的（包括慢答、在等间隔的）不烧；题没轮到不烧；没来的日子不调用，一支都不烧。
+  function endOfPractice(W, day) {
+    if (W.burned && day <= W.burned) { W.burned = day; return []; }   // 同一天或日期往回调：今天不再烧、不再发木头；未来日期夹回今天，明天恢复，不冻结
+    W.burned = day;
+    const ev = [], today = W.evs[day] || {};
+    let quota = WILD_MAX - recentWild(W, day);   // 保险：任意 14 天最多到期 3 块，额度用完这批地块不扣火把
+    Object.values(W.plots).filter(pl => pl.st === 'temp' && pl.born !== day).sort((a, b) => a.torch - b.torch || (b.age || 0) - (a.age || 0)).forEach(pl => {
+      if (W.settings.expire === false) return;   // 到期开关关着：不烧，也不计龄
+      pl.age = (pl.age || 0) + 1;
+      const es = pl.bound.map(id => today[id]).filter(Boolean);
+      if (es.some(e => e.adv)) return;
+      let burn = pl.age > AGE_MAX;
+      if (!burn) {
+        if (es.some(e => e.ok || e.slow)) return;
+        if (es.some(e => e.bad)) burn = true;
+      }
+      if (!burn) return;
+      if (pl.torch <= 1) { if (quota <= 0) return; quota--; }
+      pl.torch--;
+      if (pl.torch <= 0) { pl.st = 'wild'; pl.wildDay = day; ev.push({type: 'wild', x: pl.x, y: pl.y}); logPush(W, {day, type: 'wild', x: pl.x, y: pl.y}); }
+    });
+    gain(W, 'wood', dailyWood(W));
+    return ev;
+  }
+  function dailyWood(W) { return Math.min(8, 2 + Math.floor((count(W, 'perm') - 1) / 8)); }   // 每个练习日 2 根，每 8 块永久地块多 1 根，上限 8
+
+  function toolTier(W) { let t = -1; TOOLS.forEach(x => { if (W.tools[x.id]) t = Math.max(t, x.tier); }); return t; }
+  const toolReady = (W, t) => !W.tools[t.id] && toolTier(W) >= t.tier - 1 && Object.entries(t.need).every(([k, v]) => (W.total[k] || 0) >= v) && canPay(W, t.cost);
+  function craftTool(W, id, day) {
+    const t = TOOLS.find(x => x.id === id);
+    if (!t || !toolReady(W, t)) return false;
+    pay(W, t.cost); W.tools[id] = day; logPush(W, {day, type: 'tool', id}); return true;
+  }
+  // 钻石的来源：第 3 步以上的题（题型一道给 3 颗）减去已经变成钻石块的
+  function gemPool(W) {
+    const used = {}; W.gemQ.forEach(id => { if (id) used[id] = (used[id] || 0) + 1; });
+    Object.values(W.built).forEach(m => Object.values(m).forEach(v => { if (v.from) used[v.from] = (used[v.from] || 0) + 1; }));
+    const out = [];
+    Object.entries(W.proof).forEach(([id, p]) => { if ((p.top || 0) >= 3) for (let i = (used[id] || 0); i < (p.cr || 1); i++) out.push(id); });
+    return out;
+  }
+  function craftBlock(W, id, lit) {
+    const b = BLOCKS.find(x => x.id === id);
+    if (!b || !canPay(W, b.cost) || (b.skill && lit && !lit[b.skill])) return false;
+    if (b.gem) { const pool = gemPool(W); W.gemQ.push(pool.length ? pool[0] : null); }
+    pay(W, b.cost); gain(W, 'b:' + id, b.count);
+    return true;
+  }
+  function craftFlag(W, r) { const c = flagCost(r); if (!canPay(W, c)) return false; pay(W, c); gain(W, 'flag', 1); return true; }
+  // 放方块、拆方块：钻石块带来源；拆除退回方块和来源
+  function place(W, x, y, i, j, id, day) {
+    const pk = pkey(x, y), ck = i + ',' + j, m = W.built[pk] || (W.built[pk] = {});
+    if (m[ck] || !(W.blocks[id] > 0)) return null;
+    spendOne(W, 'b:' + id, 1);
+    const v = {b: id, t: day};
+    if (id === 'diamondb') v.from = W.gemQ.shift() || null;
+    m[ck] = v; return v;
+  }
+  function unplace(W, x, y, i, j) {
+    const m = W.built[pkey(x, y)], ck = i + ',' + j, v = m && m[ck];
+    if (!v) return null;
+    gain(W, 'b:' + v.b, 1);
+    if (v.b === 'diamondb') W.gemQ.push(v.from || null);
+    delete m[ck]; return v;
+  }
+
+  function skillsLit(W, items) {
+    const lit = {};
+    SKILLS.forEach(s => {
+      const its = items.filter(i => i.group === s.id);
+      lit[s.id] = its.length > 0 && its.filter(i => stepOf(W, i.id) >= 1).length / its.length >= 0.5;
+    });
+    return lit;
+  }
+  function bandShare(W, band, items, st) {
+    const its = items.filter(i => i.level >= band.levels[0] && i.level <= band.levels[1]);
+    const tot = its.reduce((a, i) => a + creditOf(i), 0);
+    return tot ? its.filter(i => stepOf(W, i.id) >= (st || 2)).reduce((a, i) => a + creditOf(i), 0) / tot : 0;
+  }
+  // 挑战的题：只考这一带已证明到第 2 步的，优先没下架的；下架的题在这里是第二个例外（一天最多一场）
+  const bossPool = (W, band, items) => items.filter(i => i.level >= band.levels[0] && i.level <= band.levels[1] && stepOf(W, i.id) >= 2).sort((a, b) => (a.spent ? 1 : 0) - (b.spent ? 1 : 0));
+  function bossReady(W, bi, items) {
+    const id = BANDS[bi].id;
+    if (W.boss[id] || (bi > 0 && !W.boss[BANDS[bi - 1].id])) return false;
+    if (!W.bossOpen[id] && bandShare(W, BANDS[bi], items) >= BOSS_SHARE) W.bossOpen[id] = 1;
+    return !!W.bossOpen[id] && toolTier(W) >= BANDS[bi].tool;
+  }
+  const bossCanTry = (W, bi, items, day) => bossReady(W, bi, items) && W.bossDay !== day && bossPool(W, BANDS[bi], items).length >= 3;
+  function bossEnd(W, bi, okN, day, need, hp) {
+    const id = BANDS[bi].id;
+    W.bossDay = day; W.bossHp[id] = (W.bossHp[id] || 0) + okN;
+    if (okN < (need === undefined ? BOSS_PASS : need) && W.bossHp[id] < (hp === undefined ? BOSS_HP : hp)) return false;
+    W.boss[BANDS[bi].id] = day; gain(W, 'b:goldb', BOSS_GOLD); logPush(W, {day, type: 'boss', id: BANDS[bi].id});
+    return true;
+  }
+  function maxRing(W) { let i = 0; while (i < BANDS.length - 1 && W.boss[BANDS[i].id]) i++; return BANDS[i].rings[1]; }
+
+  function frontier(W, items) {
+    const lit = skillsLit(W, items), mr = maxRing(W), seen = {}, out = [];
+    Object.values(W.plots).forEach(p => {
+      if (p.st === 'wild') return;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+        const x = p.x + dx, y = p.y + dy, k = pkey(x, y);
+        if (seen[k] || (W.plots[k] && W.plots[k].st !== 'wild')) return;
+        seen[k] = 1;
+        const r = ring(x, y), t = terrain(x, y), need = TERRAIN_NEED[t];
+        out.push({x, y, ring: r, terrain: t, ok: r <= mr && (!need || lit[need]), why: r > mr ? 'boss' : need && !lit[need] ? need : null, wild: !!W.plots[k]});
+      });
+    });
+    return out;
+  }
+  // 临时地块上限：平时 5 块；最近 14 天到期过 2 块，降到 3 块，新地也只绑 2 分（先把手上的守住）
+  const recentWild = (W, day) => W.log.filter(l => l.type === 'wild' && dayDiff(l.day, day) < 14 && dayDiff(l.day, day) >= 0).length;   // 未来日期不算
+  const struggling = (W, day) => recentWild(W, day) >= 2;
+  const tempCap = (W, day) => (struggling(W, day) ? TEMP_CAP_LOW : TEMP_CAP);
+  const usedIds = W => { const u = new Set(); Object.values(W.plots).forEach(p => p.bound.forEach(id => u.add(id))); return u; };
+  // 选一组分值刚好够 goal（默认 3）的题。rest = 还没绑地块的题；正在进行的优先，题少时有多少绑多少
+  function fitCredit(list, goal) {
+    const out = []; let cr = 0;
+    for (const i of list) { if (cr >= goal) break; if (cr + creditOf(i) > goal && cr > 0) continue; out.push(i); cr += creditOf(i); }
+    if (cr < goal) { const big = list.find(i => creditOf(i) >= goal); if (big) return {ids: [big.id], cr: creditOf(big)}; }
+    return {ids: out.map(i => i.id), cr};
+  }
+  const maxedOut = (W, i) => !!(i.spent && W.proof[i.id] && (W.proof[i.id].back || 0) >= BACK_MAX);
+  function pickBound(W, items, goal) {
+    const used = usedIds(W), rest = items.filter(i => i.seen && !used.has(i.id));
+    const live = rest.filter(i => stepOf(W, i.id) < 3 && !maxedOut(W, i))
+      .sort((a, b) => stepOf(W, b.id) - stepOf(W, a.id) || (W.proof[b.id] ? W.proof[b.id].last : '').localeCompare(W.proof[a.id] ? W.proof[a.id].last : '') || (a.level - b.level));
+    const proven = rest.filter(i => stepOf(W, i.id) >= 3);
+    return {live: fitCredit(live, goal || 3), proven: fitCredit(proven, goal || 3)};
+  }
+  // 这次插旗会怎样：提示条和 claim 共用。返回 {kind: 'temp'|'perm'|'free'|'cap'|'learn', bound}
+  function claimPlan(W, items, day, old) {
+    const room = count(W, 'temp') < tempCap(W, day), goal = struggling(W, day) ? 2 : 3;
+    if (old && old.bound.length) return room ? {kind: 'temp', bound: old.bound} : {kind: 'cap'};
+    const c = pickBound(W, items, goal), full = pickBound(W, items, 3), waiting = Object.values(W.plots).some(p => (p.st === 'temp' || p.st === 'wild') && p.bound.length);
+    if (full.proven.cr >= 3) return {kind: 'perm', bound: full.proven.ids};   // 已学会的题攒够 3 分（减负时也一样）：直接永久，不占临时名额
+    if (c.live.ids.length) { if (room) return {kind: 'temp', bound: c.live.ids}; return {kind: 'cap'}; }
+    if (waiting) return room ? {kind: 'learn'} : {kind: 'cap'};
+    // 题库到头：没有在进行的题，也没有在等的地块
+    if (full.proven.ids.length) return {kind: 'perm', bound: full.proven.ids};
+    const open = items.filter(i => i.open !== false), done = open.filter(i => stepOf(W, i.id) >= 3).length;
+    if (open.length && done / open.length >= 0.7) return {kind: 'free', bound: []};   // 开放的题 70% 以上都学会了：地块直接给
+    return {kind: 'learn'};
+  }
+  // 提示条用：地图上现在能不能拓、拓不了卡在哪
+  function nextStep(W, items, day) {
+    const fr = frontier(W, items), places = fr.filter(a => a.ok && !W.plots[pkey(a.x, a.y)]), plan = claimPlan(W, items, day);
+    const bi = BANDS.findIndex(b => !W.boss[b.id]), band = BANDS[bi];
+    return {places: places.length, plan: plan.kind, bossBand: bi, bossTry: bi >= 0 && bossCanTry(W, bi, items, day), bossShare: band ? bandShare(W, band, items) : 0, wall: !places.length && fr.some(a => a.why === 'boss')};
+  }
+  // 插旗拓地。返回 {ok, why, plot}。拓不了不扣东西
+  function claim(W, x, y, items, day) {
+    const k = pkey(x, y), f = frontier(W, items).find(a => a.x === x && a.y === y);
+    if (!f || !f.ok) return {ok: false, why: f ? f.why : 'far'};
+    if (W.bag.flag < 1) return {ok: false, why: 'flag'};
+    const old = W.plots[k], plan = claimPlan(W, items, day, old);
+    if (plan.kind === 'cap' || plan.kind === 'learn') return {ok: false, why: plan.kind};
+    spendOne(W, 'flag', 1);
+    const st = plan.kind === 'temp' ? 'temp' : 'perm';
+    const plot = {x, y, st, bound: plan.bound, born: day, torch: struggling(W, day) ? TORCH_EASY : TUNE.torch, age: 0, dug: old ? old.dug : 0};
+    if (st === 'perm') plot.permDay = day;
+    W.plots[k] = plot;
+    logPush(W, {day, type: 'claim', x, y, kind: plan.kind, cr: plan.bound.reduce((a, id) => a + ((items.find(i => i.id === id) || {gen: false}).gen ? 3 : 1), 0)});
+    return {ok: true, plot};
+  }
+  // 回来次数满了不等于学会：换一道没绑的题；换不了就去掉；绑定空了的地块进迷雾等重新绑，绝不白给永久。
+  // 题下线同样处理，并退还旗子。题库列表为空（加载异常）时什么都不做
+  function pruneBound(W, items, day) {
+    W.itemMax = Math.max(W.itemMax || 0, items.length);
+    if (!items.length || items.length < W.itemMax * 0.9) return [];   // 题库列表空或缩水超过 10%：一定是传错了，什么都不做（必须传全量题库）
+    const by = Object.fromEntries(items.map(i => [i.id, i])), ev = [];
+    Object.values(W.plots).forEach(p => {
+      if (p.st === 'perm' || !p.bound.length) return;
+      const gone = p.bound.filter(id => !by[id]), maxed = p.bound.filter(id => by[id] && stepOf(W, id) < 3 && maxedOut(W, by[id]));
+      if (!gone.length && !maxed.length) return;
+      const lost = gone.length + maxed.reduce((a, id) => a + creditOf(by[id]), 0);   // 题下线按 1 分算，满额按原分值：换回同样的分
+      p.bound = p.bound.filter(id => !gone.includes(id) && !maxed.includes(id));
+      const c = pickBound(W, items, lost);
+      p.bound = p.bound.concat(c.live.ids);
+      if (!p.bound.length) { if (p.st === 'temp') { ev.push({type: 'wild', x: p.x, y: p.y}); logPush(W, {day, type: 'wild', x: p.x, y: p.y, by: 'prune'}); } p.st = 'wild'; if (gone.length) gain(W, 'flag', 1); }
+    });
+    return ev.concat(settlePlots(W, day));
+  }
+  // 今天要补考的题（守护题）：绑在临时和迷雾地块上、今天还没判、够间隔的。火把少的优先。先过滤再截取
+  function guardList(W, items, day, max) {
+    const by = Object.fromEntries(items.map(i => [i.id, i]));
+    const pl = Object.values(W.plots).filter(p => p.st === 'temp' || p.st === 'wild').sort((a, b) => (a.st === 'temp' ? 0 : 1) - (b.st === 'temp' ? 0 : 1) || a.torch - b.torch);
+    const out = [], done = W.evs[day] || {};
+    pl.forEach(p => p.bound.forEach(id => {
+      const pr = W.proof[id], s = pr ? pr.s : 0, it = by[id];
+      if (!it || s >= 3 || (done[id] && done[id].done) || out.includes(id)) return;
+      if (maxedOut(W, it)) return;
+      if (s === 0 || !pr.last || dayDiff(pr.last, day) >= GAPS[s]) out.push(id);
+    }));
+    return out.slice(0, max === undefined ? GUARD_MAX : max).map(id => by[id]);
+  }
+  // 今天要复查的题（附魔）：永久地块绑定的题，到第 3 步后隔够 14 天；每天最多 3 道
+  function enchList(W, items, day, max) {
+    const by = Object.fromEntries(items.map(i => [i.id, i])), out = [], done = W.evs[day] || {};
+    Object.values(W.plots).filter(p => p.st === 'perm' && !p.ench).forEach(p => p.bound.forEach(id => {
+      const pr = W.proof[id], it = by[id];
+      if (!it || !pr || pr.s !== 3 || (done[id] && done[id].done) || out.includes(id)) return;
+      if (pr.last && dayDiff(pr.last, day) >= ENCH_GAP) out.push(id);
+    }));
+    return out.slice(0, max === undefined ? ENCH_MAX : max).map(id => by[id]);
+  }
+  // 已下架的题回来：按天计次（题型一天答 2 次也算 1 次）。复查不走这里，每 14 天最多 1 次
+  function noteBack(W, id, day) { const p = proofOf(W, id); if (p.backDay !== day) { p.backDay = day; p.back = (p.back || 0) + 1; } }
+  // 拓地时揭开地块里的东西。矿脉要「下矿」技能和工具等级，够了才给（工具合成后可以回来挖）
+  function digPlot(W, x, y, lit) {
+    const k = pkey(x, y), pl = W.plots[k], f = feature(x, y); if (!pl || pl.dug || !f) return null;
+    if (f.kind === 'vein') {
+      if (toolTier(W) < f.tier) return {kind: 'vein', lockTier: f.tier};
+      if (lit && !lit.bond) return {kind: 'vein', lockSkill: 'bond'};
+      gain(W, 'ore', f.ore); pl.dug = 1; return {kind: 'vein', ore: f.ore};
+    }
+    pl.dug = 1;
+    if (f.kind === 'tree') { gain(W, 'wood', f.wood); return {kind: 'tree', wood: f.wood}; }
+    if (f.block) { gain(W, 'b:' + f.block, f.n); return {kind: f.kind, block: f.block, n: f.n}; }
+    return {kind: f.kind};
+  }
+  // 世界时间（分钟）：看今天答对多少，不看坐了多久。正确率不到一半最多 1 分钟
+  const dayMinutes = (correct, answered) => { if (!correct) return 0; if (correct / Math.max(1, answered) < 0.5) return 1; return Math.min(6, 1 + Math.floor(correct / 12)); };
+
+  // 迁移：按题补，没有证明记录的题按格子档位建证明，已有的不动，随时可以再跑（导入进度后也要跑一次）。lvOf(id) 给档位，dOf(id) 给升级日期
+  function catchUp(W, items, lvOf, dOf, today) {
+    const proven = [];
+    items.forEach(it => {
+      if (W.proof[it.id]) return;
+      const lv = lvOf(it.id) || 0; if (!lv) return;
+      const d = dOf(it.id) || [], p = proofOf(W, it.id);
+      // 深红且真的隔了 3 天才算第 3 步；靠「秒答 4 次下架」直接到深红的只算第 2 步，要再证明一次
+      const real3 = lv === 3 && d[1] && d[2] && dayDiff(d[1], d[2]) >= 3;
+      p.s = lv === 3 ? (real3 ? 3 : 2) : lv; p.top = p.s; p.cr = creditOf(it);
+      p.last = d[p.s - 1] || d[lv - 1] || today; if (p.last > today) p.last = today; p.days = d.slice(0, p.s);
+      for (let k = 1; k <= p.s; k++) { const m = MATERIAL[k]; W.bag[m] += p.cr; W.total[m] += p.cr; }
+      if (p.s === 3) { proven.push(it); p.d3 = d[2]; }
+    });
+    return proven;
+  }
+  // 第一次进世界：补证明、发累计矿石、把旧的真实擅长铺成永久地块（每 3 分 1 块，铺满青草原为止，剩下的之后插旗用）
+  function migrate(W, items, lvOf, dOf, oreTotal, today) {
+    if (W.migrated) { catchUp(W, items, lvOf, dOf, today); return false; }
+    const pool = catchUp(W, items, lvOf, dOf, today), cells = [];
+    W.bag.ore += oreTotal || 0;
+    for (let r = 1; r <= BANDS[0].rings[1]; r++) for (let x = -r; x <= r; x++) for (let y = -r; y <= r; y++) if (ring(x, y) === r && terrain(x, y) === 'land' && !W.plots[pkey(x, y)]) cells.push([x, y]);
+    while (pool.length && cells.length) {
+      const bound = []; let cr = 0;
+      while (pool.length && cr < 3) { const i = pool.shift(); bound.push(i.id); cr += creditOf(i); }
+      if (cr < 3) break;
+      const [x, y] = cells.shift();
+      W.plots[pkey(x, y)] = {x, y, st: 'perm', bound, born: today, permDay: today, torch: 0, dug: 0};
+    }
+    W.migrated = today;
+    return true;
+  }
+  // 合并导入时世界不做字段合并，也不自动比较：本机世界玩过（插过旗或盖过东西）就不动；没玩过才接收备份里的世界。
+  // 整份导入是回到备份那一刻，导入前把当前世界存到 S.worldBak，家长可以恢复。结构不对的世界不接收
+  const worldOk = W => !!(W && W.plots && W.proof && W.bag && W.log && W.built);
+  const played = W => worldOk(W) && (W.log.some(l => l.type === 'claim') || Object.values(W.built).some(m => Object.keys(m).length));
+  function pickWorld(local, incoming) {
+    const keep = played(local) || !worldOk(local);
+    const W = JSON.parse(JSON.stringify(worldOk(local) && keep ? local : worldOk(incoming) ? incoming : local));
+    if (worldOk(local) && local.settings) W.settings = JSON.parse(JSON.stringify(local.settings));   // 家长设置留本机的
+    return W;
+  }
+
+  return {TUNE, GAPS, ENCH_GAP, BANDS, SKILLS, TOOLS, BLOCKS, TEMP_CAP, TORCH, GUARD_MAX, BOSS_SHARE, BOSS_N, BOSS_PASS, BOSS_HP, BACK_MAX, TORCH_EASY, MATERIAL, COAL_DAY, ENCH_MAX,
+    flagRing, blank, gain, claimPlan, catchUp, pickWorld, played, worldOk, maxedOut, nextStep, GUARD_SEC, WILD_MAX, recentWild, onAttempt, endOfPractice, settlePlots, dailyWood, frontier, pickBound, claim, pruneBound, guardList, enchList, noteBack, tempCap, struggling, digPlot,
+    craftTool, toolReady, craftBlock, craftFlag, flagCost, canPay, pay, place, unplace, gemPool,
+    skillsLit, bandShare, bossReady, bossCanTry, bossPool, bossEnd, maxRing, toolTier, terrain, feature, ring, bandOfRing, pkey, proofOf, stepOf, creditOf, needOf, count, dayMinutes, migrate, dayDiff};
+});
+</script>
+<script>
+'use strict';
+const C = WORLDCORE, $ = id => document.getElementById(id), KEY = 'kongmath.v7proto3';
+const PLOT = 8;
+const addDays = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+const short = d => +d.slice(5, 7) + ' 月 ' + +d.slice(8) + ' 日';
+
+// 原型把一天压缩：10 题代表 10 分钟，每题矿石按真实一天折算（真实一天约 60 题，答对 1 题 1 块）。题少，工具门槛按比例缩小。真实产品用 v2 题库
+const SESSION_Q = 10, NEW_MAX = 4, FAST_SEC = 8, BOSS_Q = 5, BOSS_PASS = 4, BOSS_HP = 10, ORE_SCALE = 5, DAY_SCALE = 6;
+C.TOOLS.find(t => t.id === 'pick1').need = {iron: 20}; C.TOOLS.find(t => t.id === 'pick2').need = {gold: 30}; C.TOOLS.find(t => t.id === 'pick3').need = {diamond: 30};
+
+const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const card = (id, a, op, b, level, group, fast) => ({id, name: `${a} ${op} ${b}`, gen: false, level, group, fast, make: () => ({text: `${a} ${op} ${b} =`, ans: op === '+' ? a + b : a - b})});
+const gen = (id, name, level, group, f, fast) => ({id, name, gen: true, level, group, fast, make: f});
+const cmp = (id, name, level, lo, hi) => ({id, name, gen: true, pick: true, level, group: 'cmp', make: () => { let a = ri(lo, hi), b = ri(lo, hi); while (a === b) b = ri(lo, hi); return {pick: [a, b], text: '哪个大', ans: Math.max(a, b)}; }});
+const ITEMS = [
+  card('c63', 6, '+', 3, 1, 'look'), card('c72', 7, '+', 2, 1, 'look'), card('c81', 8, '+', 1, 1, 'look'), card('c54', 5, '+', 4, 1, 'look'),
+  cmp('cmp10', '10 以内谁大', 1, 1, 10),
+  card('b62', 6, '+', 2, 2, 'bond', 1), card('b53', 5, '+', 3, 2, 'bond', 1), card('b83', 8, '−', 3, 2, 'bond', 1), card('b94', 9, '−', 4, 2, 'bond', 1), card('b72', 7, '−', 2, 2, 'bond', 1), card('b95', 9, '−', 5, 2, 'bond', 1),
+  card('t64', 6, '+', 4, 3, 'bond', 1), card('t73', 7, '+', 3, 3, 'bond', 1), card('t82', 8, '+', 2, 3, 'bond', 1), card('t91', 9, '+', 1, 3, 'bond', 1), card('t103', 10, '−', 3, 3, 'bond', 1), card('t106', 10, '−', 6, 3, 'bond', 1), card('t107', 10, '−', 7, 3, 'bond', 1),
+  gen('line10', '0—10 数线', 2, 'line', () => { const a = ri(2, 9); return {text: `${a - 1} 的下一个数`, ans: a}; }),
+  gen('next', '接方块', 2, 'garden', () => { const a = ri(2, 6); return {text: `${a}，${a + 2}，${a + 4}，？`, ans: a + 6}; }),
+  gen('hour', '整点', 3, 'market', () => { const a = ri(1, 9); return {text: `${a} 点过 2 小时是几点`, ans: a + 2}; }),
+  gen('join', '装到一起', 3, 'dock', () => { const a = ri(2, 5), b = ri(2, 4); return {text: `${a} 箱加 ${b} 箱，共几箱`, ans: a + b}; }),
+  gen('place1', '几个十几个一', 3, 'place', () => { const a = ri(1, 4), b = ri(1, 9); return {text: `${a} 个十 ${b} 个一`, ans: a * 10 + b}; }),
+  card('p96', 9, '+', 6, 5, 'bond', 1), card('p87', 8, '+', 7, 5, 'bond', 1), card('p75', 7, '+', 5, 5, 'bond', 1), card('p68', 6, '+', 8, 5, 'bond', 1), card('p94', 9, '+', 4, 5, 'bond', 1), card('p76', 7, '+', 6, 5, 'bond', 1),
+  card('m158', 15, '−', 8, 6, 'bond', 1), card('m137', 13, '−', 7, 6, 'bond', 1), card('m129', 12, '−', 9, 6, 'bond', 1), card('m146', 14, '−', 6, 6, 'bond', 1), card('m168', 16, '−', 8, 6, 'bond', 1),
+  cmp('cmp20', '20 以内谁大', 4, 11, 20),
+  gen('two', '两位数加一位数', 8, 'line', () => { const a = ri(21, 60), b = ri(1, 8); return {text: `${a} + ${b} =`, ans: a + b}; }, 1),
+  gen('twoC', '进位加', 9, 'line', () => { const a = ri(25, 68), b = ri(5, 9); return {text: `${a} + ${b} =`, ans: a + b}; }, 1),
+  gen('tt', '两位数加两位数', 10, 'bond', () => { const a = ri(11, 40), b = ri(11, 40); return {text: `${a} + ${b} =`, ans: a + b}; }, 1),
+  gen('ttC', '进位退位', 11, 'bond', () => { const a = ri(25, 58), b = ri(16, 39); return {text: `${a} + ${b} =`, ans: a + b}; }, 1),
+  gen('hun', '三位数', 12, 'place', () => { const a = ri(1, 9), b = ri(0, 9), c = ri(0, 9); return {text: `${a} 百 ${b} 十 ${c} 个`, ans: a * 100 + b * 10 + c}; }),
+  gen('m25', '2、5、10 的乘法', 13, 'garden', () => { const a = [2, 5, 10][ri(0, 2)], b = ri(2, 9); return {text: `${a} × ${b} =`, ans: a * b}; }, 1),
+  gen('m3', '表内乘法', 14, 'garden', () => { const a = ri(3, 9), b = ri(3, 9); return {text: `${a} × ${b} =`, ans: a * b}; }, 1),
+  gen('d3', '表内除法', 15, 'garden', () => { const a = ri(3, 9), b = ri(3, 9); return {text: `${a * b} ÷ ${a} =`, ans: b}; }, 1),
+];
+const ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
+
+function fresh() { return {day: '2026-11-06', W: C.blank(), seen: {}, wrongEver: {}, practiced: '', sunLeft: 0, sunTotal: 0, pet: null, skin: 'base', qs: null}; }
+let G;
+try { G = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch (e) { G = fresh(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
+const W = () => G.W;
+const items = () => ITEMS.map(i => Object.assign({}, i, {seen: !!G.seen[i.id]}));
+const isDay = () => G.practiced === G.day && G.sunLeft > 0;
+const lit = () => C.skillsLit(W(), items());
+
+// ---------- 像素图标 ----------
+const P = {'.': null, k: '#1b1d22', w: '#c08a52', W: '#8a5a2c', s: '#9a9da4', S: '#6c6f76', i: '#d6d9df', I: '#9aa0a8', g: '#f2c14e', G: '#b98a22', d: '#5fd9e6', D: '#2f9fae', c: '#111', C: '#6a6a6a', f: '#ff9a2e', F: '#ffe27a', r: '#d9342b', o: '#fff'};
+const SPR = {
+  ore: ['................', '.....ssss.......', '...ssssssss.....', '..sssGssssSS....', '..ssGgGsssSS....', '.ssssGssssSSS...', '.sssssssGsSSS...', '.ssssssGgGSSS...', '..ssssssGSSS....', '...ssSSSSSS.....', '................'],
+  wood: ['................', '....WWWWWWWW....', '...WwwwwwwwwW...', '...WwwWWWwwwW...', '...WwWwwwWwwW...', '...WwwWWWwwwW...', '...WwwwwwwwwW...', '....WWWWWWWW....', '................'],
+  coal: ['................', '.....cccc.......', '...ccCccccc.....', '..cccccCcccc....', '..cCcccccccc....', '..cccccccCcc....', '...cccCccc......', '.....ccc........', '................'],
+  iron: ['................', '................', '.....iiiiii.....', '....iiiiiiii....', '...iIIIIIIIIi...', '..iiiiiiiiiiii..', '..IIIIIIIIIIII..', '................'],
+  gold: ['................', '................', '.....gggggg.....', '....ggggggGG....', '...gGGGGGGGGg...', '..gggggggggggg..', '..GGGGGGGGGGGG..', '................'],
+  diamond: ['................', '....dddddddd....', '...dooddddddD...', '..dooddddddDDD..', '..ddddddddDDDD..', '...ddddddDDDD...', '....ddddDDDD....', '.....dddDDD.....', '......dDDD......', '.......DD.......', '................'],
+  flag: ['...W............', '...Wrrrrrrr.....', '...Wrrrrrrrrr...', '...Wrrrrrrrr....', '...Wrrrrrr......', '...W............', '...W............', '...W............', '...W............', '..WWW...........'],
+  torch: ['.......F........', '......FfF.......', '......fFf.......', '......fff.......', '.......W........', '.......W........', '.......W........', '.......W........', '.......W........', '.......W........'],
+};
+const iconCache = {};
+function icon(name) {
+  if (iconCache[name]) return iconCache[name];
+  const rows = SPR[name], c = document.createElement('canvas'); c.width = c.height = 16; const g = c.getContext('2d'), oy = (16 - rows.length) >> 1;
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (P[ch]) { g.fillStyle = P[ch]; g.fillRect(x, y + oy, 1, 1); } }));
+  return (iconCache[name] = c.toDataURL());
+}
+const img = (n, cls) => `<img class="px ${cls || ''}" src="${icon(n)}" alt="">`;
+const PICK = ['..hhhhhhhhhh....', '.hhHHHHHHHHhh...', 'hhH....WW...Hhh.', 'h......WW.....h.', '.......WW.......', '.......WW.......', '.......WW.......', '.......WW.......', '.......WW.......', '.......WW.......'];
+function pickIcon(id) {
+  const col = {pick0: ['#c08a52', '#8a5a2c'], pick00: ['#9a9da4', '#6c6f76'], pick1: ['#d6d9df', '#9aa0a8'], pick2: ['#f2c14e', '#b98a22'], pick3: ['#5fd9e6', '#2f9fae']}[id];
+  const c = document.createElement('canvas'); c.width = c.height = 16; const g = c.getContext('2d');
+  PICK.forEach((r, y) => [...r].forEach((ch, x) => { const v = ch === 'h' ? col[0] : ch === 'H' ? col[1] : P[ch]; if (v) { g.fillStyle = v; g.fillRect(x, y + 3, 1, 1); } }));
+  return c.toDataURL();
+}
+const BC = {plank: ['#c9955c', '#8a5a2c'], stone: ['#a5a8ae', '#6c6f76'], yellow: ['#f0d258', '#b89a22'], purple: ['#a768da', '#6e3aa0'], glass: ['#cfeeff', '#8fc4e0'], torch: ['#6b4628', '#5a3a20'], water: ['#4a90e2', '#2a5ea6'], lava: ['#ff7a1f', '#c93c00'], bridge: ['#a8703c', '#6b4628'], lever: ['#6c6f76', '#454850'], door: ['#8a5a2c', '#5a3a20'], bed: ['#d9342b', '#8a1c16'], chair: ['#b27d48', '#6b4628'], paint: ['#f2c14e', '#6b4628'], chest: ['#c08a52', '#6b4628'], trap: ['#5f6066', '#2b2b2b'], ironb: ['#e4e7ec', '#9aa0a8'], goldb: ['#f7d774', '#b98a22'], diamondb: ['#7fe8f2', '#2f9fae'], hut: ['#b3261e', '#8a5a2c'], tower: ['#8a8d94', '#5a5d64'], farm: ['#7a5230', '#5a3a20'], stall: ['#3d7fd9', '#8a5a2c']};
+const FLAT = {water: 1, lava: 1, bridge: 1, trap: 1, paint: 1, farm: 1};
+function drawBlock(g, id, x, y, s, v) {
+  const c = BC[id] || ['#888', '#555'], f = FLAT[id] ? 0 : Math.max(1, Math.round(s / 4)), u = Math.max(1, Math.round(s / 8));
+  g.fillStyle = c[1]; g.fillRect(x, y, s, s); g.fillStyle = c[0]; g.fillRect(x, y, s, s - f);
+  if (id === 'diamondb' || id === 'goldb' || id === 'ironb' || id === 'glass') { g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(x + u, y + u, u * 2, u); g.fillRect(x + u, y + u * 2, u, u); }
+  if (id === 'stone' || id === 'yellow' || id === 'purple') { g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(x, y + (s - f >> 1), s, Math.max(1, u >> 1)); g.fillRect(x + (s >> 1), y, Math.max(1, u >> 1), s - f >> 1); }
+  if (id === 'plank') { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x, y + (s >> 2), s, Math.max(1, u >> 1)); g.fillRect(x, y + (s >> 1) + u, s, Math.max(1, u >> 1)); }
+  if (id === 'torch') { g.fillStyle = '#ff9a2e'; g.fillRect(x + (s >> 1) - u, y + u, u * 2, u * 2); g.fillStyle = '#ffe27a'; g.fillRect(x + (s >> 1) - (u >> 1), y + u, u, u); }
+  if (id === 'lever') { g.fillStyle = '#c9ccd2'; g.fillRect(x + (s >> 1) - (u >> 1), y + u, u, s - 3 * u); g.fillStyle = '#d9342b'; g.fillRect(x + (s >> 1) - u, y + u, u * 2, u); }
+  if (id === 'paint') { if (v && v.open) { g.fillStyle = '#000'; g.fillRect(x + u, y + u, s - 2 * u, s - 2 * u); } else { g.fillStyle = '#bfe3ff'; g.fillRect(x + u, y + u, s - 2 * u, s - 2 * u); g.fillStyle = '#6fae3a'; g.fillRect(x + u, y + (s >> 1), s - 2 * u, (s >> 1) - u); } }
+  if (id === 'trap') { g.fillStyle = '#5fd9e6'; g.fillRect(x + (s >> 1) - u, y + (s >> 1) - u, u * 2, u * 2); }
+  if (id === 'door') { g.fillStyle = '#f2c14e'; g.fillRect(x + s - 3 * u, y + (s >> 1), u, u); }
+  if (id === 'bridge') { g.fillStyle = 'rgba(0,0,0,.3)'; for (let k = u * 2; k < s; k += u * 2) g.fillRect(x, y + k, s, Math.max(1, u >> 1)); }
+  if (id === 'hut') { g.fillStyle = '#c08a52'; g.fillRect(x + u, y + (s >> 1), s - 2 * u, (s >> 1) - f); g.fillStyle = '#4a2f1b'; g.fillRect(x + (s >> 1) - (u >> 1), y + (s >> 1) + u, u, s - (s >> 1) - u - f); }
+  if (id === 'tower') { g.fillStyle = '#1b1d22'; g.fillRect(x + (s >> 1) - u, y + 2 * u, u * 2, u * 2); }
+  if (id === 'farm') { g.fillStyle = '#6fae3a'; for (let k = u; k < s; k += u * 3) g.fillRect(x + u, y + k, s - 2 * u, Math.max(1, u >> 1)); }
+  if (id === 'stall') { g.fillStyle = '#fff'; for (let k = 0; k < s; k += u * 3) g.fillRect(x + k, y, u, s >> 1); }
+}
+const blockURL = {}; function blockIcon(id) { if (!blockURL[id]) { const c = document.createElement('canvas'); c.width = c.height = 16; drawBlock(c.getContext('2d'), id, 0, 0, 16); blockURL[id] = c.toDataURL(); } return blockURL[id]; }
+const sprite = (g, rows, pal, x, y, s) => rows.forEach((r, j) => [...r].forEach((ch, i) => { if (pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x + i * s, y + j * s, s, s); } }));
+const HERO_ROWS = ['..HHHH..', '.HHHHHH.', '.HSSSSH.', '.SESSES.', '.SSSSSS.', '..SMMS..', '.GGGGGG.', 'gGGGGGGg', 'gGGGGGGg', 'SGGGGGGS', '.BBBBBB.', '.BB..BB.', '.KK..KK.'];
+const SKINS = {base: ['#6fae3a', '#4f8a2e', '#3b5bdb', '#4a2f1b'], cowboy: ['#c08a52', '#8a5a2c', '#5a3a20', '#e8c84a'], miner: ['#6c6f76', '#454850', '#2b2b2b', '#f2c14e'], builder: ['#f2c14e', '#b98a22', '#3d7fd9', '#4a2f1b'], knight: ['#c9ccd2', '#9aa0a8', '#6c6f76', '#5fd9e6'], captain: ['#3d7fd9', '#2a5ea6', '#ecebe4', '#1b1d22']};
+const heroPal = () => { const s = SKINS[G.skin] || SKINS.base; return {H: s[3], S: '#f1c27d', E: '#1b1d22', M: '#c0705a', G: s[0], g: s[1], B: s[2], K: '#2b2b2b'}; };
+// 伙伴：四种体型 + 配色，全部原创
+const BODY = {
+  quad: ['.......DD.', '.......BBB', 'D.BBBBBBEB', '.BBBBBBBB.', '.BBBBBBB..', '.B.B..B.B.'],
+  fly: ['.D....D...', '..D..D....', '...BBBB...', '..BEBBEB..', '..BBBBBB..', '...BBBB...'],
+  blob: ['...BBBB...', '..BBBBBB..', '.BEBBBBEB.', '.BBBBBBBB.', '.BBDDDDBB.', '..BBBBBB..'],
+  bot: ['..DDDDDD..', '..BBBBBB..', '..BEBBEB..', '..BBBBBB..', '.DBBBBBBD.', '..B....B..'],
+};
+const PALS = [['小狼', 'look', '#b9bcc4', 'quad'], ['小猫', 'look', '#c98f4e', 'quad'], ['蜜蜂', 'garden', '#f2c14e', 'fly'], ['狐狸', 'bond', '#d9742b', 'quad'], ['鹦鹉', 'line', '#3fb56a', 'fly'], ['小猪', 'bond', '#f0a5a5', 'blob'], ['奶牛', 'place', '#ecebe4', 'quad'], ['海龟', 'dock', '#3d8a5a', 'blob'], ['炸弹蘑菇', 'cmp', '#d9342b', 'blob'], ['矿灯蜘蛛', 'bond', '#6c6f76', 'bot'], ['水晶龙', 'garden', '#5fd9e6', 'fly'], ['齿轮机器人', 'market', '#f7d774', 'bot']];
+const petPal = (col, on) => (on ? {B: col, D: '#3a3a3a', E: '#1b1d22'} : {B: '#0a0a0a', D: '#0a0a0a', E: '#0a0a0a'});
+function builtCount() { return Object.values(W().built).reduce((a, m) => a + Object.keys(m).length, 0); }
+const ROLES = [['base', '小矿工', '初始角色', () => true], ['cowboy', '草原牧羊人', '永久地块达到 5 块', w => C.count(w, 'perm') > 5], ['miner', '矿洞矿工', '合成铁镐', w => !!w.tools.pick1], ['builder', '村庄建筑师', '放满 50 个方块', () => builtCount() >= 50], ['knight', '双塔将军', '打败苔藓石人', w => !!w.boss.meadow], ['captain', '码头船长', '点亮造船技能', () => lit().dock]];
+const palLit = p => { const its = ITEMS.filter(i => i.group === p[1]); const idx = PALS.filter(x => x[1] === p[1]).indexOf(p); return its.filter(i => C.stepOf(W(), i.id) >= 1).length >= 1 + idx * 3; };
+
+// ---------- 地图 ----------
+const cv = $('map'), ctx = cv.getContext('2d');
+let vw = 0, vh = 0, DPR = 1, TILE = 7, cam = {x: 0, y: 0}, thumbs = {}, anim = {};
+const plotPx = () => TILE * PLOT;
+function clampCam() {
+  const s = plotPx(), ps = Object.values(W().plots), rx = 2 + Math.max(0, ...ps.map(p => Math.abs(p.x))), ry = 2 + Math.max(0, ...ps.map(p => Math.abs(p.y)));
+  const lx = Math.max(0, (rx + .5) * s - vw / 2 + 60), ly = Math.max(0, (ry + .5) * s - vh / 2 + 30);
+  cam.x = Math.max(-lx, Math.min(lx, cam.x)); cam.y = Math.max(-ly, Math.min(ly, cam.y));
+}
+function resize() {
+  const r = $('stage').getBoundingClientRect(); DPR = Math.min(2, window.devicePixelRatio || 1); vw = r.width; vh = r.height; if (!vw || !vh) return;
+  cv.width = Math.round(vw * DPR); cv.height = Math.round(vh * DPR);
+  TILE = Math.max(7, Math.round(Math.min(vw, vh) / 60)); thumbs = {}; clampCam(); draw();
+}
+const BAND_COL = {meadow: ['#6fae3a', '#62a033', '#3d7524'], pine: ['#4f8a2e', '#3f7526', '#2f5e1c'], sand: ['#d98a4e', '#c97a3e', '#8a4e22'], frost: ['#dfe9f2', '#c9d8e6', '#8fa9c0'], lava: ['#5a3a30', '#4a2c26', '#d9541e'], cloud: ['#bcd4f0', '#a8c4e8', '#ffffff']};
+function plotCanvas(x, y, T, withBuilt) {
+  const c = document.createElement('canvas'), s = T * PLOT; c.width = c.height = s; const g = c.getContext('2d');
+  const r = C.ring(x, y), band = C.bandOfRing(r), col = BAND_COL[band.id], t = C.terrain(x, y), f = C.feature(x, y);
+  for (let j = 0; j < PLOT; j++) for (let i = 0; i < PLOT; i++) {
+    const h = ((x * 31 + y * 17 + i * 7 + j * 13) * 2654435761 >>> 0) / 4294967296;
+    g.fillStyle = t === 'water' ? (h < .5 ? '#4a90e2' : '#3f83d4') : (!x && !y) ? (h < .5 ? '#6fae3a' : '#62a033') : (h < .55 ? col[0] : col[1]);
+    g.fillRect(i * T, j * T, T, T);
+  }
+  if (t === 'island') { g.fillStyle = '#4a90e2'; g.fillRect(0, 0, s, T); g.fillRect(0, s - T, s, T); g.fillRect(0, 0, T, s); g.fillRect(s - T, 0, T, s); }
+  if (!x && !y) {
+    for (let j = 2; j < 6; j++) for (let i = 2; i < 6; i++) drawBlock(g, 'plank', i * T, j * T, T);
+    g.fillStyle = '#8a1c16'; g.fillRect(T, T, T * 6, T * 2); g.fillStyle = '#b3261e'; g.fillRect(T * 2, T, T * 4, T); g.fillStyle = '#4a2f1b'; g.fillRect(T * 3.5, T * 4, T, T * 2);
+  } else if (f && t !== 'water') {
+    const pt = (i, j, id) => drawBlock(g, id, i * T, j * T, T);
+    if (f.kind === 'tree') [[2, 2], [5, 3], [3, 5]].forEach(([i, j]) => { g.fillStyle = col[2]; g.fillRect((i - 1) * T, (j - 1) * T, T * 2, T * 2); g.fillStyle = '#5a3a20'; g.fillRect(i * T - T / 2, (j + 1) * T - T, T, T); });
+    if (f.kind === 'vein') { for (let i = 2; i < 6; i++) for (let j = 3; j < 6; j++) { g.fillStyle = (i + j) % 2 ? '#8a8d94' : '#7c7f86'; g.fillRect(i * T, j * T, T, T); } g.fillStyle = ['#c9ccd2', '#d6d9df', '#f2c14e', '#5fd9e6', '#5fd9e6'][f.tier]; g.fillRect(3 * T, 4 * T, T, T); g.fillRect(4 * T, 3 * T, T, T); }
+    if (f.kind === 'chest') pt(4, 4, 'chest');
+    if (f.kind === 'village') { [[2, 3], [5, 4]].forEach(([i, j]) => { pt(i, j, 'plank'); g.fillStyle = '#b3261e'; g.fillRect(i * T, (j - 1) * T + T / 2, T, T / 2); }); }
+    if (f.kind === 'ruin') { [[2, 2], [5, 2], [2, 5], [5, 5]].forEach(([i, j]) => pt(i, j, 'stone')); }
+  }
+  const b = withBuilt && W().built[C.pkey(x, y)]; if (b) Object.entries(b).forEach(([ck, v]) => { const [i, j] = ck.split(',').map(Number); drawBlock(g, v.b, i * T, j * T, T, v); });
+  return c;
+}
+function plotThumb(x, y) { const k = C.pkey(x, y) + ':' + TILE + ':' + JSON.stringify(W().built[C.pkey(x, y)] || 0).length; return thumbs[k] || (thumbs[k] = plotCanvas(x, y, TILE, true)); }
+const imgs = {}; function imgCache(n) { if (!imgs[n]) { imgs[n] = new Image(); imgs[n].onload = () => draw(); imgs[n].src = icon(n); } return imgs[n]; }
+['flag', 'torch'].forEach(imgCache);
+function drawIcon(n, x, y, size) { const i = imgCache(n); if (i.complete) ctx.drawImage(i, x, y, size, size); }
+const FEAT = {tree: '树林', vein: '矿脉', chest: '宝箱', village: '村子', ruin: '遗迹', none: '空地'};
+function draw() {
+  if (!vw) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#20232a'; ctx.fillRect(0, 0, vw, vh);
+  const s = plotPx(), cx = vw / 2 + cam.x, cy = vh / 2 + cam.y, sx = x => Math.round(cx + x * s - s / 2), sy = y => Math.round(cy + y * s - s / 2), off = (a, b) => a > vw || b > vh || a + s < 0 || b + s < 0;
+  for (let y = -10; y <= 10; y++) for (let x = -10; x <= 10; x++) { const a = sx(x), b = sy(y); if (off(a, b) || W().plots[C.pkey(x, y)]) continue; ctx.fillStyle = ((x + y) & 1) ? '#2c3038' : '#282b33'; ctx.fillRect(a, b, s, s); }
+  const canAct = isDay(), hasFlag = W().bag.flag >= 1, L = lit();
+  C.frontier(W(), items()).forEach(f => {
+    if (W().plots[C.pkey(f.x, f.y)]) return;
+    const a = sx(f.x), b = sy(f.y); if (off(a, b)) return;
+    ctx.fillStyle = f.terrain === 'water' || f.terrain === 'island' ? '#2d4a70' : '#3a3f4a'; ctx.fillRect(a + 1, b + 1, s - 2, s - 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (f.ok) {
+      if (canAct && hasFlag) { ctx.globalAlpha = .7 + .3 * Math.sin(performance.now() / 350); ctx.strokeStyle = '#f2c14e'; ctx.lineWidth = 2; ctx.strokeRect(a + 3, b + 3, s - 6, s - 6); ctx.globalAlpha = 1; } else ctx.globalAlpha = .4;
+      drawIcon('flag', a + s / 2 - TILE * 2.2, b + s / 2 - TILE * 2.4, TILE * 4.4); ctx.globalAlpha = 1;
+      if (L.look) { const ft = C.feature(f.x, f.y); ctx.fillStyle = '#ecebe4'; ctx.font = `700 ${Math.max(10, TILE * 1.3)}px sans-serif`; ctx.fillText(FEAT[ft.kind], a + s / 2, b + s - TILE); }
+    } else { ctx.fillStyle = '#ecebe4'; ctx.font = `800 ${Math.max(11, TILE * 1.6)}px sans-serif`; ctx.fillText(f.why === 'boss' ? 'Boss' : f.why === 'line' ? '架桥' : '造船', a + s / 2, b + s / 2); }
+  });
+  Object.values(W().plots).forEach(p => {
+    const a = sx(p.x), b = sy(p.y); if (off(a, b)) return;
+    ctx.drawImage(plotThumb(p.x, p.y), a, b, s, s);
+    if (p.st === 'wild') { ctx.fillStyle = 'rgba(40,44,52,.78)'; ctx.fillRect(a, b, s, s); ctx.fillStyle = '#ecebe4'; ctx.font = `800 ${Math.max(11, TILE * 1.6)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('迷雾', a + s / 2, b + s / 2); }
+    if (p.st === 'temp') {
+      ctx.strokeStyle = '#f2c14e'; ctx.lineWidth = 3; ctx.setLineDash([5, 4]); ctx.strokeRect(a + 2, b + 2, s - 4, s - 4); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(a + 2, b + s - TILE * 2.3, s - 4, TILE * 2.3 - 2);
+      drawIcon('torch', a + 3, b + s - TILE * 2.3, TILE * 2.2);
+      ctx.fillStyle = p.torch <= 2 ? '#ff9a2e' : '#ecebe4'; ctx.font = `900 ${Math.max(12, TILE * 2)}px sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(String(p.torch), a + 3 + TILE * 2.3, b + s - TILE * 1.15);
+    }
+    if (p.st === 'perm' && (p.x || p.y)) { ctx.strokeStyle = p.ench ? '#5fd9e6' : '#ecebe4'; ctx.lineWidth = p.ench ? 3 : 1; ctx.strokeRect(a + 1, b + 1, s - 2, s - 2); if (p.ench) { const t = (performance.now() / 300 | 0) % 4; ctx.fillStyle = '#fff'; [[.2, .2], [.75, .3], [.3, .75], [.8, .8]].forEach(([u, v], i) => { if (i === t) ctx.fillRect(a + s * u, b + s * v, TILE * .6, TILE * .6); }); } }
+    const an = anim[C.pkey(p.x, p.y)]; if (an) { const e = (performance.now() - an.t0) / 900; if (e < 1) { ctx.fillStyle = an.col; ctx.globalAlpha = 1 - e; ctx.fillRect(a, b, s, s); ctx.globalAlpha = 1; } else delete anim[C.pkey(p.x, p.y)]; }
+  });
+  const hs = Math.max(2, Math.round(TILE / 3)); sprite(ctx, HERO_ROWS, heroPal(), sx(0) + s * .68, sy(0) + s * .55, hs);
+  if (G.pet) { const pp = PALS.find(q => q[0] === G.pet); if (pp) sprite(ctx, BODY[pp[3]], petPal(pp[2], true), sx(0) + s * .05, sy(0) + s * .78, hs); }
+  if (G.practiced !== G.day || G.sunLeft <= 0) { ctx.fillStyle = 'rgba(12,16,44,.42)'; ctx.fillRect(0, 0, vw, vh); }
+}
+setInterval(() => { if (!pageNow && !document.hidden) draw(); }, 200);
+
+// 手势：按下、拖动在指针事件里；点地块用 click，弹窗不会被同一下点击穿透
+let drag = null, moved = false;
+cv.addEventListener('pointerdown', e => { if (!e.isPrimary) return; drag = {x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y}; moved = false; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+cv.addEventListener('pointermove', e => { if (!drag || !e.isPrimary) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 16) moved = true; if (moved) { cam.x = drag.cx + dx; cam.y = drag.cy + dy; clampCam(); draw(); } });
+cv.addEventListener('pointerup', () => { drag = null; });
+cv.addEventListener('pointercancel', () => { drag = null; moved = true; });
+cv.addEventListener('click', e => { if (moved) return; const r = cv.getBoundingClientRect(), s = plotPx(); tapPlot(Math.round((e.clientX - r.left - vw / 2 - cam.x) / s), Math.round((e.clientY - r.top - vh / 2 - cam.y) / s)); });
+
+// ---------- 顶栏和提示 ----------
+const MAT = {ore: '矿石', wood: '木头', coal: '煤', iron: '铁锭', gold: '金锭', diamond: '钻石', flag: '拓荒旗'};
+const fmtSun = () => `${Math.floor(G.sunLeft / 60)}:${String(Math.floor(G.sunLeft % 60)).padStart(2, '0')}`;
+function hud() {
+  const b = W().bag;
+  $('hud').innerHTML = ['ore', 'wood', 'coal', 'iron', 'gold', 'diamond', 'flag'].map(n => `<button class="res" data-m="${n}">${img(n)}<em>${MAT[n]}</em>${b[n] || 0}</button>`).join('') + `<span id="date">${short(G.day)}</span>${isDay() ? `<span id="sunTxt">白天 ${fmtSun()}</span>` : ''}<button class="btn" id="demoBtn">演示</button>`;
+  $('hud').querySelectorAll('[data-m]').forEach(el => { el.onclick = () => toast(MAT[el.dataset.m]); });
+  $('demoBtn').onclick = demoPanel;
+  const did = G.practiced === G.day;
+  $('start').style.display = did ? 'none' : ''; $('start').textContent = G.qs && G.qs.day === G.day ? '继续今天的探险' : '开始今天的探险';
+  const bi = C.BANDS.findIndex((x, i) => C.bossCanTry(W(), i, items(), G.day));
+  $('bBoss').style.display = isDay() && bi >= 0 ? '' : 'none'; if (bi >= 0) $('bBoss').textContent = '挑战 ' + C.BANDS[bi].boss;
+  $('hint').textContent = nextHint();
+  draw();
+}
+function lackText(cost) { const b = W().bag, p = Object.entries(cost).filter(([k, v]) => (b[k] || 0) < v).map(([k, v]) => `${MAT[k]}差 ${v - (b[k] || 0)}`); return p.join('，'); }
+function showPlace() {   // 能拓的地块都在屏幕外：镜头移到最近的一块
+  if (!vw || !isDay()) return;
+  const s = plotPx(), vis = f => { const a = vw / 2 + cam.x + f.x * s, b = vh / 2 + cam.y + f.y * s; return a > s / 2 && a < vw - 90 && b > s / 2 && b < vh - s / 2; };
+  const fr = C.frontier(W(), items()).filter(f => f.ok && !W().plots[C.pkey(f.x, f.y)]); if (!fr.length || fr.some(vis)) return;
+  const f = fr.sort((a, b) => a.ring - b.ring)[0]; cam.x = -f.x * s; cam.y = -f.y * s; clampCam();
+}
+function nextHint() {
+  const w = W(), did = G.practiced === G.day;
+  if (!did) return G.qs && G.qs.day === G.day ? '探险暂停中' : `今天的探险未开始 · 临时地块 ${C.count(w, 'temp')} · 永久地块 ${C.count(w, 'perm') - 1}`;
+  if (G.sunLeft <= 0) return '夜晚：世界只能看。明天探险后天亮';
+  if (!w.tools.pick0) return '下一步：工作台合成木镐';
+  const its = items(), st = C.nextStep(w, its, G.day), can = st.places > 0 && (st.plan === 'temp' || st.plan === 'perm' || st.plan === 'free'), next = C.TOOLS.find(t => C.toolReady(w, t));
+  if (can && w.bag.flag >= 1) return '下一步：点带旗的地块，插旗拓地';
+  if (next) return `下一步：工作台合成${next.name}`;
+  if (st.bossTry) return `下一步：挑战${C.BANDS[st.bossBand].boss}（右下角按钮）`;
+  if (can && C.canPay(w, C.flagCost(C.flagRing(w)))) return '下一步：工作台合成拓荒旗';
+  if (can) return `拓荒旗材料不够：${lackText(C.flagCost(C.flagRing(w)))}。今天可以建造，明天继续挖矿`;
+  if (st.wall && st.bossBand >= 0) { const b = C.BANDS[st.bossBand], tool = C.TOOLS.find(t => t.tier === b.tool); return w.bossDay === G.day ? `${b.boss}今天已挑战，明天继续。今天可以建造` : C.toolTier(w) < b.tool ? `地图边界由${b.boss}守着，需要${tool.name}。今天可以建造` : `地图边界由${b.boss}守着：${b.name}的题 ${Math.round(st.bossShare * 100)}% / ${Math.round(C.BOSS_SHARE * 100)}%。今天可以建造`; }
+  return (st.plan === 'cap' ? '临时地块已满，地块变永久后可以继续拓地。' : '学过的题都已绑定地块，明天继续学。') + '今天可以点地块建造';
+}
+function toast(t, ms) { const el = $('toast'); el.textContent = t; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.display = 'none'; }, ms || 2200); }
+let modalAt = 0;
+function modal(html, actions) {
+  $('modal').innerHTML = html + `<div class="mact" id="mact"></div>`;
+  (actions || [{t: '关闭'}]).forEach(a => { const b = document.createElement('button'); b.className = 'btn ' + (a.c || ''); b.textContent = a.t; b.disabled = !!a.disabled; b.onclick = () => { if (performance.now() - modalAt < 300) return; closeModal(); if (a.f) a.f(); }; $('mact').appendChild(b); });
+  modalAt = performance.now(); $('mw').classList.add('on');
+}
+const closeModal = () => $('mw').classList.remove('on');
+let pageNow = null;
+function page(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === id)); pageNow = id;
+  $('toast').style.display = 'none';
+  $('hud').classList.toggle('off', id === 'pQ' || id === 'pBoss');
+  requestAnimationFrame(resize);
+  if (!id) { showPlace(); hud(); } else if (id !== 'pQ' && id !== 'pBoss') hud();
+}
+
+// ---------- 地块卡片 ----------
+function nextText(id) {
+  const s = C.stepOf(W(), id), pr = W().proof[id], ev = (W().evs[G.day] || {})[id];
+  if (s >= 4) return '已附魔'; if (s >= 3) return '已学会';
+  if (ev && ev.done) return ev.adv ? '今天通过' : ev.bad ? '今天未通过' : ev.slow ? '今天答对但偏慢' : '今天已答';
+  if (pr && pr.s > 0 && pr.last) { const wait = C.GAPS[pr.s] - C.dayDiff(pr.last, G.day); if (wait > 0) return `${wait} 天后再考`; }
+  return '今天出题';
+}
+function boundRows(p) {
+  return p.bound.map(id => { const it = ITEM[id], top = (W().proof[id] && W().proof[id].top) || 0;   // 方格按到过的最高一步显示，只增不减
+    return `<div class="bound"><span>${it ? it.name : id}</span><span style="color:var(--mute);font-size:13px;margin-left:8px">${nextText(id)}</span><span class="dots"><i class="${top >= 1 ? 'd1' : ''}"></i><i class="${top >= 2 ? 'd2' : ''}"></i><i class="${top >= 3 ? 'd3' : ''}"></i></span></div>`; }).join('');
+}
+function tapPlot(x, y) {
+  const k = C.pkey(x, y), p = W().plots[k], w = W();
+  if (p) {
+    const band = C.bandOfRing(C.ring(x, y));
+    const build = {t: '建造', c: isDay() ? 'main' : '', disabled: !isDay(), f: () => openBuild(x, y)};
+    if (!x && !y) return modal(`<h2>空空的家</h2><p>进屋后是奖状墙、伙伴和矿物柜（沿用现有页面）。门口可以建造。</p>`, [build, {t: '关闭'}]);
+    if (p.st === 'perm') return modal(`<h2>永久地块 · ${band.name}${p.ench ? ' · 附魔' : ''}</h2><p>${p.permDay ? short(p.permDay) + ' 起永久保留' : ''}${p.ench ? ' · 两周后复查通过' : p.bound.length ? ' · 两周后复查通过，地块附魔' : ''}</p>${boundRows(p)}`, [build, {t: '关闭'}]);
+    if (p.st === 'temp') return modal(`<h2>临时地块 · ${band.name}</h2><div class="torches">${Array.from({length: Math.max(C.TORCH, p.torch)}, (_, i) => img('torch', i < p.torch ? '' : 'off')).join('')}<span style="margin-left:6px;font-size:14px;font-weight:800">火把 ${p.torch}</span></div><p>${p.bound.length} 道题的方格全亮，地块变永久。答错、或地块拖太久的日子烧 1 支火把。答对、答慢、没来的日子都不烧。</p>${boundRows(p)}`, [build, {t: '关闭'}]);
+    if (p.st === 'wild') { const fr = C.frontier(w, items()).find(a => a.x === x && a.y === y);
+      return modal(`<h2>迷雾地块</h2><p>火把烧完，迷雾盖住了这块地。盖过的东西都在。下面的题全部学会，地块自动回来；也可以再插一面旗。</p>${boundRows(p)}`, [{t: '插旗拓回', c: 'warn', disabled: !fr || !fr.ok || w.bag.flag < 1 || !isDay(), f: () => doClaim(x, y)}, {t: '关闭'}]); }
+  }
+  const f = C.frontier(w, items()).find(a => a.x === x && a.y === y);
+  if (!f) return;
+  if (!f.ok) {
+    if (f.why === 'boss') { const bi = C.BANDS.findIndex(b => !w.boss[b.id]); if (bi < 0) return toast('这里还到不了'); const b = C.BANDS[bi], rd = C.bossReady(w, bi, items()), share = Math.round(C.bandShare(w, b, items()) * 100), tool = C.TOOLS.find(t => t.tier === b.tool), tried = w.bossDay === G.day;
+      return modal(`<h2>${b.boss}守着${C.bandOfRing(f.ring).name}</h2><p>打败它，地图向外开放。${rd ? (tried ? '今天已挑战，明天再来。' : '') : `条件：${b.name}的题 ${Math.round(C.BOSS_SHARE * 100)}% 到第 2 格（现在 ${share}%）；工具 ${tool.name}。`}</p>`, [{t: '挑战', c: 'warn', disabled: !rd || tried || !isDay(), f: () => openBoss(bi)}, {t: '关闭'}]); }
+    const sk = C.SKILLS.find(s => s.id === f.why);
+    return modal(`<h2>${f.why === 'line' ? '水面' : '小岛'}</h2><p>需要技能「${sk.name}」。${sk.place}的题有一半点亮后可用。</p>`);
+  }
+  if (!isDay()) return toast(G.practiced === G.day ? '夜晚不能拓地。明天继续' : '今天探险后可以拓地');
+  if (w.bag.flag < 1) { const c = C.flagCost(C.flagRing(w)), ok = C.canPay(w, c); return modal(`<h2>需要拓荒旗</h2><p>1 面旗拓 1 块地。${ok ? '材料够了。' : lackText(c) + '。'}</p>`, [{t: '去工作台', c: ok ? 'main' : '', f: () => openWork('flag')}, {t: '关闭'}]); }
+  doClaim(x, y);
+}
+function doClaim(x, y) {
+  const w = W(), wasWild = !!w.plots[C.pkey(x, y)], r = C.claim(w, x, y, items(), G.day);
+  if (!r.ok) { const m = {cap: '临时地块已满。地块变永久后可以继续拓地', learn: '学过的题都已绑定地块。明天学新题后继续', flag: '需要拓荒旗', far: '这里还到不了'}; return toast(m[r.why] || r.why); }
+  anim[C.pkey(x, y)] = {t0: performance.now(), col: '#fff3b0'};
+  const d = C.digPlot(w, x, y, lit()); let found = wasWild ? '地块拓回' : '一片空地';
+  if (d) found = d.kind === 'tree' ? `发现树林：木头 +${d.wood}` : d.kind === 'vein' ? (d.lockTier !== undefined ? `发现矿脉：需要${C.TOOLS.find(t => t.tier === d.lockTier).name}` : d.lockSkill ? '发现矿脉：需要技能「下矿」' : `挖开矿脉：矿石 +${d.ore}`) : d.kind === 'chest' ? `发现宝箱：玻璃 +${d.n}` : d.kind === 'village' ? '发现村子' : d.kind === 'ruin' ? `发现遗迹：石砖 +${d.n}` : '一片空地';
+  save(); hud();
+  const p = r.plot;
+  modal(`<h2>${found}</h2><p>${p.st === 'perm' ? (p.bound.length ? '这块地绑的题已经学会，直接永久。' : '学过的题都学会了，这块地直接永久。') : `这块地是临时的。${p.bound.length} 道题的方格全亮，地块变永久。`}</p>${boundRows(p)}`, [{t: '继续', c: 'main'}]);
+}
+
+// ---------- 答题 ----------
+let Q = null;
+function pickSession() {
+  const w = W(), its = items(), out = [], day = G.day;
+  const add = (it, tag) => { if (it && out.length < SESSION_Q) out.push({id: it.id, tag}); };
+  const has = i => out.some(x => x.id === i.id);
+  let budget = Math.floor(C.GUARD_SEC / 6);   // 守护题和复查题最多占 40 秒。原型没有手写计时，按一题 6 秒换算成题数
+  C.enchList(w, its, day).forEach(it => { if (budget-- > 0) add(ITEM[it.id], '复查题'); });   // 复查排前面：被挡住会拉长间隔、拉低主指标
+  C.guardList(w, its, day).forEach(it => { for (let k = 0; k < C.needOf(it) && budget > 0; k++, budget--) add(ITEM[it.id], '守护题'); });
+  ITEMS.filter(i => { const pr = w.proof[i.id]; return pr && pr.s > 0 && pr.s < 3 && pr.last && C.dayDiff(pr.last, day) >= C.GAPS[pr.s] && !has(i); }).forEach(i => { for (let k = 0; k < C.needOf(i); k++) add(i, ''); });
+  let n = 0;
+  ITEMS.filter(i => !G.seen[i.id] && !has(i)).sort((a, b) => a.level - b.level).forEach(i => { if (n < NEW_MAX) { n++; for (let k = 0; k < C.needOf(i); k++) add(i, '新题'); } });
+  ITEMS.filter(i => G.seen[i.id] && !has(i)).sort(() => Math.random() - .5).forEach(i => add(i, ''));
+  ITEMS.filter(i => !has(i)).sort((a, b) => a.level - b.level).forEach(i => { for (let k = 0; k < C.needOf(i); k++) add(i, '新题'); });
+  return out;
+}
+function startQ() {
+  if (!G.qs || G.qs.day !== G.day) G.qs = {day: G.day, list: pickSession(), i: 0, ore: 0, coal: 0, ok: 0, n: 0, slow: 0, adv: [], ev: [], before: Object.assign({}, W().bag), crack: 0};
+  Q = G.qs; Q.retry = [];
+  buildPad($('qright'), onDigit); page('pQ'); save(); showQ();
+}
+function buildPad(el, cb) { el.innerHTML = ''; [1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, '确定'].forEach(d => { const b = document.createElement('button'); b.textContent = d; if (d === '确定') b.style.fontSize = '18px'; b.onclick = () => cb(d); el.appendChild(b); }); }
+function fitText(el) { const box = el.parentElement.clientWidth - 16; let s = Math.min(64, Math.max(30, Math.round(innerHeight * .13))); el.style.fontSize = s + 'px'; while (el.scrollWidth > box && s > 18) { s -= 2; el.style.fontSize = s + 'px'; } }
+function showQ() {
+  if (!Q) return;
+  if (Q.retry.length && Q.retry[0].at <= Q.i) Q.cur = Object.assign({retry: 1}, Q.retry.shift());
+  else if (Q.i < Q.list.length) Q.cur = Object.assign({}, Q.list[Q.i]);
+  else if (Q.retry.length) Q.cur = Object.assign({retry: 1}, Q.retry.shift());
+  else return finishQ();
+  if (!Q.cur.inst) Q.cur.inst = ITEM[Q.cur.id].make();
+  Q.input = ''; Q.t0 = performance.now(); Q.lock = false;
+  const q = Q.cur.inst, pick = !!q.pick;
+  $('qtag').innerHTML = Q.cur.retry ? '再来一次' : Q.cur.tag === '守护题' ? img('torch') + '守护题' : Q.cur.tag || '';
+  $('qtext').textContent = q.text; fitText($('qtext'));
+  $('qans').textContent = ''; $('qans').className = '';
+  $('qpick').style.display = pick ? 'flex' : 'none'; $('qans').style.display = pick ? 'none' : ''; $('qright').style.display = pick ? 'none' : 'grid';
+  if (pick) { $('qpick').innerHTML = ''; q.pick.forEach(v => { const b = document.createElement('button'); b.textContent = v; b.onclick = () => answer(v); $('qpick').appendChild(b); }); }
+  $('qore').innerHTML = img('ore') + Q.ore;
+  $('qfill').style.width = Math.min(100, Q.i / Math.max(1, Q.list.length) * 100) + '%';
+  drawMine();
+}
+function onDigit(d) {
+  if (!Q || Q.lock) return;
+  if (d === '⌫') Q.input = Q.input.slice(0, -1);
+  else if (d === '确定') { if (Q.input) answer(+Q.input); return; }
+  else if (Q.input.length < 4) Q.input += d;
+  $('qans').textContent = Q.input;
+  if (Q.input.length === String(Q.cur.inst.ans).length) answer(+Q.input);   // 位数够了自动判，和手写版自动识别一样
+}
+function answer(v) {
+  if (!Q || Q.lock) return; Q.lock = true;
+  const cur = Q.cur, it = ITEM[cur.id], ok = v === cur.inst.ans, secs = (performance.now() - Q.t0) / 1000, fast = secs <= FAST_SEC;
+  recordAnswer(it, ok, fast, !!cur.retry);
+  $('qans').classList.add(ok ? 'ok' : 'no'); $('qans').style.display = 'flex';
+  $('qans').textContent = ok ? String(v) : `${v} → ${cur.inst.ans}`;
+  if (!ok) { if (!cur.retry) Q.retry.push({at: Q.i + 3, id: cur.id, inst: cur.inst, tag: ''}); G.wrongEver[it.id] = 1; }
+  if (!cur.retry) Q.i++;
+  if (ok) { Q.crack++; drawMine(true); $('qore').innerHTML = img('ore') + Q.ore; }
+  save();
+  const mine = Q; setTimeout(() => { if (Q === mine) showQ(); }, ok ? 420 : 1300);
+}
+function recordAnswer(it, ok, fast, retry) {
+  const w = W(), wasWrong = G.wrongEver[it.id]; G.seen[it.id] = 1;
+  const needFast = !!it.fast, out = C.onAttempt(w, it, {ok, fast, needFast, retry}, G.day);
+  if (Q && !retry) { Q.n++; if (ok) Q.ok++; if (ok && needFast && !fast) Q.slow++; }
+  if (ok && !retry) { C.gain(w, 'ore', ORE_SCALE); if (Q) Q.ore += ORE_SCALE; }
+  if (ok && wasWrong && !retry && Q && Q.coal < C.COAL_DAY) { C.gain(w, 'coal', 1); Q.coal++; }
+  if (Q && out.advanced) Q.adv.push({id: it.id, step: out.step});
+  if (Q) Q.ev.push(...out.events);
+  return out;
+}
+function drawMine(hit) {
+  const g = $('qmine').getContext('2d'); g.clearRect(0, 0, 80, 42);
+  for (let i = 0; i < 5; i++) drawBlock(g, 'stone', i * 16, 26, 16);
+  drawBlock(g, 'stone', 32, 10, 16); g.fillStyle = '#f2c14e'; g.fillRect(36, 14, 3, 3); g.fillRect(42, 19, 3, 3);
+  g.fillStyle = '#000'; for (let k = 0; k < Q.crack % 5; k++) { g.fillRect(33 + k * 3, 11 + (k * 5) % 12, 2, 4); g.fillRect(37 + k * 2, 12 + (k * 3) % 11, 3, 1); }
+  sprite(g, HERO_ROWS, heroPal(), hit ? 22 : 16, 13, 1);
+}
+function finishQ() { const sum = Q; Q = null; G.qs = null; afterPractice(sum); }
+function startDay(ok, n) { G.practiced = G.day; G.sunTotal = C.dayMinutes(ok * DAY_SCALE, n * DAY_SCALE) * 60; G.sunLeft = G.sunTotal; }
+function afterPractice(sum) {
+  const w = W(), day = G.day, wild = C.endOfPractice(w, day), prune = C.pruneBound(w, items(), day);
+  startDay(sum.ok, sum.n);
+  sum.ev.concat(wild, prune).forEach(e => { anim[C.pkey(e.x, e.y)] = {t0: performance.now(), col: e.type === 'wild' ? '#000' : e.type === 'ench' ? '#5fd9e6' : '#fff'}; });
+  save();
+  const got = Object.keys(w.bag).map(k => [k, w.bag[k] - (sum.before[k] || 0)]).filter(([k, v]) => v > 0);
+  const c = t => sum.ev.concat(prune).filter(e => e.type === t).length, line = (txt, col) => `<p style="color:${col};font-weight:900;font-size:17px;margin:4px 0">${txt}</p>`;
+  $('endBody').innerHTML = `<div class="cost" style="font-size:16px;margin-bottom:6px">${got.map(([k, v]) => `<span>${img(k)}${MAT[k]} +${v}</span>`).join('') || '今天没有新材料'}</div>
+    ${c('perm') ? line(`${c('perm')} 块地块变永久`, 'var(--dia)') : ''}${c('back') ? line(`${c('back')} 块迷雾地块回来了`, 'var(--dia)') : ''}${c('ench') ? line(`${c('ench')} 块地块附魔`, 'var(--dia)') : ''}
+    ${wild.length ? line(`${wild.length} 块地块被迷雾盖住。盖过的东西都在，题学会后地块回来`, 'var(--gold)') : ''}
+    <p style="font-size:15px;color:#d6d4c8">答对 ${sum.ok} / ${sum.n} 题 · ${sum.adv.length} 道题的方格前进一格${sum.slow ? ` · ${sum.slow} 道答对但偏慢，明天再试` : ''}</p>`;
+  const m = Math.round(G.sunTotal / 60);
+  $('endGo').textContent = m ? `去世界（白天 ${m} 分钟）` : '去世界（今天只能看）';
+  page('pEnd');
+}
+$('endGo').onclick = () => page(null);
+$('endGem').onclick = () => toast('锻造台沿用宝石规则，原型不做');
+$('start').onclick = startQ;
+$('qpause').onclick = () => { const q = Q; Q = null; G.qs = q; if (q) { delete q.cur; delete q.retry; } save(); page(null); };
+
+// ---------- 工作台 ----------
+let workTab = 'tool', workFrom = null;
+function costHTML(cost) { const b = W().bag; return `<div class="cost">${Object.entries(cost).map(([k, v]) => `<span class="${(b[k] || 0) < v ? 'lack' : ''}">${img(k)}${v}</span>`).join('')}</div>`; }
+function openWork(tab, from) {
+  const w = W(); workFrom = from || null;
+  workTab = tab || (C.TOOLS.some(t => C.toolReady(w, t)) ? 'tool' : w.bag.flag < 1 ? 'flag' : workTab);
+  page('pWork'); renderWork();
+}
+$('workBack').onclick = () => { if (workFrom === 'build' && B && isDay()) { page('pBuild'); renderBuild(); } else page(null); };
+function renderWork() {
+  const w = W(), day = isDay(), L = lit();
+  $('workTabs').innerHTML = [['tool', '工具'], ['flag', '拓荒旗'], ['block', '方块']].map(([k, t]) => `<button class="btn ${k === workTab ? 'on' : ''}" data-t="${k}">${t}</button>`).join('');
+  $('workTabs').querySelectorAll('button').forEach(b => { b.onclick = () => { workTab = b.dataset.t; renderWork(); }; });
+  $('workNote').textContent = day ? '' : (G.practiced === G.day ? '夜晚不能合成。明天继续' : '今天探险后可以合成');
+  $('workNote').style.display = day ? 'none' : '';
+  let h = '';
+  const USE = ['挖第一层矿脉', '挖第二层矿脉，进松木林', '进赤沙地', '进白霜岭和熔岩谷', '进云顶岛'];
+  if (workTab === 'tool') C.TOOLS.forEach(t => {
+    const have = w.tools[t.id], rdy = C.toolReady(w, t), prev = C.toolTier(w) < t.tier - 1;
+    const needTxt = Object.entries(t.need).map(([k, v]) => `累计${MAT[k]} ${Math.min(w.total[k] || 0, v)} / ${v}`).join('');
+    const why = prev ? `先合成${C.TOOLS.find(x => x.tier === t.tier - 1).name}` : needTxt && Object.entries(t.need).some(([k, v]) => (w.total[k] || 0) < v) ? needTxt : lackText(t.cost);
+    h += `<div class="card ${have ? 'on' : prev ? 'dark' : ''}"><div class="ct"><img class="px" src="${pickIcon(t.id)}" alt="">${t.name}</div><div class="cd">${USE[t.tier]}${needTxt && !have ? '<br>' + needTxt + '（不消耗）' : ''}</div>${costHTML(t.cost)}${have ? '<div class="why" style="color:var(--grass)">已合成</div>' : rdy && day ? `<button class="btn main" data-tool="${t.id}">合成</button>` : `<div class="why">${day ? why : ''}</div>`}</div>`;
+  });
+  if (workTab === 'flag') { const c = C.flagCost(C.flagRing(w)), ok = C.canPay(w, c);
+    h += `<div class="card"><div class="ct">${img('flag')}拓荒旗 × ${w.bag.flag}</div><div class="cd">1 面旗拓 1 块地。地盘越大越贵。新地块是临时的。</div>${costHTML(c)}${ok && day ? '<button class="btn main" id="mkFlag">合成</button>' : `<div class="why">${day ? lackText(c) : ''}</div>`}</div>`; }
+  if (workTab === 'block') C.BLOCKS.forEach(b => {
+    const ok = C.canPay(w, b.cost), lockS = b.skill && !L[b.skill], sk = lockS && C.SKILLS.find(s => s.id === b.skill);
+    h += `<div class="card ${lockS ? 'dark' : ''}"><div class="ct"><img class="px" src="${blockIcon(b.id)}" alt="">${b.name} × ${w.blocks[b.id] || 0}</div><div class="cd">${b.gem ? '每块对应一道学会的题' : lockS ? `需要技能「${sk.name}」` : `一份 ${b.count} 块`}</div>${costHTML(b.cost)}${ok && day && !lockS ? `<button class="btn main" data-block="${b.id}">合成</button>` : `<div class="why">${day && !lockS ? lackText(b.cost) : ''}</div>`}</div>`;
+  });
+  $('workGrid').innerHTML = h;
+  $('workGrid').querySelectorAll('[data-tool]').forEach(b => { b.onclick = () => { if (C.craftTool(w, b.dataset.tool, G.day)) { toast(C.TOOLS.find(t => t.id === b.dataset.tool).name + ' 合成完成'); digAll(); save(); hud(); renderWork(); } }; });
+  $('workGrid').querySelectorAll('[data-block]').forEach(b => { b.onclick = () => { if (C.craftBlock(w, b.dataset.block, L)) { save(); hud(); renderWork(); } }; });
+  const mk = $('mkFlag'); if (mk) mk.onclick = () => { if (C.craftFlag(w, C.flagRing(w))) { save(); hud(); renderWork(); } };
+}
+function digAll() { const w = W(), L = lit(); Object.values(w.plots).forEach(p => { if (!p.dug && p.st !== 'wild') { const f = C.feature(p.x, p.y); if (f && f.kind === 'vein') { const d = C.digPlot(w, p.x, p.y, L); if (d && d.ore) toast(`挖开矿脉：矿石 +${d.ore}`); } } }); }
+$('bWork').onclick = () => openWork();
+$('bHome').onclick = () => { cam = {x: 0, y: 0}; draw(); };
+
+// ---------- 图鉴 ----------
+let bookTab = 'pal';
+$('bBook').onclick = () => { page('pBook'); renderBook(); };
+$('bookBack').onclick = () => page(null);
+function renderBook() {
+  const w = W(), L = lit();
+  $('bookTabs').innerHTML = [['pal', '伙伴'], ['tool', '工具'], ['skill', '技能'], ['role', '角色'], ['boss', 'Boss']].map(([k, t]) => `<button class="btn ${k === bookTab ? 'on' : ''}" data-t="${k}">${t}</button>`).join('');
+  $('bookTabs').querySelectorAll('button').forEach(b => { b.onclick = () => { bookTab = b.dataset.t; renderBook(); }; });
+  let h = '';
+  const petImg = (p, on) => { const c = document.createElement('canvas'); c.width = 14; c.height = 10; sprite(c.getContext('2d'), BODY[p[3]], petPal(p[2], on), 2, 2, 1); return `<img class="px" src="${c.toDataURL()}" alt="">`; };
+  const heroImg = (id, on) => { const c = document.createElement('canvas'); c.width = 12; c.height = 14; const s = SKINS[id]; sprite(c.getContext('2d'), HERO_ROWS, on ? {H: s[3], S: '#f1c27d', E: '#1b1d22', M: '#c0705a', G: s[0], g: s[1], B: s[2], K: '#2b2b2b'} : {H: '#0a0a0a', S: '#0a0a0a', E: '#0a0a0a', M: '#0a0a0a', G: '#0a0a0a', g: '#0a0a0a', B: '#0a0a0a', K: '#0a0a0a'}, 2, 0, 1); return `<img class="px" src="${c.toDataURL()}" alt="">`; };
+  if (bookTab === 'pal') PALS.forEach(p => { const on = palLit(p), sk = C.SKILLS.find(s => s.id === p[1]);
+    h += `<div class="card ${on ? (G.pet === p[0] ? 'on' : '') : 'dark'}"><div class="ct">${petImg(p, on)}${on ? p[0] : '未点亮'}</div><div class="cd">${on ? '已点亮' : `${sk.place}的题学会更多后点亮`}</div>${on ? `<button class="btn" data-pet="${p[0]}">${G.pet === p[0] ? '留在家' : '带上'}</button>` : ''}</div>`; });
+  if (bookTab === 'tool') C.TOOLS.forEach(t => { const on = w.tools[t.id];
+    h += `<div class="card ${on ? '' : 'dark'}"><div class="ct"><img class="px" src="${pickIcon(t.id)}" alt="" style="${on ? '' : 'filter:brightness(0)'}">${on ? t.name : '未点亮'}</div><div class="cd">${on ? short(on) + ' 合成' : `到工作台合成${t.name}`}</div></div>`; });
+  if (bookTab === 'skill') C.SKILLS.forEach(s => { const on = L[s.id];
+    h += `<div class="card ${on ? '' : 'dark'}"><div class="ct">${on ? s.name : '未点亮：' + s.name}</div><div class="cd">${on ? s.does : `${s.place}的题有一半点亮后可用。${s.does}`}</div></div>`; });
+  if (bookTab === 'role') ROLES.forEach(([id, name, cond, f]) => { const on = f(w);
+    h += `<div class="card ${on ? (G.skin === id ? 'on' : '') : 'dark'}"><div class="ct">${heroImg(id, on)}${on ? name : '未点亮'}</div><div class="cd">${on ? '已点亮' : cond}</div>${on ? (G.skin === id ? '<div class="why" style="color:var(--grass)">穿着</div>' : `<button class="btn" data-skin="${id}">穿上</button>`) : ''}</div>`; });
+  if (bookTab === 'boss') C.BANDS.forEach(b => { const on = w.boss[b.id];
+    h += `<div class="card ${on ? '' : 'dark'}"><div class="ct">${on ? b.boss : '未打败'}</div><div class="cd">${b.name}${on ? ' · ' + short(on) + ' 打败' : ''}</div></div>`; });
+  $('bookGrid').innerHTML = h;
+  $('bookGrid').querySelectorAll('[data-pet]').forEach(b => { b.onclick = () => { G.pet = G.pet === b.dataset.pet ? null : b.dataset.pet; save(); renderBook(); }; });
+  $('bookGrid').querySelectorAll('[data-skin]').forEach(b => { b.onclick = () => { G.skin = b.dataset.skin; save(); renderBook(); }; });
+}
+
+// ---------- 建造 ----------
+let B = null;
+function openBuild(x, y) {
+  if (!isDay()) return toast(G.practiced === G.day ? '夜晚不能建造。明天继续' : '今天探险后可以建造');
+  B = {x, y, sel: null, cell: 0, base: null}; page('pBuild');
+  $('bTitle').textContent = `建造 · ${C.bandOfRing(C.ring(x, y)).name}${W().plots[C.pkey(x, y)].st === 'temp' ? ' · 临时地块' : ''}`;
+  requestAnimationFrame(() => { renderBuild(); });
+}
+function say(t) { $('bsay').textContent = t; }
+function renderBuild() {
+  const w = W(), hA = $('bwrap').clientHeight - 12, wA = $('bwrap').clientWidth * .55; if (!hA) return;
+  B.cell = Math.max(24, Math.floor(Math.min(hA, wA) / PLOT));
+  const c = $('bcv'); c.width = c.height = B.cell * PLOT; c.style.width = c.style.height = B.cell * PLOT + 'px';
+  B.base = plotCanvas(B.x, B.y, B.cell, false); drawBuild();
+  const own = C.BLOCKS.filter(b => (w.blocks[b.id] || 0) > 0);
+  if (B.sel && B.sel !== 'x' && !own.some(b => b.id === B.sel)) B.sel = null;
+  if (!B.sel && own.length) B.sel = own[0].id;
+  $('bbar').innerHTML = `<button class="bk ${B.sel === 'x' ? 'on' : ''}" data-b="x"><span style="font-size:22px;font-weight:900">✕</span>拆除</button>` + own.map(b => `<button class="bk ${B.sel === b.id ? 'on' : ''}" data-b="${b.id}"><img class="px" src="${blockIcon(b.id)}" alt=""><b>${w.blocks[b.id]}</b>${b.name}</button>`).join('') + `<button class="bk" id="toWork"><span style="font-size:20px;font-weight:900">＋</span>合成</button>`;
+  $('bbar').querySelectorAll('[data-b]').forEach(el => { el.onclick = () => { B.sel = el.dataset.b; say(B.sel === 'x' ? '点已放的方块拆除，方块退回' : C.BLOCKS.find(b => b.id === B.sel).name + '：点空格放下'); renderBuild(); }; });
+  $('toWork').onclick = () => openWork('block', 'build');
+  if (!own.length && !$('bsay').textContent) say('没有方块。点「合成」做一些');
+  sunBar();
+}
+function sunBar() { $('sunI').style.width = Math.max(0, G.sunLeft / Math.max(1, G.sunTotal) * 100) + '%'; $('sunLeft').textContent = '白天 ' + fmtSun(); }
+function drawBuild() {
+  const g = $('bcv').getContext('2d'), s = B.cell; g.imageSmoothingEnabled = false; g.drawImage(B.base, 0, 0);
+  const built = W().built[C.pkey(B.x, B.y)] || {};
+  Object.entries(built).forEach(([k, v]) => { const [i, j] = k.split(',').map(Number); if (v.b === 'bridge' && v.up) { g.globalAlpha = .35; drawBlock(g, v.b, i * s, j * s, s, v); g.globalAlpha = 1; } else drawBlock(g, v.b, i * s, j * s, s, v); });
+  g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1; for (let i = 0; i <= PLOT; i++) { g.beginPath(); g.moveTo(i * s + .5, 0); g.lineTo(i * s + .5, s * PLOT); g.moveTo(0, i * s + .5); g.lineTo(s * PLOT, i * s + .5); g.stroke(); }
+}
+$('bcv').addEventListener('click', e => {
+  if (!B) return;
+  const r = $('bcv').getBoundingClientRect(), i = Math.floor((e.clientX - r.left) / B.cell), j = Math.floor((e.clientY - r.top) / B.cell), w = W();
+  if (i < 0 || j < 0 || i >= PLOT || j >= PLOT) return;
+  if (G.sunLeft <= 0) return dusk();
+  const pk = C.pkey(B.x, B.y), ck = i + ',' + j, m = w.built[pk] || (w.built[pk] = {}), cur = m[ck];
+  if (B.sel === 'x') { if (cur) { C.unplace(w, B.x, B.y, i, j); say(C.BLOCKS.find(b => b.id === cur.b).name + ' 已退回'); save(); renderBuild(); } else say('这一格是空的'); return; }
+  if (cur) {
+    if (cur.b === 'lever') { Object.values(m).forEach(v => { if (v.b === 'bridge') v.up = !v.up; }); save(); drawBuild(); say('拉杆：吊桥收起或放下'); return; }
+    if (cur.b === 'diamondb') { const it = ITEM[cur.from], pr = W().proof[cur.from]; say(cur.from ? `这块钻石来自 ${it ? it.name : cur.from}。${pr && pr.d3 ? short(pr.d3) + ' 隔天仍答对' : ''}` : '钻石块'); return; }
+    if (cur.b === 'paint') { cur.open = !cur.open; save(); drawBuild(); say(cur.open ? '暗门画：门打开' : '暗门画：门关上'); return; }
+    if (cur.b === 'trap') { say('陷阱：上面摆着诱饵钻石，踩上去会掉下去'); return; }
+    say(C.BLOCKS.find(b => b.id === cur.b).name + '。要换先用拆除'); return;
+  }
+  if (!B.sel) { say('没有方块。点「合成」做一些'); return; }
+  const v = C.place(w, B.x, B.y, i, j, B.sel, G.day); if (!v) return;
+  if (v.b === 'diamondb') { const it = ITEM[v.from], pr = W().proof[v.from]; say(v.from ? `这块钻石来自 ${it ? it.name : v.from}。${pr && pr.d3 ? short(pr.d3) + ' 隔天仍答对' : ''}` : '钻石块'); } else say(C.BLOCKS.find(b => b.id === v.b).name + ' 已放下');
+  save(); renderBuild();
+});
+$('buildBack').onclick = () => page(null);
+function dusk() {
+  if (pageNow === 'pBuild' || pageNow === 'pWork') page(null);
+  modal(`<h2>天黑了</h2><p>今天的世界时间结束。盖好的东西都存着，明天探险后天亮。</p>`, [{t: '查看世界', c: 'main'}, {t: '关闭'}]);
+}
+
+// ---------- Boss ----------
+let BS = null;
+function openBoss(bi) {
+  if (!C.bossCanTry(W(), bi, items(), G.day)) return toast('这一带的题学会更多后可以挑战');
+  const band = C.BANDS[bi];
+  BS = {bi, band, pool: C.bossPool(W(), band, items()), i: 0, ok: 0, input: ''};
+  W().bossDay = G.day; save();
+  $('bossName').textContent = band.boss; buildPad($('bossPad'), bossDigit); page('pBoss'); bossQ();
+}
+$('bBoss').onclick = () => { const bi = C.BANDS.findIndex((x, i) => C.bossCanTry(W(), i, items(), G.day)); if (bi >= 0) modal(`<h2>挑战${C.BANDS[bi].boss}</h2><p>今天只能挑战一次，开始后中途结束也算一次。打中的次数累计，血量不回。</p>`, [{t: '开始挑战', c: 'warn', f: () => openBoss(bi)}, {t: '先不挑战'}]); };
+function drawBoss(hit) {
+  const g = $('bossCv').getContext('2d'); g.clearRect(0, 0, 48, 32);
+  const col = {meadow: ['#6c7a4a', '#3d7524'], pine: ['#6b4628', '#3d7524'], sand: ['#c97a3e', '#8a4e22'], frost: ['#dfe9f2', '#8fa9c0'], lava: ['#4a2c26', '#ff7a1f'], cloud: ['#7f8fa8', '#f2c14e']}[BS.band.id], o = hit ? 2 : 0;
+  g.fillStyle = col[0]; g.fillRect(12 + o, 8, 24, 20); g.fillRect(16 + o, 2, 16, 8); g.fillStyle = col[1]; g.fillRect(12 + o, 8, 24, 3); g.fillRect(8 + o, 12, 4, 12); g.fillRect(36 + o, 12, 4, 12);
+  g.fillStyle = '#000'; g.fillRect(19 + o, 5, 3, 2); g.fillRect(26 + o, 5, 3, 2); g.fillRect(14 + o, 28, 6, 3); g.fillRect(28 + o, 28, 6, 3);
+}
+function bossBar() { const had = W().bossHp[BS.band.id] || 0; $('bossHp').style.width = Math.max(0, 1 - Math.max(BS.ok / BOSS_PASS, (had + BS.ok) / BOSS_HP)) * 100 + '%'; }
+function bossQ() {
+  if (!BS) return;
+  if (BS.i >= BOSS_Q) return bossEnd();
+  const it = BS.pool[Math.floor(Math.random() * BS.pool.length)]; let q = it.make();
+  if (q.pick) q = {text: `${q.pick[0]} 和 ${q.pick[1]} 哪个大`, ans: q.ans};
+  BS.q = q; BS.input = ''; BS.lock = false;
+  $('bossQ').textContent = q.text; fitText($('bossQ')); $('bossQ').style.fontSize = Math.min(44, parseInt($('bossQ').style.fontSize)) + 'px';
+  $('bossA').textContent = ''; $('bossA').style.borderColor = '#555';
+  bossBar(); drawBoss();
+}
+function bossDigit(d) {
+  if (!BS || BS.lock) return;
+  if (d === '⌫') BS.input = BS.input.slice(0, -1); else if (d === '确定') { if (BS.input) bossAns(); return; } else if (BS.input.length < 4) BS.input += d;
+  $('bossA').textContent = BS.input;
+  if (BS.input.length === String(BS.q.ans).length) bossAns();
+}
+function bossAns() {
+  BS.lock = true; const ok = +BS.input === BS.q.ans; if (ok) { BS.ok++; drawBoss(true); }
+  $('bossA').style.borderColor = ok ? 'var(--grass)' : 'var(--red)'; if (!ok) $('bossA').textContent = `${BS.input} → ${BS.q.ans}`;
+  bossBar(); BS.i++;
+  const mine = BS; setTimeout(() => { if (BS === mine) bossQ(); }, ok ? 380 : 1100);
+}
+function bossEnd() {
+  const s = BS; BS = null; const win = C.bossEnd(W(), s.bi, s.ok, G.day, BOSS_PASS, BOSS_HP), nx = C.BANDS[s.bi + 1];
+  save(); page(null);
+  modal(win ? `<h2>打败${s.band.boss}</h2><p>掉落：金块 ×6。地图向外开放${nx ? `：${nx.name}` : ''}。</p>` : `<h2>${s.band.boss}未被打败</h2><p>这次打中 ${s.ok} 下，累计 ${W().bossHp[s.band.id]} / ${BOSS_HP}。血量不回，明天接着打。</p>`, [{t: '回到世界', c: 'main'}]);
+  hud();
+}
+$('bossLeave').onclick = () => { if (BS) { BS.i = BOSS_Q; bossEnd(); } };
+
+// ---------- 白天倒计时：切后台不走 ----------
+let lastT = performance.now(), warned = false;
+document.addEventListener('visibilitychange', () => { lastT = performance.now(); if (Q) Q.t0 = performance.now(); save(); });
+setInterval(() => {
+  const now = performance.now(), dt = (now - lastT) / 1000; lastT = now;
+  if (document.hidden || G.practiced !== G.day || G.sunLeft <= 0) return;
+  if (pageNow === 'pQ' || pageNow === 'pEnd' || pageNow === 'pBoss') return;
+  G.sunLeft -= dt;
+  if (pageNow === 'pBuild') sunBar();
+  const st = $('sunTxt'); if (st) st.textContent = '白天 ' + fmtSun();
+  if (G.sunLeft <= 30 && G.sunLeft > 0 && !warned) { warned = true; toast('还有 30 秒天黑'); }
+  if (G.sunLeft <= 0) { G.sunLeft = 0; warned = false; save(); dusk(); hud(); }
+}, 1000);
+setInterval(save, 5000);
+
+// ---------- 演示控制（只在原型里有）：快进日期 ----------
+function autoDay(rate) {
+  const w = W(), list = pickSession(), sum = {ev: [], ok: 0, n: 0};
+  list.forEach(({id}) => { const it = ITEM[id], ok = Math.random() < rate, res = C.onAttempt(w, it, {ok, fast: ok, needFast: !!it.fast}, G.day);
+    G.seen[id] = 1; sum.n++; if (ok) { sum.ok++; C.gain(w, 'ore', ORE_SCALE); } else G.wrongEver[id] = 1; sum.ev.push(...res.events); });
+  return sum;
+}
+function nextDay(mode, n) {
+  const ev = [];
+  Q = null; BS = null; G.qs = null;
+  for (let d = 0; d < (n || 1); d++) {
+    G.day = addDays(G.day, 1); G.sunLeft = 0;
+    if (mode === 'none') continue;
+    const sum = autoDay(mode === 'good' ? 1 : mode === 'mid' ? .75 : 0), wild = C.endOfPractice(W(), G.day), pr = C.pruneBound(W(), items(), G.day);
+    startDay(sum.ok, sum.n);
+    sum.ev.concat(wild, pr).forEach(e => ev.push(e.type));
+    // 快进时自动花掉一部分：合成工具
+    C.TOOLS.forEach(t => C.craftTool(W(), t.id, G.day));
+  }
+  save(); page(null);
+  const c = t => ev.filter(x => x === t).length;
+  const parts = [c('perm') && `${c('perm')} 块变永久`, c('back') && `${c('back')} 块回来`, c('wild') && `${c('wild')} 块被迷雾盖住`, c('ench') && `${c('ench')} 块附魔`].filter(Boolean);
+  toast(`${short(G.day)} · ${parts.join('，') || (mode === 'none' ? '没来的日子，火把不烧' : '地块没有变化')}`, 3000);
+}
+function demoPanel() {
+  modal(`<h2>演示控制（只给家长看）</h2><div id="demo">
+    <div class="demoL">下一天，自己答题</div><div class="mact" style="margin:0"><button class="btn main" data-d="self">下一天 · 自己答</button></div>
+    <div class="demoL">快进（自动答 10 题，矿石按真实一天折算）</div><div class="mact" style="margin:0"><button class="btn" data-d="good,1">1 天 · 全对</button><button class="btn" data-d="good,5">5 天 · 全对</button><button class="btn" data-d="mid,1">1 天 · 有错</button><button class="btn" data-d="bad,1">1 天 · 全错</button></div>
+    <div class="demoL">没来</div><div class="mact" style="margin:0"><button class="btn" data-d="none,1">1 天没来</button><button class="btn" data-d="none,14">14 天没来</button></div>
+    <div class="demoL">其他</div><div class="mact" style="margin:0"><button class="btn" data-d="dusk">现在天黑</button><button class="btn" data-d="rich">材料各加 200</button><button class="btn" data-d="reset">重新开始</button></div>
+  </div>`, [{t: '关闭'}]);
+  $('modal').querySelectorAll('[data-d]').forEach(b => { b.onclick = () => {
+    closeModal(); const [m, n] = b.dataset.d.split(',');
+    if (m === 'reset') return modal('<h2>重新开始？</h2><p>原型里的进度全部清空。不影响真实产品。</p>', [{t: '清空', c: 'warn', f: () => { G = fresh(); thumbs = {}; Q = null; BS = null; save(); cam = {x: 0, y: 0}; page(null); }}, {t: '取消'}]);
+    if (m === 'self') { Q = null; BS = null; G.qs = null; G.day = addDays(G.day, 1); G.sunLeft = 0; save(); return page(null); }
+    if (m === 'dusk') { if (G.practiced === G.day) { G.sunLeft = 0; save(); dusk(); hud(); } else toast('今天还没探险'); return; }
+    if (m === 'rich') { ['ore', 'wood', 'coal', 'iron', 'gold', 'diamond'].forEach(k => C.gain(W(), k, 200)); save(); return hud(); }
+    nextDay(m, +n);
+  }; });
+}
+addEventListener('resize', () => { resize(); if (pageNow === 'pBuild') renderBuild(); if (Q) fitText($('qtext')); });
+resize(); page(null);
+window.__G = () => G; window.__C = C; window.__ITEMS = ITEMS; window.__itemsNow = items; window.__plotPx = plotPx; window.__cam = () => cam; window.__curAns = () => (Q && Q.cur ? Q.cur.inst.ans : null); window.__renderBuild = () => renderBuild(); window.__openBoss = openBoss; window.__bossAns = () => (BS && BS.q ? BS.q.ans : null);
+</script>
+</body>
+</html>
