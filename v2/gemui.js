@@ -1,5 +1,5 @@
 // 空空数学岛 · 碎片、锻造台、挑战的界面。规则都在 gems.js，这里只管显示和存取
-// 只在 iPad App 里开（测试：网址带 ?gems=1 且 #test）
+// 手机网页和 iPad App 都开；领宝石只在 App 里有，手机上没有空空矿场（测试：#test 下要带 ?gems=1）
 (function () {
   'use strict';
   const G = window.GEMS, KM = window.KM;
@@ -270,7 +270,7 @@
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span>`;
     const b = $('forgeClaim');
-    b.hidden = !items || hold > 0; b.textContent = left ? `领 ${left} 颗宝石` : '再领一次';
+    b.hidden = !c.canClaim || !items || hold > 0; b.textContent = left ? `领 ${left} 颗宝石` : '再领一次';
     b.classList.toggle('go', left > 0);
   }
   // 答题时碎片从屏幕中间飞向顶部

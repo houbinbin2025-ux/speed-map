@@ -96,7 +96,16 @@ with sync_playwright() as p:
     check(pg.evaluate("Object.values(GEMUI.state().days).reduce((a,d)=>a+d.n,0)") == n0, '口答模式不记作答')
     # 6 手机网页（没带 gems=1）：没有碎片
     pg2 = ctx.new_page(); pg2.goto((root / 'v2' / 'index.html').as_uri() + '#test'); pg2.wait_for_timeout(600)
-    check(pg2.evaluate("GEMUI.enabled()") is False, '不在 App 里不开碎片')
+    check(pg2.evaluate("GEMUI.enabled()") is False, '测试模式没带 gems=1 不开碎片')
+    # 6b 手机网页：碎片和锻造台都有，没有领宝石
+    pg3 = ctx.new_page(); pg3.goto((root / 'v2' / 'index.html').as_uri()); pg3.wait_for_timeout(700)
+    check(pg3.evaluate("GEMUI.enabled()") is True, '手机网页开碎片')
+    pg3.evaluate("Object.assign(GEMUI.state().inv,{s:0,m:10,l:0}); GEMUI.openForge('island')"); pg3.wait_for_timeout(200)
+    for _ in range(10): pg3.locator('[data-add=m]').click()
+    pg3.click('#forgeGo'); pg3.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=8000)
+    check(pg3.locator('#forgeMsg').inner_text() == '得到宝石 1，废料 0', '手机上能炼')
+    check(pg3.locator('#forgeClaim').is_hidden(), '手机上没有领宝石按钮'); check('1' in pg3.locator('#forgeToday').inner_text(), '手机上累计显示炼出的宝石')
+    pg3.screenshot(path=str(out / f'phone-{W}.png'))
     # 7 动画被系统暂停（finished 永远不结束）：不能卡死在锻造台
     def fresh(extra=None, gems=None):
         c2 = b.new_context(viewport={'width': W, 'height': H}); pp = c2.new_page(); pp.on('pageerror', lambda e: errs.append('异常场景 ' + str(e)))
