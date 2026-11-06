@@ -28,7 +28,7 @@
     return {counts, lit: counts[1] + counts[2] + counts[3], total: counts.reduce((a, b) => a + b, 0)};
   }
   const skillOf = id => K.BY[K.ITEM[id].skill];
-  const tagOf = id => { const s = skillOf(id); return s.hard ? `${GNAME[s.group]} · 挑战 · ${s.name}` : s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
+  const tagOf = id => { const s = skillOf(id); return s.hard ? `${GNAME[s.group]} · ${s.name}` : s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
 
   // ---------- 小零件 ----------
   const dot = cls => `<i class="dot${cls ? ' ' + cls : ''}"></i>`;
@@ -70,6 +70,8 @@
     if (q.view === 'grid') return `<div class="hgrid" style="grid-template-columns:repeat(${q.cols},26px)">${dot().repeat(q.rows * q.cols)}</div>`;
     if (q.view === 'h100') return `<div class="h100">${Array.from({length: 100}, (_, i) => `<i${i < q.n ? ' class="on"' : ''}></i>`).join('')}</div>`;
     if (q.view === 'hto') return `<div class="hto"><div class="hsqs">${'<i class="hsq"></i>'.repeat(q.h)}</div>${rods(q.t, q.o)}</div>`;
+    if (q.view === 'story') return a === undefined ? nbSay(q) : `<div class="eq num sm">${q.text.replace('□', ans(a))}</div>`;
+    if (q.view === 'clock5') return clockSvg(q.h, q.m) + (a === undefined ? nbSay(q) : `<div class="say2">${q.text.replace('□', ans(a))}</div>`);
     const t = q.text || ''; return `<div class="eq num${t.length > 11 ? ' sm' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
   };
   // ---------- 三个新地方的图 ----------
@@ -211,7 +213,7 @@
   // 小数线：标出几个点，jump = 画一条从第一个点到第二个点的弧
   function miniLine(lo, hi, marks, jump) {
     const pos = v => ((v - lo) / (hi - lo) * 100).toFixed(2);
-    const step = hi - lo <= 20 ? 1 : 10, ticks = [];
+    const step = hi - lo <= 20 ? 1 : hi - lo <= 100 ? 10 : 100, ticks = [];
     for (let v = lo; v <= hi; v += step) ticks.push(`<i class="tick" style="left:${pos(v)}%"></i>`);
     const arc = jump && marks.length === 2 ? `<svg class="arc" style="left:${Math.min(pos(marks[0][0]), pos(marks[1][0]))}%;width:${Math.abs(pos(marks[1][0]) - pos(marks[0][0]))}%" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path d="M1 29 Q50 -8 99 29" vector-effect="non-scaling-stroke"></path></svg>` : '';
     const close = marks.length === 2 && Math.abs(marks[0][0] - marks[1][0]) / (hi - lo) < 0.14, left = close ? Math.min(marks[0][0], marks[1][0]) : null;
@@ -247,7 +249,7 @@
       body = step(1, nbFig(q) || `<div class="prow">${q.l.map(n => `<span class="pst">${n}</span>`).join('')}</div>`, '看题') + arrow + step(2, `<div class="nbthink">${q.why}</div>`, '想一想') + arrow + step(3, `<div class="say2">${nbAns(q, ex.ans)}</div>`, s.input === 'pick' ? '点它' : '写答案');
       foot = s.input === 'pick' ? '点错了会告诉你答案' : '不会就点「不会」，会告诉你答案';
     } else if (s.hard && s.input !== 'line') {
-      title = '挑战：' + s.name;
+      title = GNAME[s.group] + '：' + s.name;
       body = s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
       foot = q.why;
@@ -288,7 +290,7 @@
       body = step(1, miniLine(0, q.max, [[0, ''], [q.max, '']]), `两头是 0 和 ${q.max}`) + arrow + step(2, miniLine(0, q.max, [[q.max / 2, 'from']]), `中间是 ${q.max / 2}`) + arrow + step(3, miniLine(0, q.max, [[q.target, 'win']]), `${q.target} 在这里`);
       foot = '手指按在线上，可以拖，松手停一下就好';
     }
-    return `<div class="demo${s.nb ? ' dnb' : ''}"><div class="dhead"><span class="learn">学一学</span><span class="dtitle">${title}</span>${s.nb ? nbSay(q) : ''}</div><div class="dbody">${body}</div><div class="dfoot">${foot}</div></div>`;
+    return `<div class="demo${s.nb || (s.hard && s.input !== 'line') ? ' dnb' : ''}"><div class="dhead"><span class="learn">学一学</span><span class="dtitle">${title}</span>${s.nb ? nbSay(q) : ''}</div><div class="dbody">${body}</div><div class="dfoot">${foot}</div></div>`;
   }
 
   // ---------- 名称：技能组地图的题型格子、结算的"今天点亮的"、错题本的题 ----------
@@ -315,6 +317,7 @@
   function mistLabel(m) {
     if (!m.src) return `${m.a} ${opSign(m.op)} ${m.b}`;
     const q = m.q || {}, s = skillOf(m.uid);
+    if (s.hard && q.view === 'clock5') return clockSvg(q.h, q.m);
     if (s.nb) return q.view === 'clock' ? clockSvg(q.h, q.m) : q.view === 'bad' ? q.l.join('、') : q.view === 'pat' ? `<span class="prow">${q.seq.map(blk).join('')}<span class="pblk qm">？</span></span>` : q.eq ? q.eq.replace(/=.*$/, '= ？') : s.name;   // 错题标签只给题面，不露答案
     if (s.hard && s.input === 'pick') return `${q.la || q.a} 和 ${q.lb || q.b} 谁大`;
     if (s.hard && s.input === 'write') return q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;

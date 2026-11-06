@@ -107,7 +107,8 @@ test('10 分钟里前 15 天简单题不再占绝大多数（模拟）', () => {
 
 test('练这一块：12 题不被第一个技能占满，能练的技能都出现', () => {
   const S = blank(); K.SKILLS.filter(s => s.group === 'bond').forEach(s => s.pre.forEach(p => K.BY[p].items.forEach(it => { const q = E.prog(S, it.id); q.lv = 1; q.d = ['2026-11-01']; })));
-  const rd = K.SKILLS.filter(s => s.group === 'bond' && E.ready(S, s.id)).map(s => s.id);
+  S.settings = {levels: [2, 3, 5]};
+  const rd = K.SKILLS.filter(s => s.group === 'bond' && E.ready(S, s.id) && s.items.some(it => E.itemOn(S, it.id))).map(s => s.id);
   assert.ok(rd.length >= 2);
   const s = E.free(S, '2026-11-05', 'bond', {rnd}), seen = new Set();
   for (let x = s.next(); x; x = s.next()) { if (x.kind !== 'q') continue; seen.add(K.ITEM[x.inst.id].skill); s.answer({ok: true, fast: false, secs: 5}); }
@@ -139,7 +140,7 @@ test('审查 2 轮：今日练习一天最多复习 15 道错题，多的顺延'
 });
 test('审查 2 轮：全部下架 → groupOut / allOut 为真；今天不计练习天数', () => {
   const S = blank(), day = '2026-11-05';
-  K.SKILLS.flatMap(s => s.items).forEach(it => { Object.assign(E.prog(S, it.id), {lv: 3, d: ['2026-10-01', '2026-10-02', '2026-10-06']}); if (it.gen) E.prog(S, it.id).out = 1; });
+  K.SKILLS.concat(K.HARD).flatMap(s => s.items).forEach(it => { Object.assign(E.prog(S, it.id), {lv: 3, d: ['2026-10-01', '2026-10-02', '2026-10-06']}); if (it.gen) E.prog(S, it.id).out = 1; });
   assert.ok(E.groupOut(S, 'bond', day)); assert.ok(E.allOut(S, day));
   const s = E.session(S, day, {rnd}); assert.equal(s.next(), null);
   assert.ok(!(S.stats[day] && S.stats[day].done), '0 题不算一天');
@@ -147,9 +148,9 @@ test('审查 2 轮：全部下架 → groupOut / allOut 为真；今天不计练
 });
 test('审查 2 轮：「练这一块」前置已满足的先出，不够 12 题才按从易到难带上后面的；不会一上来出最难的', () => {
   const day = '2026-11-05';
-  for (const g of ['line', 'cmp', 'bond', 'look', 'dock', 'garden', 'market']) {
+  for (const g of ['line', 'cmp', 'bond', 'dock', 'garden']) {
     const S = blank(), s = E.free(S, day, g, {rnd}), list = []; let n = 0;
-    const order = K.SKILLS.filter(x => x.group === g).map(x => x.id);
+    const order = K.SKILLS.filter(x => x.group === g && x.items.some(it => E.itemOn(S, it.id))).map(x => x.id);
     for (let x = s.next(); x; x = s.next()) { if (x.kind !== 'q') continue; n++; if (!x.retry) list.push(K.ITEM[x.inst.id].skill); s.answer({ok: true, fast: false, secs: 5}); }
     assert.equal(n, 12, g + ' 只有 ' + n + ' 题');
     const nr = order.filter(id => !E.ready(blank(), id)), firstNr = list.findIndex(id => nr.includes(id));

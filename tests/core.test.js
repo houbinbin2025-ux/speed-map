@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 const C = require('../v2/core.js');
 
 // ---------- 任务 1：题库、升级、限时 ----------
-test('题库：L1 80 张（110 张去掉所有数字 ≤ 5 的 30 张）、L2 90 张、L3/L4 各 12 种题型', () => {
-  assert.equal(C.unitsOf(0).length, 80);
+test('题库：L1 70 张（110 张去掉所有数字 ≤ 5 的 30 张和 +0、−0、自己减自己的 10 张）、L2 90 张、L3/L4 各 12 种题型', () => {
+  assert.equal(C.unitsOf(0).length, 70);
   assert.equal(C.unitsOf(1).length, 90);
   assert.equal(C.unitsOf(2).length, 12);
   assert.equal(C.unitsOf(3).length, 12);

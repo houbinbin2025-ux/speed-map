@@ -16,10 +16,26 @@
   const FAST_OUT = 4, FAST_PER_DAY = 2, MIST_EVERY = 2, MIST_DAY = 15;   // MIST_EVERY：每出 2 道别的题插 1 道到期错题；MIST_DAY：今日练习一天最多复习几道，多的顺延
 
   const skillOf = id => K.BY[K.ITEM[id].skill];
-  // 挑战题：家长按板块勾选（S.settings.hard）；秒答的挑战题属于 speedH 组，勾选项还是「秒答」
-  const boardOf = s => (s.group === 'speedH' ? 'speed' : s.group);
-  const hardOn = S => { const h = S.settings && S.settings.hard; return h ? K.HARD.filter(s => h[boardOf(s)]) : []; };
-  const activeItem = (S, id) => { const s = skillOf(id); return !s.hard || !!(S.settings && S.settings.hard && S.settings.hard[boardOf(s)]); };
+  // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级
+  const AUTO_PASS = 0.7, ALL_ITEMS = K.SKILLS.concat(K.HARD).flatMap(s => s.items);
+  const CELLS = K.LEVELS.map(l => ALL_ITEMS.filter(it => K.itemLevels(it.id)[0] === l.n));
+  const chosen = S => { const l = S.settings && S.settings.levels; return Array.isArray(l) && l.length ? l : null; };
+  // 自动：开放到「第一个还没点亮 70% 的级别」再往上一级，题量才够用满 10 分钟；摸底判为会的技能算点亮，全对的孩子不用从第 1 级起
+  let topMemo = null;   // 排课时一题要查几百次；档位变了（bump、retire）、新一次练习开始时清掉
+  function autoLevel(S) {
+    if (topMemo && topMemo.S === S) return topMemo.top;
+    let top = K.LEVELS.length;
+    for (let i = 0; i < CELLS.length; i++) { const share = l => (l.length ? l.filter(it => lv(S, it.id) >= 1 || (S.known && S.known[it.skill])).length / l.length : -1), c = CELLS[i];
+      // 理解和秒答分开算，有一条线过 70% 就算过：摸底不测秒答，不能因为秒答还灰把会的数位关掉
+      if (c.length && Math.max(share(c.filter(it => skillOf(it.id).speed)), share(c.filter(it => !skillOf(it.id).speed))) < AUTO_PASS) { top = Math.min(i + 2, K.LEVELS.length); break; } }
+    topMemo = {S, top};
+    return top;
+  }
+  const levelFits = (S, L, top) => { const c = chosen(S); return c ? c.includes(L) : L <= (top === undefined ? autoLevel(S) : top); };
+  const levelOn = (S, inst) => levelFits(S, K.levelOf(inst));
+  const itemOn = (S, id) => { const top = chosen(S) ? 0 : autoLevel(S); return K.itemLevels(id).some(L => levelFits(S, L, top)); };
+  const hardOn = S => K.HARD.filter(s => s.items.some(it => itemOn(S, it.id)));
+  const activeItem = (S, id) => !skillOf(id).hard || itemOn(S, id);
   // 格子的种类看题目本身：固定题 = 卡；每次出新数 = 题型（秒答题型沿用 v2 的"一天 5 次"）
   const kindOf = id => !K.ITEM[id].gen ? 'card' : skillOf(id).speed ? 'day5' : 'type8';
 
@@ -41,10 +57,13 @@
   };
   const needFast = (S, id) => { const s = skillOf(id); return s.timedFrom !== null && lv(S, id) >= s.timedFrom; };
   const learned = (S, sid) => K.BY[sid].items.every(it => lv(S, it.id) >= 1);
-  const ready = (S, sid) => K.BY[sid].pre.every(p => learned(S, p));
+  // 前置只看已开放的题；家长手选难度时不管前置
+  const learnedOn = (S, sid) => { const on = K.BY[sid].items.filter(it => itemOn(S, it.id)); return on.length > 0 && on.filter(it => lv(S, it.id) >= 1).length / on.length >= AUTO_PASS; };   // 已开放的题点亮 70% 算学会（和开下一级同一个标准）；前置还没开放 = 没学会
+  const ready = (S, sid) => !!chosen(S) || K.BY[sid].pre.every(p => learnedOn(S, p));
 
   // 升一级：只升不降、一天最多一级、淡红到深红隔 ≥ 3 天、日期往回调不升
   function bump(p, day) {
+    topMemo = null;
     const lastUp = p.lv > 0 ? p.d[p.lv - 1] : null;
     if (lastUp && day <= lastUp) return false;
     if (p.lv === 0) { p.lv = 1; p.d[0] = day; return true; }
@@ -82,6 +101,7 @@
   const outOf = (S, id) => (K.ITEM[id].gen ? !!peek(S, id).out : lv(S, id) === 3);    // 这一格的题全部下架了
   function retire(S, id, day) {                     // 点亮到深红（只升不降）；返回这次有没有升
     const p = prog(S, id); if (p.lv === 3) return false;
+    topMemo = null;
     for (let i = p.lv; i < 3; i++) p.d[i] = day;
     p.lv = 3;
     const L = (S.log[day] = S.log[day] || {ups: [], n: 0}); if (!L.ups.includes(id)) L.ups.push(id);
@@ -97,9 +117,10 @@
   }
   // 出一道还没下架的题；这一格的题全下架了返回 null，并把这一格点到深红
   function makeLive(S, id, r, day) {
-    if (outOf(S, id)) return null;
-    for (let k = 0; k < 400; k++) { const inst = K.make(id, r); if (!spent(S, inst)) return inst; if (!K.ITEM[id].gen) break; }
-    if (K.ITEM[id].gen) { prog(S, id).out = 1; retire(S, id, day); }
+    if (outOf(S, id) || !itemOn(S, id)) return null;
+    let live = false;
+    for (let k = 0; k < 400; k++) { const inst = K.make(id, r); if (!spent(S, inst)) { live = true; if (levelOn(S, inst)) return inst; } if (!K.ITEM[id].gen) break; }
+    if (K.ITEM[id].gen && !live) { prog(S, id).out = 1; retire(S, id, day); }   // 这一格的题全下架了；只是级别没开放不算
     return null;
   }
   // 下架的题不再以错题身份回来：对应的错题算过关
@@ -110,9 +131,11 @@
     }
   }
   // 还有题能出吗（一格、一组、全部）：先看都到深红了没有，到了才真的试着抽，平时不动发牌进度
-  const itemsOut = (S, its, day) => its.every(it => lv(S, it.id) === 3) && its.every(it => !makeLive(S, it.id, Math.random, day));
-  const groupOut = (S, group, day) => itemsOut(S, hardOn(S).concat(K.SKILLS).filter(s => inGroup(s, group)).flatMap(s => s.items), day);
-  const allOut = (S, day) => itemsOut(S, hardOn(S).concat(K.SKILLS).flatMap(s => s.items), day);
+  const itemsOut = (S, its0, day) => { const its = its0.filter(it => itemOn(S, it.id)); return its.length > 0 && (!!chosen(S) || its.every(it => lv(S, it.id) === 3)) && its.every(it => !makeLive(S, it.id, Math.random, day)); };
+  const groupItems = (S, group) => K.SKILLS.concat(K.HARD).filter(s => inGroup(s, group)).flatMap(s => s.items);
+  const groupOut = (S, group, day) => itemsOut(S, groupItems(S, group), day);
+  const groupEmpty = (S, group) => !groupItems(S, group).some(it => itemOn(S, it.id));   // 这块地在现在的难度下没有题
+  const allOut = (S, day) => itemsOut(S, ALL_ITEMS, day);
   // 家长区题库页用：这一格有多少道题已经下架
   const spentCount = (S, id) => Object.keys(S.fast || {}).filter(k => (k === id || k.startsWith(id + '|')) && S.fast[k][0] >= FAST_OUT).length;
 
@@ -136,9 +159,11 @@
     return key;
   }
   const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !(m.q && C.isLow(m.q));
-  const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && activeItem(S, m.uid) && (!only || only(m.uid)))
+  // 手选难度时只回来选中级别的错题，其他的暂停不丢
+  const mistOn = (S, m) => !!K.ITEM[m.uid] && activeItem(S, m.uid) && (!chosen(S) || chosen(S).includes(K.levelOf(instOfMistake(m))));
+  const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && mistOn(S, m) && (!only || only(m.uid)))
     .sort((a, b) => a.due.localeCompare(b.due) || a.added.localeCompare(b.added));
-  const dueCount = (S, day) => { let n = 0; for (const k in S.mistakes || {}) if (isDue(S.mistakes[k], day) && activeItem(S, S.mistakes[k].uid)) n++; return n; };
+  const dueCount = (S, day) => { let n = 0; for (const k in S.mistakes || {}) if (isDue(S.mistakes[k], day) && mistOn(S, S.mistakes[k])) n++; return n; };
   const instOfMistake = m => m.src ? K.make(m.uid, null, {q: m.q, ans: m.ans}) : {id: m.uid, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans};
 
   // ---------- 统计（意图卡的指标） ----------
@@ -183,8 +208,8 @@
   }
 
   // 同一技能不连续超过 3 题：从排队里挑第一个不违反的；学新的里已经点亮的不再出
-  function picker(S, asked, recent) {
-    const room = id => (asked[id] || 0) < MAXPER[kindOf(id)];
+  function picker(S, asked, recent, extra) {   // extra：题型多给的次数（练这一块题少时用）
+    const room = id => (asked[id] || 0) < MAXPER[kindOf(id)] + (extra && K.ITEM[id].gen ? extra : 0);
     const usable = x => room(x.inst.id) && !(x.seg === 'new' && lv(S, x.inst.id) > 0) && !spent(S, x.inst);   // 排着队时下架了也不再出
     return list => {
       for (let i = list.length - 1; i >= 0; i--) if (!usable(list[i])) list.splice(i, 1);
@@ -243,11 +268,13 @@
   function session(S, day, opts) {
     opts = opts || {};
     const r = opts.rnd || Math.random, Dy = daily(S, day);
+    topMemo = null;
     S.demoSeen = S.demoSeen || {}; S.known = S.known || {};
     if (opts.extra && Dy.done) { Dy.budget = Dy.sec + opts.extra; Dy.done = false; Dy.seg = null; Dy.mistN = 0; }
-    const recent = [], pick = picker(S, Dy.asked, recent), room = id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)];
+    const CHOSEN_EXTRA = 60, extra = chosen(S) ? CHOSEN_EXTRA : 0;   // 手选难度时题少，题型放宽，才练得满 10 分钟（一道题一天只记 2 次秒答）
+    const recent = [], pick = picker(S, Dy.asked, recent, extra), room = id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)] + (K.ITEM[id].gen ? extra : 0);
     let cur = null, queue = [], pending = [];
-    const RT = retrier(S, Dy.retried = Dy.retried || {}, id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA);
+    const RT = retrier(S, Dy.retried = Dy.retried || {}, id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + (K.ITEM[id].gen ? extra : 0));
     const finished = () => { Dy.done = true; if (stat(S, day).n > 0) stat(S, day).done = 1; };   // 今天的题做完了：家的累计天数要用（说明书-v5-家）
     if (!Dy.seg || Dy.seg === 'review') Dy.seg = 'new';
     Dy.sinceM = Dy.sinceM || 0;
@@ -258,12 +285,13 @@
     // 学新的：同时最多 2 个技能（理解技能和秒答各占一个，缺一类时另一类补）；一天最多开始 3 个从没练过的技能
     function frontSkills() {
       // 今天这个技能的灰格子都出满了（新题型一次最多 6 题、要攒 8 次，所以常常要两天）→ 让位给下一个技能
-      const hasRoom = s => s.items.some(it => lv(S, it.id) === 0 && room(it.id) && !outOf(S, it.id));
-      const ok = s => ready(S, s.id) && !learned(S, s.id) && hasRoom(s) && (started(s.id) || Dy.fresh.includes(s.id) || Dy.fresh.length < NEW_PER_DAY);
+      const hasRoom = s => s.items.some(it => lv(S, it.id) === 0 && room(it.id) && !outOf(S, it.id) && itemOn(S, it.id));
+      const ok = s => ready(S, s.id) && hasRoom(s) && (started(s.id) || Dy.fresh.includes(s.id) || Dy.fresh.length < NEW_PER_DAY);
       // 防冷落：已经开始学、≥ STALE 天没练的技能排到最前
       const stale = s => { const l = s.items.map(it => lastSeen(peek(S, it.id))).sort().pop(); return started(s.id) && l && C.dayDiff(l, day) >= STALE; };
       const byStale = list => list.filter(stale).concat(list.filter(s => !stale(s)));
-      const u = hardOn(S).filter(ok).concat(byStale(K.understand.filter(ok))), sp =   // 家长勾选的挑战题排最前
+      const notKnown = l => l.filter(s => !S.known[s.id]).concat(l.filter(s => S.known[s.id]));   // 摸底判为会的排后面，先学真正新的
+      const u = byStale(notKnown(K.understand.filter(ok).concat(hardOn(S).filter(ok)))), sp =
         byStale(K.speed.filter(ok));
       const front = u.slice(0, 1).concat(sp.slice(0, 1));
       for (const s of u.slice(1).concat(sp.slice(1))) { if (front.length >= FRONT) break; front.push(s); }
@@ -277,7 +305,7 @@
     }
     function fillNew() {
       queue = spreadOut(frontSkills().map(s => {
-        const gray = s.items.filter(it => lv(S, it.id) === 0 && room(it.id)), out = [];
+        const gray = s.items.filter(it => lv(S, it.id) === 0 && room(it.id) && itemOn(S, it.id)), out = [];
         const add = it => { const inst = makeLive(S, it.id, r, day); if (inst) out.push({inst, seg: 'new'}); };
         gray.filter(it => !it.gen).slice(0, 6).forEach(add);
         gray.filter(it => it.gen).forEach(it => { for (let k = 0; k < REP[kindOf(it.id)]; k++) add(it); });
@@ -289,7 +317,9 @@
       const due = [], learning = [], keep = [];
       K.SKILLS.concat(hardOn(S)).forEach(s => s.items.forEach(it => {
         const p = peek(S, it.id), seen = lastSeen(p);
-        if (p.lv === 0 || p.lastDay === day || !room(it.id) || outOf(S, it.id)) return;
+        if (!room(it.id) || outOf(S, it.id) || !itemOn(S, it.id)) return;
+        if (chosen(S)) { learning.push(it); return; }   // 家长手选：这几级的题都能出，不等到期
+        if (p.lv === 0 || p.lastDay === day) return;
         if ((p.lv === 1 && p.d[0] < day) || (p.lv === 2 && C.dayDiff(p.d[1], day) >= C.GAP_DAYS)) due.push(it);
         else if (p.lv < 3) learning.push(it);
         else if (!seen || C.dayDiff(seen, day) >= KEEP[Math.min(p.keep || 0, KEEP.length - 1)]) keep.push(it);
@@ -303,7 +333,7 @@
       keep.sort((a, b) => old(a).localeCompare(old(b)));
       queue = spreadOut(due.concat(learning, keep).map(it => {
         const isKeep = peek(S, it.id).lv === 3;
-        return Array.from({length: REP[kindOf(it.id)]}, () => makeLive(S, it.id, r, day)).filter(Boolean).map(inst => ({inst, seg: 'fluency', keep: isKeep}));
+        return Array.from({length: REP[kindOf(it.id)]}, () => makeLive(S, it.id, r, day)).filter(Boolean).map(inst => ({inst, seg: lv(S, it.id) === 0 ? 'new' : 'fluency', keep: isKeep}));   // 灰的（手选时才有）算新题，第一次有示范卡
       }));
     }
     function advance() {
@@ -374,9 +404,10 @@
   function free(S, day, group, opts) {
     opts = opts || {};
     const r = opts.rnd || Math.random, n = opts.n || (opts.mistOnly ? Infinity : FREE_N);
+    topMemo = null;
     S.demoSeen = S.demoSeen || {}; S.known = S.known || {}; sweep(S);
     const skills = hardOn(S).concat(K.SKILLS).filter(s => inGroup(s, group)), inSet = id => skills.includes(skillOf(id));
-    const asked = {}, recent = [], pick = picker(S, asked, recent);
+    const FREE_EXTRA = 6, asked = {}, recent = [], pick = picker(S, asked, recent, FREE_EXTRA);
     let since = 0;
     const mist = dueMistakes(S, day, inSet).map(m => ({inst: instOfMistake(m), mkey: m.key, seg: 'review'}));
     // Ben 11-05：12 题不许被第一个技能占满：能练的技能轮流出，靠后（更难）的先；同一技能里灰的先、久没练的先
@@ -386,15 +417,15 @@
     const queue = [], seg = it => (lv(S, it.id) === 0 ? 'new' : 'fluency');
     if (!opts.mistOnly) for (const tier of tiers) {
       if (queue.length >= n) break;
-      const its = spreadOut(tier.map(s => s.items.filter(it => !outOf(S, it.id)).sort(byIt)));
+      const its = spreadOut(tier.map(s => s.items.filter(it => !outOf(S, it.id) && itemOn(S, it.id)).sort(byIt)));
       queue.push(...spreadOut(its.map(it => Array.from({length: REP[kindOf(it.id)]}, () => makeLive(S, it.id, r, day)).filter(Boolean).map(inst => ({inst, seg: seg(it)})))));
       for (let more = true; queue.length < n && more;) {
         more = false; const per = {}; queue.forEach(x => { per[x.inst.id] = (per[x.inst.id] || 0) + 1; });
-        its.forEach(it => { if (queue.length >= n || !it.gen || (per[it.id] || 0) >= MAXPER[kindOf(it.id)]) return; const inst = makeLive(S, it.id, r, day); if (inst) { queue.push({inst, seg: seg(it)}); more = true; } });
+        its.forEach(it => { if (queue.length >= n || !it.gen || (per[it.id] || 0) >= MAXPER[kindOf(it.id)] + FREE_EXTRA) return; const inst = makeLive(S, it.id, r, day); if (inst) { queue.push({inst, seg: 'fluency'}); more = true; } });
       }
     }
     let cur = null, count = 0;
-    const pending = [], RT = retrier(S, {}, id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA);
+    const pending = [], RT = retrier(S, {}, id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + (K.ITEM[id].gen ? FREE_EXTRA : 0));
     return {
       next() {
         if (pending.length) { cur = pending.shift(); return cur; }
@@ -485,7 +516,8 @@
   }
 
   return {BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
-    boardOf, hardOn, activeItem, prog, peek, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
+    chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
+    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,
     review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
 });

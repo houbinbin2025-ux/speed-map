@@ -9,7 +9,7 @@ const G = ['dock', 'garden', 'market'];
 test('3 个新地方，11 个技能（4 + 3 + 4），都在技能表和板块表里', () => {
   assert.deepEqual(G.map(g => K.SKILLS.filter(s => s.group === g).length), [4, 3, 4]);
   G.forEach(g => assert.ok(R.GROUPS.find(x => x.id === g)));
-  assert.equal(K.SKILLS.length, 46); assert.ok(K.topoOk());
+  assert.equal(K.SKILLS.length, 45); assert.ok(K.topoOk());
 });
 test('前置：很早就能开始规律，故事题在分合之后，比多少最后', () => {
   assert.deepEqual(K.BY.gardenA.pre, ['look3']);
