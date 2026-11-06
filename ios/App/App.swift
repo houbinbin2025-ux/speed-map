@@ -1,5 +1,6 @@
 import UIKit
 import WebKit
+import AVFoundation
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {}
@@ -49,6 +50,7 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
         config.mediaTypesRequiringUserActionForPlayback = []
         config.userContentController.add(self, name: "backup")
         config.userContentController.add(self, name: "clip")
+        config.userContentController.add(self, name: "speak")
         web = WKWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
         installBootScript()
@@ -141,8 +143,24 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
         switch message.name {
         case "backup": if ProgressBackup.save(text) { installBootScript() }
         case "clip": UIPasteboard.general.string = text
+        case "speak": speak(text)
         default: break
         }
+    }
+
+    /// 朗读题目：内嵌网页的语音不可靠，用系统语音（离线可用、不受静音键影响）。空字符串 = 停止
+    private let speech = AVSpeechSynthesizer()
+    private func speak(_ json: String) {
+        speech.stopSpeaking(at: .immediate)
+        guard let data = json.data(using: .utf8),
+              let m = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+              let text = m["text"], !text.isEmpty else { return }
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
+        let u = AVSpeechUtterance(string: text)
+        u.voice = AVSpeechSynthesisVoice(language: m["lang"] ?? "zh-CN")
+        u.rate = AVSpeechUtteranceDefaultSpeechRate * 0.9
+        speech.speak(u)
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,

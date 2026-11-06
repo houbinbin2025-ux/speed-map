@@ -3,7 +3,7 @@ import sys, json, pathlib, time
 from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 page = (root / 'v2' / 'index.html').as_uri()
-seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'oral': True,
+seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'oral': True, 'settings': {'bilingual': False},
         'known': {k: True for k in ['look1', 'look2', 'look3', 'look4', 'bond1', 'cmp1']}}
 errs = []
 with sync_playwright() as p:
@@ -39,7 +39,7 @@ with sync_playwright() as p:
     # 12f：预览页（地址在 /v2/ 下、不带 #test），正式键已经存在 → 停写、提示新版
     b = p.chromium.launch(); pg = b.new_page(viewport={'width': 932, 'height': 430})
     pg.on('pageerror', lambda e: errs.append(str(e)))
-    pg.goto(page); pg.evaluate("localStorage.clear(); localStorage.setItem('speedmap.v2', JSON.stringify({v: 2, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}}))"); pg.reload(); pg.wait_for_timeout(300)
+    pg.goto(page); pg.evaluate("localStorage.clear(); localStorage.setItem('speedmap.v2', JSON.stringify({v: 2, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}, settings: {bilingual: false}}))"); pg.reload(); pg.wait_for_timeout(300)
     pg.screenshot(path=str(out / 'g3-newversion.png'))
     nv = pg.evaluate("!document.getElementById('ovNew').hidden"); pre = pg.evaluate("localStorage.getItem('speedmap.v2.preview')")
     b.close()
