@@ -25,6 +25,7 @@
     c.$('forgeClaim').addEventListener('click', claim);
     c.$('forgeBack').addEventListener('click', () => { if (busy) return; if (back === 'island') c.goIsland(); else c.show(back); });
     addEventListener('resize', () => { if (c.cur() === 'forge') layoutScene(); });
+    if (window.ResizeObserver) new ResizeObserver(() => { if (c.cur() === 'forge' && c.$('forge').clientHeight) layoutScene(); }).observe(c.$('forge'));
     window.__kongEarnFailed = () => { st.sent = {}; save(); msg = '没有找到空空矿场'; if (c.cur() === 'forge') draw(); };
   }
 

@@ -398,6 +398,10 @@
       M.fast = Object.assign({}, v.fast || {});
       for (const k in S.fast || {}) if (!M.fast[k] || S.fast[k][0] >= M.fast[k][0]) M.fast[k] = S.fast[k];
     }
+    if (S.think || v.think) {   // 思维模块进度按技能取大：只增不减
+      M.think = {};
+      [S.think || {}, v.think || {}].forEach(t => { for (const id in t) if (Array.isArray(t[id])) { M.think[id] = M.think[id] || []; t[id].forEach((n, i) => { M.think[id][i] = Math.max(M.think[id][i] || 0, Number(n) || 0); }); } });
+    }
     if (!M.placedAt) delete M.placedAt;
     if (S.lvTop || v.lvTop) { const hi = (v.lvTop || 0) > (S.lvTop || 0) ? v : S; M.lvTop = hi.lvTop; M.lvTopDay = hi.lvTopDay; }   // 自动开级放行到哪一级：取大，不退回去
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）

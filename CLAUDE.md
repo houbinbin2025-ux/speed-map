@@ -29,7 +29,7 @@
 - **审改循环上限 3 轮**：任何一个环节"审出问题 → 修改 → 再验收"最多 3 轮；第 3 轮还不过 = 方案本身有问题，**回到方案研究 / 风险验证换方案**，不许硬磨第 4 轮；只有方案和 Ben 的意图冲突时才停下问 Ben。审查记录写 `docs/审查/`。
 - **提报格式**：我的建议 → 为什么 → 不这样做的后果。技术选择我自己定，只问 Ben 本人才知道的事实（孩子的情况、使用场景）。
 - **完成必须有证据**：测试输出 + 真访问截图；收尾推送 GitHub（注意第三条硬约束：推 main = 上线）。
-- **改了 `v2/` 下任何一个脚本（i18n / bank / hardbank / placebank / core / ink / skills / engine / render / world / home / house），跑 `node tools/bump-version.js`**，它把 `v2/index.html` 里全部 12 个 `?v=N` 一起加 1 并更新指纹（10-26 踩坑：手机缓存旧脚本配新页面，一写字就报错；`npm test` 的脚本指纹测试会拦住忘加的情况）。
+- **改了 `v2/` 下任何一个脚本（i18n / bank / hardbank / placebank / core / ink / skills / engine / render / world / home / puzzles / thinking / house），跑 `node tools/bump-version.js`**，它把 `v2/index.html` 里全部 17 个 `?v=N` 一起加 1 并更新指纹（10-26 踩坑：手机缓存旧脚本配新页面，一写字就报错；`npm test` 的脚本指纹测试会拦住忘加的情况）。
 - **iPad 同步（Ben 11-06）**：App 的题是打包进去的。凡是改了 `v2/`（题库、页面、脚本）并推送，**同一次收尾必须跑 `bash ios/release.sh`** 装到 iPad，并在交付说明里写「iPad 已更新到 vN」；iPad 没连上就明说没同步，不许略过。只同步内容，进度两边各存各的。
 - **改题只改题库数据（`v2/bank.js`、`hardbank.js`、`placebank.js`）**：卡和题型编号只增不删、卡的题目不改（要改换新编号）、题型的题可增删；改完跑 `node tools/bump-version.js` 和 `npm test`（`tests/bank.test.js` 查答案、覆盖、左右平衡、旧进度）。规则和标准见 `docs/说明书-题库.md`。
 - **改了题面、图解或页面排版（`v2/render.js`、`v2/index.html` 样式），跑 `python3 tools/e2e/overflow.py . 30`**，6 种 iPhone 横屏尺寸下每种题都不许超出左栏、钻到写字板下（10-28 踩坑：两个十格框被写字板盖住半边）。
@@ -48,6 +48,8 @@
 
 ## 六、当前状态（2026-10-25）
 - **2026-11-06**：题库到四年级第一批（第 10–15 级约 5700 道，只用现有题面；`docs/说明书-到四年级第一批.md`，白话 `docs/到四年级第一批-改动说明.md`）。新题用 `q.qk` 短编号，改题规则同题库；生成在 `tools/grade34-pools.js`。
+- **2026-11-06 Ben 拍板**：下界、末地、末影龙、凋灵、监守者保留我的世界原名，中英文一致（The Nether、The End、Ender Dragon、Wither、Warden）。其他角色、造型、贴图仍是原创。
+- **2026-11-06**：v2 岛上新增 4 个思维地点（天平桥、凑数矿、线索营地、方块工坊）：`v2/puzzles.js` 出题和进度（`S.think`），`v2/thinking.js` 页面（样式隔离在 `#think`）。自由练习，不进每日排课和四档颜色。说明：`docs/v8-改动说明.md`、`docs/意图-v8-思维模块.md`；走查 `tools/e2e/e2e-v8.py`。
 - **2026-11-06**：习惯记录和家长区「能力观察」（只记录，不影响练习；`docs/说明书-习惯记录.md`，白话说明 `docs/习惯记录-改动说明.md`）。下一步见 `docs/意图-学习习惯.md`，要等约 2 周的真实笔迹数据；到四年级的题库方案见 `docs/题库规划-到四年级.md`。
 - **2026-11-05**：v2 岛上新增 3 个地方（规律花园、钟楼集市、故事码头），11 个技能混在主路线里（`v2/placebank.js` 题库，`tools/build-places.js` 生成）；剔除所有数字都不超过 5 的题；挑战题家长区可勾选。说明：`docs/v6-改动说明.md`。
 - **2026-11-05**：v2 剔除所有数字 ≤ 5 的题（`C.isLow`，运行时过滤，数据和旧进度不删，见 `docs/说明书-题库.md` 末尾）。

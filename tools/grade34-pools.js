@@ -46,7 +46,7 @@ fill('dock:g11:perim', 114, 120, r => { const s = r() < .3; if (s) { const a = i
 fill('dock:g11:times', 115, 120, r => { const [th, u] = pick(THINGS, r), w = pick(WHO, r), w2 = pick(WHO.filter(x => x !== w), r), a = int(r, 12, 240), t = int(r, 2, 9); return r() < .5
   ? st(`t${a}-${t}-${th}`, `${w}有 ${a} ${u}${th}，${w2}的${th}是${w}的 ${t} 倍。${w2}有几${u}？`, a * t, `${a} × ${t} = ${a * t}`, `${a}*${t}`)
   : st(`d${a}-${t}-${th}`, `${w}有 ${a * t} ${u}${th}，是${w2}的 ${t} 倍。${w2}有几${u}？`, a, `${a * t} ÷ ${t} = ${a}`, `${a * t}/${t}`); });
-fill('dock:g11:two', 116, 120, r => { const [th, u] = pick(THINGS, r), b = int(r, 4, 9), n = int(r, 12, 60), c = int(r, 7, b * n - 1); return st(`p${b}-${n}-${c}-${th}`, `每盒 ${b} ${u}${th}，买 ${n} 盒，送出 ${c} ${u}。还剩几${u}？`, b * n - c, `${n} × ${b} = ${b * n}，${b * n} − ${c} = ${b * n - c}`, `${n}*${b}-${c}`); });
+fill('dock:g11:two', 116, 120, r => { const [th, u] = pick(SHOP, r), b = int(r, 4, 9), n = int(r, 12, 60), c = int(r, 7, b * n - 1); return st(`p${b}-${n}-${c}-${th}`, `每盒 ${b} ${u}${th}，买 ${n} 盒，送出 ${c} ${u}。还剩几${u}？`, b * n - c, `${n} × ${b} = ${b * n}，${b * n} − ${c} = ${b * n - c}`, `${n}*${b}-${c}`); });
 fill('dock:g11:speed', 117, 90, r => { const v = int(r, 12, 90), t = int(r, 2, 9); return st(`v${v}-${t}`, `小船每小时行 ${v} 千米，行了 ${t} 小时。一共几千米？`, v * t, `${v} × ${t} = ${v * t}`, `${v}*${t}`); });
 fill('dock:g11:part', 118, 90, r => { const half = r() < .5, d = half ? 2 : 4, n = int(r, 4, 240) * d, [th, u] = pick(THINGS, r); return st(`f${d}-${n}-${th}`, `${n} ${u}${th}的${half ? '一半' : '四分之一'}是几${u}？`, n / d, `${n} ÷ ${d} = ${n / d}`, `${n}/${d}`); });
 // ---------- 第 12 级 ----------
@@ -71,7 +71,7 @@ fill('speed:g13:order', 133, 200, r => { const kind = int(r, 0, 4), a = int(r, 1
 fill('place:g13:round', 134, 120, r => { const n = int(r, 1010, 9490); if (n % 100 === 0) return null; const up = n % 100 >= 50, a = Math.round(n / 100) * 100, t = Math.floor(n / 10) % 10; return eq(`${n}`, `${n} 四舍五入到百位 = □`, a, `十位是 ${t}，${up ? '大于等于 5，进一' : '小于 5，舍去'}，是 ${a}`); });
 fill('dock:g13:unit', 135, 150, r => { const [th, u] = pick(SHOP, r), p = int(r, 3, 30), a = int(r, 3, 9), n = int(r, 11, 40); return st(`u${p}-${a}-${n}-${th}`, `${a} ${u}${th}共 ${p * a} 元。同样的${th} ${n} ${u}要几元？`, p * n, `${p * a} ÷ ${a} = ${p}，${p} × ${n} = ${p * n}`, `${p * a}/${a}*${n}`); });
 fill('dock:g13:speed', 136, 100, r => { const v = int(r, 12, 80), a = int(r, 2, 6), n = int(r, 7, 15); return st(`v${v}-${a}-${n}`, `小船 ${a} 小时行 ${v * a} 千米。照这样，${n} 小时行几千米？`, v * n, `${v * a} ÷ ${a} = ${v}，${v} × ${n} = ${v * n}`, `${v * a}/${a}*${n}`); });
-fill('dock:g13:share', 137, 100, r => { const [th, u] = pick(THINGS, r), b = int(r, 12, 48), n = int(r, 6, 25), k = int(r, 3, 8); if ((b * n) % k) return null; return st(`s${b}-${n}-${k}-${th}`, `每盒 ${b} ${u}${th}，买 ${n} 盒，平均分给 ${k} 个班。每班几${u}？`, b * n / k, `${b} × ${n} = ${b * n}，${b * n} ÷ ${k} = ${b * n / k}`, `${b}*${n}/${k}`); });
+fill('dock:g13:share', 137, 100, r => { const [th, u] = pick(SHOP, r), b = int(r, 12, 48), n = int(r, 6, 25), k = int(r, 3, 8); if ((b * n) % k) return null; return st(`s${b}-${n}-${k}-${th}`, `每盒 ${b} ${u}${th}，买 ${n} 盒，平均分给 ${k} 个班。每班几${u}？`, b * n / k, `${b} × ${n} = ${b * n}，${b * n} ÷ ${k} = ${b * n / k}`, `${b}*${n}/${k}`); });
 // ---------- 第 14 级 ----------
 fill('speed:g14:law', 141, 200, r => { const kind = int(r, 0, 4), a = int(r, 12, 89), b = int(r, 12, 89);
   if (kind === 0) return eq(`l0-${a}`, `25 × ${a} × 4 =`, a * 100, `25 × 4 = 100，100 × ${a} = ${a * 100}`);

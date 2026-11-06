@@ -108,7 +108,7 @@
     const it = K.ITEM[inst.id], s = skillOf(inst.id), q = inst.q, tag = tagOf(inst.id);
     if (s.nb) return Object.assign({input: s.input, tag, html: s.input === 'pick' && q.view === 'clock' ? `<div class="nbrow">${nbSay(q)}${nbFig(q)}</div>` : nbSay(q) + nbFig(q), note: ''}, nbOpts(q));
     if (s.hard && s.input === 'pick') return {input: 'pick', tag, html: '<div class="say2">哪个大？点它</div>', pick: [q.a, q.b], pickText: q.la ? [q.la, q.lb] : null};
-    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (q.text === '□' ? '' : hardFig(q)) : hardFig(q), note: String(inst.ans).length >= 3 ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
+    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (q.text === '□' ? '' : hardFig(q)) : hardFig(q), note: /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
     if (s.hard && s.input === 'write') return {input: 'write', tag, html: hardFig(q), note: q.view === 'hto' ? '方块是 100，一根是 10，一块是 1' : q.view === 'grid' ? '一排一排数，写在右边' : q.view === 'h100' ? '一行是 10，一共涂了几格？' : '在右边写出答案'};
     if (s.speed) return {input: 'write', tag, html: `<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} =</div>`, note: '在右边写出答案，写完停一下就好'};
     if (s.group === 'look') return {input: 'write', tag, html: `<div class="look">${pattern(q)}</div>`, flash: true, note: '有几个？写在右边'};

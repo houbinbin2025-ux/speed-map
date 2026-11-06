@@ -30,7 +30,7 @@
 
   // ---------- 整句字典 ----------
   // 岛上小地图按钮只有 48 点宽、技能地图有 8 个标签，用短名字
-  const SHORT = {看数: 'Count', 分合: 'Bonds', 数位: 'Place', 数线: 'Line', 规律: 'Pattern', 规律花园: 'Patterns', 钟楼集市: 'Market', 故事码头: 'Dock'};
+  const SHORT = {天平: 'Balance', 凑数: 'Target', 线索: 'Clues', 工坊: 'Blocks', 看数: 'Count', 分合: 'Bonds', 数位: 'Place', 数线: 'Line', 规律: 'Pattern', 规律花园: 'Patterns', 钟楼集市: 'Market', 故事码头: 'Dock'};
   const D = {
     "计算": "Math",
     "可以用纸笔算，算好写在右边": "Use paper if you like, then write the answer on the right",
@@ -105,6 +105,18 @@
     "和倍差倍": "Sum and times",
     "鸡兔同笼": "Chickens and rabbits",
     "年龄": "Ages",
+    // 思维模块
+    天平: 'Balance', 凑数: 'Target', 线索: 'Clues', 工坊: 'Blocks', 天平桥: 'Balance Bridge', 凑数矿: 'Target Mine', 线索营地: 'Clue Camp', 方块工坊: 'Block Workshop',
+    平不平: 'Balanced?', 填一个数: 'One number', 填两个数: 'Two numbers', 先想后称: 'Think first', 只用加: 'Add only', 加和减: 'Add and take', 五个数字: 'Five numbers',
+    三行: 'Three rows', 四行: 'Four rows', 粗线框: 'Thick boxes', 小狗在哪: 'Find the dog', 左右对称: 'Left-right', 上下对称: 'Up-down', 转一转: 'Turn it', 转一转五格: 'Turn it (5)',
+    重来: 'Start over', '不能翻面，只能转': 'You can turn it, but not flip it', 朗读: 'Read', 一样重: 'Same', 不一样: 'Not same', 称一称: 'Weigh', 答完再称: 'Weigh after you answer', 算好了: 'Check', 再找一种: 'Find another', 做好了: 'Check', 点数字: 'Tap a number',
+    两边一样重吗: 'Do both sides weigh the same?', '填几，两边才一样重': 'What number makes both sides the same?', '填两个数，让两边一样重': 'Fill in two numbers to make both sides the same', '先想好，填上再称': 'Think first, fill it in, then weigh',
+    '和右边的数一样，换两个数': 'Those are the numbers on the right. Try two others', 用这些数字凑出: 'Use these numbers to make', '每个数字只能用一次，不用全部用完': 'Use each number once at most. You can leave some out',
+    '这种找过了，换一种': 'You found that one already. Try another', 全部找到了: 'You found them all', 凑到了: 'You made it', '不够减，换一个数字': "That's too much to take away. Try another number",
+    先改红色的数字: 'Fix the red number first', '红色的数字重复了，改你填的数字': 'The red numbers repeat. Change a number you filled in', 全部填对了: 'All correct', '先找只缺一个数的行或列，再接着往下推': 'Start with a row or column that is missing just one number, then keep going',
+    小狗藏在哪个木箱: 'Which crate is the dog hiding in?', '想好了，点那个木箱': 'When you know, tap that crate', '红线是镜子，补出右边的影子': 'The red line is a mirror. Fill in the reflection on the right', '红线是镜子，补出下面的影子': 'The red line is a mirror. Fill in the reflection below',
+    '红色的方块对不上，要和另一边离红线一样远': "The red blocks don't match. They must be as far from the line as the other side", 两边对上了: 'Both sides match', '离红线多远，另一边也离多远': 'As far from the red line on one side as on the other',
+    哪一个是它转过来的样子: 'Which one is this shape turned around?', '只能转，不能翻面': 'You can turn it, but not flip it', 这个要翻面才对得上: 'That one only matches if you flip it', '对，就是转过来的': "Yes, that's it turned around", '绿框是转过来的，另外两个要翻面': 'The green box is the turned shape. The other two need a flip',
     // 碎片和锻造台（gemui.js）
     小碎片: 'Small shard', 中碎片: 'Medium shard', 大碎片: 'Big shard', 这次的碎片: 'Shards this round', 背包: 'Backpack', 去锻造: 'Go to forge', 锻造: 'Forge', 领宝石: 'Claim gems', 再领一次: 'Claim again', 今天炼出: 'Forged today', 挑战: 'Challenge', 挑战结束: 'Challenge over', 先放碎片: 'Add shards first', 暂时没有挑战题: 'No challenge right now', 没有找到空空矿场: 'KongMine not found', 再练一会: 'Practice more', 返回: 'Back', 回到岛上: 'Back to the island',
     // 名字和地方
@@ -112,8 +124,8 @@
     看数草原: 'Counting Meadow', 分合矿洞: 'Number Bond Mine', 数位村庄: 'Place Value Village', 比大小双塔: 'Compare Towers', 数线铁轨: 'Number Line Railway', 秒答高塔: 'Speed Tower', 规律花园: 'Pattern Garden', 钟楼集市: 'Clock Tower Market', 故事码头: 'Story Dock',
     看数: 'Counting', 分合: 'Number Bonds', 数位: 'Place Value', 比大小: 'Compare', 数线: 'Number Line', 秒答地图: 'Speed Map', 秒答: 'Speed', 规律: 'Patterns', 集市: 'Market', 码头: 'Dock', 进阶口算: 'Advanced Math',
     达标: 'On target',
-    草地: 'Meadow', 森林: 'Forest', 沙漠: 'Desert', 雪山: 'Snow Mountain', 矿洞: 'Mine', 下界: 'Lava Land', 末地: 'Sky End',
-    末影龙: 'Void Dragon', 凋灵: 'Shadow King', 监守者: 'Deep Guard', 远古守卫者: 'Ancient Keeper',
+    草地: 'Meadow', 森林: 'Forest', 沙漠: 'Desert', 雪山: 'Snow Mountain', 矿洞: 'Mine', 下界: 'The Nether', 末地: 'The End',
+    末影龙: 'Ender Dragon', 凋灵: 'Wither', 监守者: 'Warden', 远古守卫者: 'Ancient Keeper',
     十几加减几: 'Teens: Adding and Subtracting', '7、6 加几': 'Adding to 7 and 6', '十几减 7、6': 'Teens minus 7 and 6', '十几减 5～2': 'Teens minus 5 to 2', 加法题型: 'Addition types', 减法题型: 'Subtraction types',
     整十加整十: 'Tens plus tens', 两位数加一位数: '2-digit plus 1-digit', 两位数加整十: '2-digit plus tens', 两位数加两位数: '2-digit plus 2-digit', 整十减整十: 'Tens minus tens', 两位数减一位数: '2-digit minus 1-digit', 两位数减整十: '2-digit minus tens', 两位数减两位数: '2-digit minus 2-digit',
     不进位: 'no regrouping', 进位: 'regrouping', 不退位: 'no regrouping', 退位: 'regrouping',
@@ -212,7 +224,7 @@
     [/^长方形面积 (\d+) 平方厘米，宽 (\d+) 厘米。长几厘米？$/, (m, a, b) => `A rectangle has an area of ${a} square cm and is ${b} cm wide. How long is it in cm?`],
     [new RegExp(`^${WHO}有 (\\d+) ${U3}${G3}，${WHO}的${G3}是${WHO}的 (\\d+) 倍。${WHO}有几${U3}？$`), (m, w, a, t, w2, t2, w3, n) => `${NAME[w]} has ${th2(a, t)}. ${NAME[w2]} has ${n} times as many. How many does ${NAME[w2]} have?`],
     [new RegExp(`^${WHO}有 (\\d+) ${U3}${G3}，是${WHO}的 (\\d+) 倍。${WHO}有几${U3}？$`), (m, w, a, t, w2, n) => `${NAME[w]} has ${th2(a, t)}, which is ${n} times as many as ${NAME[w2]}. How many does ${NAME[w2]} have?`],
-    [new RegExp(`^每盒 (\\d+) ${U3}${G3}，买 (\\d+) 盒，送出 (\\d+) ${U3}。还剩几${U3}？$`), (m, b, t, n, c) => `Each box has ${th2(b, t)}. You buy ${pl(n, 'box', 'boxes')} and give away ${c}. How many are left?`],
+    [new RegExp(`^每盒 (\\d+) ${U3}${G3}，买 (\\d+) 盒，送出 (\\d+) ${U3}。还剩几${U3}？$`), (m, b, t, n, c) => `Each box has ${th2(b, t)}. You buy ${pl(n, 'box', 'boxes')} and give away ${th2(c, t)}. How many are left?`],
     [new RegExp(`^每盒 (\\d+) ${U3}${G3}，买 (\\d+) 盒，平均分给 (\\d+) 个班。每班几${U3}？$`), (m, b, t, n, k) => `Each box has ${th2(b, t)}. You buy ${pl(n, 'box', 'boxes')} and share them evenly among ${k} classes. How many for each class?`],
     [/^小船每小时行 (\d+) 千米，行了 (\d+) 小时。一共几千米？$/, (m, v, t) => `A boat goes ${v} km per hour for ${pl(t, 'hour')}. How many km in all?`],
     [/^小船 (\d+) 小时行 (\d+) 千米。照这样，(\d+) 小时行几千米？$/, (m, a, b, c) => `A boat goes ${b} km in ${pl(a, 'hour')}. At that speed, how many km in ${pl(c, 'hour')}?`],
@@ -237,7 +249,7 @@
     [/^乘法分配律，相同的 (\d+) 提出来，是 (\d+)$/, (m, a, n) => `Take out the shared ${a}. It is ${n}`],
     [/^乘 (\d+)，小数点右移 (\d+) 位，是 (\d+)$/, (m, a, b, n) => `Times ${a}: move the decimal point ${pl(b, 'place')} right. It is ${n}`],
     [/^(\d+) 次成绩是 ([\d、]+)。平均每次多少？$/, (m, a, l) => `${a} scores are ${l.replace(/、/g, ', ')}. What is the average?`],
-    [/^甲每小时行 (\d+) 千米，乙每小时行 (\d+) 千米，相向走 (\d+) 小时相遇。全程几千米？$/, (m, a, b, t) => `A goes ${a} km per hour and B goes ${b} km per hour. They walk toward each other and meet after ${pl(t, 'hour')}. How many km apart were they?`],
+    [/^甲每小时行 (\d+) 千米，乙每小时行 (\d+) 千米，相向走 (\d+) 小时相遇。全程几千米？$/, (m, a, b, t) => `A goes ${a} km per hour and B goes ${b} km per hour. They travel toward each other and meet after ${pl(t, 'hour')}. How many km apart were they?`],
     [/^三角形两个角是 (\d+) 度和 (\d+) 度。第三个角几度？$/, (m, a, b) => `Two angles of a triangle are ${a}° and ${b}°. How many degrees is the third?`],
     [/^(\d+) 和 (\d+) 最小的公倍数是几？$/, (m, a, b) => `What is the least common multiple of ${a} and ${b}?`],
     [/^(\d+) 既是 (\d+) 的倍数，也是 (\d+) 的倍数，是 (\d+)$/, (m, l, a, b, n) => `${l} is a multiple of both ${a} and ${b}: ${n}`],
@@ -254,7 +266,41 @@
     [/^差 (\d+) 岁不变，(.+)$/, (m, a, b) => `The gap stays ${a} years. ${b}`],
     [/^计算 · (.+)$/, (m, a) => { const t = one(a); return t === null ? null : `Math · ${t}`; }],
   ];
+  const THINK_CLUE = c => { let r; return (r = /^比 (\d+) 大$/.exec(c)) ? `Bigger than ${r[1]}` : (r = /^比 (\d+) 小$/.exec(c)) ? `Smaller than ${r[1]}` : (r = /^不是 (\d+)$/.exec(c)) ? `Not ${r[1]}` : (r = /^有 (\d+) 个十$/.exec(c)) ? `Has ${pl(r[1], 'ten')}` : null; };
+  const SIDE = {左边: 'The left side', 右边: 'The right side'};
   const P = [
+    // 思维模块
+    [/^(比 \d+ [大小]|不是 \d+|有 \d+ 个十)$/, (m, c) => THINK_CLUE(c)],
+    [/^(\d+) 不符合「(.+)」$/, (m, n, c) => `${n} doesn't fit: ${THINK_CLUE(c)}`],
+    [/^小狗在 (\d+) 号木箱$/, (m, n) => `The dog is in crate ${n}`],
+    [/^只有 (\d+) 符合全部线索$/, (m, n) => `Only ${n} fits all the clues`],
+    [/^(.+?) (\d+\/\d+|✓)$/, (m, a, b) => (D[a] ? `${D[a]} ${b}` : null)],
+    [/^学会 (\d+) \/ (\d+) 个技能$/, (m, a, b) => `${a} of ${b} skills learned`],
+    [/^学会了，下一个：(.+)$/, (m, a) => (D[a] ? `Learned. Next: ${D[a]}` : null)],
+    [/^(天平桥|凑数矿|线索营地|方块工坊)全部学会了$/, (m, a) => `${D[a]}: all learned`],
+    [/^两边都是 (\d+)，一样重$/, (m, a) => `Both sides are ${a}, so they weigh the same`],
+    [/^左边 (\d+)，右边 (\d+)，不一样重$/, (m, a, b) => `Left is ${a}, right is ${b}, so they are not the same`],
+    [/^两边都是 (\d+)，桥放平了$/, (m, a) => `Both sides are ${a}. The bridge is level`],
+    [/^(左边|右边)重了，填(小|大)一点$/, (m, a, b) => `${SIDE[a]} is heavier. Try a ${b === '小' ? 'smaller' : 'bigger'} number`],
+    [/^(左边|右边)重了，换两个数$/, (m, a) => `${SIDE[a]} is heavier. Try two other numbers`],
+    [/^填 (\d+)，两边都是 (\d+)$/, (m, a, b) => `Fill in ${a}. Both sides are ${b}`],
+    [/^答案不止一种，比如 (\d+) 和 (\d+)，两边都是 (\d+)$/, (m, a, b, c) => `There is more than one answer, like ${a} and ${b}. Both sides are ${c}`],
+    [/^这题有 (\d+) 种凑法$/, (m, a) => `There are ${a} ways to make it`],
+    [/^已找到 (\d+) 种，共 (\d+) 种$/, (m, a, b) => `Found ${a} of ${b}`],
+    [/^(.+) 是 (\d+)，不是 (\d+)$/, (m, e, a, b) => `${e} is ${a}, not ${b}`],
+    [/^比如 ([\d +−]+ = \d+)$/, (m, e) => `For example, ${e}`],
+    [/^用这些数字凑出 (\d+)$/, (m, a) => `Use these numbers to make ${a}`],
+    [/^每行、每列，1 到 (\d+) 各一个$/, (m, a) => `Each row and column has 1 to ${a}, once each`],
+    [/^每行、每列、每个粗线框，1 到 (\d+) 各一个$/, (m, a) => `Each row, column and thick box has 1 to ${a}, once each`],
+    [/^这一行或这一列已经有 (\d+) 了$/, (m, a) => `This row or column already has ${a}`],
+    [/^还差 (\d+) 块$/, (m, a) => `${pl(a, 'block')} to go`],
+    // 朗读（data-say）：题干。补充
+    [/^([^。]+)。([^。]+)$/, (m, a, b) => {
+      const head = D[a] || (/^用这些数字凑出 (\d+)$/.test(a) ? `Use these numbers to make ${a.match(/\d+/)[0]}` : null);
+      if (!head) return null;
+      const tail = D[b] || (/加|等于|和 /.test(b) && /\d|空格/.test(b) ? b.replace(/空格/g, 'blank').replace(/ 加 /g, ' plus ').replace(/ 等于 /g, ' equals ').replace(/ 和 /g, ' and ') : b.split('，').every(THINK_CLUE) ? b.split('，').map(THINK_CLUE).join('. ') : null);
+      return tail ? `${head}. ${tail}` : null;
+    }],
     [/^得 1 张挑战券$/, () => 'Earn 1 challenge ticket'], [/^认真奖励 (★+)$/, (m, a) => `Careful bonus ${a}`], [/^挑战券 (\+?\d+)$/, (m, a) => `Challenge tickets ${a}`], [/^大碎片 \+(\d+)$/, (m, a) => `Big shard +${a}`], [/^答对 (\d+) \/ (\d+) 题$/, (m, a, b) => `${a} / ${b} correct`], [/^炉子最多放 (\d+) 个$/, (m, a) => `The furnace holds ${a}`], [/^还差 (\d+)，碎片退回$/, (m, a) => `Short by ${a}. Shards returned`], [/^得到宝石 (\d+)，废料 (\d+)$/, (m, a, b) => `Got ${pl(a, 'gem')}, ${b} scrap`], [/^今天已炼 (\d+) 颗，碎片留到明天$/, (m, a) => `${pl(a, 'gem')} forged today. Shards keep for tomorrow`], [/^领 (\d+) 颗宝石$/, (m, a) => `Claim ${pl(a, 'gem')}`],
     // 应用题
     [new RegExp(`^${WHO}有 (\\d+) ${M}${THG}，又得到 (\\d+) ${M}。一共几${M}？$`), (m, w, a, t, b) => `${NAME[w]} has ${thing(a, t)} and gets ${b} more. How many in all?`],

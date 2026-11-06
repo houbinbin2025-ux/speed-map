@@ -100,11 +100,12 @@ test('错题和题库标签：文字题显示题干，不只是一个 □', () =
   const R = require('../v2/render.js');
   G.forEach(([id, l]) => { const x = l[0], s = K.ITEM[id].skill, label = R.mistLabel({src: K.BY[s].group, uid: id, q: x.q}); assert.notEqual(String(label).trim(), '□', id); });
 });
-test('题面提示：挖空题写方框里的数；答案 3 位以上提示纸笔；计算题不叫秒答', () => {
+test('题面提示：挖空题写方框里的数；多位计算和文字题提示纸笔，提示不泄露答案位数；计算题不叫秒答', () => {
   const R = require('../v2/render.js');
   const q = (id, x) => R.question({id, q: x.q, ans: x.ans});
   const dec = HB.pools['speed:g12:dec'][0]; assert.match(q('speed:g12:dec', dec).note, /方框/);
   const mul = HB.pools['speed:g11:mul'].find(x => String(x.ans).length >= 3); assert.match(q('speed:g11:mul', mul).note, /纸笔/);
+  for (const x of HB.pools['speed:g13:div2'].filter(x => String(x.ans).length < 3).slice(0, 3)) assert.match(q('speed:g13:div2', x).note, /纸笔/);
   assert.match(q('speed:g11:mul', mul).tag, /^计算/); assert.ok(!/秒答/.test(R.demo(K.ITEM['speed:g11:mul'].skill)));
 });
 test('文字题答错时讲解页还看得到题干', () => {
