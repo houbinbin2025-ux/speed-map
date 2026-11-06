@@ -476,15 +476,42 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .lvboxes{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.lvboxes button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--stone);border:3px solid #000;padding:5px 8px;min-height:54px;text-align:left;color:var(--ink,#ecebe4);min-width:0}.lvboxes button b{font-size:14px;font-weight:800}.lvboxes button small{font-size:11px;color:var(--mute);line-height:1.25}.lvboxes button.on{border-color:var(--warn);background:#4a3d1a}.lvboxes button.auto{min-height:48px}
 .hardboxes label{display:flex;align-items:center;gap:8px;background:var(--stone);border:2px solid #000;padding:4px 8px;min-height:48px}.hardboxes input{width:26px;height:26px;flex:none;margin:0}.hardboxes b{display:block;font-size:14px}.hardboxes small{font-size:12px;color:var(--mute);line-height:1.25;display:block}
 /* 碎片和锻造台（gemui.js） */
-.frag{display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-family:var(--f-num);font-weight:900;color:#10131a;border:2px solid #000;box-shadow:inset 2px 2px 0 rgba(255,255,255,.5);width:34px;height:34px;font-size:15px;flex:none}
-.frag.s{background:#c3cbd6}.frag.m{background:#6fc3e8}.frag.l{background:#c79cf0;width:40px;height:40px;font-size:18px}
-.fragrow{display:flex;align-items:center;gap:10px;min-height:60px;padding:6px 10px;background:var(--stone-hi);border:2px solid #000;color:inherit;font-size:17px;font-weight:800;text-align:left}
-.fragrow b{margin-left:auto;font-size:26px}.fragrow[disabled]{opacity:.45}
-#forgeSlots{display:grid;grid-template-columns:repeat(4,56px);grid-auto-rows:56px;gap:6px;background:#2a1d14;border:3px solid #000;padding:8px}
-.fslot{display:flex;align-items:center;justify-content:center;background:#46301f;border:2px solid #000;padding:0}
+.frag{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;flex:none;line-height:1;gap:1px}
+.frag img{image-rendering:pixelated;width:28px;display:block;filter:drop-shadow(0 2px 0 #000)}.frag.l img{width:36px}.frag.s img{width:24px}
+.frag b{font-family:var(--f-num);font-weight:900;font-size:13px;color:#fff;text-shadow:1px 1px 0 #000}
+.frag.land{animation:fragLand .22s}
+@keyframes fragLand{0%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
+#forge{position:relative;display:flex;flex-direction:row;gap:12px;padding:12px;overflow:hidden}
+#forge.shake{animation:forgeShake .09s linear 2}
+@keyframes forgeShake{0%,100%{transform:none}25%{transform:translate(-3px,1px)}75%{transform:translate(3px,-1px)}}
+#forgeScene{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;z-index:0}
+#forgeList,.forgeMid,.forgeSide{position:relative;z-index:1}
+#forgeList{display:flex;flex-direction:column;gap:10px;width:150px;flex:none;justify-content:center}
+.fragrow{display:flex;align-items:center;gap:8px;min-height:68px;padding:6px 8px;background:rgba(27,29,34,.86);border:3px solid #000;box-shadow:0 4px 0 #000;color:#fff;font-size:14px;font-weight:800;text-align:left}
+.fragrow:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.fragrow em{margin-left:auto;font-style:normal;font-size:24px}.fragrow[disabled]{opacity:.45}
+.forgeMid{display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center;flex:none}
+#forgeSlots{display:grid;grid-template-columns:repeat(4,calc(min(14vh,52px)));grid-auto-rows:calc(min(14vh,52px));gap:4px;background:#2a1d14;border:4px solid #000;box-shadow:inset 0 0 0 2px #5a3a20,0 5px 0 #000;padding:6px}
+#forgeSlots.nope{animation:forgeShake .09s linear 2}
+.fslot{display:flex;align-items:center;justify-content:center;background:#46301f;border:2px solid #000;box-shadow:inset 2px 2px 0 #2a1d14;padding:0}
+#forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}#forge.working #forgeGo{filter:brightness(.7)}
+#forgeMsg{font-size:18px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
+#forgeMsg.pop{animation:fragLand .28s}
+.forgeSide{margin-left:auto;display:flex;flex-direction:column;gap:8px;width:150px;flex:none}
+.forgeSide .btn{min-height:50px;font-size:16px}
+#forgeToday{display:flex;align-items:center;gap:6px;background:rgba(27,29,34,.86);border:3px solid #000;padding:6px 8px;font-size:12px;color:#ddd}
+#forgeToday img{width:32px;image-rendering:pixelated}#forgeToday b{font-size:24px;color:#fff}
+#forgeToday.bump{animation:fragLand .3s}
+.flying{position:fixed;left:0;top:0;z-index:50;image-rendering:pixelated;pointer-events:none}
+.gempop{position:fixed;left:0;top:0;width:120px;height:120px;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.gempop img{width:84px;image-rendering:pixelated;position:relative;filter:drop-shadow(0 4px 0 #000)}
+.rays{position:absolute;inset:-30px;background:repeating-conic-gradient(rgba(255,243,176,.55) 0 15deg,transparent 15deg 30deg);border-radius:50%;animation:raySpin 2s linear infinite;-webkit-mask:radial-gradient(circle,#000 25%,transparent 70%);mask:radial-gradient(circle,#000 25%,transparent 70%)}
+@keyframes raySpin{to{transform:rotate(360deg)}}
+.bigwin{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center;animation:fragLand .4s}
+.bigwin img{width:84px;image-rendering:pixelated;position:relative}
 .gemsum{background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:none}
 .gemline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:700}
-.gemline .frag{width:26px;height:26px;font-size:12px}
+.gemsum .gemline .frag{animation:fragLand .35s}
 .gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
 </style>
 </head>
@@ -588,10 +615,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <!-- 6 结算（v3：今日练习 / 自由加练 / 复习这一组） -->
 <div class="scr" id="qsum" hidden></div>
 <!-- 锻造台（gemui.js）：炉子最多 12 个碎片，满 100 炼 1 颗宝石 -->
-<div class="scr" id="forge" hidden style="flex-direction:row;gap:14px;padding:14px">
-  <div class="panel" style="width:240px;flex:none;gap:10px"><div class="ptitle">背包</div><div id="forgeList" style="display:flex;flex-direction:column;gap:10px"></div></div>
-  <div class="panel" style="flex:1;gap:10px;align-items:center"><div class="ptitle">炉子 · 满 100 炼 1 颗宝石</div><div id="forgeSlots"></div><button class="gobig" id="forgeGo" style="width:240px;height:64px;font-size:22px">锻造</button><div id="forgeMsg" style="font-size:18px;font-weight:800;min-height:26px;color:var(--warn)"></div></div>
-  <div class="panel" style="width:210px;flex:none;gap:10px;justify-content:flex-end"><div id="forgeToday" class="muted" style="font-size:15px"></div><button class="btn" id="forgeClaim" style="min-height:64px;font-size:18px" hidden>领宝石</button><button class="btn" id="forgeBack" style="min-height:56px">返回</button></div>
+<div class="scr" id="forge" hidden>
+  <canvas id="forgeScene" class="px"></canvas>
+  <div id="forgeList"></div>
+  <div class="forgeMid"><div id="forgeSlots"></div><button class="gobig" id="forgeGo">锻造</button><div id="forgeMsg"></div></div>
+  <div class="forgeSide"><div id="forgeToday"></div><button class="btn" id="forgeClaim" hidden>领宝石</button><button class="btn" id="forgeBack">返回</button></div>
 </div>
 
 <!-- 7 技能组地图 -->
@@ -817,7 +845,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v68:e19695372774 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v70:357db61ff89c -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -827,20 +855,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=68"></script>
-<script src="hardbank.js?v=68"></script>
-<script src="placebank.js?v=68"></script>
-<script src="core.js?v=68"></script>
-<script src="ink.js?v=68"></script>
-<script src="skills.js?v=68"></script>
-<script src="engine.js?v=68"></script>
-<script src="render.js?v=68"></script>
-<script src="world.js?v=68"></script>
-<script src="home.js?v=68"></script>
-<script src="house.js?v=68"></script>
-<script src="kongmine.js?v=68"></script>
-<script src="gems.js?v=68"></script>
-<script src="gemui.js?v=68"></script>
+<script src="bank.js?v=70"></script>
+<script src="hardbank.js?v=70"></script>
+<script src="placebank.js?v=70"></script>
+<script src="core.js?v=70"></script>
+<script src="ink.js?v=70"></script>
+<script src="skills.js?v=70"></script>
+<script src="engine.js?v=70"></script>
+<script src="render.js?v=70"></script>
+<script src="world.js?v=70"></script>
+<script src="home.js?v=70"></script>
+<script src="house.js?v=70"></script>
+<script src="kongmine.js?v=70"></script>
+<script src="gems.js?v=70"></script>
+<script src="gemui.js?v=70"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
