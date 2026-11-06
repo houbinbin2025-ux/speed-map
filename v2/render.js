@@ -28,7 +28,7 @@
     return {counts, lit: counts[1] + counts[2] + counts[3], total: counts.reduce((a, b) => a + b, 0)};
   }
   const skillOf = id => K.BY[K.ITEM[id].skill];
-  const tagOf = id => { const s = skillOf(id); return s.hard ? `${GNAME[s.group]} · ${s.name}` : s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
+  const tagOf = id => { const s = skillOf(id); if (s.group === 'speedH' && /^g34:/.test(s.id)) return '计算 · ' + s.name; return s.hard ? `${GNAME[s.group]} · ${s.name}` : s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
 
   // ---------- 小零件 ----------
   const dot = cls => `<i class="dot${cls ? ' ' + cls : ''}"></i>`;
@@ -72,7 +72,7 @@
     if (q.view === 'hto') return `<div class="hto"><div class="hsqs">${'<i class="hsq"></i>'.repeat(q.h)}</div>${rods(q.t, q.o)}</div>`;
     if (q.view === 'story') return a === undefined ? nbSay(q) : `<div class="eq num sm">${q.text.replace('□', ans(a))}</div>`;
     if (q.view === 'clock5') return clockSvg(q.h, q.m) + (a === undefined ? nbSay(q) : `<div class="say2">${q.text.replace('□', ans(a))}</div>`);
-    const t = q.text || ''; return `<div class="eq num${t.length > 11 ? ' sm' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
+    const t = q.text || ''; return `<div class="eq num${t.length > 22 ? ' xs' : t.length > 11 ? ' sm' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
   };
   // ---------- 三个新地方的图 ----------
   let SPRITE = () => '';   // 页面注入：名字 → 图片地址（node 里没有画布，返回空）
@@ -108,6 +108,7 @@
     const it = K.ITEM[inst.id], s = skillOf(inst.id), q = inst.q, tag = tagOf(inst.id);
     if (s.nb) return Object.assign({input: s.input, tag, html: s.input === 'pick' && q.view === 'clock' ? `<div class="nbrow">${nbSay(q)}${nbFig(q)}</div>` : nbSay(q) + nbFig(q), note: ''}, nbOpts(q));
     if (s.hard && s.input === 'pick') return {input: 'pick', tag, html: '<div class="say2">哪个大？点它</div>', pick: [q.a, q.b], pickText: q.la ? [q.la, q.lb] : null};
+    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (q.text === '□' ? '' : hardFig(q)) : hardFig(q), note: String(inst.ans).length >= 3 ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
     if (s.hard && s.input === 'write') return {input: 'write', tag, html: hardFig(q), note: q.view === 'hto' ? '方块是 100，一根是 10，一块是 1' : q.view === 'grid' ? '一排一排数，写在右边' : q.view === 'h100' ? '一行是 10，一共涂了几格？' : '在右边写出答案'};
     if (s.speed) return {input: 'write', tag, html: `<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} =</div>`, note: '在右边写出答案，写完停一下就好'};
     if (s.group === 'look') return {input: 'write', tag, html: `<div class="look">${pattern(q)}</div>`, flash: true, note: '有几个？写在右边'};
@@ -170,7 +171,7 @@
     const pack = (fig, line) => `<div class="explain">${fig}<div class="why">${line}</div></div>`;
     if (s.nb) return pack(`${q.view === 'clock' ? clockSvg(q.h, q.m) : ''}<div class="say2">${s.input === 'pick' && q.view !== 'bad' ? '应该是 ' : ''}${nbAns(q, a)}</div>`, q.why);
     if (s.hard && s.input === 'pick') return pack(`<div class="say2"><span class="num" style="font-size:32px">${pickWord(q, a)}</span> 更大</div>`, q.why);
-    if (s.hard && s.input === 'write') return pack(hardFig(q, a), q.why);
+    if (s.hard && s.input === 'write') return pack((q.qk && q.say ? `<div class="whysay">${q.say}</div>` : '') + hardFig(q, a), q.why);
     if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
     if (s.group === 'look') {
       const five = q.layout === 'tf' && q.n > 5 ? `5 和 ${q.n - 5}，是 ${ans(q.n)}` : q.layout === 'tf2' ? `10 和 ${q.n - 10}，是 ${ans(q.n)}` : `一共是 ${ans(q.n)}`;
@@ -249,7 +250,7 @@
       body = step(1, nbFig(q) || `<div class="prow">${q.l.map(n => `<span class="pst">${n}</span>`).join('')}</div>`, '看题') + arrow + step(2, `<div class="nbthink">${q.why}</div>`, '想一想') + arrow + step(3, `<div class="say2">${nbAns(q, ex.ans)}</div>`, s.input === 'pick' ? '点它' : '写答案');
       foot = s.input === 'pick' ? '点错了会告诉你答案' : '不会就点「不会」，会告诉你答案';
     } else if (s.hard && s.input !== 'line') {
-      title = GNAME[s.group] + '：' + s.name;
+      title = (s.group === 'speedH' && /^g34:/.test(s.id) ? '计算' : GNAME[s.group]) + '：' + s.name;
       body = s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
       foot = q.why;
@@ -320,7 +321,7 @@
     if (s.hard && q.view === 'clock5') return clockSvg(q.h, q.m);
     if (s.nb) return q.view === 'clock' ? clockSvg(q.h, q.m) : q.view === 'bad' ? q.l.join('、') : q.view === 'pat' ? `<span class="prow">${q.seq.map(blk).join('')}<span class="pblk qm">？</span></span>` : q.eq ? q.eq.replace(/=.*$/, '= ？') : s.name;   // 错题标签只给题面，不露答案
     if (s.hard && s.input === 'pick') return `${q.la || q.a} 和 ${q.lb || q.b} 谁大`;
-    if (s.hard && s.input === 'write') return q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;
+    if (s.hard && s.input === 'write') return q.text === '□' ? q.say : q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;
     if (s.group === 'look') return `看数 · ${q.n}`;
     if (s.group === 'bond') {
       if (q.blank === 'part') return `${q.n} = ${q.a} + □`;

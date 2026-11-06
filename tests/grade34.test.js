@@ -96,3 +96,49 @@ test('不许出现感叹号、繁体字和外国单位', () => {
 test('每个新题型都在技能里，能出题', () => {
   G.forEach(([id]) => { assert.ok(K.ITEM[id], id); assert.ok(K.make(id, seeded(1)).q); });
 });
+test('错题和题库标签：文字题显示题干，不只是一个 □', () => {
+  const R = require('../v2/render.js');
+  G.forEach(([id, l]) => { const x = l[0], s = K.ITEM[id].skill, label = R.mistLabel({src: K.BY[s].group, uid: id, q: x.q}); assert.notEqual(String(label).trim(), '□', id); });
+});
+test('题面提示：挖空题写方框里的数；答案 3 位以上提示纸笔；计算题不叫秒答', () => {
+  const R = require('../v2/render.js');
+  const q = (id, x) => R.question({id, q: x.q, ans: x.ans});
+  const dec = HB.pools['speed:g12:dec'][0]; assert.match(q('speed:g12:dec', dec).note, /方框/);
+  const mul = HB.pools['speed:g11:mul'].find(x => String(x.ans).length >= 3); assert.match(q('speed:g11:mul', mul).note, /纸笔/);
+  assert.match(q('speed:g11:mul', mul).tag, /^计算/); assert.ok(!/秒答/.test(R.demo(K.ITEM['speed:g11:mul'].skill)));
+});
+test('文字题答错时讲解页还看得到题干', () => {
+  const R = require('../v2/render.js'), x = HB.pools['dock:g13:unit'][0];
+  assert.ok(R.explain({id: 'dock:g13:unit', q: x.q, ans: x.ans}).includes(x.q.say));
+});
+test('第 12 级不出两位除数：面积反求边的除数是一位', () => {
+  HB.pools['dock:g12:area'].filter(x => /面积 \d+ 平方厘米/.test(x.q.say)).forEach(x => { const m = x.q.say.match(/宽 (\d+) 厘米/); assert.ok(+m[1] <= 9, x.q.say); });
+});
+test('买东西的题不买金币；24 时说法对；没有小数位过多的讲解', () => {
+  ['dock:g12:price', 'dock:g13:unit'].forEach(id => HB.pools[id].forEach(x => assert.ok(!x.q.say.includes('金币'), x.q.say)));
+  HB.pools['market:g12:24'].forEach(x => { const m = /^(下午|晚上) (\d+) 点/.exec(x.q.say); if (m) assert.equal(m[1], +m[2] <= 5 ? '下午' : '晚上', x.q.say); });
+  G.forEach(([id, l]) => l.forEach(x => assert.ok(!/\d\.\d{4,}/.test(x.q.why + (x.q.text || '')), `${id} ${x.q.why}`)));
+});
+// ---------- 自动开级 ----------
+const fill = (S, lv) => K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv, d: [D(-9), D(-8), D(-5)].slice(0, lv), seen: 3, lastDay: D(-1)})));
+test('自动开级：第 9 级不到淡红，开不了第 10 级', () => {
+  const S = blank(); fill(S, 1); S.lvTop = 15; assert.equal(E.autoLevel(S), 9);
+});
+test('自动开级：练够了也一次只开一级，等满 25 个练习日才开下一级', () => {
+  const S = blank(); fill(S, 2); S.stats = {};
+  E.session(S, D(0), {rnd: seeded(1)}); assert.equal(E.autoLevel(S), 9);
+  for (let i = 1; i <= 24; i++) S.stats[D(i)] = {sec: 60, n: 1, ups: 0, over: 0, gap: 0};
+  E.session(S, D(24), {rnd: seeded(1)}); assert.equal(E.autoLevel(S), 9, '24 天还不够');
+  S.stats[D(25)] = {sec: 60, n: 1, ups: 0, over: 0, gap: 0};
+  E.session(S, D(26), {rnd: seeded(1)}); assert.equal(E.autoLevel(S), 10);
+  E.session(S, D(26), {rnd: seeded(1)}); assert.equal(E.autoLevel(S), 10, '同一天不连开');
+});
+test('自动开级：开放的题全练完时不用等，防止卡死', () => {
+  const S = blank(); fill(S, 3); K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => { if (it.gen) E.prog(S, it.id).out = 1; }));
+  E.session(S, D(0), {rnd: seeded(1)}); assert.ok(E.autoLevel(S) >= 10, '开放到 ' + E.autoLevel(S));
+});
+test('导入进度：开级进度取大，不退回去', () => {
+  const a = blank(), b = blank(); b.lvTop = 12; b.lvTopDay = D(5);
+  const M = C.importMerge(a, JSON.stringify(b)); assert.equal(M.lvTop, 12); assert.equal(M.lvTopDay, D(5));
+  const c = blank(); c.lvTop = 14; c.lvTopDay = D(9); assert.equal(C.importMerge(c, JSON.stringify(b)).lvTop, 14);
+});

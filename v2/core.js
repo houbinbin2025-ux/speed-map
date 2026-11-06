@@ -399,6 +399,7 @@
       for (const k in S.fast || {}) if (!M.fast[k] || S.fast[k][0] >= M.fast[k][0]) M.fast[k] = S.fast[k];
     }
     if (!M.placedAt) delete M.placedAt;
+    if (S.lvTop || v.lvTop) { const hi = (v.lvTop || 0) > (S.lvTop || 0) ? v : S; M.lvTop = hi.lvTop; M.lvTopDay = hi.lvTopDay; }   // 自动开级放行到哪一级：取大，不退回去
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
     for (const d in v.stats || {}) {
       const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;
