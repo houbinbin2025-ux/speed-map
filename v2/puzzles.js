@@ -1,5 +1,5 @@
 // 思维模块出题（只有数据和判定，不碰页面）：天平桥、凑数矿、线索营地、方块工坊
-(function (root, f) { if (typeof module !== 'undefined' && module.exports) module.exports = f(); else root.Puzzles = f(); })(this, function () {
+(function (root, f) { if (typeof module !== 'undefined' && module.exports) module.exports = f(); else root.PUZZLES = f(); })(typeof self !== 'undefined' ? self : this, function () {
   const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const int = (r, a, b) => a + Math.floor(r() * (b - a + 1));
   const pick = (r, xs) => xs[Math.floor(r() * xs.length)];
@@ -134,5 +134,18 @@
     {id: 'clue', name: '线索营地', tiers: ['三行', '四行', '粗线框', '小狗在哪'], make: (r, t) => t === 3 ? dog(r) : grid(r, t)},
     {id: 'block', name: '方块工坊', tiers: ['左右对称', '上下对称', '转一转', '转一转五格'], make: (r, t) => t < 2 ? mirror(r, t ? 'h' : 'v') : rotate(r, t - 2)},   // 用语已核：地点名
   ];
-  return {rng, sum, MODULES, balance, balanced, isCopy, altPair, target, solutions, keyOf, grid, conflicts, countGrid, dog, clueOk, mirror, rotate, rot, flip, same, norm};
+  // —— 进度：S.think = {模块 id: [每个技能做出来的题数]}；旧存档没有这个字段，读的时候当 0。只存次数，不进四档颜色 ——
+  const PASS = 3;   // 一个技能做出来 3 题就开放下一个
+  const modOf = id => MODULES.find(m => m.id === id);
+  function progress(S, id) {
+    const m = modOf(id), saved = (S.think && S.think[id]) || [], n = m.tiers.map((_, i) => Number(saved[i]) || 0);
+    const first = n.findIndex(x => x < PASS), tier = first < 0 ? m.tiers.length - 1 : first;
+    return {n, tier, passed: n.filter(x => x >= PASS).length, total: m.tiers.length};
+  }
+  function record(S, id, t) {   // 返回 true = 这一题刚好学会这个技能
+    S.think = S.think || {};
+    const n = progress(S, id).n; n[t]++; S.think[id] = n;
+    return n[t] === PASS;
+  }
+  return {PASS, modOf, progress, record, rng, sum, MODULES, balance, balanced, isCopy, altPair, target, solutions, keyOf, grid, conflicts, countGrid, dog, clueOk, mirror, rotate, rot, flip, same, norm};
 });

@@ -178,7 +178,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .w-hint.gone{opacity:0}
 @keyframes wsway{50%{transform:translateX(14px)}}
 .w-mini{left:var(--padL);bottom:12px;display:flex;gap:4px;max-width:calc(100vw - var(--padL) - 300px);overflow-x:auto;scrollbar-width:none;touch-action:pan-x;background:var(--cave);border:3px solid #000;box-shadow:0 4px 0 #000;padding:5px}
-@media(max-width:900px){.w-mini{flex-wrap:wrap;width:274px}.w-hint{bottom:128px}}
+@media(max-width:900px){.w-mini{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,auto);width:274px}.w-hint{bottom:128px}}
 .mq .pclock{width:44px;height:44px;flex:none;display:block}.mq .prow,.bq .prow{display:inline-flex;gap:2px;vertical-align:middle}.mq .pblk,.bq .pblk{width:16px;border-width:2px;box-shadow:none;font-size:11px}.bq .pclock{width:36px;height:36px;display:block}
 .w-mini button{flex:none;width:48px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;white-space:nowrap;padding:0;font-weight:700;color:var(--mute);border:2px solid transparent;background:none;position:relative}
 .w-mini button i{width:16px;height:12px;border:2px solid #000;display:block}
@@ -515,6 +515,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   </div>
 </div>
 
+<!-- 思维模块（天平桥、凑数矿、线索营地、方块工坊）：内容由 thinking.js 画 -->
+<div class="scr" id="think" hidden></div>
+
 <!-- 2 摸底 · 开始说明 / 结果 -->
 <div class="scr" id="placeIntro" hidden style="flex-direction:column;gap:14px">
   <div class="top"><button class="btn" id="piBack">返回</button><span style="flex:1"></span></div>
@@ -800,7 +803,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v67:8ff6a20cf1ce -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v71:68c25c2ba4d9 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -810,17 +813,19 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="bank.js?v=67"></script>
-<script src="hardbank.js?v=67"></script>
-<script src="placebank.js?v=67"></script>
-<script src="core.js?v=67"></script>
-<script src="ink.js?v=67"></script>
-<script src="skills.js?v=67"></script>
-<script src="engine.js?v=67"></script>
-<script src="render.js?v=67"></script>
-<script src="world.js?v=67"></script>
-<script src="home.js?v=67"></script>
-<script src="house.js?v=67"></script>
+<script src="bank.js?v=71"></script>
+<script src="hardbank.js?v=71"></script>
+<script src="placebank.js?v=71"></script>
+<script src="core.js?v=71"></script>
+<script src="ink.js?v=71"></script>
+<script src="skills.js?v=71"></script>
+<script src="engine.js?v=71"></script>
+<script src="render.js?v=71"></script>
+<script src="world.js?v=71"></script>
+<script src="home.js?v=71"></script>
+<script src="puzzles.js?v=71"></script>
+<script src="thinking.js?v=71"></script>
+<script src="house.js?v=71"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -856,7 +861,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv', 'house'];
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'bankv', 'house', 'think'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); show('island'); };
@@ -932,6 +937,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   let zCur = null, Zone = null;   // Zone = 这次练习在岛上的哪块地（背景、结算、回岛时闪的格子）
   function openZone(z) {
+    if (PUZZLES.modOf(z.id)) {   // 思维模块：不算格子，不接错题，只看学会了几个技能
+      const pr = PUZZLES.progress(S, z.id); zCur = z.id;
+      $('zName').textContent = z.name; $('zCt').textContent = `学会 ${pr.passed} / ${pr.total} 个技能`;
+      $('zSkills').innerHTML = PUZZLES.modOf(z.id).tiers.map((t, i) => `<span class="zsk"><i class="l${pr.n[i] >= PUZZLES.PASS ? 1 : 0}"></i>${t}</span>`).join('');
+      $('zGo').textContent = '练这一块'; $('zGo').disabled = false; $('zMap').hidden = true; $('zMist').hidden = true;
+      $('zSheet').classList.add('open'); $('lead').style.visibility = 'hidden'; document.querySelector('.w-mini').style.visibility = 'hidden';
+      return;
+    }
+    $('zMist').hidden = false;
     zCur = z.id; const st = R.groupStat(S, z.id), sq = zoneSq(z.id);
     $('zName').textContent = z.name; $('zCt').textContent = `亮了 ${st.lit} / ${st.total} 格`;
     $('zSkills').innerHTML = zoneSkills(z.id).map((s, i) => `<span class="zsk"><i class="l${sq[i]}"></i>${s.name}</span>`).join('');
@@ -943,13 +957,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   function closeZone() { $('zSheet').classList.remove('open'); $('lead').style.visibility = ''; document.querySelector('.w-mini').style.visibility = ''; const o = !!zCur; zCur = null; return o; }
   const WD = WORLD.create($('island'), {
-    sign: g => ({sq: zoneSq(g), today: todayZone() === g}),
+    sign: g => PUZZLES.modOf(g) ? {sq: PUZZLES.progress(S, g).n.map(x => x >= PUZZLES.PASS ? 1 : 0), today: false} : {sq: zoneSq(g), today: todayZone() === g},
     onZone: z => (z ? openZone(z) : closeZone()),
     closeAll: () => closeZone(),
     onHome: () => { closeZone(); WD.go('home', () => HS.enter()); },
     homeLoot: () => !!(S.home && S.home.loot && S.home.loot.length),
     heroLine: () => E.allOut(S, today()) ? '全部通关了' : isDone() ? '今天练完啦，明天再来' : !S.placedAt ? '一起看看你会什么吧！' : `今天去${zoneName(todayZone())}吧！`,
   });
+  const TH = THINKING.create($('think'), {S: () => S, show: () => show('think'), earn: n => { HOME.addOre(S, n); HOME.sync(S, today()); save(); }, onExit: goIsland}, {seed: CTX.test ? 7 : 0});
   const HS = HOUSE.create($('house'), {
     S: () => S, today, save, show: () => show('house'), leave: goIsland, doneToday: isDone,
     // 从家里去练：有对应的地方就走过去，秒答进秒答地图，其余 = 今天的探险
@@ -968,6 +983,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('zGo').addEventListener('click', () => {
     const g = zCur; if (!g) return;
     if (g === 'speed') { closeZone(); renderSpeed(); show('home'); return; }
+    if (PUZZLES.modOf(g)) { closeZone(); WD.go(g, () => TH.enter(g)); return; }
     closeZone(); Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
   });
   $('zMap').addEventListener('click', () => { const g = zCur; closeZone(); if (g) openSkillMap(g); });
@@ -1990,7 +2006,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       save(); renderIsland();
     });
   }
-  window.__sm = {get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  window.__sm = {TH, get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();

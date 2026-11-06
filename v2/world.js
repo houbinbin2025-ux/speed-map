@@ -18,8 +18,12 @@
     {id: 'garden', x: 985, name: '规律花园', short: '规律', icon: '#d9342b'},
     {id: 'market', x: 1130, name: '钟楼集市', short: '集市', icon: '#f2c14e'},
     {id: 'dock', x: 1270, name: '故事码头', short: '码头', icon: '#3d7fd9'},
+    {id: 'balance', x: 1410, name: '天平桥', short: '天平', icon: '#c08a52'},
+    {id: 'target', x: 1550, name: '凑数矿', short: '凑数', icon: '#5fd9e6'},
+    {id: 'clue', x: 1690, name: '线索营地', short: '线索', icon: '#7bd88f'},
+    {id: 'block', x: 1830, name: '方块工坊', short: '工坊', icon: '#6ea8fe'},
   ];
-  const WW = 1344, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
+  const WW = 1904, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
   const ORE = ['#f2c14e', '#6ea8fe', '#7bd88f', '#f6a5a0'];
 
   // ---------- 像素画工具 ----------
@@ -114,6 +118,25 @@
     for (let x = 1232; x < 1300; x += 6) { g.fillStyle = x % 12 ? '#c08a52' : '#b27d48'; g.fillRect(x, 70, 6, 3); } [1244, 1272, 1296].forEach(x => { g.fillStyle = '#5a3a20'; g.fillRect(x, 73, 3, 14); });
     for (let i = 0; i < 5; i++) { g.fillStyle = i % 2 ? '#ecebe4' : '#b3261e'; g.fillRect(1218, 64 - i * 8, 12, 8); } g.fillStyle = '#2b2b2b'; g.fillRect(1216, 30, 16, 2); g.fillStyle = '#f2c14e'; g.fillRect(1220, 24, 8, 6); g.fillStyle = '#b3261e'; g.fillRect(1218, 20, 12, 4);
     g.fillStyle = '#6b4628'; g.fillRect(1306, 70, 32, 7); g.fillStyle = '#8a5a2c'; g.fillRect(1310, 77, 24, 3); g.fillStyle = '#5a3a20'; g.fillRect(1320, 40, 2, 30); g.fillStyle = '#ecebe4'; g.fillRect(1322, 42, 14, 22); g.fillStyle = '#b3261e'; g.fillRect(1322, 37, 7, 4);
+    // 天平桥：立柱、横梁当桥面、两边托盘放方块
+    g.fillStyle = '#5a3a20'; g.fillRect(1406, 34, 8, 38); g.fillRect(1396, 68, 28, 4);
+    g.fillStyle = '#000'; g.fillRect(1357, 31, 106, 6); g.fillStyle = '#c08a52'; g.fillRect(1358, 32, 104, 4);
+    [1370, 1436].forEach((x, i) => { g.fillStyle = '#ecebe4'; g.fillRect(x + 7, 36, 1, 16); g.fillRect(x, 52, 16, 2); [0, 6].forEach(d => block(g, x + 1 + d, 48, i ? '#6ea8fe' : '#f2c14e')); block(g, x + 4, 44, i ? '#6ea8fe' : '#f2c14e'); });
+    // 凑数矿：石头矿洞口、矿石、矿车
+    for (let y = 40; y < 72; y += 8) for (let x = 1520; x < 1584; x += 8) tile(g, x, y, 'brick');
+    g.fillStyle = '#1b1d22'; g.fillRect(1536, 48, 32, 24); g.fillStyle = '#6b4628'; g.fillRect(1534, 46, 36, 3); g.fillRect(1534, 46, 3, 26); g.fillRect(1567, 46, 3, 26);
+    [[1525, 44, '#5fd9e6'], [1574, 52, '#f2c14e'], [1526, 60, '#7bd88f'], [1560, 42, '#f6a5a0']].forEach(([x, y, c]) => block(g, x, y, c));
+    cart(g, 1588, 65);
+    // 线索营地：帐篷、篝火、木箱
+    for (let i = 0; i < 18; i++) { g.fillStyle = i < 9 ? '#b3261e' : '#8a1c16'; g.fillRect(1660 + i, 72 - (i < 9 ? i : 17 - i) * 2 - 2, 1, (i < 9 ? i : 17 - i) * 2 + 2); }
+    for (let y = 0; y < 22; y++) { const hw = y + 2; g.fillStyle = '#d9c9a0'; g.fillRect(1668 - hw, 50 + y, hw * 2, 1); g.fillStyle = '#1b1d22'; if (y > 8) g.fillRect(1668 - (y - 8) / 2, 50 + y, y - 8, 1); }
+    g.fillStyle = '#5a3a20'; g.fillRect(1696, 69, 12, 3); g.fillStyle = '#f2c14e'; g.fillRect(1699, 62, 6, 7); g.fillStyle = '#d9342b'; g.fillRect(1701, 64, 2, 5);
+    [1720, 1732, 1726].forEach((x, i) => { const y = i === 2 ? 52 : 62; g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 12, 11); g.fillStyle = '#c08a52'; g.fillRect(x, y, 10, 9); g.fillStyle = '#8a5a2c'; g.fillRect(x, y + 4, 10, 1); });
+    tree(g, 1760, 72, 3);
+    // 方块工坊：木屋和一面左右对称的方块墙
+    for (let y = 32; y < 72; y += 8) for (let x = 1800; x < 1860; x += 8) tile(g, x, y, 'plank');
+    g.fillStyle = '#8a1c16'; g.fillRect(1796, 28, 68, 4); g.fillStyle = '#1b1d22'; g.fillRect(1822, 54, 14, 18);
+    [[0, 0, '#6ea8fe'], [1, 0, '#6ea8fe'], [1, 1, '#f2c14e'], [2, 1, '#6ea8fe'], [2, 2, '#f2c14e']].forEach(([a, b, c]) => { [1829 - 6 - a * 7, 1829 + a * 7].forEach(x => { g.fillStyle = '#000'; g.fillRect(x - 1, 34 + b * 6, 8, 7); g.fillStyle = c; g.fillRect(x, 35 + b * 6, 6, 5); }); });
   }
   function tree(g, x, base, h) {
     for (let i = 0; i < h; i++) { g.fillStyle = i % 2 ? '#5a3a20' : '#6b4628'; g.fillRect(x, base - (i + 1) * 4, 4, 4); }
@@ -215,7 +238,7 @@
       let best = ZONES[0]; ZONES.forEach(z => { if (Math.abs(z.x - mid) < Math.abs(best.x - mid)) best = z; });
       if (camX <= 1) best = ZONES[0]; else if (camX >= maxX - 1) best = ZONES[ZONES.length - 1]; // 到边时镜头没法居中，按边上那个算
       if (pinZone) best = pinZone;
-      if (best.id !== onZone) { onZone = best.id; mini.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.z === best.id)); }
+      if (best.id !== onZone) { onZone = best.id; mini.querySelectorAll('button').forEach(b => { const on = b.dataset.z === best.id; b.classList.toggle('on', on); if (on && mini.scrollWidth > mini.clientWidth) mini.scrollLeft = b.offsetLeft - (mini.clientWidth - b.offsetWidth) / 2; }); }
       if (hintOn && Math.abs(camX - cam0) > 60) { hintOn = false; hint.classList.add('gone'); }
     }
     function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = null; say.classList.remove('on'); }
