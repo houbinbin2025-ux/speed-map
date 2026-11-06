@@ -184,6 +184,42 @@
     if (!S.daily || S.daily.day !== day) S.daily = {day, sec: 0, done: false, budget: BUDGET, fresh: [], asked: {}, tally: {n: 0, pass: 0}};
     return S.daily;
   };
+  // ---------- 习惯记录（docs/说明书-习惯记录.md）：只记录，不影响排课、判题、升级、下架 ----------
+  const SLIPS_MAX = 30, HABIT_DAYS = 14, HABIT_KEYS = ['a', 'r', 'd', 'k', 'ks', 'wn', 'ws', 'in', 'is', 'ia', 'ic', 'say'];
+  const habDay = (S, day) => { const st = stat(S, day); return (st.h = st.h || {}); };
+  const inc = (h, k, n = 1) => { h[k] = (h[k] || 0) + n; };
+  // 熟题：作答前所在格已到淡红以上，或这道题已算过 2 次秒答
+  // 「已算 2 次秒答」要跨天：一天最多记 2 次，所以 ≥ 3 次一般已跨天；正好 2 次时，最后一天只记了 1 次才算跨天。卡的次数有按档位打底的，家长手选难度时可能同一天就够，影响小
+  const isKnown = (S, inst, lv0) => { if (lv0 >= 2) return true; const f = (S.fast || {})[qkey(inst)]; return !!f && (f[0] >= 3 || (f[0] === 2 && f[2] < 2)); };
+  function noteAnswer(S, day, inst, res, known) {
+    try {
+      const h = habDay(S, day), wrong = !res.ok && !res.dunno;
+      inc(h, 'a'); if (res.ok) inc(h, 'r'); if (res.dunno) inc(h, 'd');
+      if (inst.q && inst.q.say) { inc(h, 'wn'); inc(h, 'ws', res.readSecs === undefined ? res.secs || 0 : res.readSecs); }
+      if (known && !res.dunno) {
+        inc(h, 'k');
+        if (wrong) {
+          inc(h, 'ks');
+          const s = skillOf(inst.id);
+          S.slips = (S.slips || []).concat(s.speed ? {d: day, uid: inst.id, a: inst.q.a, op: inst.q.op, b: inst.q.b} : {d: day, uid: inst.id, src: s.group, q: inst.q}).slice(-SLIPS_MAX);
+        }
+      }
+    } catch (e) {}
+  }
+  // digits：每一位是什么数字。按数字分别记：不同数字的评分不可比（h.ds[数字] = [个数, 评分之和]）
+  function noteInk(S, day, scores, clear, digits) {
+    try {
+      const h = habDay(S, day), ok = scores.filter(x => x !== null); inc(h, 'in', ok.length); inc(h, 'is', ok.reduce((a, b) => a + b, 0)); inc(h, 'ia'); if (clear) inc(h, 'ic');
+      (digits || []).forEach((d, i) => { if (scores[i] === null) return; const ds = h.ds = h.ds || {}, c = ds[d] = ds[d] || [0, 0]; c[0]++; c[1] += scores[i]; });
+    } catch (e) {}
+  }
+  function noteSay(S, day) { try { inc(habDay(S, day), 'say'); } catch (e) {} }
+  // 汇总：近 n 天和再往前 n 天；days = 有作答的天数
+  function habit(S, day, n = HABIT_DAYS) {
+    const sum = (from, to) => { const o = {days: 0, ds: {}}; HABIT_KEYS.forEach(k => { o[k] = 0; }); for (let i = from; i < to; i++) { const st = (S.stats || {})[C.addDays(day, -i)], h = st && st.h; if (!h) continue; if (h.a) o.days++; HABIT_KEYS.forEach(k => { o[k] += h[k] || 0; }); for (const d in h.ds || {}) { const c = o.ds[d] = o.ds[d] || [0, 0]; c[0] += h.ds[d][0]; c[1] += h.ds[d][1]; } } return o; };
+    return {now: sum(0, n), prev: sum(n, n * 2), n, slips: (Array.isArray(S.slips) ? S.slips : []).filter(m => m && K.ITEM[m.uid]).slice().reverse()};
+  }
+
   // 笔迹校准等练习以外的时间：计入当天 10 分钟和用时统计
   function addTime(S, day, sec) { daily(S, day).sec += sec; stat(S, day).sec += sec; }
 
@@ -191,6 +227,7 @@
   function settle(S, x, res, day, onTime) {
     if (x.afterDemo) S.demoSeen[x.afterDemo] = true;
     const id = x.inst.id, p = prog(S, id);
+    if (!x.retry && !res.peeked) { let known = false; try { known = isKnown(S, x.inst, p.lv); } catch (e) {} noteAnswer(S, day, x.inst, res, known); }   // 先于这次作答判断
     const lv0 = p.lv, out = record(S, id, res, day);
     if (res.ok && res.fast && !res.peeked && !x.retry && addFast(S, x.inst, day, lv0)) out.up = true;
     if (res.ok && res.fast) sweep(S);
@@ -517,7 +554,7 @@
 
   return {BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
-    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
+    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,
     review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
 });
