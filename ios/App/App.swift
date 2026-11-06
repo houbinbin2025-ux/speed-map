@@ -38,7 +38,7 @@ enum ProgressBackup {
     }
 }
 
-final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessageHandler {
+final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessageHandler, UIGestureRecognizerDelegate {
     private var web: WKWebView!
     private let turnCover = UIView()
 
@@ -58,6 +58,10 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
         #if DEBUG
         if #available(iOS 16.4, *) { web.isInspectable = true }
         #endif
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+        pinch.cancelsTouchesInView = false   // 不抢页面自己的触摸
+        pinch.delegate = self
+        web.addGestureRecognizer(pinch)
         view = UIView()
         view.backgroundColor = .black
         view.addSubview(web)
@@ -109,6 +113,20 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
         controller.removeAllUserScripts()
         controller.addUserScript(WKUserScript(source: Self.bootScript(), injectionTime: .atDocumentStart, forMainFrameOnly: true))
     }
+
+    /// 两指捏合调界面大小；是否生效、落到哪一档由页面脚本决定
+    @objc private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
+        let phase: String
+        switch pinch.state {
+        case .began: phase = "begin"
+        case .changed: phase = "change"
+        default: return
+        }
+        web.evaluateJavaScript("window.__kongPinch && window.__kongPinch('\(phase)', \(pinch.scale)); void 0", completionHandler: nil)
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
 
     override var prefersStatusBarHidden: Bool { true }
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -172,6 +190,70 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
             webkit.messageHandlers.clip.postMessage(String(t));
             return Promise.resolve();
           }}});
+
+          // 界面大小：页面逻辑宽度变大，界面元素变小、可用空间变大。只存本机，不进进度
+          var ZOOMS = [100, 90, 80, 70, 60], ZKEY = 'kongmath.zoom';
+          var getZoom = function () {
+            var z = 100;
+            try { z = +localStorage.getItem(ZKEY); } catch (e) {}
+            return ZOOMS.indexOf(z) < 0 ? 100 : z;
+          };
+          var applyZoom = function (meta) {
+            meta.content = meta.content.replace(/width=\\d+/, 'width=' + Math.round(932 * 100 / getZoom()));
+          };
+          window.__kongK = function () { return getZoom() / 100; };   // 岛和家的场景按它缩小（见 sync-web.sh）
+          var findMeta = function () { return document.querySelector('meta[name=viewport]'); };
+          var watch = new MutationObserver(function () {
+            var meta = findMeta();
+            if (meta) { watch.disconnect(); applyZoom(meta); }
+          });
+          watch.observe(document, {childList: true, subtree: true});
+          var markZoom = function () {}, settle = 0;
+          var setZoom = function (z) {
+            var meta = findMeta();
+            if (!meta || z === getZoom()) return;
+            try { localStorage.setItem(ZKEY, String(z)); } catch (err) { return; }
+            applyZoom(meta); markZoom();
+            // 系统改完逻辑宽度不一定及时发 resize，岛和家的场景靠它重排，这里补发
+            clearTimeout(settle);
+            settle = setTimeout(function () { dispatchEvent(new Event('resize')); }, 150);
+          };
+          // 两指捏合：答题和手写时不响应，防止手掌误触
+          var NO_PINCH = '#play:not([hidden]),#qplay:not([hidden]),#calib:not([hidden]),#demo:not([hidden])';
+          var pinchBase = 0;
+          window.__kongPinch = function (phase, scale) {
+            if (phase === 'begin') {
+              pinchBase = document.querySelector(NO_PINCH) ? 0 : getZoom();
+              // 捏合不算拖动：取消场景正在进行的拖动，画面不跟着手指跑
+              if (pinchBase) ['wVp', 'h_vp'].forEach(function (id) {
+                var vp = document.getElementById(id);
+                if (vp && vp.getClientRects().length) vp.dispatchEvent(new Event('pointercancel'));
+              });
+            }
+            if (!pinchBase) return;
+            var want = pinchBase * scale;
+            setZoom(ZOOMS.reduce(function (a, b) { return Math.abs(b - want) < Math.abs(a - want) ? b : a; }));
+          };
+          addEventListener('DOMContentLoaded', function () {
+            var grid = document.querySelector('#parent .pgrid'), meta = findMeta();
+            if (!grid || !meta) return;
+            var panel = document.createElement('div');
+            panel.className = 'panel';
+            panel.innerHTML = '<div class="ptitle">界面大小</div><div class="seg" id="segZoom">' + ZOOMS.map(function (z) {
+              return '<button type="button" data-zoom="' + z + '">' + z + '%</button>';
+            }).join('') + '</div>';
+            markZoom = function () {
+              panel.querySelectorAll('[data-zoom]').forEach(function (b) {
+                b.classList.toggle('on', +b.dataset.zoom === getZoom());
+              });
+            };
+            panel.addEventListener('click', function (e) {
+              var b = e.target.closest('[data-zoom]');
+              if (b) setZoom(+b.dataset.zoom);
+            });
+            grid.insertBefore(panel, grid.children[1] || null);
+            markZoom();
+          });
         })();
         """
     }

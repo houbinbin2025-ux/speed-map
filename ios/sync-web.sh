@@ -14,3 +14,36 @@ sed -i '' 's/进度只存在这部手机的 Safari 里。请一直用 Safari 打
 perl -pi -e "s/长期保存：\\\$\\{persisted.*?'查询中'\\}/长期保存：App 内自动保留副本/" "$here/web/index.html"
 grep -q '这台 iPad 的空空数学岛' "$here/web/index.html" || { echo "错误：v2 备份说明的文案变了，请同步 sync-web.sh" >&2; exit 1; }
 grep -q '长期保存：App 内自动保留副本' "$here/web/index.html" || { echo "错误：v2 长期保存的文案变了，请同步 sync-web.sh" >&2; exit 1; }
+
+# 让岛和家的场景跟着「界面大小」缩小（同样只改打包副本）：场景贴屏幕底部，上方露出天空或屋顶。
+# __kongK 由 App.swift 的启动脚本提供。v2 这几行变了就报错，不会悄悄失效。
+patch() {
+  python3 - "$here/web/$1" "$2" "$3" <<'PY'
+import sys
+path, old, new = sys.argv[1:]
+text = open(path, encoding='utf-8').read()
+if text.count(old) != 1:
+    sys.exit(f"错误：{path} 里找不到唯一的「{old}」，请同步 sync-web.sh")
+open(path, 'w', encoding='utf-8').write(text.replace(old, new))
+PY
+}
+# 岛
+patch world.js "const W = () => root.clientWidth || innerWidth, H = () => root.clientHeight || innerHeight;" \
+  "const W = () => root.clientWidth || innerWidth, FH = () => root.clientHeight || innerHeight, H = () => FH() * window.__kongK(), TOP = () => FH() - H();"
+patch world.js "P = H() / WH; lastW = W();" \
+  "P = H() / WH; lastW = W(); Lmain.style.top = Lfar.style.top = TOP() + 'px';"
+patch world.js "ax = (camX + cx) / P, ay = cy / P;" \
+  "ax = (camX + cx) / P, ay = (cy - TOP()) / P;"
+patch world.js "say.style.top = ay * P - 46 + 'px';" \
+  "say.style.top = TOP() + ay * P - 46 + 'px';"
+# 家：同时让缩放后镜头停在原来看的位置
+patch house.js "const VW = () => innerWidth, VH = () => innerHeight;" \
+  "const VW = () => innerWidth, VH = () => innerHeight * window.__kongK(), TOP = () => innerHeight - VH(); let lastVW = 0;"
+patch house.js "P = VH() / RH; [cvRoom" \
+  "const mid = lastVW ? (camX + lastVW / 2) / P : null; P = VH() / RH; lastVW = VW(); world.style.top = TOP() + 'px'; [cvRoom"
+patch house.js "maxX = Math.max(0, RW * P - VW()); setCam(camX);" \
+  "maxX = Math.max(0, RW * P - VW()); setCam(mid === null ? camX : Math.max(0, Math.min(maxX, mid * P - VW() / 2)));"
+patch house.js "tap((e.clientX + camX) / P, e.clientY / P);" \
+  "tap((e.clientX + camX) / P, (e.clientY - TOP()) / P);"
+patch index.html "#house #h_vp{position:absolute;inset:0;touch-action:none;background:#2a1d12}" \
+  "#house #h_vp{position:absolute;inset:0;touch-action:none;background:repeating-linear-gradient(0deg,#3b2513 0 6px,#5a3a20 6px 34px)}"
