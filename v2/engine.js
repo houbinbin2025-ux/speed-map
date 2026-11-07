@@ -109,7 +109,7 @@
   // ---------- 秒答下架：S.fast[题的编号] = [累计次数, 最后一次的日子, 当天次数] ----------
   const qkey = inst => (K.ITEM[inst.id].gen && skillOf(inst.id).speed ? inst.id + '|' + inst.q.a + ',' + inst.q.b : K.mkey(inst));
   const fastCount = (S, inst) => { const f = (S.fast || {})[qkey(inst)]; return f ? f[0] : K.ITEM[inst.id].gen ? 0 : lv(S, inst.id); };   // 旧进度：卡每升一档算一次秒答
-  const spent = (S, inst) => (K.ITEM[inst.id].gen ? fastCount(S, inst) >= FAST_OUT : lv(S, inst.id) === 3);
+  const spent = (S, inst) => fastCount(S, inst) >= FAST_OUT || (!K.ITEM[inst.id].gen && lv(S, inst.id) === 3);
   const outOf = (S, id) => (K.ITEM[id].gen ? !!peek(S, id).out : lv(S, id) === 3);    // 这一格的题全部下架了
   function retire(S, id, day) {                     // 点亮到深红（只升不降）；返回这次有没有升
     const p = prog(S, id); if (p.lv === 3) return false;
@@ -131,7 +131,7 @@
   function makeLive(S, id, r, day) {
     if (outOf(S, id) || !itemOn(S, id)) return null;
     let live = false;
-    for (let k = 0; k < 400; k++) { const inst = K.make(id, r); if (!spent(S, inst)) { live = true; if (levelOn(S, inst)) return inst; } if (!K.ITEM[id].gen) break; }
+    for (let k = 0; k < 400; k++) { const inst = K.make(id, r); if (!K.ITEM[id].gen && spent(S, inst)) { retire(S, id, day); return null; } if (!spent(S, inst)) { live = true; if (levelOn(S, inst)) return inst; } if (!K.ITEM[id].gen) break; }
     if (K.ITEM[id].gen && !live) { prog(S, id).out = 1; retire(S, id, day); }   // 这一格的题全下架了；只是级别没开放不算
     return null;
   }

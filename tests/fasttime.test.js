@@ -92,6 +92,16 @@ test('摸底答对但慢不算会', () => {
   assert.equal(K.SKILLS.filter(s => s.items.some(it => E.lv(S, it.id) > 0)).length, 0);
 });
 
+test('旧存档：卡已记满 3 次但没到深红，不再出，直接点到深红', () => {
+  const S = blank(), id = K.BY.bond2.items[0].id, inst = K.make(id, seeded(1)), p = E.prog(S, id);
+  Object.assign(p, {lv: 1, d: ['2026-11-01'], seen: 3});
+  S.fast = {[E.qkey(inst)]: [3, '2026-11-02', 1]};
+  assert.equal(E.spent(S, inst), true);
+  const s = E.free(S, DAY, 'bond2', {rnd: seeded(3)});   // 专练这一组，一定会排到这张卡
+  for (let x = s.next(), g = 0; x && g < 60; x = s.next(), g++) { if (x.kind === 'q') { assert.notEqual(x.inst.id, id); s.answer({ok: true, fast: true, secs: 3}); } }
+  assert.equal(E.lv(S, id), 3);
+});
+
 test('摸底答对且快照常算会', () => {
   const S = C.blank(), pl = E.placement(S, DAY, {rnd: seeded(5)});
   for (let x = pl.next(), g = 0; x && g < 200; x = pl.next(), g++) pl.answer({ok: true, fast: true, secs: 1});
@@ -117,7 +127,8 @@ test('慢答只给 1 个小碎片，不算答错；即使这格本该给中碎�
 test('答对的字：秒答写清得了什么碎片，闪电秒答写清多得的', () => {
   const inst = K.make('bond:t:whole9', seeded(1));
   assert.deepEqual(R.okWords(inst, {pass: true}, 0, null, {got: 'm', extra: 1, bolt: false}), {big: '⚡ 秒答！', small: '+1 中碎片 · +1 小碎片'});
-  assert.deepEqual(R.okWords(inst, {pass: true, up: true}, 0, null, {got: 's', extra: 2, bolt: true}), {big: '⚡⚡ 闪电秒答！', small: '点亮了 · +1 小碎片 · +1 小碎片 · +1 小碎片'});
+  assert.deepEqual(R.okWords(inst, {pass: true, up: true}, 0, null, {got: 's', extra: 1, bolt: true}), {big: '⚡⚡ 闪电秒答！', small: '点亮了 · +1 小碎片 · +1 小碎片 · +1 中碎片'});
+  assert.equal(R.okWords(inst, {pass: true}, 0, null, {got: 'o12', extra: 1}).small, '+1 碎片（12） · +1 小碎片', '杂色碎片写面值');
   assert.equal(R.okWords(inst, {pass: false}, 0, {used: 8200, limit: 5400}, {got: 's', extra: 0}).small, '这次 9 秒，秒答要 5 秒内 · +1 小碎片');
 });
 

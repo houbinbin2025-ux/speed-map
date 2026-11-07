@@ -10,7 +10,7 @@
   // 杂色碎片（Ben 11-07）：印 4、6、7、8、12、13，给孩子自己凑 100 做算数。数量要少，核心还是普通碎片
   const VALUE = {s: 5, m: 10, l: 50, o4: 4, o6: 6, o7: 7, o8: 8, o12: 12, o13: 13}, ODD = ['o4', 'o6', 'o7', 'o8', 'o12', 'o13'], ODD_RATE = 0.1, ODD_OF = {s: ['o4', 'o6', 'o7', 'o8'], m: ['o8', 'o12', 'o13']};
   const GEM = 100, SLOTS = 12, DAY_MAX = 30, CH_N = 5, CLAIM_DAYS = 7, KEEP_DAYS = 14, RECENT_DAYS = 14;
-  const BOLT = 0.6, BOLT_DAY = 20;   // 闪电秒答：用时不到秒答时间的 60%，多得 1 个小碎片，一天最多 20 个
+  const BOLT = 0.6, BOLT_DAY = 20;   // 闪电秒答：用时不到秒答时间的 60%，多得 1 个中碎片，一天最多 20 个（小碎片单独炼不出宝石，给小的等于没奖励）
   const blank = () => ({v: 1, inv: {s: 0, m: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
@@ -80,12 +80,12 @@
     if (!list || !rand || rand() >= ODD_RATE) return t;
     return list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
   }
-  // 秒答且这题得了碎片才调：多发 1 个小碎片，闪电秒答再发 1 个（一天最多 BOLT_DAY 个）；返回 {extra, bolt}
+  // 秒答且这题得了碎片才调：多发 1 个小碎片，闪电秒答再发 1 个中碎片（一天最多 BOLT_DAY 个）；返回 {extra, bolt}
   function speedBonus(st, day, fast) {
     const D = dayOf(st, day), bolt = !!fast && (D.bolt || 0) < BOLT_DAY;
-    if (bolt) D.bolt = (D.bolt || 0) + 1;
-    const extra = bolt ? 2 : 1; st.inv.s += extra;
-    return {extra, bolt};
+    st.inv.s++;
+    if (bolt) { D.bolt = (D.bolt || 0) + 1; st.inv.m++; }
+    return {extra: 1, bolt};
   }
   const K_levelOf = inst => { try { return K.ITEM[inst.id] ? K.levelOf(inst) : 0; } catch (e) { return 0; } };
 
@@ -142,7 +142,9 @@
     D.n++;
     if (o.dunno) return null;
     if (!o.ok) { D.bad++; return null; }
-    D.ok++; st.inv.m++;
+    D.ok++;
+    if (o.slow) { st.inv.s++; return 's'; }   // 挑战题慢答：答对也有，但不算过
+    st.inv.m++;
     return 'm';
   }
   function finishChallenge(st, o) {
