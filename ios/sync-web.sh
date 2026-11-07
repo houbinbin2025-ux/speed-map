@@ -52,7 +52,7 @@ patch index.html "#house #h_vp{position:absolute;inset:0;touch-action:none;backg
 game="${KONG_WORLD_REPO:-$HOME/03_个人/测试/minecraft-web}"
 [ -d "$game/.git" ] || { echo "错误：找不到方块世界仓库 $game" >&2; exit 1; }
 mkdir -p "$here/web/world"
-git -C "$game" archive HEAD index.html quest.js rewards.js unlock.js tiles.js math-bank.js three.min.js audio.js | tar -x -C "$here/web/world"
+git -C "$game" archive HEAD index.html quest.js rewards.js unlock.js pal.js pal-art.js tiles.js math-bank.js three.min.js audio.js | tar -x -C "$here/web/world"
 # 岛上加入口（只改打包副本，手机和网页不变）
 cp "$here/world-entry.js" "$here/web/world-entry.js"
 patch index.html "</body>" '<script src="world-entry.js"></script></body>'
