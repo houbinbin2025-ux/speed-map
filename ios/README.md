@@ -30,3 +30,11 @@ xcrun devicectl device install app --device <设备标识符> build/Build/Produc
 
 两指捏合或家长区「界面大小」可调 100%–60%，每档 10%，只存本机，不进进度。答题和手写页面不响应捏合。
 按钮和题目靠放大页面逻辑宽度变小（`App/App.swift`）；岛和家的场景按比例缩小并贴屏幕底部（`sync-web.sh` 只改打包副本，`v2/` 对应代码变了会报错）。
+
+## 方块世界
+
+App 里打包了奖励游戏：`sync-web.sh` 用 `git archive HEAD` 把 `~/03_个人/测试/minecraft-web`（可用 `KONG_WORLD_REPO` 改）已提交的版本放进 `web/world/`，岛上左上角加一个方块图标进入（`world-entry.js`），游戏里左上角「回数学岛」回来。线上网页版没有这个入口。
+
+游戏和数学岛共用 App 的 localStorage，进游戏自动领奖励。改了游戏要先提交，再跑 `bash ios/release.sh`。
+
+**配置要求**：数学岛不能放进「学习应用」分组，否则在方块世界玩也会加宝石。

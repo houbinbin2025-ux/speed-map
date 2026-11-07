@@ -125,6 +125,7 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
 
     /// 两指捏合调界面大小；是否生效、落到哪一档由页面脚本决定
     @objc private func handlePinch(_ pinch: UIPinchGestureRecognizer) {
+        if web.url?.path.contains("/world/") == true { return }   // 方块世界有自己的双指缩放，不改数学岛的界面大小
         let phase: String
         switch pinch.state {
         case .began: phase = "begin"
@@ -189,7 +190,7 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
           var saved = \(ProgressBackup.load() ?? "null");
           var main = localStorage.getItem('speedmap.v2'), bad = false;
           if (main !== null) { try { JSON.parse(main); } catch (e) { bad = true; } }
-          var keys = function () { return Object.keys(localStorage).filter(function (k) { return k.indexOf('speedmap') === 0; }); };
+          var keys = function () { return Object.keys(localStorage).filter(function (k) { return k.indexOf('speedmap') === 0 || k.indexOf('mc_') === 0; }); };
           try {
             // 主存档缺失或损坏才恢复；清空进度会保留主存档，不会被恢复回来
             if (saved && (main === null || bad)) {
@@ -203,6 +204,8 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
             var gems = localStorage.getItem('speedmap.gems'), gemsBad = gems === null;
             if (gems !== null) { try { var g = JSON.parse(gems); gemsBad = !g || typeof g !== 'object' || Array.isArray(g); } catch (e) { gemsBad = true; } }
             if (saved && gemsBad && saved['speedmap.gems']) localStorage.setItem('speedmap.gems', saved['speedmap.gems']);
+            // 方块世界的存档（mc_ 开头）也进副本：缺了就恢复
+            if (saved) Object.keys(saved).forEach(function (k) { if (k.indexOf('mc_') === 0 && localStorage.getItem(k) === null) localStorage.setItem(k, saved[k]); });
           } catch (e) {}
           var last = '';
           var push = function () {
