@@ -509,6 +509,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
 #forgeMsg{font-size:18px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
 #forgeMsg.pop{animation:fragLand .28s}
+#gemEv{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:calc(env(safe-area-inset-left) + 112px);z-index:30;min-height:44px;width:236px;padding:4px 10px;line-height:1.25;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;font-size:14px;font-weight:800;text-align:left}#gemEv[hidden]{display:none}#gemEv[disabled]{min-height:32px;font-size:14px;color:var(--warn);opacity:1}#gemEv.offer{background:var(--warn);color:#1b1d22;box-shadow:0 4px 0 #000;animation:fragLand .3s}
+#restOv{position:fixed;inset:0;z-index:75;background:var(--cave);display:flex;align-items:center;justify-content:center}#restOv[hidden]{display:none}#restOv h2{margin:0;font-size:24px}#restOv b{font-size:44px;color:var(--warn)}
+#exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden]{display:none!important}
+.qcrit{font-size:12px;font-weight:800;color:#ddd;white-space:nowrap;flex:none}.qcrit.on{color:var(--warn)}.qcrit[hidden]{display:none}
+.evpop{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:55;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;padding:6px 16px;font-size:18px;font-weight:900;pointer-events:none;white-space:nowrap;animation:evpop 1.5s ease forwards}.evpop.gold{background:var(--warn);color:#1b1d22;font-size:24px}@keyframes evpop{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.08)}20%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px)}}
 #forgeWarn{position:absolute;inset:0;z-index:40;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#forgeWarn[hidden]{display:none}
 .fwcard{background:var(--cave);border:4px solid #000;box-shadow:0 5px 0 #000;padding:14px 18px;display:flex;flex-direction:column;gap:8px;max-width:440px;text-align:center}.fwcard b{font-size:20px;color:var(--warn)}.fwcard span{font-size:15px;line-height:1.35}.fwcard .gembtns{justify-content:center}
 .forgeSide{margin-left:auto;display:flex;flex-direction:column;gap:8px;width:150px;flex:none}
@@ -548,6 +553,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     </div>
     </div>
     <span class="muted" id="backupHint" style="white-space:nowrap"></span>
+    <button class="corner" id="btnForge" hidden><img id="forgeIco" alt="" style="width:26px;image-rendering:pixelated"><span>锻造台</span><span class="num" id="forgeN" style="margin-left:4px"></span></button>
     <button class="corner" id="btnMist"><img id="chestIco" alt="">错题宝箱<span class="dotn num" id="mistDot" hidden></span></button>
     <button class="gear" id="gear" aria-label="家长区（长按 2 秒）"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8bac3" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"></path></svg><i></i></button>
   </div>
@@ -587,9 +593,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 <!-- 3 练习（今日练习 / 摸底 / 自由加练 / 复习这一组） -->
 <div class="scr" id="qplay" hidden>
+  <button id="gemEv" hidden></button>
+  <div id="exitOv" hidden><div class="fwcard"><b></b><span></span><div class="gembtns"><button class="btn go" id="exitGo">继续答题</button><button class="btn" id="exitEnd">结束</button></div></div></div>
   <canvas class="scnbg px" id="qBg"></canvas>
   <div class="ql">
-    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span></div>
+    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span><span class="qcrit" id="qCrit" hidden></span></div>
     <div class="banner" id="qWarn" hidden></div>
     <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
     <div class="qtag" id="qTag"></div>
@@ -759,6 +767,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 <!-- 10 家长区 -->
 <div class="scr" id="parent" hidden style="flex-direction:column;gap:10px">
+  <div id="gemStats" style="background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:none;font-size:14px;line-height:1.5"></div>
   <div class="top"><button class="btn" id="parBack">返回</button><h1>家长区</h1><span class="muted">首页右上角齿轮长按 2 秒进入</span></div>
   <div class="warnbox" id="parNote" hidden></div>
   <div class="pgrid" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start">
@@ -844,6 +853,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 </div></div>
 
 <div class="w-fade"></div>
+<div id="restOv" hidden><div class="fwcard"><h2>休息时间</h2><b class="num"></b><span>连续练了 30 分钟，休息 5 分钟后再来</span></div></div>
 <div class="w-turn"><span style="font-size:54px">↻</span>把手机横过来</div>
 
 <!-- 12 异常 -->
@@ -876,7 +886,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v91:421052b72c2c -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v95:b189ef0e91ed -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -886,24 +896,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=91"></script>
-<script src="i18n.js?v=91"></script>
-<script src="bank.js?v=91"></script>
-<script src="hardbank.js?v=91"></script>
-<script src="placebank.js?v=91"></script>
-<script src="core.js?v=91"></script>
-<script src="ink.js?v=91"></script>
-<script src="skills.js?v=91"></script>
-<script src="engine.js?v=91"></script>
-<script src="render.js?v=91"></script>
-<script src="world.js?v=91"></script>
-<script src="home.js?v=91"></script>
-<script src="puzzles.js?v=91"></script>
-<script src="thinking.js?v=91"></script>
-<script src="house.js?v=91"></script>
-<script src="kongmine.js?v=91"></script>
-<script src="gems.js?v=91"></script>
-<script src="gemui.js?v=91"></script>
+<script src="touchfix.js?v=95"></script>
+<script src="i18n.js?v=95"></script>
+<script src="bank.js?v=95"></script>
+<script src="hardbank.js?v=95"></script>
+<script src="placebank.js?v=95"></script>
+<script src="core.js?v=95"></script>
+<script src="ink.js?v=95"></script>
+<script src="skills.js?v=95"></script>
+<script src="engine.js?v=95"></script>
+<script src="render.js?v=95"></script>
+<script src="world.js?v=95"></script>
+<script src="home.js?v=95"></script>
+<script src="puzzles.js?v=95"></script>
+<script src="thinking.js?v=95"></script>
+<script src="house.js?v=95"></script>
+<script src="kongmine.js?v=95"></script>
+<script src="gems.js?v=95"></script>
+<script src="gemui.js?v=95"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -956,7 +966,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'habit', 'bankv', 'house', 'forge', 'think'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
-  const goIsland = () => { renderIsland(); show('island'); WD.layout(); };   // 显示之后再算一次：隐藏时量不到真实高度
+  const goIsland = () => { renderIsland(); GM.islandBtn(); show('island'); WD.layout(); };   // 显示之后再算一次：隐藏时量不到真实高度
   // 手写模式第一次练习前先校准
   const begin = (fn, back) => { if (!S.oral && !calibrated()) startCal(fn, back); else fn(); };
 
@@ -1491,6 +1501,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     clearInterval(Q.tick); Q.tick = setInterval(qBar, 500);
     if (kind === 'free' || kind === 'review') Zone = String((opts && opts.group) || Zone || 'look').split(':')[0].replace('speedH', 'speed');
     Q.zone = Zone || 'look'; Q.ore = 0; $('qMined').querySelector('b').textContent = 0; $('qMined').querySelector('i').style.background = ''; $('qMined').hidden = kind === 'place' || kind === 'challenge';
+    if (opts && opts.restore) { Object.assign(Q, opts.restore); delete Q.opts.restore; $('qMined').querySelector('b').textContent = Q.ore || 0; }
     const zone = Q.zone; nextQ(); requestAnimationFrame(() => WORLD.sceneBg($('qBg'), zone, innerWidth, innerHeight));   // nextQ 可能已结束练习（今天没题了），Q 变成 null
   }
   function nextQ() {
@@ -1663,7 +1674,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const x = Q.x, inst = x.inst;
     const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? OK_MS : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
-    GM.answerQ(Q, x, r);
+    GM.answerQ(Q, x, r, secs);
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1729,7 +1740,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       box.appendChild(a.firstChild);
     }
   }
-  longPress($('qQuit'), 1000, () => finishQ(true), () => { $('qQuitHint').hidden = false; clearTimeout(window._qh); window._qh = setTimeout(() => { $('qQuitHint').hidden = true; }, 1500); });
+  longPress($('qQuit'), 1000, () => GM.askQuit(Q, () => finishQ(true)), () => { $('qQuitHint').hidden = false; clearTimeout(window._qh); window._qh = setTimeout(() => { $('qQuitHint').hidden = true; }, 1500); });
 
   // ---------- 3a 学一学 · 示范卡：动画播完（约 3 秒）「我知道了」才能点 ----------
   function showDemo(skill) {
@@ -1740,7 +1751,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qBar();
   }
   $('ack').addEventListener('click', () => { if (Q && Q.phase === 'demo' && !$('ack').disabled) nextQ(); });
-  longPress($('dQuit'), 1000, () => finishQ(true));
+  longPress($('dQuit'), 1000, () => GM.askQuit(Q, () => finishQ(true)));
 
   // ---------- 6 结算 / 2b 摸底结果 ----------
   const lvColor = id => ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][E.lv(S, id) || 0];
@@ -1863,6 +1874,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const fmtDay = ms => { const d = new Date(ms); return `${d.getMonth() + 1} 月 ${d.getDate()} 日`; };
   const kb = k => { const v = store.getItem(k); return v === null ? '—' : (v.length / 1024).toFixed(1) + ' KB'; };
   function renderParent() {
+    { const h = GM.parentStats(); $('gemStats').innerHTML = h; $('gemStats').hidden = !h; }
     const t = today(), st = S.stats || {};
     // 周报：最近 7 天
     const last7 = Array.from({length: 7}, (_, i) => st[C.addDays(t, -i)]).filter(Boolean).filter(x => x.sec > 0);
@@ -2159,8 +2171,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     });
   }
   const inApp = !!(window.webkit && webkit.messageHandlers && webkit.messageHandlers.backup) && !TEST && !PREVIEW;
-  GM.init({enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
+  GM.init({finishQ, goIsland, curQ: () => Q, leaveQ: () => { timers(); clearInterval(Q.tick); try { Q.lock && Q.lock.release(); } catch (e) {} const q = Q; Q = null; save(); return q; }, enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
     canWrite: () => !frozen && !S.readOnly && !S.stopped});
+  GM.islandBtn(); $('btnForge').addEventListener('click', () => { if (!WD.entering) GM.openForge('island'); });
   window.__sm = {TH, today, resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
