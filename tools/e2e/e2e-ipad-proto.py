@@ -1,0 +1,60 @@
+# iPad 答题原型（docs/原型/ipad/）：6 种布局都在 iPad 横屏里放得下；每种布局真写答案（逐格画数字）判对、写错判错、「不会」给讲解
+# 用法：python3 tools/e2e/e2e-ipad-proto.py <项目根> <截图目录>
+import sys, pathlib, math
+from playwright.sync_api import sync_playwright
+root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
+url = (root / 'docs' / '原型' / 'ipad' / 'index.html').as_uri()
+fails, errs = [], []
+def check(ok, msg):
+    print(('ok  ' if ok else 'FAIL'), msg)
+    if not ok: fails.append(msg)
+# 标准写法（和 ink.js 的 STD 同一套坐标，0.6 × 1）
+def arc(cx, cy, rx, ry, a0, a1, n=18): return [(cx + rx * math.cos(math.radians(a0 + (a1 - a0) * i / (n - 1))), cy + ry * math.sin(math.radians(a0 + (a1 - a0) * i / (n - 1)))) for i in range(n)]
+D = {0: [arc(.3, .5, .3, .5, -90, 270, 30)], 1: [[(.05, .2), (.3, 0), (.3, 1)]], 2: [arc(.3, .27, .3, .27, 190, 390, 14) + [(0, 1), (.6, 1)]],
+     3: [arc(.28, .25, .28, .25, 210, 450, 14) + arc(.28, .73, .32, .27, 270, 510, 16)], 4: [[(.45, 0), (0, .68), (.6, .68)], [(.45, 0), (.45, 1)]],
+     5: [[(.55, 0), (.08, 0), (.04, .42)] + arc(.28, .7, .32, .3, 230, 510, 16)[1:]], 6: [arc(.42, .35, .42, .35, 290, 180, 8) + arc(.3, .72, .3, .28, 180, 540, 18)],
+     7: [[(0, 0), (.6, 0), (.2, 1)]], 8: [arc(.3, .24, .24, .24, 90, 450, 16) + arc(.3, .74, .3, .26, -90, 270, 18)], 9: [arc(.3, .28, .3, .28, 0, 360, 18) + [(.6, .28), (.5, 1)]]}
+def write(pg, el, d):
+    b = el.bounding_box(); h = b['height'] * .62; w = h * .6; x0 = b['x'] + (b['width'] - w) / 2; y0 = b['y'] + (b['height'] - h) / 2
+    for st in D[d]:
+        pts = [(x0 + x * w / .6, y0 + y * h) for x, y in st]
+        pg.mouse.move(*pts[0]); pg.mouse.down()
+        for p in pts[1:]: pg.mouse.move(*p, steps=2)
+        pg.mouse.up()
+def answer(pg, ans, rem=None):
+    cells = pg.locator('.cell'); n = cells.count() - (1 if rem is not None else 0); s = str(ans)
+    for i, ch in enumerate(s): write(pg, cells.nth(n - len(s) + i), int(ch))
+    if rem is not None: write(pg, cells.nth(n), rem)
+with sync_playwright() as p:
+    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1194, 'height': 834}, has_touch=True)
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.goto(url); pg.wait_for_timeout(300)
+    kinds = pg.evaluate("KINDS")
+    for k in kinds:
+        n = pg.evaluate(f"BANK['{k}'].qs.length")
+        for i in range(n):
+            pg.evaluate(f"Q.kind='{k}'; Q.i={i}; render()"); pg.wait_for_timeout(200)
+            q = pg.evaluate("BANK[Q.kind].qs[Q.i]")
+            over = pg.evaluate("[...document.querySelectorAll('#stage *')].filter(e=>!e.closest('#res')&&(()=>{const r=e.getBoundingClientRect();return r.width&&(r.right>1195||r.bottom>835)})()).length")
+            check(over == 0, f'{k}#{i} 放得下（超出 {over} 个；答完才滑出的讲解栏不算）')
+            cw = pg.evaluate("Math.min(...[...document.querySelectorAll('.cell')].map(c=>c.getBoundingClientRect().width))")
+            check(cw >= 90, f'{k}#{i} 答案格够手指写（最窄 {cw:.0f}）')
+            answer(pg, q['ans'], q.get('rem')); pg.wait_for_timeout(100)
+            if i == 0: pg.screenshot(path=str(out / f'{k}-write.png'))
+            pg.click('#done'); pg.wait_for_timeout(400)
+            big = pg.inner_text('#res .big')
+            check('对了' in big, f'{k}#{i} 写对 {q["ans"]} 判对：{big} · {pg.inner_text("#res .muted")}')
+            if i == 0: pg.screenshot(path=str(out / f'{k}-ok.png'))
+    # 写错判错、不会给讲解
+    pg.evaluate("Q.kind='vert'; Q.i=0; render()"); pg.wait_for_timeout(200)
+    answer(pg, 189); pg.click('#done'); pg.wait_for_timeout(300)
+    check('再看看' in pg.inner_text('#res .big'), '写错 189 判错'); pg.screenshot(path=str(out / 'vert-bad.png'))
+    pg.evaluate("render()"); pg.wait_for_timeout(200); pg.click('#dunno'); pg.wait_for_timeout(300)
+    check('借' in pg.inner_text('#res .why'), '不会：出讲解')
+    # 中间空一格算错
+    pg.evaluate("Q.kind='vert'; Q.i=0; render()"); pg.wait_for_timeout(200)
+    cells = pg.locator('.cell'); write(pg, cells.nth(0), 1); write(pg, cells.nth(2), 9); pg.click('#done'); pg.wait_for_timeout(300)
+    check('再看看' in pg.inner_text('#res .big'), '中间空一格判错')
+    b.close()
+print('错误', errs or '无'); print('不通过', fails or '无')
+sys.exit(1 if fails or errs else 0)

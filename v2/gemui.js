@@ -22,13 +22,15 @@
     c.$('forgeList').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) add(b.dataset.add); });
     c.$('forgeSlots').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b && !busy) { slots.splice(+b.dataset.i, 1); msg = ''; blip([[260, 0, 0.05]]); draw(); } });
     c.$('forgeGo').addEventListener('click', () => doForge());
+    c.$('gemEv').addEventListener('click', takeOffer);
+    setInterval(() => { try { evTick(); } catch (e) { /* 弹出的东西出错不挡练习 */ } }, 500);
     c.$('forgeWarnBack').addEventListener('click', () => { c.$('forgeWarn').hidden = true; });
     c.$('forgeWarnGo').addEventListener('click', () => { c.$('forgeWarn').hidden = true; doForge(true); });
     c.$('forgeClaim').addEventListener('click', claim);
     c.$('forgeBack').addEventListener('click', () => { if (busy) return; if (back === 'island') c.goIsland(); else c.show(back); });
     addEventListener('resize', () => { if (c.cur() === 'forge') layoutScene(); });
     if (window.ResizeObserver) new ResizeObserver(() => { if (c.cur() === 'forge' && c.$('forge').clientHeight) layoutScene(); }).observe(c.$('forge'));
-    window.__kongEarnFailed = () => { st.sent = {}; save(); msg = '没有找到空空矿场'; if (c.cur() === 'forge') draw(); };
+    window.__kongEarnFailed = () => { st.sent = st.sentBak || st.sent; save(); msg = '没有找到空空矿场'; if (c.cur() === 'forge') draw(); };
   }
 
   // ---------- 记作答：判定一出来就调，在显示答案和存进度之前 ----------
@@ -36,10 +38,21 @@
   const oddChips = (o, plus) => G.ODD.filter(t => o[t] > 0).map(t => `${chip(t)}<span>${plus}${o[t]}</span>`).join('');
   function credit(run, got, i) { if (got) { run.gem = run.gem || {s: 0, m: 0}; run.gem[got] = (run.gem[got] || 0) + 1; floatShard(got, i); } }   // i：这题第几个，错开飞，看得出多
   function topOf(run) { if (run.gemTop === undefined) { G.sync(st, S(), auto()); run.gemTop = G.top(st, auto()); } return run.gemTop; }
-  function answerQ(q, x, r) {
+  const clock = () => Date.now() / 1000;
+  const evOn = q => on && !!q && ['today', 'free', 'review'].includes(q.kind) && !S().oral && c.canWrite();
+  function answerQ(q, x, r, secs) {
     if (!on || q.kind === 'place' || !c.canWrite()) return null;
     let got = null, more = null;
-    if (q.kind === 'challenge') {
+    const secBefore = (st.days[q.day] || {}).sec || 0, evc = q.opts && q.opts.evc;
+    secs = Math.min(30, secs || 0);
+    G.noteRest(st, secs, clock());
+    if (!S().oral) { G.addSec(st, q.day, secs); if (!x.retry) G.notePace(st, secs, r.ok && !r.dunno); }
+    if (evc) {
+      got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, rand: oddRand});
+      credit(q, got); if (got) evc.earned[got] = (evc.earned[got] || 0) + 1;
+      if (r.ok && !r.dunno && !q.peeked) evc.done++;
+      evLater();
+    } else if (q.kind === 'challenge') {
       got = G.challengeAnswer(st, {day: q.day, inst: x.inst, ok: r.ok && !q.peeked, slow: r.ok && !r.fast, dunno: r.dunno || q.peeked, oral: S().oral});
       q.chDone = (q.chDone || 0) + 1; if (got === 'm') q.chWon = (q.chWon || 0) + 1;
       credit(q, got);
@@ -47,14 +60,136 @@
       got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand});
       credit(q, got);
       if (got && r.fast) { more = G.speedBonus(st, q.day, r.bolt); credit(q, 's', 1); if (more.bolt) credit(q, 'm', 2); }
+      if (evOn(q)) afterAnswer(q, x, r, got, secBefore);
     }
     save();
     return {got, extra: more ? more.extra : 0, bolt: !!more && more.bolt};
+  }
+  // ---------- 练习中的正反馈：暴击、连对、弹出挑战 ----------
+  let evRun = null;
+  // 判定流程走完再检查：evTick 可能结束这一关，不能在判定中途调
+  const evLater = () => setTimeout(() => { try { evTick(); } catch (e) {} }, 0);
+  function afterAnswer(q, x, r, got, secBefore) {
+    evRun = q;
+    if (!x.retry) { q.streak = r.ok && !r.dunno ? (q.streak || 0) + 1 : 0; if ([5, 10, 20, 30].includes(q.streak)) { evPop(`连对 ${q.streak}`); blip([[660, 0, 0.05], [880, 0.05, 0.08]]); } }
+    const sec = (st.days[q.day] || {}).sec || 0;
+    if (secBefore < G.TUNE.critAt && sec >= G.TUNE.critAt) { evPop('暴击时间开启', 'gold'); blip([[523, 0, 0.1], [784, 0.1, 0.1], [1046, 0.2, 0.25]]); }
+    if (got === 'l') { q.crit = (q.crit || 0) + 1; evPop('暴击 +50', 'gold'); blip([[784, 0, 0.08], [1046, 0.08, 0.08], [1568, 0.16, 0.25]]); }
+    evLater();
+  }
+  function evPop(text, cls) {
+    const e = document.createElement('div'); e.className = 'evpop' + (cls ? ' ' + cls : ''); e.textContent = text;
+    document.body.appendChild(e); setTimeout(() => e.remove(), 1500);
+  }
+  const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  function evTick() {
+    if (!on) return;
+    const t = clock(), el = c.$('gemEv'), chipEl = c.$('qCrit');
+    restTick(t);
+    if (c.cur() !== 'qplay') c.$('exitOv').hidden = true;
+    const q = c.cur() === 'qplay' ? c.curQ() : null, evc = q && q.opts && q.opts.evc;
+    let text = '', btn = false;
+    if (evc) {
+      if (evc.done >= evc.n || t >= evc.until) return void c.finishQ(true);
+      text = `${evc.kind === 'dbl' ? '双倍挑战' : '限时挑战'} ${evc.done} / ${evc.n} · ${mmss(Math.ceil(evc.until - t))}`;
+      chipEl.hidden = true;
+    } else if (q && q === evRun && evOn(q)) {
+      const D = st.days[q.day] || {}, sec = D.sec || 0, left = G.TUNE.critAt - sec;
+      chipEl.hidden = left > 300; chipEl.textContent = left > 0 ? `暴击时间 还差 ${Math.max(1, Math.ceil(left / 60))} 分钟` : '暴击时间'; chipEl.classList.toggle('on', left <= 0);
+      if (G.restDue(st)) {   // 连续 30 分钟：30 秒内结束
+        q.restAt = q.restAt || t + G.TUNE.restGrace;
+        if (t >= q.restAt) { c.$('exitOv').hidden = true; return void c.finishQ(true); }
+        text = `${Math.ceil(q.restAt - t)} 秒后休息 ${G.TUNE.restSec / 60} 分钟`;
+      } else {
+        const e = G.eventStep(st, q.day, q, sec, t, Math.random), o = q.ev.offer;
+        if (e.offer) blip([[880, 0, 0.06], [880, 0.1, 0.06]]);
+        if (o) { btn = true; const s = Math.max(0, Math.ceil(o.until - t)); text = o.kind === 'dbl' ? `双倍碎片挑战 · 点这里进入 · ${s}` : `限时挑战 · 3 分钟答对 ${o.n} 题，额外 1 颗宝石 · ${s}`; }
+      }
+    } else chipEl.hidden = true;
+    el.hidden = !text; el.disabled = !btn; el.classList.toggle('offer', btn); if (el.dataset.raw !== text) { el.dataset.raw = text; el.textContent = text; }
+  }
+  // 休息：练习页之外才开始，盖住所有界面，到点自动消失。刷新后接着算
+  function restTick(t) {
+    const v = c.$('restOv');
+    if (G.restDue(st) && c.cur() !== 'qplay' && c.cur() !== 'play' && c.cur() !== 'demo') { G.startRest(st, t); save(); blip([[523, 0, 0.12], [392, 0.12, 0.2]]); }
+    const left = G.restLeft(st, t);
+    v.hidden = left <= 0;
+    if (left > 0) { const m = v.querySelector('b'), s = mmss(Math.ceil(left)); if (m.textContent !== s) m.textContent = s; }
+  }
+  function takeOffer() {
+    const q = evRun; if (!q || !evOn(q)) return;
+    const kind = G.acceptOffer(q, clock()); if (kind) { try { startEv(q, kind, false); } catch (e) { if (!c.curQ()) c.goIsland(); } }
+  }
+  // 进入挑战：停下当前练习，出题，完了回到原来的练习接着做
+  function startEv(q, kind, retry) {
+    const tg = G.evTarget(st, kind), day = q.day, top = G.top(st, auto());
+    const qs = G.pickEv(S(), st, Math.ceil(tg.n * 2 + 6), top, Math.random);
+    if (qs.length < tg.n) { if (c.curQ() !== q) resume(q); return; }   // 题不够就不开，接着练
+    const prev = c.curQ() === q ? c.leaveQ() : q;
+    G.evStart(st, day, kind, retry); save();
+    let i = 0;
+    evPop(kind === 'dbl' ? `${tg.T} 秒答对 ${tg.n} 题，碎片翻倍` : `3 分钟答对 ${tg.n} 题`, 'gold'); blip([[660, 0, 0.08], [990, 0.08, 0.12]]);
+    c.startQ('challenge', {sess: {next: () => (i < qs.length ? {kind: 'q', inst: qs[i++], seg: 'challenge'} : null), answer: () => null},
+      evc: {kind, n: tg.n, T: tg.T, until: clock() + tg.T, done: 0, earned: {}, retry, prev}});
+    evRun = c.curQ(); evTick();
+  }
+  function resume(prev) {
+    const keep = ['n', 'ups', 'passed', 'retries', 'wrong', 'secs', 'gem', 'crit', 'qcWon', 'streak', 'ev', 'exitAsked', 'restAt', 'mist0', 'ore', 'fastN'], o = Object.assign({}, prev.opts), restore = {}; delete o.extra;
+    keep.forEach(k => { if (prev[k] !== undefined) restore[k] = prev[k]; });
+    o.restore = restore;   // 先恢复再出题：原练习没题了也能走结算页
+    c.startQ(prev.kind, o);
+    const q = c.curQ(); if (!q) return;
+    evRun = q; evTick();
+  }
+  function evResult(q) {
+    const v = q.opts.evc, res = G.evEnd(st, q.day, {kind: v.kind, n: v.n, done: v.done, earned: v.earned, retry: v.retry}); save();
+    if (res.won && v.prev) { if (res.gem) v.prev.qcWon = (v.prev.qcWon || 0) + 1; }
+    if (v.prev) {   // 挑战里得的碎片（和翻倍的那份）算进原练习的「这次的碎片」
+      const pg = v.prev.gem = v.prev.gem || {s: 0, m: 0}, add = o => Object.keys(o || {}).forEach(t => { pg[t] = (pg[t] || 0) + o[t]; });
+      add(q.gem); if (res.bonus) add(v.earned);
+    }
+    const canRetry = !res.won && v.kind === 'dbl' && !v.retry && !G.restDue(st);
+    const name = v.kind === 'dbl' ? '双倍挑战' : '限时挑战';
+    c.$('qsum').innerHTML = `<div class="col" style="flex:1;justify-content:center;align-items:center;gap:12px">
+      <div style="font-size:28px;font-weight:900">${res.won ? `${name}完成` : `${name}结束`}</div>
+      <div style="font-size:18px">答对 ${v.done} / ${v.n} 题</div>
+      ${res.gem ? `<div class="gemline"><img src="${gemURL()}" alt="" style="width:36px;image-rendering:pixelated"><span>宝石 +1</span></div>` : ''}
+      ${res.bonus ? `<div class="gemline" style="font-size:18px;font-weight:900;color:var(--warn)">碎片翻倍 +${res.bonus}</div>` : ''}
+      <div class="gembtns">${canRetry ? '<button class="btn go" id="evRetry">再挑战一次</button>' : ''}<button class="btn${canRetry ? '' : ' go'}" id="evBack">继续练习</button></div></div>`;
+    c.show('qsum');
+    if (res.won) blip([[660, 0, 0.1], [880, 0.09, 0.1], [1320, 0.18, 0.22]]); else blip([[300, 0, 0.1], [240, 0.1, 0.14]], 'triangle');
+    c.$('evBack').addEventListener('click', () => { if (v.prev) resume(v.prev); else c.goIsland(); });
+    if (canRetry) c.$('evRetry').addEventListener('click', () => { startEv(v.prev, 'dbl', true); });
+  }
+  // 长按结束：差一点开启暴击时间，或已开启且还有次数，提示一次。一次练习最多一次，选结束直接走
+  function gateQuit(q, done) {
+    if (!evOn(q) || q.exitAsked || !q.n || c.cur() !== 'qplay') return false;
+    const o = G.exitOffer(st, q.day); if (!o) return false;
+    q.exitAsked = true;
+    const v = c.$('exitOv');
+    v.querySelector('b').textContent = o.kind === 'crit' ? `再答 ${o.mins} 分钟，开启暴击时间` : '双倍碎片挑战';
+    v.querySelector('span').textContent = o.kind === 'crit' ? '暴击时间内，答对有机会直接得到大碎片' : '完成后，这一关得到的碎片翻倍';
+    v.hidden = false; blip([[660, 0, 0.08], [880, 0.08, 0.1]]);
+    c.$('exitGo').textContent = o.kind === 'crit' ? '继续答题' : '进入挑战';
+    c.$('exitGo').onclick = () => { v.hidden = true; if (o.kind === 'dbl') { try { const d0 = st.days[q.day].dbl || 0; startEv(q, 'dbl', false); if ((st.days[q.day].dbl || 0) > d0) st.days[q.day].exitDbl = 1; } catch (e) { if (!c.curQ()) c.goIsland(); } } else { evRun = q; evTick(); } };
+    c.$('exitEnd').onclick = () => { v.hidden = true; done(); };
+    return true;
+  }
+  function islandBtn() {
+    const b = c && c.$('btnForge'); if (!b) return;
+    b.hidden = !on || !c.canWrite(); if (b.hidden) return;
+    c.$('forgeIco').src = gemURL(); c.$('forgeN').textContent = (st.days[c.today()] || {}).forged || 0;
+  }
+  function parentStats() {
+    if (!on) return '';
+    let e, R; try { e = G.evStats(st); R = st.rest || {}; } catch (x) { return ''; }
+    return `<b>挑战数据</b><div>最近 ${e.n} 次，完成 ${e.won} 次${e.n ? `（${Math.round(e.rate * 100)}%）` : ''}。目标约 70%，会自动调题数</div><div>难度系数：双倍 ${e.dbl.toFixed(2)}，限时 ${e.qc.toFixed(2)}。最近每题 ${e.sec.toFixed(1)} 秒，正确率 ${Math.round(e.acc * 100)}%</div><div>连续已练 ${Math.round((R.sec || 0) / 60)} 分钟，满 ${G.TUNE.restAt / 60} 分钟休息 ${G.TUNE.restSec / 60} 分钟</div>`;
   }
   function answerP(p, inst, c0, limit) {   // 老秒答流程。Boss 和摸底不给
     if (!on || p.kind === 'boss' || p.kind === 'scan' || p.kind === 'final' || !c.canWrite()) return null;
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
+    { const secs = Math.min(30, (p.ms || 0) / 1000); G.noteRest(st, secs, clock()); G.addSec(st, p.gemDay, secs); evRun = null; }
     const got = G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', slow: p.result === 'slow', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay), rand: oddRand});
     credit(p, got);
     let more = null;
@@ -64,7 +199,9 @@
   }
 
   // ---------- 结算页的碎片区块 ----------
+  const critOpen = day => ((st.days[day] || {}).sec || 0) >= G.TUNE.critAt;
   function summary(run, day, opts) {
+    evRun = null;
     if (!on || !c.canWrite() || run.kind === 'boss' || run.kind === 'scan' || run.kind === 'final') return '';   // Boss、摸底不算；只读时不结算
     opts = opts || {};
     const set = G.settle(st, day), g = run.gem || {s: 0, m: 0};
@@ -74,8 +211,9 @@
     const more = opts.todayRun && S().daily && S().daily.done && c.E.hasMore(S(), c.today());
     return `<div class="gemsum">
       <b>这次的碎片</b>
-      <div class="gemline">${chip('s')}<span>+${g.s}</span>${chip('m')}<span>+${g.m}</span>${oddChips(g, '+')}${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
+      <div class="gemline">${chip('s')}<span>+${g.s}</span>${chip('m')}<span>+${g.m}</span>${oddChips(g, '+')}${g.l ? `${chip('l')}<span>+${g.l}</span>` : ''}${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
       <div class="gemline muted"><span>背包</span>${chip('s')}<span>${st.inv.s}</span>${chip('m')}<span>${st.inv.m}</span>${chip('l')}<span>${st.inv.l}</span>${oddChips(st.inv, '')}<span>挑战券 ${st.tickets}</span></div>
+      ${run.crit || run.qcWon || critOpen(day) ? `<div class="gemline">${run.crit ? `<span>暴击 ${run.crit} 次</span>` : ''}${run.qcWon ? `<span>限时挑战宝石 +${run.qcWon}</span>` : ''}${critOpen(day) ? '<span>暴击时间已开启</span>' : ''}</div>` : ''}
       <div class="gembtns"><button class="btn go" data-gem="forge">去锻造</button>${more ? `<button class="btn" data-gem="more">${S().oral ? '再练一会' : '再练一会 · 得 1 张挑战券'}</button>` : ''}${st.tickets > 0 && !S().oral ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
     </div>`;
   }
@@ -100,6 +238,7 @@
     c.begin(() => c.startQ('challenge', {sess: {next: () => (i < qs.length ? {kind: 'q', inst: qs[i++], seg: 'challenge'} : null), answer: () => null}}));
   }
   function finishChallenge(q) {
+    if (q.opts && q.opts.evc) return evResult(q);
     const won = q.chWon || 0, r = G.finishChallenge(st, {won, n: q.chDone === G.CH_N ? G.CH_N : 0});
     save();
     c.$('qsum').innerHTML = `<div class="col" style="flex:1;justify-content:center;align-items:center;gap:14px">
@@ -272,11 +411,14 @@
   }
   function claim() {
     if (busy) return;
-    const items = G.items(st, c.today());
-    if (!items) return;
-    G.markSent(st, c.today()); save(); msg = '';
+    const today = c.today();
+    if (!G.items(st, today)) return;
+    G.reserve(st, today);
+    if (!G.netTotal(st, today)) { save(); msg = '宝石留给伙伴罐了'; draw(); return; }   // 只炼 1 颗全留：不用去矿场
+    st.sentBak = Object.assign({}, st.sent);   // 领取失败恢复这份，不清空：清空会让罐凭空变多
+    G.markSent(st, today); save(); msg = '';
     draw();
-    const link = KM.earnLink(items);
+    const link = KM.earnLink(G.items(st, today));
     window.__gemLink = link;
     if (c.enabledInApp) location.href = link;
   }
@@ -297,7 +439,7 @@
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span><span class="ft14">近 ${G.RECENT_DAYS} 天 ${G.recentForged(st, today) - hold}</span>`;
     const b = $('forgeClaim');
-    b.hidden = !c.canClaim || !items || hold > 0; b.textContent = left ? `领 ${left} 颗宝石` : '再领一次';
+    b.hidden = !c.canClaim || !items || hold > 0; const keep = G.jarWant(st, today); b.textContent = !left ? '再领一次' : keep ? (left > keep ? `留 ${keep} 颗给伙伴罐，领 ${left - keep} 颗` : `留 ${keep} 颗给伙伴罐`) : `领 ${left} 颗宝石`;
     b.classList.toggle('go', left > 0);
   }
   // 答题时碎片从屏幕中间飞向顶部
@@ -307,6 +449,6 @@
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
   const api = {init: safe(init), enabled: () => on, syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
-    finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
+    parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();
