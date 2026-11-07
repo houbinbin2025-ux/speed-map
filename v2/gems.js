@@ -41,7 +41,7 @@
   }
   function prune(st, today) {
     const old = Object.keys(st.days).filter(d => d <= today).sort();
-    old.slice(0, Math.max(0, old.length - KEEP_DAYS)).forEach(d => { delete st.days[d]; delete st.sent[d]; });
+    old.slice(0, Math.max(0, old.length - KEEP_DAYS)).forEach(d => { delete st.days[d]; delete st.sent[d]; if (st.palJar && st.palJar.moved) delete st.palJar.moved[d]; });
   }
 
   // 去重 key：和秒答下架同一个编号（秒答题型只看两个数，老流程的题没有 op）
@@ -267,7 +267,12 @@
     const earliest = t.toISOString().slice(0, 10);
     return Object.keys(st.days).filter(d => d >= earliest && d <= today && st.days[d].forged > 0).sort().reverse().slice(0, 8);
   }
-  const items = (st, today) => recentDays(st, today).map(d => { const D = st.days[d]; return `${compact(d)}.${D.forged}.${D.ok}.${D.n}`; }).join(',');
+  // 伙伴罐（小伙伴乐园买吃喝的宝石，方块世界只读写 bal 和 target）：领取前从待领里留一部分；矿场记的是减掉留下后的净值
+  // 设计和反例：~/03_个人/测试/minecraft-web/docs/DESIGN-V5-小伙伴乐园.md §3、tools/pal-jar-sim.js
+  const jarOf = st => (st.palJar && st.palJar.bal !== undefined ? st.palJar : (st.palJar = Object.assign({bal: 0, moved: {}, target: 0, res: {day: '', n: 0}}, st.palJar)));
+  const net = (st, d) => st.days[d].forged - ((st.palJar && st.palJar.moved && st.palJar.moved[d]) || 0);
+  const items = (st, today) => recentDays(st, today).map(d => { const D = st.days[d]; return `${compact(d)}.${net(st, d)}.${D.ok}.${D.n}`; }).join(',');
+  const netTotal = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, net(st, d)), 0);
   // 只决定按钮显示「领宝石」还是「再领一次」：页面拿不到矿场是否入账，所以不能用它决定报什么
   // 近 14 天炼出（含今天）。记录只留 14 天，所以不做总数；宝石总数以矿场为准
   function recentForged(st, today) {
@@ -275,9 +280,25 @@
     const earliest = t.toISOString().slice(0, 10);
     return Object.keys(st.days).reduce((n, d) => (d >= earliest && d <= today ? n + (st.days[d].forged || 0) : n), 0);
   }
-  const unsent = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, st.days[d].forged - (st.sent[d] || 0)), 0);
-  function markSent(st, today) { recentDays(st, today).forEach(d => { st.sent[d] = st.days[d].forged; }); }
+  const unsent = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, net(st, d) - (st.sent[d] || 0)), 0);
+  function markSent(st, today) { recentDays(st, today).forEach(d => { st.sent[d] = net(st, d); }); }
+  function moveToJar(st, today, n) {   // 从最早有余量的日子移入
+    const J = jarOf(st); J.moved = J.moved || {}; let left = n;
+    recentDays(st, today).reverse().forEach(d => { const room = Math.max(0, net(st, d) - (st.sent[d] || 0)), k = Math.min(room, left); if (k > 0) { J.moved[d] = (J.moved[d] || 0) + k; J.bal += k; left -= k; } });
+    return n - left;
+  }
+  // 这次该留几颗：不超过目标缺口；一天最多留待领的一半（至少 1 颗）。只算不写，按钮文字也用它
+  function jarWant(st, today) {
+    const J = st.palJar || {}, wait = unsent(st, today), done = J.res && J.res.day === today ? J.res.n : 0;
+    return Math.min(Math.max(0, (J.target || 0) - (J.bal || 0)), Math.max(0, Math.max(1, Math.floor(wait / 2)) - done), wait);
+  }
+  function reserve(st, today) {
+    const n = jarWant(st, today); if (!n) return 0;
+    const J = jarOf(st); if (!J.res || J.res.day !== today) J.res = {day: today, n: 0};
+    const got = moveToJar(st, today, n); J.res.n += got;
+    return got;
+  }
 
   return {TUNE, critChance, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, exitOffer, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
-    earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent};
+    earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });

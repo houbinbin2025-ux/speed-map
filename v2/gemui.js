@@ -30,7 +30,7 @@
     c.$('forgeBack').addEventListener('click', () => { if (busy) return; if (back === 'island') c.goIsland(); else c.show(back); });
     addEventListener('resize', () => { if (c.cur() === 'forge') layoutScene(); });
     if (window.ResizeObserver) new ResizeObserver(() => { if (c.cur() === 'forge' && c.$('forge').clientHeight) layoutScene(); }).observe(c.$('forge'));
-    window.__kongEarnFailed = () => { st.sent = {}; save(); msg = '没有找到空空矿场'; if (c.cur() === 'forge') draw(); };
+    window.__kongEarnFailed = () => { st.sent = st.sentBak || st.sent; save(); msg = '没有找到空空矿场'; if (c.cur() === 'forge') draw(); };
   }
 
   // ---------- 记作答：判定一出来就调，在显示答案和存进度之前 ----------
@@ -411,11 +411,14 @@
   }
   function claim() {
     if (busy) return;
-    const items = G.items(st, c.today());
-    if (!items) return;
-    G.markSent(st, c.today()); save(); msg = '';
+    const today = c.today();
+    if (!G.items(st, today)) return;
+    G.reserve(st, today);
+    if (!G.netTotal(st, today)) { save(); msg = '宝石留给伙伴罐了'; draw(); return; }   // 只炼 1 颗全留：不用去矿场
+    st.sentBak = Object.assign({}, st.sent);   // 领取失败恢复这份，不清空：清空会让罐凭空变多
+    G.markSent(st, today); save(); msg = '';
     draw();
-    const link = KM.earnLink(items);
+    const link = KM.earnLink(G.items(st, today));
     window.__gemLink = link;
     if (c.enabledInApp) location.href = link;
   }
@@ -436,7 +439,7 @@
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span><span class="ft14">近 ${G.RECENT_DAYS} 天 ${G.recentForged(st, today) - hold}</span>`;
     const b = $('forgeClaim');
-    b.hidden = !c.canClaim || !items || hold > 0; b.textContent = left ? `领 ${left} 颗宝石` : '再领一次';
+    b.hidden = !c.canClaim || !items || hold > 0; const keep = G.jarWant(st, today); b.textContent = !left ? '再领一次' : keep ? (left > keep ? `留 ${keep} 颗给伙伴罐，领 ${left - keep} 颗` : `留 ${keep} 颗给伙伴罐`) : `领 ${left} 颗宝石`;
     b.classList.toggle('go', left > 0);
   }
   // 答题时碎片从屏幕中间飞向顶部
