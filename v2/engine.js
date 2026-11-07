@@ -48,9 +48,11 @@
   const practiceDays = (S, since) => Object.keys(S.stats || {}).filter(d => d > since && S.stats[d].sec > 0).length;
   // 每次练习开始时调用：到了该开新级的时候，一次只放行一级
   const capTop = S => Math.max(HOLD_FROM, S.lvTop || 0);
-  const floorOf = S => (S.lvMax !== undefined ? S.lvMax : Math.min(rawLevel(S, FROZEN), capTop(S)));   // 还没写 lvMax（第一次练习前）：临时按冻结格子算，不写存档
+  const frozenLevel = S => Math.min(rawLevel(S, FROZEN), capTop(S));   // 冻结格子只会越练越亮，按它算的级别只升不降
+  const floorOf = S => (Number.isFinite(S.lvMax) ? Math.max(S.lvMax, 0) : frozenLevel(S));   // 还没写 lvMax（第一次练习前）或坏值：临时按冻结格子算，不写存档
   function tickLevel(S, day) {
-    if (S.lvMax === undefined) S.lvMax = Math.min(rawLevel(S, FROZEN), capTop(S));   // 迁移：写在最前面，第 9 级以下的孩子也要有
+    if (!Number.isFinite(S.lvMax)) delete S.lvMax;   // 坏值（存档损坏）当没有
+    S.lvMax = Math.max(S.lvMax || 0, frozenLevel(S));   // 迁移 + 兜底：每次都取冻结格子算出的级别，导入备份、整份替换后也不掉（代码审查 R1 第 1 条）；写在最前面，第 9 级以下的孩子也要有
     const raw = rawLevel(S);
     if (raw > HOLD_FROM) {
       if (!S.lvTop) { S.lvTop = HOLD_FROM; S.lvTopDay = day; }
@@ -503,7 +505,7 @@
     }
     let cur = null, count = 0;
     const pending = [], RT = retrier(S, {}, id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + (K.ITEM[id].gen ? FREE_EXTRA : 0));
-    return {
+    const api = {
       demoTime(sec) { stat(S, day).sec += Math.max(0, Math.min(CARD_MAX_SEC, sec) - DEMO_SEC); },
       next() {
         if (pending.length) { cur = pending.shift(); return cur; }
@@ -517,7 +519,7 @@
         const sid = K.ITEM[x.inst.id].skill;
         if (lv(S, x.inst.id) === 0 && !S.demoSeen[sid] && !S.known[sid]) {
           const c0 = cardFor(S, daily(S, day), sid);
-          if (c0 === false) { [queue, mist].forEach(l => { for (let i = l.length - 1; i >= 0; i--) if (K.ITEM[l[i].inst.id].skill === sid) l.splice(i, 1); }); return this.next(); }   // 今天讲解卡满 2 张：这个新技能今天不出
+          if (c0 === false) { [queue, mist].forEach(l => { for (let i = l.length - 1; i >= 0; i--) if (K.ITEM[l[i].inst.id].skill === sid) l.splice(i, 1); }); return api.next(); }   // 今天讲解卡满 2 张：这个新技能今天不出
           stat(S, day).sec += DEMO_SEC;
           const c = c0 || undefined;
           pending.push(Object.assign({kind: 'q', afterDemo: sid, afterConcept: c}, x)); cur = {kind: 'demo', skill: sid, concept: c}; return cur;
@@ -535,6 +537,7 @@
         return out;
       },
     };
+    return api;
   }
 
   // ---------- 首次摸底：每个技能组按难度排成一条链，先测最难的，再二分往下找；3 题全部秒答算会，错或慢一题提前结束这次 ----------

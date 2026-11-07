@@ -125,7 +125,7 @@
   // 出题：开头 2 道会的先稳住信心，之后约 1/4 稍难。会的 = 学过且不超过当前级别；稍难 = 高 1 级或没学过的格子
   function pickEv(S, st, want, top, r) {
     const seen = (st.seen && st.seen.keys) || {}, used = {}, out = [];
-    const items = K.SKILLS.concat(K.HARD).flatMap(x => x.items).filter(it => E.itemOn(S, it.id) || K.itemLevels(it.id).some(L => L <= top + 1));
+    const items = K.SKILLS.concat(K.HARD).flatMap(x => x.items).filter(it => (E.itemOn(S, it.id) || K.itemLevels(it.id).some(L => L <= top + 1)) && taught(S, it));
     for (let i = 0; i < want && items.length; i++) {
       const stretch = i >= 2 && r() < TUNE.stretch; let got = null, loose = null;
       for (let tries = 0; tries < 60 && !got; tries++) {
@@ -248,9 +248,11 @@
     return {big};
   }
   // 出题：高 1～2 级（到顶时第 14、15 级）；没下架、今天没作答过、互不重复
+  // 挑战不出还没讲过的概念（第二批：线段图、条形图、周长等要先看讲解卡，代码审查 R1 第 3 条）
+  const taught = (S, it) => { const c = K.BY[it.skill].concept; return !c || !!(S.demoSeen && S.demoSeen['c:' + c]); };
   function pickChallenge(S, topLevel, r, st) {
     const hi = topLevel < 10 ? Math.min(topLevel + 2, 9) : Math.min(topLevel + 2, 15), lo = Math.min(topLevel + 1, 14, hi), seen = (st && st.seen.keys) || {};
-    const items = K.SKILLS.concat(K.HARD).flatMap(s => s.items).filter(it => K.itemLevels(it.id).some(L => L >= lo && L <= hi));
+    const items = K.SKILLS.concat(K.HARD).flatMap(s => s.items).filter(it => K.itemLevels(it.id).some(L => L >= lo && L <= hi) && taught(S, it));
     const out = [], used = {};
     for (let tries = 0; out.length < CH_N && tries < 2000 && items.length; tries++) {
       const it = items[Math.floor(r() * items.length)], inst = K.make(it.id, r), L = K.levelOf(inst), k = key(inst);

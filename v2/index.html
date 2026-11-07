@@ -334,9 +334,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 .ackrow{display:flex;align-items:center;gap:16px}
 /* 第二批 2a：题面里的图（线段图、条形图、长方形）和讲解卡（说明书-到四年级第二批） */
-.eq.tw{white-space:normal;overflow-wrap:break-word}   /* 题面带文字（如「四舍五入到百位」）：英文日翻译变长时换行，不出左栏 */
+.eq.tw{white-space:normal;overflow-wrap:break-word}
+.bcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.bcp{background:var(--stone);border:2px solid #000;padding:6px;font-size:13px;display:flex;flex-direction:column;gap:4px}.bcp svg.fig2{width:100%;height:120px}.bcp .nrows span{min-width:30px;font-size:15px}.bcp .eq{font-size:22px}   /* 题面带文字（如「四舍五入到百位」）：英文日翻译变长时换行，不出左栏 */
 .fig2w{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}.fig2w>svg.fig2{width:100%;height:100%;max-height:100%}
-.explain .fig2w{flex:none;height:clamp(110px,34vh,240px)}
+.explain .fig2w{flex:none;height:clamp(120px,44vh,260px)}
 .dcard .cdots{margin-left:auto;display:flex;gap:6px}.dcard .cdots i{width:12px;height:12px;background:var(--stone-hi);border:2px solid #000}.dcard .cdots i.on{background:var(--warn)}
 .dcard .cfig{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}.dcard .cfig>svg.fig2{width:100%;flex:1;min-height:0;max-height:100%}
 .dcard .cline .nbsay{font-size:clamp(17px,3vw,22px);justify-content:flex-start}
@@ -895,7 +896,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v101:059bed9af080 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v103:1caa8efcee5b -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -905,24 +906,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=101"></script>
-<script src="i18n.js?v=101"></script>
-<script src="bank.js?v=101"></script>
-<script src="hardbank.js?v=101"></script>
-<script src="placebank.js?v=101"></script>
-<script src="core.js?v=101"></script>
-<script src="ink.js?v=101"></script>
-<script src="skills.js?v=101"></script>
-<script src="engine.js?v=101"></script>
-<script src="render.js?v=101"></script>
-<script src="world.js?v=101"></script>
-<script src="home.js?v=101"></script>
-<script src="puzzles.js?v=101"></script>
-<script src="thinking.js?v=101"></script>
-<script src="house.js?v=101"></script>
-<script src="kongmine.js?v=101"></script>
-<script src="gems.js?v=101"></script>
-<script src="gemui.js?v=101"></script>
+<script src="touchfix.js?v=103"></script>
+<script src="i18n.js?v=103"></script>
+<script src="bank.js?v=103"></script>
+<script src="hardbank.js?v=103"></script>
+<script src="placebank.js?v=103"></script>
+<script src="core.js?v=103"></script>
+<script src="ink.js?v=103"></script>
+<script src="skills.js?v=103"></script>
+<script src="engine.js?v=103"></script>
+<script src="render.js?v=103"></script>
+<script src="world.js?v=103"></script>
+<script src="home.js?v=103"></script>
+<script src="puzzles.js?v=103"></script>
+<script src="thinking.js?v=103"></script>
+<script src="house.js?v=103"></script>
+<script src="kongmine.js?v=103"></script>
+<script src="gems.js?v=103"></script>
+<script src="gemui.js?v=103"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1966,6 +1967,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="panel"><div class="ptitle">熟题</div>${row('作答', a.k + ' 题')}${row('失误', a.ks + ' 次')}${row('失误率', pctOf(a.ks, a.k) + prevOf(a.ks, a.k, b.ks, b.k))}<div class="muted" style="font-size:12px;line-height:1.5">熟题：格子已到淡红，或这道题已在不同的日子算过 2 次秒答。失误：熟题答错，不含点「不会」。写对但被识别错，也会计入</div></div>
       <div class="panel"><div class="ptitle">书写</div><div class="kv">书写评分（试运行）：<b>${digs || '--'}</b></div>${row('免确认识别率', pctOf(a.ic, a.ia))}<div class="muted" style="font-size:12px;line-height:1.5">书写评分和规范字形比，0–100，还没有校准。不同数字之间不可比，所以按数字显示（括号里是个数），也不做前后对比。请对照下面的字判断是否准确。免确认识别率是识别的把握，不代表工整</div></div>
       <div class="panel"><div class="ptitle">读题</div>${row('文字题平均用时', a.wn ? (a.ws / a.wn).toFixed(0) + ' 秒' : '--')}${row('朗读次数', a.say + ' 次')}</div>
+      <div class="panel"><div class="ptitle">讲解卡后前 5 题</div>${Object.keys(S.introStat || {}).length ? Object.entries(S.introStat).map(([c, v]) => row((R.card(c) || {title: c}).title, `${v[0]} 题 · 答对 ${v[1]} · 不会 ${v[2]}`)).join('') : '<div class="muted">还没看过讲解卡</div>'}<div class="muted" style="font-size:12px;line-height:1.5">新概念第一次出现时先看讲解卡。5 题里答对少、点「不会」多，说明这张讲解卡没讲明白。</div></div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${String(m.d).slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 认定为 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
   }
@@ -2008,6 +2010,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       let body = '';
       if (bankOpen[s.id]) {
         const sets = [];
+        if (s.concept && R.card(s.concept)) { const k = R.card(s.concept); sets.push({title: `讲解卡「${k.title}」：第一次碰到这个概念时出${(S.demoSeen || {})['c:' + s.concept] ? ' · 空空已看过' : ''}`, html: `<div class="bcard">${k.pages.map(p => `<div class="bcp">${p.fig}<div>${p.line}</div></div>`).join('')}</div>`}); }
         const cardIt = s.items.filter(it => !it.gen);
         if (cardIt.length) sets.push({title: `${cardIt.length} 道固定题（颜色 = 空空现在的进度）`, list: cardIt.map(it => ({inst: bankItems(it)[0], lv: E.lv(S, it.id)}))});
         s.items.filter(it => it.gen).forEach(it => {
@@ -2024,7 +2027,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
             .map(m => ({inst: s.speed ? {id: it.id, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans} : {id: it.id, q: m.q, ans: m.ans}}));
           if (out.length) sets.push({title: `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 题库外的旧错题（${out.length}）`, list: out});
         });
-        body = sets.map(st => `<div class="bkset"><div class="bt">${st.title}</div><div class="bqs">${st.list.map(o => { BQ.push(o.inst); return `<button class="bq${o.lv ? ' l' + o.lv : ''}${isMist(o.inst) ? ' m' : ''}" data-bq="${BQ.length - 1}">${qText(o.inst)}</button>`; }).join('')}</div></div>`).join('');
+        body = sets.map(st => st.html ? `<div class="bkset"><div class="bt">${st.title}</div>${st.html}</div>` : `<div class="bkset"><div class="bt">${st.title}</div><div class="bqs">${st.list.map(o => { BQ.push(o.inst); return `<button class="bq${o.lv ? ' l' + o.lv : ''}${isMist(o.inst) ? ' m' : ''}" data-bq="${BQ.length - 1}">${qText(o.inst)}</button>`; }).join('')}</div></div>`).join('');
       }
       return `<div class="bkrow"><div class="bh"><b>${s.name}</b><span class="muted">${(l => (l.length > 1 ? `第 ${l[0]}–${l[l.length - 1]} 级` : `第 ${l[0]} 级`))([...new Set(s.items.flatMap(it => K.itemLevels(it.id)))].sort((x, y) => x - y))} · ${n} 道题${cardsN ? ` · ${cardsN} 道固定题` : ''}${typesN ? ` · ${typesN} 个题型` : ''} · 亮了 ${lit} / ${s.items.length} 格</span><span style="flex:1"></span><button class="btn" data-bo="${s.id}">${bankOpen[s.id] ? '收起' : '看题目'}</button></div>
         <div class="bk"><em>学什么</em>：${txt[0]}<br><em>怎样算学会</em>：${ruleText(s)}<br><em>怎么教</em>：${txt[1]}<br><em>要先学会</em>：${pre}</div>${body}</div>`;

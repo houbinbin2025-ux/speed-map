@@ -95,30 +95,32 @@
   // 条形图：data = {bars: [[名字, 数]], max, step, ask}；hi = 高亮哪几根（答错图解）
   function chartSvg(d, a, o) {
     o = o || {};
-    const n = d.max / d.step, H = 250, top = 14, bot = 206, L = 52, bw = 58, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
+    const n = d.max / d.step, H = 262, top = 16, bot = 212, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
     const hi = a === undefined ? [] : d.ask.kind === 'read' ? [d.ask.i] : [d.ask.i, d.ask.j];
     let out = '';
-    for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 8, y(v) + 7, v, {anchor: 'end', size: 19}); }
+    for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 10, y(v) + 8, v, {anchor: 'end', size: 24}); }
     d.bars.forEach(([name, v], i) => {
       const x = L + gap / 2 + i * (bw + gap), on = hi.includes(i);
       if (o.blocks) { for (let k = 0; k < v / d.step; k++) out += `<rect x="${x + 4}" y="${y((k + 1) * d.step) + 2}" width="${bw - 8}" height="${y(0) - y(d.step) - 4}" fill="${FC.blue}" stroke="#000" stroke-width="2"/>`; }
       else out += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${bot - y(v)}" fill="${on ? FC.yellow : FC.blue}" stroke="#000" stroke-width="3"/>`;
-      out += svgT(x + bw / 2, bot + 28, name, {size: 20});
-      if (on) out += `<line x1="${L}" x2="${x}" y1="${y(v)}" y2="${y(v)}" stroke="${OK}" stroke-width="3" stroke-dasharray="6 5"/>` + svgT(x + bw / 2, y(v) - 8, v, {fill: OK});
+      out += svgT(x + bw / 2, bot + 34, name, {size: 24});
+      if (on) out += `<line x1="${L}" x2="${x}" y1="${y(v)}" y2="${y(v)}" stroke="${OK}" stroke-width="3" stroke-dasharray="6 5"/>` + svgT(x + bw / 2 + bw / 2 + 6, y(v) + 8, v, {fill: OK, size: 24, anchor: 'start'});   // 答案写在条顶右边，不压纵轴的字
     });
     return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="条形图">${out}</svg>`;
   }
   // 长方形：data = {w, h, labels: 'all'|'two'|'one'|'none', grid?}；a 有值时标出答案
   function rectSvg(d, a, o) {
     o = o || {};
-    const cell = Math.min(36, 300 / d.w, 160 / d.h), long = d.w > 15 || d.h > 9, sc = long ? Math.min(300 / d.w, 150 / d.h) : cell, w = d.w * sc, h = d.h * sc, x0 = 46, y0 = 30, W = w + 100, H = h + 72;
+    // 边距按标注留够（11-07 走查：左边的「12 厘米」画到图外），字号 26，手机上缩小后还看得清
+    const sc = Math.min(40, 300 / d.w, 170 / d.h), w = d.w * sc, h = d.h * sc, L = d.labels === 'all' ? 112 : 16, Rm = d.labels === 'none' || d.labels === 'one' ? 16 : 112, x0 = L, y0 = d.labels === 'none' ? 8 : 40;
+    const W = L + w + Rm, H = y0 + h + (d.labels === 'all' ? 40 : 10) + (a !== undefined ? 40 : 0);
     let out = `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#3b5f2a" stroke="#000" stroke-width="4"/>`;
     if (d.grid || o.grid) for (let r = 0; r < d.h; r++) for (let c = 0; c < d.w; c++) { out += `<rect x="${x0 + c * sc}" y="${y0 + r * sc}" width="${sc}" height="${sc}" fill="none" stroke="#000" stroke-width="2"/>`; if (o.count) out += svgT(x0 + c * sc + sc / 2, y0 + r * sc + sc / 2 + 6, r * d.w + c + 1, {size: Math.min(17, sc * .5)}); }
-    const lab = (t, x, y, anchor) => svgT(x, y, `${t} 厘米`, {anchor: anchor || 'middle', size: 18});
-    if (d.labels !== 'none') { out += lab(d.w, x0 + w / 2, y0 - 9); if (d.labels !== 'one') out += lab(d.h, x0 + w + 8, y0 + h / 2 + 6, 'start'); }
-    if (d.labels === 'all') { out += lab(d.w, x0 + w / 2, y0 + h + 24); out += lab(d.h, x0 - 8, y0 + h / 2 + 6, 'end'); }
-    if (a !== undefined) out += svgT(x0 + w / 2, y0 + h + (d.labels === 'all' ? 50 : 30), d.ask === 'perim' ? `周长 ${a} 厘米` : `面积 ${a} 平方厘米`, {fill: OK, size: 20});
-    return `<svg class="fig2" viewBox="0 0 ${W} ${H + (d.labels === 'all' && a !== undefined ? 26 : 0)}" role="img" aria-label="长方形">${out}</svg>`;
+    const lab = (t, x, y, anchor) => svgT(x, y, `${t} 厘米`, {anchor: anchor || 'middle', size: 26});
+    if (d.labels !== 'none') { out += lab(d.w, x0 + w / 2, y0 - 10); if (d.labels !== 'one') out += lab(d.h, x0 + w + 10, y0 + h / 2 + 9, 'start'); }
+    if (d.labels === 'all') { out += lab(d.w, x0 + w / 2, y0 + h + 32); out += lab(d.h, x0 - 10, y0 + h / 2 + 9, 'end'); }
+    if (a !== undefined) out += svgT(W / 2, H - 10, d.ask === 'perim' ? `周长 ${a} 厘米` : `面积 ${a} 平方厘米`, {fill: OK, size: 28});
+    return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="长方形">${out}</svg>`;
   }
   const FIGS = {bar: barSvg, chart: chartSvg, rect: rectSvg};
   // 讲解卡用的小图：一排苹果（可分组装盘）、分成 10 份的条、两行数（高亮共有的）
@@ -169,8 +171,8 @@
       [rectSvg({w: 4, h: 3, labels: 'none', grid: true}, undefined, {count: true}), '数一数：12 格，面积是 12 平方厘米'],
       [rectSvg({w: 4, h: 3, labels: 'two', grid: true, ask: 'area'}, 12), '一行 4 格，有 3 行：4 × 3 = 12。长 × 宽 = 面积']]},
     times: {title: '倍', pages: [
-      [barSvg(TM), '小狗的鱼是 4 个 3'],
-      [barSvg(TM), '小狗的是小猫的 4 倍'],
+      [barSvg({rows: [TM.rows[0]]}, undefined, {of: 12}), '小猫有 3 条鱼'],
+      [barSvg(TM), '小狗的鱼是 4 个 3，小狗的是小猫的 4 倍'],
       [barSvg(TM, 12), '4 倍就是 4 个 3：3 × 4 = 12']]},
     rem: {title: '余数', pages: [
       [dotsSvg(14), '14 个苹果，每盘放 4 个'],

@@ -428,7 +428,7 @@
     苹果: ['apple', 'apples'], 梨: ['pear', 'pears'], 桃: ['peach', 'peaches'], 橘子: ['orange', 'oranges']};
   const NOUN2 = {花: 'flowers', 球: 'balls', 鱼: 'fish', 学生: 'students', 气球: 'balloons', 羊: 'sheep'};
   const PAL = Object.assign({小狗: 'Little Dog', 小兔: 'Little Rabbit'}, NAME), N2K = `(${Object.keys(N2).join('|')})`, PK = `(${Object.keys(PAL).join('|')})`, U2 = '[个朵条只块]';
-  const cap = t => t[0].toUpperCase() + t.slice(1), lab2 = n => (PAL[n] ? PAL[n] : cap(N2[n][1]));   // 条形图上的名字
+  const cap = t => t[0].toUpperCase() + t.slice(1), lab2 = n => (PAL[n] ? PAL[n] : N2[n][1]);   // 句子里的条名（小写）；图上单独的名字在 D 里首字母大写
   const pal = n => !!PAL[n], TH3 = (n, t) => pl(n, (TH2[t] || THING[t])[0], (TH2[t] || THING[t])[1]);
   const P2A = [
     [new RegExp(`^${N2K} (\\d+) ${U2}，${N2K} (\\d+) ${U2}。一共几${U2}？$`), (m, a, x, b, y) => `${pl(x, N2[a][0], N2[a][1])} and ${pl(y, N2[b][0], N2[b][1])}. How many in all?`],
@@ -463,7 +463,7 @@
     '小狗的条顶对着左边的 8，小狗钓了 8 条': "The top of Little Dog's bar lines up with 8, so Little Dog caught 8", '长方形：长 6 厘米，宽 4 厘米': 'A rectangle: 6 cm long and 4 cm wide',
     '对边一样长：上下都是 6，左右都是 4': 'Opposite sides are equal: top and bottom are 6, left and right are 4', '绕一圈：6 + 4 + 6 + 4 = 20，这一圈的长度叫周长': 'Go all the way around: 6 + 4 + 6 + 4 = 20. The distance around is the perimeter',
     '这块地有多大？': 'How big is this field?', '铺满 1 平方厘米的小方格': 'Cover it with squares of 1 square cm', '数一数：12 格，面积是 12 平方厘米': 'Count them: 12 squares, so the area is 12 square cm',
-    '一行 4 格，有 3 行：4 × 3 = 12。长 × 宽 = 面积': '4 in a row, 3 rows: 4 × 3 = 12. Length × width = area', '小狗的鱼是 4 个 3': "Little Dog's fish make 4 threes", '小狗的是小猫的 4 倍': 'Little Dog has 4 times as many as Little Cat',
+    '一行 4 格，有 3 行：4 × 3 = 12。长 × 宽 = 面积': '4 in a row, 3 rows: 4 × 3 = 12. Length × width = area', '小猫有 3 条鱼': 'Little Cat has 3 fish', '小狗的鱼是 4 个 3，小狗的是小猫的 4 倍': "Little Dog's fish make 4 threes, so Little Dog has 4 times as many as Little Cat", 下一步: 'Next', 试一试: 'Try it',
     '4 倍就是 4 个 3：3 × 4 = 12': '4 times as many means 4 threes: 3 × 4 = 12', '14 个苹果，每盘放 4 个': '14 apples, 4 on each plate', '放满 3 盘，还剩 2 个': '3 full plates and 2 left over',
     '剩下的 2 叫余数，余数比 4 小': 'The 2 left over is the remainder. It is less than 4', '三个小伙伴钓的鱼：4、8、6': 'Fish caught by three pals: 4, 8, 6', '多的分给少的，变得一样多': 'Move some from the most to the fewest until they are equal',
     '每个都是 6 条，6 叫平均数': 'Each has 6. 6 is the average', '4 的倍数和 6 的倍数': 'Multiples of 4 and multiples of 6', '两行都有的 12、24 叫公倍数，最小的是 12': '12 and 24 are in both rows. They are common multiples, and the least is 12',

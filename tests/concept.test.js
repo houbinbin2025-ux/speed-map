@@ -66,3 +66,17 @@ test('导入备份：讲解卡记录按概念取题数多的；看过的概念�
   const M = C.importMerge(a, JSON.stringify(b)); assert.deepEqual(M.introStat, {bar: [5, 4, 1], area: [1, 1, 0]}); assert.ok(M.demoSeen['c:bar'] && M.demoSeen['c:area']);
   assert.equal(C.resetProgress(M).introStat, undefined);
 });
+
+test('限时挑战不出还没讲过的概念（代码审查 R1 第 3 条）', () => {
+  const G = require('../v2/gems.js'), S = fresh(); S.settings = {levels: null};
+  const qs = G.pickChallenge(S, 8, seeded(5), G.blank());
+  qs.forEach(x => { const c = K.BY[K.ITEM[x.id].skill].concept; assert.ok(!c, `出了没讲过的 ${c}`); });
+  S.demoSeen = {'c:chart': true}; const ok = Array.from({length: 30}, (_, i) => G.pickChallenge(S, 8, seeded(10 + i), G.blank())).flat();
+  ok.forEach(x => { const c = K.BY[K.ITEM[x.id].skill].concept; assert.ok(!c || c === 'chart', c); });
+});
+
+test('讲解卡的按钮和每一页都有英文', () => {
+  const I = require('../v2/i18n.js');
+  ['下一步', '试一试', '我知道了'].forEach(t => assert.ok(!I.ZH.test(I.text(t)), t));
+  R.CONCEPTS.forEach(c => R.card(c).pages.forEach((p, i) => { const t = I.html(R.cardPage(c, i)).replace(/<[^>]+>/g, ' '); assert.ok(!I.ZH.test(t), `${c} ${i}: ${t.slice(0, 80)}`); }));
+});

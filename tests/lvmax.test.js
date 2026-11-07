@@ -52,3 +52,16 @@ test('整份替换成没有 lvMax 的旧备份：下次练习开始时迁移', (
 test('清空进度：lvMax 一起清掉', () => {
   const S = blank(); S.lvMax = 8; assert.equal(C.resetProgress(S).lvMax, undefined);
 });
+
+test('导入一份进度更少、没有 lvMax 的备份后，下次练习不掉级（代码审查 R1 第 1 条）', () => {
+  const a = blank(); fill(a, 1, s => K.itemLevels(s.items[0].id)[0] <= 8); delete a.lvMax;
+  const L = E.autoLevel(a); assert.ok(L >= 9, '原来 ' + L);
+  const b = blank(); b.lvMax = 3;
+  const M = C.importMerge(a, JSON.stringify(b)); E.session(M, D(0), {rnd: seeded(1)});
+  assert.ok(E.autoLevel(M) >= L, `导入后 ${E.autoLevel(M)}，原来 ${L}`);
+});
+
+test('lvMax 是坏值（存档损坏）：当没有，照常按冻结格子算，题照样出得来', () => {
+  const S = blank(); fill(S, 1, s => K.itemLevels(s.items[0].id)[0] <= 5); S.lvMax = NaN;
+  assert.ok(E.autoLevel(S) >= 5); const s = E.session(S, D(0), {rnd: seeded(1)}); assert.ok(Number.isFinite(S.lvMax)); assert.ok(s.next());
+});
