@@ -1,5 +1,5 @@
 # 宝石碎片和锻造台的真实点击回归（说明书-宝石规则）。用法：python3 tools/e2e/e2e-gems.py <项目根> <截图目录> [宽 高]
-import sys, json, pathlib, re, hashlib, hmac
+import sys, json, pathlib, re, hashlib, hmac, datetime
 from urllib.parse import urlparse, parse_qs
 from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
@@ -114,8 +114,8 @@ with sync_playwright() as p:
     pg3.evaluate("Object.assign(GEMUI.state().inv,{s:0,m:10,l:0}); GEMUI.openForge('island')"); pg3.wait_for_timeout(200)
     for _ in range(10): pg3.locator('[data-add=m]').click()
     pg3.click('#forgeGo'); pg3.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000)
-    check(pg3.locator('#forgeMsg').inner_text() == '得到宝石 1，废料 0', '手机上能炼')
-    check(pg3.locator('#forgeClaim').is_hidden(), '手机上没有领宝石按钮'); check('1' in pg3.locator('#forgeToday').inner_text(), '手机上累计显示炼出的宝石')
+    check(pg3.locator('#forgeMsg').inner_text() == pg3.evaluate("I18N.text('得到宝石 1，废料 0')"), '手机上能炼')   # 这一页走真实日期，单日是英文
+    check(pg3.locator('#forgeClaim').is_hidden(), '手机上没有领宝石按钮'); check(pg3.evaluate("I18N.text('近 14 天 1')") in pg3.locator('#forgeToday').inner_text(), '手机上显示近 14 天炼出：' + pg3.locator('#forgeToday').inner_text())
     pg3.screenshot(path=str(out / f'phone-{W}.png'))
     # 7 动画被系统暂停（finished 永远不结束）：不能卡死在锻造台
     def fresh(extra=None, gems=None):
@@ -141,12 +141,13 @@ with sync_playwright() as p:
     pp = fresh({'oral': True}); pp.evaluate("GEMUI.state().tickets=2"); pp.click('#btnStart', force=True); pp.wait_for_timeout(1800); play(pp, 2); quit_(pp)
     check(pp.locator('[data-gem=challenge]').count() == 0, '口答时不显示挑战')
     # 11 英文日：孩子看到的新文字没有中文
-    pp = fresh({'settings': {'bilingual': True}, 'testDays': 1}); check(pp.evaluate("document.documentElement.lang") == 'en', '测试日是英文日')
+    pp = fresh({'settings': {'bilingual': True}, 'testDays': 0 if datetime.date.today().day % 2 == 1 else 1});   # 单日是英文日，今天是双日就跳到明天 check(pp.evaluate("document.documentElement.lang") == 'en', '测试日是英文日')
     pp.evaluate("Object.assign(GEMUI.state().inv,{s:20,m:20,l:2}); GEMUI.state().tickets=1; GEMUI.openForge('island')"); pp.wait_for_timeout(300)
     for _ in range(13): pp.locator('[data-add=s]').click(); pp.wait_for_timeout(20)
     pp.wait_for_timeout(200); t1 = pp.locator('#forge').inner_text(); pp.screenshot(path=str(out / f'forge-en-{W}.png'))
     pp.click('#forgeGo'); pp.wait_for_timeout(150); t2 = pp.locator('#forgeWarn').inner_text(); pp.screenshot(path=str(out / f'forge-warn-en-{W}.png')); pp.click('#forgeWarnGo'); pp.wait_for_timeout(300); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); t2 += pp.locator('#forge').inner_text()
-    pp.locator('[data-add=m]').click(); [pp.locator('[data-add=m]').click() for _ in range(9)]; pp.click('#forgeGo'); pp.wait_for_timeout(600); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); t3 = pp.locator('#forge').inner_text(); pp.screenshot(path=str(out / f'forge-en-done-{W}.png'))
+    pp.locator('[data-add=m]').click(); [pp.locator('[data-add=m]').click() for _ in range(9)]; pp.click('#forgeGo'); pp.wait_for_timeout(600); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); t3 = pp.locator('#forge').inner_text(); pp.wait_for_timeout(400); pp.screenshot(path=str(out / f'forge-en-done-{W}.png'))
+    box = pp.evaluate("(()=>{const b=document.getElementById('forgeToday').getBoundingClientRect();return [b.left,b.top,b.right,b.bottom,innerWidth,b.height]})()"); check(box[1] >= 0 and box[2] <= box[4] and box[5] <= 72, f'英文日「近 14 天」不换行不超屏 {box}')
     pp.click('#forgeBack'); pp.wait_for_timeout(300); pp.click('#btnStart', force=True); pp.wait_for_timeout(1800); play(pp, 2); quit_(pp); t4 = pp.locator('.gemsum').inner_text(); pp.screenshot(path=str(out / f'sum-en-{W}.png'))
     han = re.compile(r'[\u3400-\u9fff]')
     for name, t in [('放碎片', t1), ('不够', t2), ('炼成', t3), ('结算', t4)]: check(not han.search(t), f'英文日{name}没有中文：' + t.replace(chr(10), ' ')[:110])

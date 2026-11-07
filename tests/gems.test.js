@@ -276,3 +276,17 @@ test('碎片和锻造台的文字都有英文（单日显示英文）', () => {
   assert.equal(I18N.text('没有炼出宝石，废料 60'), 'No gem. 60 scrap');
   for (const s of ['碎片不够，炼不出宝石', '开始锻造后，炉子里的碎片都会变成废料，不退回', '先不炼', '仍然锻造']) assert.notEqual(I18N.text(s), s, s);
 });
+
+test('近 14 天炼出：含今天共 14 个日历日，更早的不算，炼不成的不算', () => {
+  const st = G.blank(); const put = (d, n) => { st.days[d] = {ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: n, waste: 0}; };
+  assert.equal(G.recentForged(st, '2026-11-07'), 0);
+  put('2026-11-07', 2); put('2026-10-25', 3); put('2026-10-24', 100); put('2026-11-08', 50);
+  assert.equal(G.recentForged(st, '2026-11-07'), 5, '10-25 是第 14 天；10-24 太早，11-08 是将来');
+  assert.equal(G.RECENT_DAYS, 14);
+  st.inv = {s: 1, m: 0, l: 0}; G.forge(st, {s: 1, m: 0, l: 0}, '2026-11-07');
+  assert.equal(G.recentForged(st, '2026-11-07'), 5, '没炼成不计');
+});
+test('近 14 天炼出的文字有英文', () => {
+  const I18N = require('../v2/i18n.js');
+  assert.equal(I18N.text('近 14 天 5'), 'Last 14 days: 5');
+});

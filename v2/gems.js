@@ -7,7 +7,7 @@
 })(typeof self !== 'undefined' ? self : this, function (K, E) {
   'use strict';
   const KEY = 'speedmap.gems';
-  const VALUE = {s: 5, m: 10, l: 50}, GEM = 100, SLOTS = 12, DAY_MAX = 30, CH_N = 5, CLAIM_DAYS = 7, KEEP_DAYS = 14;
+  const VALUE = {s: 5, m: 10, l: 50}, GEM = 100, SLOTS = 12, DAY_MAX = 30, CH_N = 5, CLAIM_DAYS = 7, KEEP_DAYS = 14, RECENT_DAYS = 14;
   const blank = () => ({v: 1, inv: {s: 0, m: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
@@ -153,9 +153,15 @@
   }
   const items = (st, today) => recentDays(st, today).map(d => { const D = st.days[d]; return `${compact(d)}.${D.forged}.${D.ok}.${D.n}`; }).join(',');
   // 只决定按钮显示「领宝石」还是「再领一次」：页面拿不到矿场是否入账，所以不能用它决定报什么
+  // 近 14 天炼出（含今天）。记录只留 14 天，所以不做总数；宝石总数以矿场为准
+  function recentForged(st, today) {
+    const t = new Date(today + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() - (RECENT_DAYS - 1));
+    const earliest = t.toISOString().slice(0, 10);
+    return Object.keys(st.days).reduce((n, d) => (d >= earliest && d <= today ? n + (st.days[d].forged || 0) : n), 0);
+  }
   const unsent = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, st.days[d].forged - (st.sent[d] || 0)), 0);
   function markSent(st, today) { recentDays(st, today).forEach(d => { st.sent[d] = st.days[d].forged; }); }
 
-  return {KEY, VALUE, GEM, SLOTS, DAY_MAX, CH_N, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {KEY, VALUE, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent};
 });
