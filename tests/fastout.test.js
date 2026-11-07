@@ -1,4 +1,4 @@
-// Ben 11-05：累计秒答 4 次的题不再出；错题穿插进练习；答错的题当场多练
+// Ben 11-07：累计秒答 3 次的题不再出（11-05 是 4 次）；错题穿插进练习；答错的题当场多练
 const test = require('node:test'), assert = require('node:assert');
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js');
 const blank = () => ({v: 2, cards: {}, boss: {}, log: {}, mistakes: {}, level: 0, placedAt: 1, known: {}, settings: {}, skills: {}});
@@ -7,7 +7,7 @@ const addDays = (d, n) => C.addDays(d, n);
 const card = K.SKILLS.flatMap(s => s.items).find(it => !it.gen && K.BY[it.skill].pre.length === 0);
 const genIt = K.SKILLS.flatMap(s => s.items).find(it => K.ITEM[it.id].gen && K.BY[it.skill].nb);
 
-test('卡：累计秒答 4 次变深红、之后不再出', () => {
+test('卡：累计秒答 3 次变深红、之后不再出', () => {
   const S = blank(); let day = '2026-11-05';
   for (let d = 0; d < 2; d++) {
     const inst = K.make(card.id, rnd);
@@ -21,13 +21,13 @@ test('卡：累计秒答 4 次变深红、之后不再出', () => {
   assert.ok(!seen.includes(card.id), '下架的卡又出现了');
 });
 
-test('新卡正好 4 次秒答才下架，3 次不下架（首次作答不重复计数）', () => {
+test('新卡正好 3 次秒答才下架，2 次不下架（首次作答不重复计数）', () => {
   const S = blank(), inst = K.make(card.id, rnd); let day = '2026-11-05';
   const hit = () => { const s = E.session(S, day, {rnd}); s.inject({kind: 'q', inst, seg: 'new'}); s.answer({ok: true, fast: true, secs: 2}); };
-  hit(); hit(); day = addDays(day, 1); hit();
-  assert.equal(S.fast[K.mkey(inst)][0], 3); assert.ok(!E.outOf(S, card.id));
-  hit();
-  assert.equal(S.fast[K.mkey(inst)][0], 4); assert.equal(E.lv(S, card.id), 3);
+  hit(); hit();
+  assert.equal(S.fast[K.mkey(inst)][0], 2); assert.ok(!E.outOf(S, card.id));
+  day = addDays(day, 1); hit();
+  assert.equal(S.fast[K.mkey(inst)][0], 3); assert.equal(E.lv(S, card.id), 3);
 });
 
 test('一天最多记 2 次：同一天秒答 10 次也不下架（底线：至少跨两天）', () => {
@@ -61,12 +61,12 @@ test('题型：只下架答过的那一道，别的题还出；全部下架后�
 });
 
 test('旧存档：卡已深红直接不出；淡黄淡红折算已有次数；没有 fast 字段不崩', () => {
-  const S = blank(); S.skills[card.id] = {lv: 2, d: ['2026-11-03', '2026-11-04'], seen: 3, lastDay: '2026-11-04', win: []};
+  const S = blank(); S.skills[card.id] = {lv: 1, d: ['2026-11-04'], seen: 3, lastDay: '2026-11-04', win: []};
   const inst = K.make(card.id, rnd); let day = '2026-11-05';
   let s = E.session(S, day, {rnd}); s.inject({kind: 'q', inst, seg: 'fluency'}); s.answer({ok: true, fast: true, secs: 2});
-  assert.ok(E.lv(S, card.id) < 3, '2+1 次还不够');
+  assert.ok(E.lv(S, card.id) < 3, '1+1 次还不够');
   day = addDays(day, 1); s = E.session(S, day, {rnd}); s.inject({kind: 'q', inst, seg: 'fluency'}); s.answer({ok: true, fast: true, secs: 2});
-  assert.equal(E.lv(S, card.id), 3, '2+2 次下架');
+  assert.equal(E.lv(S, card.id), 3, '1+2 次下架');
 });
 
 function seedMistakes(n, day) {

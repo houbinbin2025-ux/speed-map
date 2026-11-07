@@ -12,8 +12,8 @@
   const KEEP = [7, 14, 30, 60];          // 深红以后的维持复习间隔（天）
   const PLACE_MAX_N = 40, PLACE_MAX_SEC = 300, PROBE = 3, FREE_N = 12;
   const STATS_DAYS = 400;
-  // Ben 11-05：一道题累计秒答 4 次就不再出。一天最多记 2 次，所以至少跨两天，「隔天还会」的底线还在
-  const FAST_OUT = 4, FAST_PER_DAY = 2, MIST_EVERY = 2, MIST_DAY = 15;   // MIST_EVERY：每出 2 道别的题插 1 道到期错题；MIST_DAY：今日练习一天最多复习几道，多的顺延
+  // Ben 11-07：一道题累计秒答（含闪电秒答）3 次就算熟练，不再出（11-05 定的是 4 次），奖励也就到头，刷不了。一天最多记 2 次，所以至少跨两天，「隔天还会」的底线还在
+  const FAST_OUT = 3, FAST_PER_DAY = 2, MIST_EVERY = 2, MIST_DAY = 15;   // MIST_EVERY：每出 2 道别的题插 1 道到期错题；MIST_DAY：今日练习一天最多复习几道，多的顺延
 
   const skillOf = id => K.BY[K.ITEM[id].skill];
   // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级

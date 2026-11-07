@@ -496,7 +496,7 @@
     });
   }
   function showChest() {
-    near(CHEST.x, () => sheet(`<div class="sh-h"><h2>木箱</h2><button class="sh-x">×</button></div><div class="sh-b">矿石 <b style="font-size:30px;color:var(--warn)">${S.home.ore}</b> 块</div><div class="muted">练习时每秒答一题，得到 1 块矿石。</div>`));
+    near(CHEST.x, () => sheet(`<div class="sh-h"><h2>木箱</h2><button class="sh-x">×</button></div><div class="sh-b">矿石 <b style="font-size:30px;color:var(--warn)">${S.home.ore}</b> 块</div><div class="muted">练习时每答对一题，得到 1 块矿石。</div>`));
   }
   // ---------- 伙伴图鉴 ----------
   function showBook() {

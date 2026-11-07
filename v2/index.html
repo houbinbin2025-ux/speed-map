@@ -250,7 +250,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .qfast{position:absolute;left:0;right:0;bottom:-9px;height:6px;background:rgba(0,0,0,.45);pointer-events:none}.pbar .qfast{bottom:-7px}
 .qfast i{display:block;height:100%;background:var(--warn);transform-origin:left;transform:scaleX(1)}
 .qfast.run i{animation:qfast var(--fast-ms,3s) linear forwards}.qfast.stop i{animation-play-state:paused}
-@keyframes qfast{to{transform:scaleX(0)}}
+@keyframes qfast{0%,59.9%{background:#7de3ff}60%{background:var(--warn)}100%{transform:scaleX(0);background:var(--warn)}}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
 .qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:14px;font-weight:700}
 .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
@@ -490,6 +490,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .frag{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;flex:none;line-height:1;gap:1px}
 .frag img{image-rendering:pixelated;width:28px;display:block;filter:drop-shadow(0 2px 0 #000)}.frag.l img{width:36px}.frag.s img{width:24px}
 .frag b{font-family:var(--f-num);font-weight:900;font-size:13px;color:#fff;text-shadow:1px 1px 0 #000}
+.frag.o img{width:24px}
 .frag.land{animation:fragLand .22s}
 @keyframes fragLand{0%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
 #forge{gap:12px;background:#22252c}
@@ -501,6 +502,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .fragrow{display:flex;align-items:center;gap:8px;min-height:68px;padding:6px 8px;background:rgba(27,29,34,.86);border:3px solid #000;box-shadow:0 4px 0 #000;color:#fff;font-size:14px;font-weight:800;text-align:left}
 .fragrow:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 .fragrow em{margin-left:auto;font-style:normal;font-size:24px}.fragrow[disabled]{opacity:.45}
+#forgeList.hasOdd{gap:6px}#forgeList.hasOdd .fragrow{min-height:48px;padding:2px 8px;font-size:13px}#forgeList.hasOdd .fragrow .frag img{width:22px}#forgeList.hasOdd .fragrow em{font-size:20px}
+.oddbox{background:rgba(27,29,34,.86);border:3px solid #000;padding:3px;display:flex;flex-direction:column;gap:2px;color:#ddd;font-size:11px}
+.oddgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.oddchip{display:flex;align-items:center;justify-content:center;gap:2px;min-height:40px;padding:0;background:#2a2d34;border:2px solid #000;color:#fff}.oddchip .frag img{width:16px}.oddchip .frag b{font-size:11px}.oddchip em{font-style:normal;font-size:13px}.oddchip[disabled]{opacity:.45}
 .forgeMid{display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center;flex:none}
 #forgeSlots{display:grid;grid-template-columns:repeat(4,calc(min(14vh,52px)));grid-auto-rows:calc(min(14vh,52px));gap:4px;background:#2a1d14;border:4px solid #000;box-shadow:inset 0 0 0 2px #5a3a20,0 5px 0 #000;padding:6px}
 #forgeSlots.nope{animation:forgeShake .09s linear 2}
@@ -513,8 +518,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .forgeSide{margin-left:auto;display:flex;flex-direction:column;gap:8px;width:150px;flex:none}
 .forgeSide .btn{min-height:50px;font-size:16px}
 #forgeToday{display:flex;align-items:center;gap:6px;background:rgba(27,29,34,.86);border:3px solid #000;padding:6px 8px;font-size:12px;color:#ddd}
-#forgeToday img{width:32px;image-rendering:pixelated}#forgeToday b{font-size:24px;color:#fff}
+#forgeToday img{width:26px;image-rendering:pixelated}#forgeToday b{font-size:24px;color:#fff}
 #forgeToday.bump{animation:fragLand .3s}
+#forgeToday{flex-wrap:wrap;row-gap:2px}#forgeToday .ft14{width:100%;white-space:nowrap;font-size:11px;line-height:1.2}#forgeToday>span:not(.ft14){font-size:11px;white-space:nowrap}
 .flying{position:fixed;left:0;top:0;z-index:50;image-rendering:pixelated;pointer-events:none}
 .gempop{position:fixed;left:0;top:0;width:120px;height:120px;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center}
 .gempop img{width:84px;image-rendering:pixelated;position:relative;filter:drop-shadow(0 4px 0 #000)}
@@ -875,7 +881,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v91:e7ac18134d63 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v94:131ea4bb47a9 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -885,24 +891,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=91"></script>
-<script src="i18n.js?v=91"></script>
-<script src="bank.js?v=91"></script>
-<script src="hardbank.js?v=91"></script>
-<script src="placebank.js?v=91"></script>
-<script src="core.js?v=91"></script>
-<script src="ink.js?v=91"></script>
-<script src="skills.js?v=91"></script>
-<script src="engine.js?v=91"></script>
-<script src="render.js?v=91"></script>
-<script src="world.js?v=91"></script>
-<script src="home.js?v=91"></script>
-<script src="puzzles.js?v=91"></script>
-<script src="thinking.js?v=91"></script>
-<script src="house.js?v=91"></script>
-<script src="kongmine.js?v=91"></script>
-<script src="gems.js?v=91"></script>
-<script src="gemui.js?v=91"></script>
+<script src="touchfix.js?v=94"></script>
+<script src="i18n.js?v=94"></script>
+<script src="bank.js?v=94"></script>
+<script src="hardbank.js?v=94"></script>
+<script src="placebank.js?v=94"></script>
+<script src="core.js?v=94"></script>
+<script src="ink.js?v=94"></script>
+<script src="skills.js?v=94"></script>
+<script src="engine.js?v=94"></script>
+<script src="render.js?v=94"></script>
+<script src="world.js?v=94"></script>
+<script src="home.js?v=94"></script>
+<script src="puzzles.js?v=94"></script>
+<script src="thinking.js?v=94"></script>
+<script src="house.js?v=94"></script>
+<script src="kongmine.js?v=94"></script>
+<script src="gems.js?v=94"></script>
+<script src="gemui.js?v=94"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1344,20 +1350,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   function feedback() {
     const c = P.deck[P.i];
-    GM.answerP(P, asInst(c), c);
+    P.gain = GM.answerP(P, asInst(c), c, limitOf(c));
     P.phase = 'a'; playPad.enabled = false; clearTimeout(P.submitT);
     $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`; fitQ();
     $('btnClear').hidden = true; $('btnDunno').hidden = true;
     const sec = (P.ms / 1000).toFixed(1);
     if (P.result === 'fast') {
-      $('res').innerHTML = `<div class="say fast">⚡ 秒答！</div><div class="muted" style="font-size:15px">${sec} 秒</div>`;
+      $('res').innerHTML = `<div class="say fast">⚡ 秒答！</div><div class="muted" style="font-size:15px">${sec} 秒</div>${R.okWords(asInst(c), {pass: true}, 0, null, P.gain).small.split(' · ').filter(Boolean).map(s => `<div class="muted" style="font-size:15px"><span>${s}</span></div>`).join('')}`;
       $('pad').classList.add('good'); $('check').hidden = false; $('footNote').textContent = '马上进入下一题…';
       return later(800);
     }
     if (P.result === 'slow') {
-      $('res').innerHTML = `<div class="say">✓ 对了</div><div class="muted" style="font-size:15px">这次 ${Math.ceil(P.ms / 1000)} 秒，秒答要 ${Math.floor(limitOf(c) / 1000)} 秒内</div>`;
+      $('res').innerHTML = `<div class="say">✓ 对了</div><div class="muted" style="font-size:15px">这次 ${Math.ceil(P.ms / 1000)} 秒，秒答要 ${Math.floor(limitOf(c) / 1000)} 秒内${P.gain && P.gain.got ? ' · <span>+1 小碎片</span>' : ''}</div>`;
       $('footNote').textContent = '马上进入下一题…';
-      return later(1000);
+      return later(2500);
     }
     const why = P.dunno ? '没关系，记住它' : S.oral ? '已放进错题本，明天再来' : `你写的是 ${P.typed} · 已放进错题本，明天再来`;
     $('res').innerHTML = `<div class="say bad">这题再练一下</div><div class="muted" style="font-size:15px">${why}</div>`;
@@ -1421,7 +1427,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     P.phase = 'oral'; P.result = P.ms <= limitOf(c) ? 'fast' : 'slow';
     $('q').className = 'q num small'; $('q').innerHTML = `${C.show(c)} =&nbsp;<span class="ans">${c.ans}</span>`; fitQ();
     $('res').innerHTML = P.result === 'fast' ? `<div class="say fast">⚡ 秒答！</div>` : '<div class="say">✓</div>';
-    $('res').innerHTML += `<div class="muted" style="font-size:15px">${(P.ms / 1000).toFixed(1)} 秒</div>`;
+    $('res').innerHTML += P.result === 'fast' ? `<div class="muted" style="font-size:15px">${(P.ms / 1000).toFixed(1)} 秒</div>` : `<div class="muted" style="font-size:15px">这次 ${Math.ceil(P.ms / 1000)} 秒，秒答要 ${Math.floor(limitOf(c) / 1000)} 秒内</div>`;
     $('oralTap').hidden = true; $('oralFoot').hidden = false; $('btnOralWrong').textContent = '答错了';
   });
   $('btnOralWrong').addEventListener('click', () => {
@@ -1442,7 +1448,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const goHome = () => { P = null; renderSpeed(); show('home'); };
     if (!done.length) return goHome();
     const fast = done.filter(r => r.fast).length, wrong = done.filter(r => r.wrong).length, slow = done.length - fast - wrong;
-    HOME.addOre(S, fast); HOME.sync(S, today()); save(); const box = S.home.loot.length;
+    HOME.addOre(S, fast + slow); HOME.sync(S, today()); save(); const box = S.home.loot.length;
     const mins = Math.max(1, Math.round((Date.now() - P.startAt) / 60000));
     const okT = done.filter(r => !r.wrong).map(r => r.ms), avg = okT.length ? (okT.reduce((a, b) => a + b, 0) / okT.length / 1000).toFixed(1) : '–';
     const lastOf = {}; done.forEach(r => { lastOf[r.id] = r; });
@@ -1542,7 +1548,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (v.input === 'pick') showPick(v);
     if (v.input === 'line') showLine(v);
     if (v.flash) flashLook();
-    fastBar($('qFast'), qLimit(inst));
+    fastBar($('qFast'), v.input === 'pick' && Q.pickDelay ? 0 : qLimit(inst));
     // 画面刷新后再校准起点；已经落笔就不再挪
     requestAnimationFrame(() => requestAnimationFrame(() => { if (Q && Q.x === x && Q.phase === 'q' && !qPad.strokes().length && v.input === 'write') { Q.t0 = performance.now(); fastBar($('qFast'), qLimit(inst)); } }));
     qBar();
@@ -1657,7 +1663,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const inst = Q.x.inst, j = K.judge(K.ITEM[inst.id], inst, Q.val, S.settings);
     const key = inst.q.any ? inst.q.max + 'a' : String(inst.q.max);
     S.lineErr = S.lineErr || {}; S.lineErr[key] = (S.lineErr[key] || []).concat(Math.round(j.err * 10) / 10).slice(-20);
-    resolve({ok: j.ok, fast: j.ok && performance.now() - Q.shownAt <= qLimit(inst) + LINE_WAIT});
+    resolve({ok: j.ok, fast: j.ok && performance.now() - Q.t0 <= qLimit(inst) + LINE_WAIT});
   }
 
   // ---------- 4 反馈：答对 0.8 秒自动下一题；答错 / 不会：图解停住，点「继续」才下一题（Ben 10-31） ----------
@@ -1665,9 +1671,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (!Q || (Q.phase !== 'q' && Q.phase !== 'confirm')) return;
     Q.phase = 'a'; qPad.enabled = false; timers(); fastBar($('qFast'), 0);
     const x = Q.x, inst = x.inst;
-    const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? OK_MS : BAD_MS;
+    const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? (r.fast && !Q.peeked ? OK_MS : SLOW_MS) : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
-    GM.answerQ(Q, x, r);
+    const used = Q.v.input === 'write' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
+    r.bolt = !!r.fast && used <= qLimit(inst) * GEMS.BOLT;
+    const gain = GM.answerQ(Q, x, r);
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++; if (out.pass) Q.fastN++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1680,10 +1688,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     }
     const v = Q.v;
     if (r.ok) {
-      const w0 = R.okWords(inst, out, Q.wasLv, r.fast ? null : {used: v.input === 'write' ? Q.ms : v.input === 'line' ? performance.now() - Q.shownAt - LINE_WAIT : performance.now() - Q.t0, limit: qLimit(inst)}), w = x.retry ? {big: w0.big, small: out.again ? '一会儿再来一次' : '明天再考你一次'} : w0, q0 = Q, n0 = out.pass ? Q.ore++ : Q.ore;
-      if (Q.kind !== 'challenge' && out.pass) WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
+      const w0 = R.okWords(inst, out, Q.wasLv, r.fast ? null : {used, limit: qLimit(inst)}, gain), w = x.retry ? {big: w0.big, small: out.again ? '一会儿再来一次' : '明天再考你一次'} : w0, q0 = Q, n0 = Q.ore++;
+      if (Q.kind !== 'challenge') WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
       if (v.input === 'line') drawTarget(true);
-      $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' && !w.small ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
+      $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' && !w.small ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small.split(' · ').map(s => `<span>${s}</span>`).join(' · ')}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
       if (v.input === 'pick') $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.add(+b.dataset.n === inst.ans ? 'right' : 'wrong'));
       if (v.input === 'write' && !S.oral) { $('qPad').classList.add('good'); $('qCheck').hidden = false; }
       $('qNote').textContent = '';
@@ -1762,7 +1770,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const mins = Math.max(1, Math.round((q.kind === 'today' ? S.daily.sec : q.secs) / 60));
     const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
     const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
-    const ore = q.fastN;
+    const ore = q.n - q.wrong;
     HOME.addOre(S, ore); HOME.sync(S, today()); save(); const box = S.home.loot.length;
     $('qsum').innerHTML = `<canvas class="scnbg px" id="qsBg"></canvas>
       <div class="col" style="width:330px;flex:none;justify-content:center;gap:10px">
@@ -1948,7 +1956,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const card = '每道题：秒答变淡黄 → 另一天再秒答变淡红 → 隔 3 天以上再秒答变深红';
     const type = '每个题型：最近 8 次秒答 7 次升一级（淡红要另一天，深红要再隔 3 天）';
     const hasCard = s.items.some(it => !it.gen), hasType = s.items.some(it => it.gen);
-    return (hasCard && hasType ? card + '；「合起来是几」是题型，' + type.replace('每个题型：', '') : hasCard ? card : type) + '。慢了不算学会。同一道题累计秒答 4 次不再出';
+    return (hasCard && hasType ? card + '；「合起来是几」是题型，' + type.replace('每个题型：', '') : hasCard ? card : type) + `。慢了不算学会。同一道题累计秒答 ${E.FAST_OUT} 次算熟练，不再出`;
   }
   const qText = inst => { const it = K.ITEM[inst.id], s = K.BY[it.skill]; return s.speed ? `${inst.q.a} ${inst.q.op === '+' ? '+' : '−'} ${inst.q.b}` : !it.gen ? R.label(inst.id) : R.mistLabel({src: 1, uid: inst.id, q: inst.q}); };
   const isMist = inst => { const s = K.BY[K.ITEM[inst.id].skill]; return s.speed ? Object.values(S.mistakes || {}).some(m => !m.src && m.uid === inst.id && m.a === inst.q.a && m.b === inst.q.b && m.due !== null) : !!(S.mistakes[K.mkey(inst)] && S.mistakes[K.mkey(inst)].due !== null); };
@@ -2042,7 +2050,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       speechSynthesis.speak(u);
     } catch (err) { sayEnd(); }
   }
-  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') { E.noteSay(S, today()); if (Q && Q.phase === 'q' && Q.x && !qPad.strokes().length) { Q.t0 = Q.shownAt = performance.now(); fastBar($('qFast'), qLimit(Q.x.inst)); } } sayIt(b); });   // 听题不算想题的时间
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') { E.noteSay(S, today()); if (Q && Q.phase === 'q' && Q.x && (Q.v.input !== 'write' || !qPad.strokes().length)) { Q.t0 = performance.now(); fastBar($('qFast'), qLimit(Q.x.inst)); } } sayIt(b); });   // 听题不算想题的时间
   R.setSprite(ART.spriteURL);
   function renderBi() { $('biBox').checked = S.settings.bilingual !== false; $('biToday').textContent = I18N.isEn(S.settings, today()) ? '英文' : '中文'; }
   $('biBox').addEventListener('change', e => { S.settings.bilingual = e.target.checked; save(); applyLang(); renderBi(); });

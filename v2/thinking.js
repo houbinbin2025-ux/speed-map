@@ -109,14 +109,17 @@ function fit() {
 }
 addEventListener('resize', fit);
 const hush = () => o.stopSay();   // 朗读走页面的 sayIt（App 里是原生语音）
-document.addEventListener('visibilitychange', () => { if (document.hidden) hush(); });
-addEventListener('popstate', hush);
+const OK_NEXT_MS = 2000;   // 做对后自动进下一题（Ben 11-07）；不会的讲解停住，等孩子点「继续」
+const cancelAuto = () => { clearTimeout(G.autoT); G.autoT = null; };
+const autoNext = () => { cancelAuto(); G.autoT = setTimeout(() => { G.autoT = null; G.tap = performance.now() + 500; next(); }, OK_NEXT_MS); };   // 正要点「继续」时刚好切题，这一下不能落到新题上
+document.addEventListener('visibilitychange', () => { if (document.hidden) { hush(); cancelAuto(); } });
+addEventListener('popstate', () => { hush(); cancelAuto(); });
 
 function enter(id) {
   G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = P.progress(o.S(), id).tier; G.tap = performance.now() + 500;
   o.show(); fit(); next();
 }
-function next() { hush(); if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; render(); }
+function next() { hush(); cancelAuto(); if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; render(); }
 function earn() {   // 一题一块矿石；进度和矿石马上存，中途退出不丢
   if (G.got) return; G.got = true; G.ore++; const n = $s.querySelector('#oreN'); if (n) n.textContent = G.ore;
   G.note = '';
@@ -141,16 +144,16 @@ function tabsHtml() {   // 没开放的技能点不了；当前技能显示还�
 }
 function shell(say, sub) {
   $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
-  $s.querySelector('#back').onclick = () => { hush(); o.onExit(); };
+  $s.querySelector('#back').onclick = () => { hush(); cancelAuto(); o.onExit(); };
   paintTabs();
   return $s.querySelector('#main');
 }
 const guarded = () => performance.now() < G.tap;
-function finish(ok, msg, fbEl) {   // ok = 孩子做出来了；false = 点了不会。都由孩子点「继续」
+function finish(ok, msg, fbEl) {   // ok = 孩子做出来了，2 秒后自动下一题（也可以点「继续」）；false = 点了不会，等孩子点「继续」
   G.done = true; G.tap = performance.now() + 500; if (ok) earn();
   fbEl.className = 'fb ' + (ok ? 'ok' : 'bad'); fbEl.textContent = msg;
   const a = $s.querySelector('#acts'); a.innerHTML = '<button class="go" id="cont">继续</button>';
-  bindCont(a);
+  bindCont(a); if (ok) autoNext();
 }
 function acts(html, dunno) { return `<div class="acts" id="acts">${html}<button id="dunno">不会</button></div>`; }
 const bindDunno = fn => { const d = $s.querySelector('#dunno'); if (d) d.onclick = () => { if (!guarded()) fn(); }; };
@@ -259,8 +262,8 @@ function rTarget() {
     G.done = true; G.tap = performance.now() + 500;
     a.innerHTML = (s.found.length < q.solutions.length ? '<button id="more">再找一种</button>' : '') + '<button class="go" id="cont">继续</button>';
     const more = a.querySelector('#more');
-    if (more) more.onclick = () => { if (guarded()) return; G.done = false; fb.textContent = ''; s.expr = []; s.sign = '+'; working(); };
-    bindCont(a);
+    if (more) more.onclick = () => { if (guarded()) return; cancelAuto(); G.done = false; fb.textContent = ''; s.expr = []; s.sign = '+'; working(); };
+    bindCont(a); autoNext();
   };
   m.querySelectorAll('[data-i]').forEach(btn => on(btn, () => {
     const i = Number(btn.dataset.i); if (s.expr.some(it => it.i === i)) return;

@@ -228,9 +228,12 @@
 
   // ---------- 答对时的字（说明书 3.4「孩子看到的字」） ----------
   // t = {used, limit}（毫秒）：这次用时和秒答时间
-  function okWords(inst, out, wasLv, t) {
-    if (out.pass) return {big: '⚡ 秒答！', small: out.up ? '点亮了' : ''};
-    return {big: skillOf(inst.id).input === 'line' ? '✓ 很接近' : '✓ 对了', small: out.peeked ? '' : t ? `这次 ${Math.ceil(t.used / 1000)} 秒，秒答要 ${Math.floor(t.limit / 1000)} 秒内` : '再快一点才算学会'};
+  // g = {got, bolt}：这次得的碎片
+  const SHARD = {s: '+1 小碎片', m: '+1 中碎片', l: '+1 大碎片'};
+  const shards = g => (g && g.got ? [SHARD[g.got] || '+1 碎片'].concat(Array(g.extra || 0).fill('+1 小碎片')) : []);
+  function okWords(inst, out, wasLv, t, g) {
+    if (out.pass) return {big: g && g.bolt ? '⚡⚡ 闪电秒答！' : '⚡ 秒答！', small: (out.up ? ['点亮了'] : []).concat(shards(g)).join(' · ')};
+    return {big: skillOf(inst.id).input === 'line' ? '✓ 很接近' : '✓ 对了', small: (out.peeked ? [] : [t ? `这次 ${Math.ceil(t.used / 1000)} 秒，秒答要 ${Math.floor(t.limit / 1000)} 秒内` : '再快一点才算学会']).concat(shards(g)).join(' · ')};
   }
 
   // ---------- 「学一学」示范卡：三步动画（具体 → 图形 → 抽象），约 3 秒 ----------

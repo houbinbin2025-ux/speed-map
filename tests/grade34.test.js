@@ -40,9 +40,9 @@ test('新题写错进错题本，键短，还能复习', () => {
   const k = Object.keys(S.mistakes)[0]; assert.ok(k.length < 50, k); assert.equal(S.mistakes[k].q.say, x.q.say);
 });
 // ---------- 下架 ----------
-test('新题秒答 4 次（一天最多记 2 次）就下架', () => {
+test('新题秒答 3 次（一天最多记 2 次）就下架', () => {
   const S = blank(); S.settings = {levels: [11]}; const id = 'dock:g11:speed', x = HB.pools[id][0], inst = {id, q: x.q, ans: x.ans};
-  [0, 0, 0, 1, 1].forEach(d => E.addFast(S, inst, D(d), 0));
+  [0, 0, 0, 1].forEach(d => E.addFast(S, inst, D(d), 0));
   assert.equal(E.spent(S, inst), true);
 });
 test('真实练习：只答对不够快，新题不计次；秒答才计次', () => {

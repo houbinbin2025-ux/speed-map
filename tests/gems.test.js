@@ -46,6 +46,15 @@ test('每道题每天只有第一次作答算数；错了当天再做不给，�
   assert.equal(ans(st, {day: '2026-11-07', top: 99}), 's');
 });
 
+test('秒答多 1 个小碎片；闪电再多 1 个，一天最多 20 次，超过仍有秒答那 1 个', () => {
+  const st = G.blank();
+  assert.deepEqual(G.speedBonus(st, DAY, false), {extra: 1, bolt: false});
+  for (let i = 0; i < G.BOLT_DAY; i++) assert.deepEqual(G.speedBonus(st, DAY, true), {extra: 2, bolt: true});
+  assert.deepEqual(G.speedBonus(st, DAY, true), {extra: 1, bolt: false});
+  assert.equal(st.inv.s, 1 + G.BOLT_DAY * 2 + 1);
+  assert.equal(G.speedBonus(st, '2026-11-07', true).bolt, true, '隔天重新算');
+});
+
 test('当场再来一次不给碎片，也不计正确率', () => {
   const st = G.blank();
   assert.equal(ans(st, {retry: true}), null);
@@ -276,3 +285,61 @@ test('碎片和锻造台的文字都有英文（单日显示英文）', () => {
   assert.equal(I18N.text('没有炼出宝石，废料 60'), 'No gem. 60 scrap');
   for (const s of ['碎片不够，炼不出宝石', '开始锻造后，炉子里的碎片都会变成废料，不退回', '先不炼', '仍然锻造']) assert.notEqual(I18N.text(s), s, s);
 });
+
+test('近 14 天炼出：含今天共 14 个日历日，更早的不算，炼不成的不算', () => {
+  const st = G.blank(); const put = (d, n) => { st.days[d] = {ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: n, waste: 0}; };
+  assert.equal(G.recentForged(st, '2026-11-07'), 0);
+  put('2026-11-07', 2); put('2026-10-25', 3); put('2026-10-24', 100); put('2026-11-08', 50);
+  assert.equal(G.recentForged(st, '2026-11-07'), 5, '10-25 是第 14 天；10-24 太早，11-08 是将来');
+  assert.equal(G.RECENT_DAYS, 14);
+  st.inv = {s: 1, m: 0, l: 0}; G.forge(st, {s: 1, m: 0, l: 0}, '2026-11-07');
+  assert.equal(G.recentForged(st, '2026-11-07'), 5, '没炼成不计');
+});
+test('近 14 天炼出的文字有英文', () => {
+  const I18N = require('../v2/i18n.js');
+  assert.equal(I18N.text('近 14 天 5'), 'Last 14 days: 5');
+});
+
+(function () {
+  const inst = n => ({id: 'odd-test-' + n});
+  const seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
+  test('杂色碎片：有 6 种，价值 4、6、7、8、12、13；小碎片换成小的，中碎片换成大的', () => {
+    assert.deepEqual(G.ODD.map(t => G.VALUE[t]).sort((a, b) => a - b), [4, 6, 7, 8, 12, 13]);
+    assert.equal(G.ODD_RATE, 0.1);
+    assert.deepEqual(G.oddFor('s', seq(0.05, 0)), 'o4');
+    assert.deepEqual(G.oddFor('s', seq(0.05, 0.99)), 'o8');
+    assert.deepEqual(G.oddFor('m', seq(0.05, 0)), 'o8');
+    assert.deepEqual(G.oddFor('m', seq(0.05, 0.99)), 'o13');
+    assert.equal(G.oddFor('s', seq(0.1)), 's', '10% 之外还是原来的');
+    assert.equal(G.oddFor('m', seq(0.5)), 'm');
+    assert.equal(G.oddFor('s'), 's', '不给随机数就不出杂色');
+    assert.equal(G.oddFor('l', seq(0)), 'l', '大碎片不换');
+  });
+  test('杂色碎片：答对时进背包，中碎片的认真奖励计数不变', () => {
+    const st = G.blank(), base = {day: DAY, ok: true, top: 0, lv: 0};
+    assert.equal(G.answer(st, Object.assign({}, base, {inst: inst(1), rand: seq(0, 0.99)})), 'o13');
+    assert.equal(st.inv.o13, 1); assert.equal(st.inv.m, 0); assert.equal(st.days[DAY].m, 1);
+    assert.equal(G.answer(st, Object.assign({}, base, {inst: inst(2), top: 99, lv: 3, rand: seq(0.99)})), 's');
+    assert.equal(st.inv.s, 1);
+  });
+  test('杂色碎片：能和普通碎片一起炼，凑准 100 没有废料；数量不够不能放', () => {
+    const st = G.blank(); Object.assign(st.inv, {o13: 2, o7: 1, o12: 1, o8: 1, l: 1});
+    assert.deepEqual(G.forge(st, {o13: 1, o7: 1, l: 1, o12: 1, o8: 2}, DAY).why, 'lack');
+    assert.equal(G.enough({o13: 2, o12: 1, o7: 1, o8: 1, s: 0}), false, '13+13+12+7+8 = 53，不够');
+    assert.deepEqual(G.forge(st, {o13: 1, o7: 1, o12: 1, o8: 1, l: 1}, DAY), {ok: true, gems: 0, waste: 90}, '13+7+12+8+50 = 90，不够');
+    assert.equal(st.inv.o13, 1); assert.equal(st.inv.l, 0);
+    const b = G.blank(); Object.assign(b.inv, {o13: 2, o12: 1, l: 1, o6: 2}); b.inv.o7 = 0;
+    assert.deepEqual(G.forge(b, {o13: 2, o12: 1, l: 1, s: 0, o6: 2}, DAY), {ok: true, gems: 1, waste: 0}, '13+13+12+50+6+6 = 100');
+    assert.equal(G.forge(G.blank(), {zz: 1}, DAY).why, 'lack', '不认识的碎片不能放');
+  });
+  test('杂色碎片：旧存档照常读；杂色数量损坏算坏数据；领宝石不受影响', () => {
+    assert.ok(G.parse(JSON.stringify({inv: {s: 1, m: 2, l: 3}})));
+    assert.equal(G.parse(JSON.stringify({inv: {s: 1, m: 2, l: 3, o7: 2}})).inv.o7, 2);
+    assert.equal(G.parse(JSON.stringify({inv: {s: 1, m: 2, l: 3, o7: 'x'}})), null);
+    assert.equal(G.parse(JSON.stringify({inv: {s: 1, m: 2, l: 3, o7: -1}})), null);
+  });
+  test('杂色碎片的名字有英文', () => {
+    const I18N = require('../v2/i18n.js');
+    assert.equal(I18N.text('杂色碎片'), 'Odd shards');
+  });
+})();
