@@ -334,6 +334,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 .ackrow{display:flex;align-items:center;gap:16px}
 /* 第二批 2a：题面里的图（线段图、条形图、长方形）和讲解卡（说明书-到四年级第二批） */
+.eq.tw{white-space:normal;overflow-wrap:break-word}   /* 题面带文字（如「四舍五入到百位」）：英文日翻译变长时换行，不出左栏 */
 .fig2w{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}.fig2w>svg.fig2{width:100%;height:100%;max-height:100%}
 .explain .fig2w{flex:none;height:clamp(110px,34vh,240px)}
 .dcard .cdots{margin-left:auto;display:flex;gap:6px}.dcard .cdots i{width:12px;height:12px;background:var(--stone-hi);border:2px solid #000}.dcard .cdots i.on{background:var(--warn)}
@@ -894,7 +895,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v100:0ad568fb60d6 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v101:059bed9af080 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -904,24 +905,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=100"></script>
-<script src="i18n.js?v=100"></script>
-<script src="bank.js?v=100"></script>
-<script src="hardbank.js?v=100"></script>
-<script src="placebank.js?v=100"></script>
-<script src="core.js?v=100"></script>
-<script src="ink.js?v=100"></script>
-<script src="skills.js?v=100"></script>
-<script src="engine.js?v=100"></script>
-<script src="render.js?v=100"></script>
-<script src="world.js?v=100"></script>
-<script src="home.js?v=100"></script>
-<script src="puzzles.js?v=100"></script>
-<script src="thinking.js?v=100"></script>
-<script src="house.js?v=100"></script>
-<script src="kongmine.js?v=100"></script>
-<script src="gems.js?v=100"></script>
-<script src="gemui.js?v=100"></script>
+<script src="touchfix.js?v=101"></script>
+<script src="i18n.js?v=101"></script>
+<script src="bank.js?v=101"></script>
+<script src="hardbank.js?v=101"></script>
+<script src="placebank.js?v=101"></script>
+<script src="core.js?v=101"></script>
+<script src="ink.js?v=101"></script>
+<script src="skills.js?v=101"></script>
+<script src="engine.js?v=101"></script>
+<script src="render.js?v=101"></script>
+<script src="world.js?v=101"></script>
+<script src="home.js?v=101"></script>
+<script src="puzzles.js?v=101"></script>
+<script src="thinking.js?v=101"></script>
+<script src="house.js?v=101"></script>
+<script src="kongmine.js?v=101"></script>
+<script src="gems.js?v=101"></script>
+<script src="gemui.js?v=101"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);

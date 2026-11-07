@@ -204,7 +204,7 @@
     if (FIGS[q.view]) return `<div class="fig2w">${FIGS[q.view](q.data, a)}</div>`;
     if (q.view === 'story') return a === undefined ? nbSay(q) : `<div class="eq num sm">${q.text.replace('□', ans(a))}</div>`;
     if (q.view === 'clock5') return clockSvg(q.h, q.m) + (a === undefined ? nbSay(q) : `<div class="say2">${q.text.replace('□', ans(a))}</div>`);
-    const t = q.text || ''; return `<div class="eq num${t.length > 22 ? ' xs' : t.length > 11 ? ' sm' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
+    const t = q.text || ''; return `<div class="eq num${t.length > 22 ? ' xs' : t.length > 11 ? ' sm' : ''}${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
   };
   // ---------- 三个新地方的图 ----------
   let SPRITE = () => '';   // 页面注入：名字 → 图片地址（node 里没有画布，返回空）
