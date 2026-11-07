@@ -9,9 +9,8 @@
   const rint = (r, lo, hi) => lo + Math.floor(r() * (hi - lo + 1));
   const SK = [], BY = {}, ITEM = {};
   // kind：card 一道固定题一个格子 / type8 题型（最近 8 次合格 ≥ 7）/ day5 秒答题型（同一天合格 5 次，同 v2）
-  // timedFrom：从第几档开始要求"快"（0 = 一开始就要快，秒答；1 = 淡黄以后，先对后快；null = 不计时）
   function skill(o) {
-    const s = Object.assign({timedFrom: null, input: 'write', pre: [], items: []}, o);
+    const s = Object.assign({input: 'write', pre: [], items: []}, o);
     s.items = s.items.filter(Boolean); if (!s.items.length) return null;   // 题全被剔除的技能（如 5 以内分合）不再存在
     s.items.forEach(it => { it.skill = s.id; ITEM[it.id] = it; });
     SK.push(s); BY[s.id] = s; return s;
@@ -21,34 +20,34 @@
   const POOL = {}, pool = id => POOL[id] || (POOL[id] = B.pools[id].filter(x => !C.isLow(x.q)));
   const fromPool = id => r => { const p = pool(id), x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; };
   const type = id => (pool(id).length ? {id, gen: fromPool(id)} : null);
-  // 三个新地方（docs/意图-v6-三个新关卡.md）：题在 placebank.js，不计时，排在各自前置学完之后
+  // 三个新地方（docs/意图-v6-三个新关卡.md）：题在 placebank.js，排在各自前置学完之后
   const place = (id, group, name, pre, ids, input) => skill({id, group, name, nb: true, kind: 'type8', input: input || 'write', pre, items: ids.map(i => ({id: i, gen: r => { const p = NB.pools[i], x = p[C.deal(i, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }}))});
 
-  // ---------- 看数（一眼看出有几个，不计时） ----------
+  // ---------- 看数（一眼看出有几个） ----------
   skill({id: 'look1', group: 'look', name: '骰子点', kind: 'card', items: cards('look1')});
   skill({id: 'look2', group: 'look', name: '乱点', kind: 'card', items: cards('look2')});
-  skill({id: 'cmp1', group: 'cmp', name: '10 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', items: [type('cmp:t:10')]});
+  skill({id: 'cmp1', group: 'cmp', name: '10 以内谁大', kind: 'type8', input: 'pick', items: [type('cmp:t:10')]});
   skill({id: 'look3', group: 'look', name: '一个十格框', kind: 'card', pre: ['look1'], items: cards('look3')});
   place('gardenA', 'garden', '接方块', ['look3'], ['garden:t:next'], 'pick');
   // ---------- 分合（分合图：整体在上，两部分在下；先卡后题型） ----------
-  skill({id: 'bond1', group: 'bond', name: '5 以内分合', kind: 'card', timedFrom: 1, pre: ['look3'], items: cards('bond1').concat([type('bond:t:whole5')])});
+  skill({id: 'bond1', group: 'bond', name: '5 以内分合', kind: 'card', pre: ['look3'], items: cards('bond1').concat([type('bond:t:whole5')])});
   skill({id: 'look4', group: 'look', name: '两个十格框', kind: 'card', pre: ['look3'], items: cards('look4')});
-  skill({id: 'bond2', group: 'bond', name: '6–9 分合', kind: 'card', timedFrom: 1, pre: ['bond1'], items: cards('bond2').concat([type('bond:t:whole9')])});
+  skill({id: 'bond2', group: 'bond', name: '6–9 分合', kind: 'card', pre: ['bond1'], items: cards('bond2').concat([type('bond:t:whole9')])});
   place('dockA', 'dock', '装到一起', ['bond2'], ['dock:t:join']);
   place('dockB', 'dock', '拿走', ['bond2'], ['dock:t:take']);
   skill({id: 'line1', group: 'line', name: '0—10 数线', kind: 'type8', input: 'line', pre: ['cmp1'], items: [type('line:t:10')]});
   place('clockA', 'market', '整点', ['line1'], ['market:t:hour']);
   place('clockB', 'market', '半点', ['clockA'], ['market:t:half'], 'pick');
-  skill({id: 'bond3', group: 'bond', name: '凑十', kind: 'card', timedFrom: 1, pre: ['bond2'], items: cards('bond3')});
+  skill({id: 'bond3', group: 'bond', name: '凑十', kind: 'card', pre: ['bond2'], items: cards('bond3')});
   place('money1', 'market', '付钱', ['bond3'], ['market:t:pay']);
-  skill({id: 'cmp2', group: 'cmp', name: '20 以内谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp1', 'look4'], items: [type('cmp:t:20')]});
+  skill({id: 'cmp2', group: 'cmp', name: '20 以内谁大', kind: 'type8', input: 'pick', pre: ['cmp1', 'look4'], items: [type('cmp:t:20')]});
   // 缺数四种：□+a=b（答 b−a）、a+□=b（答 b−a）、□−a=b（答 a+b）、a−□=b（答 a−b）
-  skill({id: 'bond4', group: 'bond', name: '缺数算式', kind: 'type8', timedFrom: 1, pre: ['bond3'],
+  skill({id: 'bond4', group: 'bond', name: '缺数算式', kind: 'type8', pre: ['bond3'],
     items: ['addL', 'addR', 'subL', 'subR'].map(f => type('bond:t:' + f))});
   place('dockC', 'dock', '还差几个', ['bond4'], ['dock:t:need']);
   place('money2', 'market', '找零', ['bond4'], ['market:t:change']);
   // 过十准备：k + a = 10 + □（和在 11–17）
-  skill({id: 'bond5', group: 'bond', name: '过十准备', kind: 'type8', timedFrom: 1, pre: ['bond3', 'look4'], items: [9, 8, 7].map(k => type('bond:t:to10-' + k))});
+  skill({id: 'bond5', group: 'bond', name: '过十准备', kind: 'type8', pre: ['bond3', 'look4'], items: [9, 8, 7].map(k => type('bond:t:to10-' + k))});
   place('dockD', 'dock', '比多少', ['bond4', 'cmp2'], ['dock:t:more']);
   skill({id: 'line2', group: 'line', name: '0—20 数线', kind: 'type8', input: 'line', pre: ['line1', 'cmp2'], items: [type('line:t:20')]});
   // ---------- 数位（几个十和几个一） ----------
@@ -58,9 +57,9 @@
   place('gardenC', 'garden', '找错的', ['gardenB'], ['garden:t:bad'], 'pick');
   skill({id: 'place2', group: 'place', name: '几个十几个一', kind: 'type8', pre: ['place1'],
     items: [type('place:t:split')]});
-  skill({id: 'cmp3', group: 'cmp', name: '两位数谁大', kind: 'type8', timedFrom: 1, input: 'pick', pre: ['cmp2', 'place2'],
+  skill({id: 'cmp3', group: 'cmp', name: '两位数谁大', kind: 'type8', input: 'pick', pre: ['cmp2', 'place2'],
     items: [type('cmp:t:100'), type('cmp:t:swap')]});
-  skill({id: 'cmp4', group: 'cmp', name: '前后数', kind: 'type8', timedFrom: 1, pre: ['cmp3'],
+  skill({id: 'cmp4', group: 'cmp', name: '前后数', kind: 'type8', pre: ['cmp3'],
     items: ['p1', 'm1', 'p10', 'm10'].map(k => type('cmp:t:' + k))});
   skill({id: 'line3', group: 'line', name: '0—100 整十', kind: 'type8', input: 'line', pre: ['line2', 'cmp3'], items: [type('line:t:100t')]});
   skill({id: 'line4', group: 'line', name: '0—100 任意', kind: 'type8', input: 'line', pre: ['line3'], items: [type('line:t:100')]});
@@ -81,7 +80,7 @@
     Object.keys(byW).forEach(w => {
       w = +w;
       const name = L < 2 ? `${LV.name} · ${LV.worlds[w].name}` : `${LV.name} · ${w === 0 ? '加法' : '减法'}题型`;
-      skill({id: `speed:L${L + 1}:${w}`, group: 'speed', name, kind: L < 2 ? 'card' : 'day5', timedFrom: 0, pre: speedPre(L, w),
+      skill({id: `speed:L${L + 1}:${w}`, group: 'speed', name, kind: L < 2 ? 'card' : 'day5', pre: speedPre(L, w),
         items: byW[w].map(u => u.gen ? {id: u.id, gen: () => { const g = u.gen(); return {q: {a: g.a, op: u.op, b: g.b}, ans: g.ans}; }} : {id: u.id, q: {a: u.a, op: u.op, b: u.b}, ans: u.ans}),
         speed: true, L});
     });
@@ -92,22 +91,22 @@
 
   // ---------- 高级别题（不进 SK：现有地图、奖状、伙伴不受影响。说明书-难度分级） ----------
   const HARD = [];
-  const hard = o => { const s = Object.assign({hard: true, kind: 'type8', timedFrom: null, input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
+  const hard = o => { const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
   hard({id: 'lookH1', group: 'look', name: '几排几个', ids: ['look:h:grid']});
   hard({id: 'lookH2', group: 'look', name: '百格图数数', pre: ['lookH1'], ids: ['look:h:h100']});
-  hard({id: 'bondH1', group: 'bond', name: '整十分合', timedFrom: 1, ids: ['bond:h:tens']});
-  hard({id: 'bondH2', group: 'bond', name: '凑一百', timedFrom: 1, pre: ['bondH1'], ids: ['bond:h:to100']});
+  hard({id: 'bondH1', group: 'bond', name: '整十分合', ids: ['bond:h:tens']});
+  hard({id: 'bondH2', group: 'bond', name: '凑一百', pre: ['bondH1'], ids: ['bond:h:to100']});
   hard({id: 'placeH1', group: 'place', name: '看百十个写数', ids: ['place:h:read']});
   hard({id: 'placeH2', group: 'place', name: '几个百几个十', pre: ['placeH1'], ids: ['place:h:split']});
-  hard({id: 'cmpH1', group: 'cmp', name: '算式谁大', timedFrom: 1, input: 'pick', ids: ['cmp:h:expr']});
-  hard({id: 'cmpH2', group: 'cmp', name: '三位数谁大', timedFrom: 1, input: 'pick', pre: ['cmpH1'], ids: ['cmp:h:1000']});
+  hard({id: 'cmpH1', group: 'cmp', name: '算式谁大', input: 'pick', ids: ['cmp:h:expr']});
+  hard({id: 'cmpH2', group: 'cmp', name: '三位数谁大', input: 'pick', pre: ['cmpH1'], ids: ['cmp:h:1000']});
   hard({id: 'lineH1', group: 'line', name: '0—1000 整百', input: 'line', ids: ['line:h:1000t']});
   hard({id: 'lineH2', group: 'line', name: '0—1000 任意', input: 'line', pre: ['lineH1'], ids: ['line:h:1000']});
-  hard({id: 'speedH1', group: 'speedH', name: '连加连减', timedFrom: 1, ids: ['speed:h:chain']});
-  hard({id: 'speedH2', group: 'speedH', name: '两位数加减两位数', timedFrom: 1, pre: ['speedH1'], ids: ['speed:h:two']});
-  hard({id: 'speedH3', group: 'speedH', name: '乘法 2、5、10', timedFrom: 1, pre: ['speedH2'], ids: ['speed:h:mul']});
+  hard({id: 'speedH1', group: 'speedH', name: '连加连减', ids: ['speed:h:chain']});
+  hard({id: 'speedH2', group: 'speedH', name: '两位数加减两位数', pre: ['speedH1'], ids: ['speed:h:two']});
+  hard({id: 'speedH3', group: 'speedH', name: '乘法 2、5、10', pre: ['speedH2'], ids: ['speed:h:mul']});
   // 11-06 分 15 级补的题（说明书-难度分级）；旧的挑战题也并进分级，家长选难度才出或自动开放
-  hard({id: 'bondH3', group: 'bond', name: '20 以内分合', timedFrom: 1, ids: ['bond:h:20']});
+  hard({id: 'bondH3', group: 'bond', name: '20 以内分合', ids: ['bond:h:20']});
   hard({id: 'dockH1', group: 'dock', name: '20 以内应用题', ids: ['dock:h:20']});
   hard({id: 'dockH2', group: 'dock', name: '50 以内应用题', pre: ['dockH1'], ids: ['dock:h:50']});
   hard({id: 'dockH3', group: 'dock', name: '100 以内应用题', pre: ['dockH2'], ids: ['dock:h:100']});
@@ -119,10 +118,10 @@
   hard({id: 'marketH3', group: 'market', name: '几点几分', ids: ['market:h:clock']});
   hard({id: 'gardenH1', group: 'garden', name: '3 和 4 跳着数', ids: ['garden:h:skip']});
   hard({id: 'gardenH2', group: 'garden', name: '倒着跳', pre: ['gardenH1'], ids: ['garden:h:down']});
-  hard({id: 'speedH4', group: 'speedH', name: '表内乘法', timedFrom: 1, pre: ['speedH3'], ids: ['speed:h:mul2']});
-  hard({id: 'speedH5', group: 'speedH', name: '表内除法', timedFrom: 1, pre: ['speedH4'], ids: ['speed:h:div']});
+  hard({id: 'speedH4', group: 'speedH', name: '表内乘法', pre: ['speedH3'], ids: ['speed:h:mul2']});
+  hard({id: 'speedH5', group: 'speedH', name: '表内除法', pre: ['speedH4'], ids: ['speed:h:div']});
 
-  // ---------- 三四年级第一批（说明书-到四年级第一批）：不计时，答对累计下架；不进地图格子和奖励 ----------
+  // ---------- 三四年级第一批（说明书-到四年级第一批）：不进地图格子和奖励 ----------
   const g34 = (group, name, ids) => hard({id: 'g34:' + ids[0].split(':').slice(1).join(':'), group, name, ids});
   g34('speedH', '有余数除法', ['speed:g10:rem', 'speed:g10:quo']); g34('speedH', '三位数加减', ['speed:g10:add3', 'speed:g10:sub3']); g34('place', '千位', ['place:g10:thou']);
   g34('market', '单位换算', ['market:g10:conv']); g34('market', '经过时间', ['market:g10:span']); g34('dock', '余数应用题', ['dock:g10:remain']); g34('dock', '两步应用题', ['dock:g10:two']);
@@ -194,6 +193,36 @@
   }
   const isType = itemId => !!ITEM[itemId].gen;
 
+  // ---------- 秒答时间（说明书-秒答时间）：想的时间（秒，按题型定）+ 读题 + 写字；秒答才算学会 ----------
+  // 新增题型必须在这里定时间（tests/fasttime.test.js 会拦）；秒答卡和题型沿用 core.js 的 fast
+  const FAST_THINK = {
+    look1: 3, look3: 3, look4: 3, lookH1: 4, lookH2: 4,
+    bond1: 3, bond2: 3, bond3: 3, bond4: 3, bond5: 3, bondH1: 3, bondH2: 4, bondH3: 3,
+    place1: 3, place2: 3, placeH1: 3, placeH2: 4,
+    cmp1: 2, cmp2: 2, cmp3: 2, cmp4: 3, cmpH1: 5, cmpH2: 3,
+    line1: 4, line2: 4, line3: 4, line4: 5, lineH1: 5, lineH2: 6,
+    speedH1: 6, speedH2: 6, speedH3: 3, speedH4: 3, speedH5: 3,
+    gardenA: 4, gardenB: 4, gardenC: 5, gardenH1: 6, gardenH2: 6,
+    clockA: 3, clockB: 4, money1: 5, money2: 4, marketH1: 6, marketH2: 4, marketH3: 5,
+    dockA: 3, dockB: 3, dockC: 4, dockD: 4, dockH1: 4, dockH2: 5, dockH3: 6, dockH4: 4, dockH5: 4, dockH6: 5,
+    'speed:g10:rem': 5, 'speed:g10:quo': 5, 'speed:g10:add3': 12, 'speed:g10:sub3': 12, 'place:g10:thou': 4, 'market:g10:conv': 6, 'market:g10:span': 6, 'dock:g10:remain': 6, 'dock:g10:two': 20,
+    'speed:g11:mul': 15, 'speed:g11:div': 20, 'speed:g11:divrem': 8, 'dock:g11:perim': 10, 'dock:g11:times': 15, 'dock:g11:two': 15, 'dock:g11:speed': 10, 'dock:g11:part': 15,
+    'speed:g12:mul2': 30, 'speed:g12:dec': 6, 'dock:g12:area': 25, 'dock:g12:price': 30, 'market:g12:24': 4, 'market:g12:year': 15,
+    'speed:g13:mul3': 45, 'speed:g13:div2': 25, 'speed:g13:order': 20, 'place:g13:round': 5, 'dock:g13:unit': 25, 'dock:g13:speed': 25, 'dock:g13:share': 25,
+    'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 8, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
+    'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
+  };
+  const READ_MS = 400, EN_READ = 1.5;   // 题面每个汉字；英文日读得慢，多给一半（按中文字数估）
+  const fastThink = id => (C.BYID[id] ? C.BYID[id].fast / 1000 : FAST_THINK[id] || FAST_THINK[ITEM[id].skill]);
+  // o = {oral, speed}：speed 是测到的写一个数字的用时
+  function fastMs(inst, o) {
+    o = o || {};
+    const s = BY[ITEM[inst.id].skill], q = inst.q || {}, read = (String(q.say || q.text || '').match(/[\u4e00-\u9fff]/g) || []).length * READ_MS * (o.en ? EN_READ : 1);
+    return (fastThink(inst.id) || 5) * 1000 + read + (s.input === 'write' && !o.oral ? (o.speed || 1000) * C.digits(inst.ans) : 0);
+  }
+  // 三四年级多位计算和文字题：写到一半会停下想，不算写完
+  const slowWrite = inst => /:g\d+:/.test(inst.id);
+
   // 前置关系检查（测试用）：所有前置都存在、没有环
   function topoOk() {
     const seen = new Set(), stack = new Set();
@@ -201,6 +230,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {LEVELS, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL,
+  return {LEVELS, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

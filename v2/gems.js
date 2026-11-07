@@ -50,7 +50,7 @@
   const levelOfCell = (st, S, id) => Math.max(st.lvMax[id] || 0, ((S.cards || {})[id] || (S.skills || {})[id] || {}).lv || 0);
 
   // 记一次作答，返回得到的碎片 's' | 'm' | null。判定一出来就调，在显示答案之前
-  // o = {day, inst, ok, top, lv, dunno, peeked, oral, retry, mistake, guard}
+  // o = {day, inst, ok, slow, top, lv, dunno, peeked, oral, retry, mistake, guard}；slow = 答对但没秒答：不算错，也不给碎片
   function answer(st, o) {
     if (o.oral || o.retry) return null;
     const seen = seenToday(st, o.day), k = key(o.inst);
@@ -61,7 +61,7 @@
     if (o.peeked || o.dunno) return null;
     if (!o.ok) { D.bad++; return null; }
     D.ok++;
-    if (o.guard) return null;
+    if (o.guard || o.slow) return null;
     const cell = cellOf(o), first = !seen.cells[cell];
     seen.cells[cell] = 1;
     const mid = o.mistake || (first && (o.lv < 2 || K_levelOf(o.inst) >= o.top));

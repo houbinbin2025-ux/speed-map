@@ -1,5 +1,5 @@
 // 空空数学岛 · 今日练习引擎（纯逻辑，无 DOM）：格子升级、错题本、每天 10 分钟排课、自由加练、首次摸底、统计
-// 排课对标：知识图谱 + 前置掌握（Math Academy）、首次诊断定位（ALEKS）、跨技能交错、先对后快（WWC 2021）
+// 排课对标：知识图谱 + 前置掌握（Math Academy）、首次诊断定位（ALEKS）、跨技能交错；秒答才算学会（Ben 11-07，说明书-秒答时间）
 // 浏览器里挂到 window.ENGINE（依赖 window.SM、window.SKILLS），node 里 require 后直接测
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./core.js'), require('./skills.js'));
@@ -16,7 +16,6 @@
   const FAST_OUT = 4, FAST_PER_DAY = 2, MIST_EVERY = 2, MIST_DAY = 15;   // MIST_EVERY：每出 2 道别的题插 1 道到期错题；MIST_DAY：今日练习一天最多复习几道，多的顺延
 
   const skillOf = id => K.BY[K.ITEM[id].skill];
-  const countsRight = inst => /:g\d+:/.test(inst.id);   // 三四年级第一批（说明书-到四年级第一批）
   // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级
   const AUTO_PASS = 0.7, ALL_ITEMS = K.SKILLS.concat(K.HARD).flatMap(s => s.items);
   const CELLS = K.LEVELS.map(l => ALL_ITEMS.filter(it => K.itemLevels(it.id)[0] === l.n));
@@ -69,7 +68,6 @@
     if (p.last) { const t = new Date(p.last); if (!isNaN(t)) { const v = C.dayOf(t.getTime()); if (v > l) l = v; } }
     return l;
   };
-  const needFast = (S, id) => { const s = skillOf(id); return s.timedFrom !== null && lv(S, id) >= s.timedFrom; };
   const learned = (S, sid) => K.BY[sid].items.every(it => lv(S, it.id) >= 1);
   // 前置只看已开放的题；家长手选难度时不管前置
   const learnedOn = (S, sid) => { const on = K.BY[sid].items.filter(it => itemOn(S, it.id)); return on.length > 0 && on.filter(it => lv(S, it.id) >= 1).length / on.length >= AUTO_PASS; };   // 已开放的题点亮 70% 算学会（和开下一级同一个标准）；前置还没开放 = 没学会
@@ -89,7 +87,7 @@
   // 记录一次作答。r = {ok, fast, peeked}；返回 {pass, up}
   function record(S, id, r, day) {
     const p = prog(S, id), kind = kindOf(id);
-    const pass = !!r.ok && (!needFast(S, id) || !!r.fast);
+    const pass = !!r.ok && !!r.fast;
     p.seen++; p.lastDay = day;
     if (skillOf(id).speed) { p.last = new Date().toISOString(); p.intro = true; }
     let up = false;
@@ -199,7 +197,7 @@
     return S.daily;
   };
   // ---------- 习惯记录（docs/说明书-习惯记录.md）：只记录，不影响排课、判题、升级、下架 ----------
-  const SLIPS_MAX = 30, HABIT_DAYS = 14, HABIT_KEYS = ['a', 'r', 'd', 'k', 'ks', 'wn', 'ws', 'in', 'is', 'ia', 'ic', 'say'];
+  const SLIPS_MAX = 30, HABIT_DAYS = 14, HABIT_KEYS = ['a', 'r', 'f', 'd', 'k', 'ks', 'wn', 'ws', 'in', 'is', 'ia', 'ic', 'say'];
   const habDay = (S, day) => { const st = stat(S, day); return (st.h = st.h || {}); };
   const inc = (h, k, n = 1) => { h[k] = (h[k] || 0) + n; };
   // 熟题：作答前所在格已到淡红以上，或这道题已算过 2 次秒答
@@ -208,7 +206,7 @@
   function noteAnswer(S, day, inst, res, known) {
     try {
       const h = habDay(S, day), wrong = !res.ok && !res.dunno;
-      inc(h, 'a'); if (res.ok) inc(h, 'r'); if (res.dunno) inc(h, 'd');
+      inc(h, 'a'); if (res.ok) inc(h, 'r'); if (res.ok && res.fast) inc(h, 'f'); if (res.dunno) inc(h, 'd');
       if (inst.q && inst.q.say) { inc(h, 'wn'); inc(h, 'ws', res.readSecs === undefined ? res.secs || 0 : res.readSecs); }
       if (known && !res.dunno) {
         inc(h, 'k');
@@ -243,12 +241,12 @@
     const id = x.inst.id, p = prog(S, id);
     if (!x.retry && !res.peeked) { let known = false; try { known = isKnown(S, x.inst, p.lv); } catch (e) {} noteAnswer(S, day, x.inst, res, known); }   // 先于这次作答判断
     const lv0 = p.lv, out = record(S, id, res, day);
-    const counted = res.ok && (res.fast || countsRight(x.inst));   // 新题答对就计次（文字题和多位计算达不到秒答时限，否则永不下架）
+    const counted = res.ok && res.fast;
     if (counted && !res.peeked && !x.retry && addFast(S, x.inst, day, lv0)) out.up = true;
     if (counted) sweep(S);
     if (x.keep) {
       if (out.pass && p.keepDay !== day) { p.keep = (p.keep || 0) + 1; p.keepDay = day; }
-      if (!res.ok) p.keep = 0;
+      if (!out.pass && !out.peeked) p.keep = 0;
     }
     const m = x.mkey && S.mistakes[x.mkey];
     if (m && isDue(m, day)) C.reviewMistake(S, x.mkey, out.pass ? 'fast' : res.ok ? 'slow' : 'wrong', day);
@@ -508,7 +506,7 @@
     };
   }
 
-  // ---------- 首次摸底：每个技能组按难度排成一条链，先测最难的，再二分往下找；3 题全对算会，错一题提前结束这次 ----------
+  // ---------- 首次摸底：每个技能组按难度排成一条链，先测最难的，再二分往下找；3 题全部秒答算会，错或慢一题提前结束这次 ----------
   const GROUPS = ['look', 'bond', 'place', 'cmp', 'line'];
   function placement(S, day, opts) {
     opts = opts || {};
@@ -552,8 +550,8 @@
         if (!cur) return;
         const pr = st.probe, secs = res.secs || 0;
         st.n++; st.sec += secs; Dy.sec += secs; stat(S, day).sec += secs;   // 摸底时间计入当天 10 分钟
-        pr.ans.push(!!res.ok);
-        const failed = !res.ok, full = pr.ans.length >= pr.qs.length;
+        pr.ans.push(!!res.ok && !!res.fast);
+        const failed = !res.ok || !res.fast, full = pr.ans.length >= pr.qs.length;
         if (failed || full) {
           if (!failed) {                                   // 3 题全对：测过的格子点亮淡黄
             pr.qs.forEach(q => { const p = prog(S, q.id); if (p.lv === 0) bump(p, day); p.seen++; p.lastDay = day; });
@@ -569,7 +567,7 @@
 
   return {qkey, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
-    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, needFast, learned, ready, record, countsRight, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
+    prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,
     review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
 });

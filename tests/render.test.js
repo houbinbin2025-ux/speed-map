@@ -45,18 +45,16 @@ test('首页每块地的格子数：看数 16、分合 43、数位 2、比大小
   const t = g => R.groupStat(S, g).total;
   assert.deepEqual(['look', 'bond', 'place', 'cmp', 'line'].map(t), [16, 43, 2, 8, 4]);
   assert.equal(t('speed'), C.UNITS.filter(u => !u.retired).length);
-  E.record(S, 'look:tf:7', {ok: true}, '2026-11-01');
+  E.record(S, 'look:tf:7', {ok: true, fast: true}, '2026-11-01');
   assert.deepEqual(R.groupStat(S, 'look').counts, [15, 1, 0, 0]);
 });
 
-test('答对的字：卡第一次合格「对了！点亮了」；题型升级「点亮了！」；淡黄以后对但慢「再快一点」；数线「很接近！」', () => {
+test('答对的字：秒答都说「秒答！」，升级加「点亮了」；慢了只说对了和再快一点', () => {
   const card = {id: 'bond:7=3+_'}, type = {id: 'cmp:t:100'}, line = {id: 'line:t:10'};
-  assert.equal(R.okWords(card, {pass: true, up: true}, 0).big, '✓ 对了！点亮了');
-  assert.equal(R.okWords(type, {pass: true, up: true}, 0).big, '✓ 点亮了！');
-  assert.equal(R.okWords(type, {pass: true, up: false}, 0).big, '✓ 对了！');
-  assert.equal(R.okWords(card, {pass: false, up: false}, 1).small, '再快一点就能升级');
-  assert.equal(R.okWords(card, {pass: true, up: false}, 1).big, '⚡ 又对又快！');
-  assert.equal(R.okWords(line, {pass: true}, 0).big, '很接近！');
+  assert.deepEqual(R.okWords(card, {pass: true, up: true}, 0), {big: '⚡ 秒答！', small: '点亮了'});
+  assert.deepEqual(R.okWords(type, {pass: true, up: false}, 0), {big: '⚡ 秒答！', small: ''});
+  assert.deepEqual(R.okWords(card, {pass: false, up: false}, 1), {big: '✓ 对了', small: '再快一点才算学会'});
+  assert.equal(R.okWords(line, {pass: false}, 0).big, '✓ 很接近');
 });
 
 test('数线答错：差得少说"再往右一点"，差得多说"再往右"', () => {

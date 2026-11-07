@@ -37,11 +37,11 @@
   function answerQ(q, x, r) {
     if (!on || q.kind === 'place' || !c.canWrite()) return;
     if (q.kind === 'challenge') {
-      const got = G.challengeAnswer(st, {day: q.day, inst: x.inst, ok: r.ok && !q.peeked, dunno: r.dunno || q.peeked, oral: S().oral});
+      const got = G.challengeAnswer(st, {day: q.day, inst: x.inst, ok: r.ok && !!r.fast && !q.peeked, dunno: r.dunno || q.peeked, oral: S().oral});
       q.chDone = (q.chDone || 0) + 1; if (got) q.chWon = (q.chWon || 0) + 1;
       credit(q, got);
     } else {
-      credit(q, G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey}));
+      credit(q, G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey}));
     }
     save();
   }
@@ -49,7 +49,7 @@
     if (!on || p.kind === 'boss' || p.kind === 'scan' || p.kind === 'final' || !c.canWrite()) return;
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
-    credit(p, G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay)}));
+    credit(p, G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', slow: p.result === 'slow', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay)}));
     save();
   }
 
@@ -94,7 +94,7 @@
     save();
     c.$('qsum').innerHTML = `<div class="col" style="flex:1;justify-content:center;align-items:center;gap:14px">
       <div style="font-size:28px;font-weight:900">挑战结束</div>
-      <div style="font-size:18px">答对 ${won} / ${G.CH_N} 题</div>
+      <div style="font-size:18px">秒答 ${won} / ${G.CH_N} 题</div>
       ${r.big ? `<div class="bigwin"><span class="rays"></span><img src="${shardURL('l')}" alt=""></div><div style="font-size:18px;font-weight:900;color:var(--warn)">大碎片 +1</div>` : ''}
       <div class="gemline">${chip('m')} +${won}</div>
       <div class="gembtns"><button class="btn go" id="chForge">去锻造</button><button class="btn" id="chHome">回到岛上</button></div></div>`;

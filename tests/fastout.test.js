@@ -94,12 +94,13 @@ test('答错的题当场再来两次：隔 3 题一次、再隔 8 题一次', ()
   assert.ok(at[1] - at[0] >= 3 && at[2] - at[1] >= 8, '位置：' + at);
 });
 
+// 秒答才算学会（11-07）：简单题秒答不了就还会多出，这里模拟的是大多能秒答的孩子
 test('10 分钟里前 15 天简单题不再占绝大多数（模拟）', () => {
   const S = blank(); let day = '2026-11-05'; const big = x => Math.max(x.inst.ans || 0, ...Object.values(x.inst.q || {}).filter(v => typeof v === 'number'));
   let low = 0, all = 0;
   for (let d = 0; d < 15; d++) {
     const s = E.session(S, day, {rnd}); let n = 0;
-    for (let x = s.next(); x && n < 300; x = s.next()) { if (x.kind !== 'q') continue; n++; if (d >= 7) { all++; if (big(x) <= 10) low++; } const ok = rnd() < .9; s.answer({ok, fast: ok && rnd() < .6, secs: 6}); }
+    for (let x = s.next(); x && n < 300; x = s.next()) { if (x.kind !== 'q') continue; n++; if (d >= 7) { all++; if (big(x) <= 10) low++; } const ok = rnd() < .9; s.answer({ok, fast: ok && rnd() < .85, secs: 6}); }
     day = addDays(day, 1);
   }
   assert.ok(low / all < .7, '第 8—15 天 10 以内占 ' + Math.round(low / all * 100) + '%（改前约 85%）');

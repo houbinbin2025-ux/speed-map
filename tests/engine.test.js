@@ -16,9 +16,10 @@ function play(S, day, answerFn, opts) {
 }
 
 // ---------- 升级 ----------
-test('卡：灰 → 淡黄只看对（先对后快）；淡黄以后要快；一天最多一级；淡红到深红隔 ≥ 3 天', () => {
+test('卡：每一档都要秒答；一天最多一级；淡红到深红隔 ≥ 3 天', () => {
   const S = C.blank();
-  assert.equal(E.record(S, 'bond:7=3+_', slow, D(0)).up, true);         // 慢也能亮淡黄
+  assert.equal(E.record(S, 'bond:7=3+_', slow, D(0)).up, false);        // 慢了不亮
+  assert.equal(E.record(S, 'bond:7=3+_', ok, D(0)).up, true);
   assert.equal(E.lv(S, 'bond:7=3+_'), 1);
   assert.equal(E.record(S, 'bond:7=3+_', ok, D(0)).up, false);          // 同一天不再升
   assert.equal(E.record(S, 'bond:7=3+_', slow, D(1)).up, false);        // 淡黄以后慢了不升
@@ -26,13 +27,6 @@ test('卡：灰 → 淡黄只看对（先对后快）；淡黄以后要快；一
   assert.equal(E.record(S, 'bond:7=3+_', ok, D(3)).up, false);          // 隔 2 天不够
   assert.equal(E.record(S, 'bond:7=3+_', ok, D(4)).up, true);           // 深红
   assert.equal(E.lv(S, 'bond:7=3+_'), 3);
-});
-
-test('不计时的技能（看数、数线）慢也合格', () => {
-  const S = C.blank();
-  E.record(S, 'look:tf:7', slow, D(0));
-  assert.equal(E.record(S, 'look:tf:7', slow, D(1)).up, true);
-  assert.equal(E.lv(S, 'look:tf:7'), 2);
 });
 
 test('题型：最近 8 次（可以跨天）合格 ≥ 7 才升；6/8 不升；升级后重新数', () => {
@@ -225,7 +219,7 @@ test('统计：每天用时、题数、新点亮数、练完后剩下的到期�
 // ---------- 摸底 ----------
 function place(S, day, isRight) {
   const p = E.placement(S, day, {rnd: seeded(5)}), asked = [];
-  for (let x = p.next(), g = 0; x && g < 100; x = p.next(), g++) { asked.push(x); p.answer({ok: isRight(x), secs: 6}); }
+  for (let x = p.next(), g = 0; x && g < 100; x = p.next(), g++) { asked.push(x); p.answer({ok: isRight(x), fast: true, secs: 6}); }
   return asked;
 }
 test('摸底：最难的技能 3 题全对 → 测过的格子点亮淡黄，同组更简单的技能标为"会"（不放示范卡）；不跨组', () => {
@@ -384,7 +378,7 @@ test('R2-B14 题型淡红 → 深红：只数隔 3 天以后的作答', () => {
 test('R2-B15 摸底中途关掉：重开后接着测原来那次探测，不改成测中间的', () => {
   const S = C.blank();
   const p = E.placement(S, D(0), {rnd: seeded(5)});
-  const x = p.next(); p.answer({ok: true, secs: 6});
+  const x = p.next(); p.answer({ok: true, fast: true, secs: 6});
   const p2 = E.placement(S, D(0), {rnd: seeded(5)});
   assert.equal(K.ITEM[p2.next().inst.id].skill, K.ITEM[x.inst.id].skill);
 });
