@@ -32,7 +32,9 @@
   }
 
   // ---------- 记作答：判定一出来就调，在显示答案和存进度之前 ----------
-  function credit(run, got) { if (got) { run.gem = run.gem || {s: 0, m: 0}; run.gem[got]++; floatShard(got); } }
+  const oddRand = () => (window.__gemRand || Math.random)();   // 测试可固定
+  const oddChips = (o, plus) => G.ODD.filter(t => o[t] > 0).map(t => `${chip(t)}<span>${plus}${o[t]}</span>`).join('');
+  function credit(run, got) { if (got) { run.gem = run.gem || {s: 0, m: 0}; run.gem[got] = (run.gem[got] || 0) + 1; floatShard(got); } }
   function topOf(run) { if (run.gemTop === undefined) { G.sync(st, S(), auto()); run.gemTop = G.top(st, auto()); } return run.gemTop; }
   function answerQ(q, x, r) {
     if (!on || q.kind === 'place' || !c.canWrite()) return;
@@ -41,7 +43,7 @@
       q.chDone = (q.chDone || 0) + 1; if (got) q.chWon = (q.chWon || 0) + 1;
       credit(q, got);
     } else {
-      credit(q, G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey}));
+      credit(q, G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand}));
     }
     save();
   }
@@ -49,7 +51,7 @@
     if (!on || p.kind === 'boss' || p.kind === 'scan' || p.kind === 'final' || !c.canWrite()) return;
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
-    credit(p, G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay)}));
+    credit(p, G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay), rand: oddRand}));
     save();
   }
 
@@ -64,8 +66,8 @@
     const more = opts.todayRun && S().daily && S().daily.done && c.E.hasMore(S(), c.today());
     return `<div class="gemsum">
       <b>这次的碎片</b>
-      <div class="gemline">${chip('s')}<span>+${g.s}</span>${chip('m')}<span>+${g.m}</span>${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
-      <div class="gemline muted"><span>背包</span>${chip('s')}<span>${st.inv.s}</span>${chip('m')}<span>${st.inv.m}</span>${chip('l')}<span>${st.inv.l}</span><span>挑战券 ${st.tickets}</span></div>
+      <div class="gemline">${chip('s')}<span>+${g.s}</span>${chip('m')}<span>+${g.m}</span>${oddChips(g, '+')}${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
+      <div class="gemline muted"><span>背包</span>${chip('s')}<span>${st.inv.s}</span>${chip('m')}<span>${st.inv.m}</span>${chip('l')}<span>${st.inv.l}</span>${oddChips(st.inv, '')}<span>挑战券 ${st.tickets}</span></div>
       <div class="gembtns"><button class="btn go" data-gem="forge">去锻造</button>${more ? `<button class="btn" data-gem="more">${S().oral ? '再练一会' : '再练一会 · 得 1 张挑战券'}</button>` : ''}${st.tickets > 0 && !S().oral ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
     </div>`;
   }
@@ -111,11 +113,13 @@
     m: {rows: ['....ab...', '...abbc..', '..abbbcc.', '.aabbbcc.', '.abbbbcc.', '..abbcc..', '...bcc...', '....c....'], pal: {a: '#d8f4ff', b: '#6fc3e8', c: '#2b7fb0'}},
     l: {rows: ['.....ab.....', '....abbc....', '...aabbbc...', '..aabbbbcc..', '.aabbbbbbcc.', 'aabbdbbbbccc', '.abbbbdbbcc.', '..abbbbbcc..', '...abbbcc...', '....abcc....', '.....bc.....'], pal: {a: '#f3e4ff', b: '#c79cf0', c: '#7d48bd', d: '#ffffff'}},
   };
+  SHARD.o = {rows: ['...aab...', '..aabbc..', '.aabbbcc.', '.abbdbcc.', '..abbcc..', '...bcc...'], pal: {a: '#ffe9b0', b: '#f2a93b', c: '#a8611a', d: '#fff8e0'}};   // 杂色碎片
+  const isOdd = t => G.ODD.includes(t), artOf = t => (isOdd(t) ? 'o' : t);
   const GEMPIX = {rows: ['..aaaa..', '.abbbba.', 'abbccbba', 'abcccbba', '.abbbba.', '..abba..', '...aa...'], pal: {a: '#0f6e6e', b: '#1fc8b8', c: '#c8fff4'}};
   const URLS = {};
-  const shardURL = t => URLS[t] || (URLS[t] = px(SHARD[t].rows, SHARD[t].pal, 4).toDataURL());
+  const shardURL = t => { const a = artOf(t); return URLS[a] || (URLS[a] = px(SHARD[a].rows, SHARD[a].pal, 4).toDataURL()); };
   const gemURL = () => URLS.gem || (URLS.gem = px(GEMPIX.rows, GEMPIX.pal, 6).toDataURL());
-  const chip = t => `<i class="frag ${t}"><img src="${shardURL(t)}" alt=""><b>${G.VALUE[t]}</b></i>`;
+  const chip = t => `<i class="frag ${t}${isOdd(t) ? ' o' : ''}"><img src="${shardURL(t)}" alt=""><b>${G.VALUE[t]}</b></i>`;
 
   // ---------- 声音：和家里一样用系统合成，不带音频文件 ----------
   let AC = null;
@@ -199,7 +203,7 @@
   function add(t) {
     if (busy) return;
     if (slots.length >= G.SLOTS) { msg = `炉子最多放 ${G.SLOTS} 个`; blip([[140, 0, 0.12]]); c.$('forgeSlots').classList.remove('nope'); void c.$('forgeSlots').offsetWidth; c.$('forgeSlots').classList.add('nope'); return draw(); }
-    if (placed(t) >= st.inv[t]) return;
+    if (placed(t) >= (st.inv[t] || 0)) return;
     const from = c.$('forgeList').querySelector(`[data-add="${t}"] img`), i = slots.length;
     slots.push(t); msg = ''; draw();
     const cell = c.$('forgeSlots').children[i], target = cell.querySelector('.frag');
@@ -210,7 +214,7 @@
   async function doForge(sure) {
     if (busy) return;
     if (!slots.length) { msg = '先放碎片'; return draw(); }
-    const r = {s: placed('s'), m: placed('m'), l: placed('l')};
+    const r = {}; slots.forEach(t => { r[t] = (r[t] || 0) + 1; });
     if (!sure && !G.enough(r) && !G.dayFull(st, c.today())) { blip([[200, 0, 0.14]], 'triangle'); msg = ''; draw(); c.$('forgeWarn').hidden = false; return; }   // 不够：开炉前提醒。不说差多少，算数留给孩子
     const res = G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
     if (!res.ok) { if (res.why === 'daily') msg = `今天已炼 ${G.DAY_MAX} 颗，碎片留到明天`; return draw(); }
@@ -268,12 +272,18 @@
     window.__gemLink = link;
     if (c.enabledInApp) location.href = link;
   }
+  const hasOdd = () => G.ODD.some(t => (st.inv[t] || 0) > 0);
+  function oddList() {
+    if (!hasOdd()) return '';
+    return `<div class="oddbox"><span>杂色碎片</span><div class="oddgrid">${G.ODD.filter(t => (st.inv[t] || 0) > 0).map(t => { const left = st.inv[t] - placed(t); return `<button class="oddchip" data-add="${t}"${left > 0 ? '' : ' disabled'}>${chip(t)}<em class="num">${left}</em></button>`; }).join('')}</div></div>`;
+  }
   function draw() {
     const $ = c.$;
     $('forgeList').innerHTML = ['s', 'm', 'l'].map(t => {
       const left = st.inv[t] - placed(t);
       return `<button class="fragrow" data-add="${t}"${left > 0 ? '' : ' disabled'}>${chip(t)}<span>${NAME[t]}</span><em class="num">${left}</em></button>`;
-    }).join('');
+    }).join('') + oddList();
+    $('forgeList').classList.toggle('hasOdd', hasOdd());
     $('forgeSlots').innerHTML = Array.from({length: G.SLOTS}, (_, i) => (slots[i] ? `<button class="fslot" data-i="${i}">${chip(slots[i])}</button>` : '<span class="fslot"></span>')).join('');
     $('forgeMsg').textContent = msg;
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
