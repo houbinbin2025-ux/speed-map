@@ -1,4 +1,4 @@
-# 每道题的秒答时间（11-07 Ben：秒答才是习得）：时间条按这道题的秒答时间走；超时答对不算学会、不进错题宝箱；答对都有矿石（Ben：答对就要有）
+# 每道题的秒答时间（11-07 Ben：秒答才是习得）：不显示时间条；超时答对不算学会、不进错题宝箱；答对都有矿石（Ben：答对就要有）
 # 用口答走（判定路径和手写同一个 resolve）；把作答起点往前拨来模拟「想了很久」，不用真等
 # 用法：python3 tools/e2e/e2e-fast.py <项目根> <截图目录>
 import pathlib
@@ -27,13 +27,9 @@ with sync_playwright() as p:
     pg.evaluate("""(()=>{const {K,E,S}=__sm;K.SKILLS.forEach(s=>{if(s.id==='dockA')return;s.items.forEach(i=>{const q=E.prog(S,i.id);q.lv=1;q.d=['2026-09-01'];q.seen=1;});});})()""")
     pg.locator('.w-mini button[data-z="dock"]').scroll_into_view_if_needed(); pg.click('.w-mini button[data-z="dock"]'); pg.wait_for_timeout(500); pg.click('#zGo'); pg.wait_for_timeout(3000)
     check(toQ(pg), f'没进到题目页：{cur(pg)}')
-    # 时间条：在跑，时长 = 这道题的秒答时间（口答：想 + 读题）
-    bar = pg.evaluate("""(()=>{const f=document.getElementById('qFast'),{K,Q,S}=__sm,r=f.getBoundingClientRect();return {run:f.classList.contains('run'),ms:parseFloat(f.style.getPropertyValue('--fast-ms')),want:K.fastMs(Q.x.inst,{oral:S.oral}),h:r.height,w:r.width,top:r.top,tagTop:document.getElementById('qTag').getBoundingClientRect().top};})()""")
-    check(bar['run'], f'时间条没走 {bar}'); check(bar['ms'] == bar['want'], f'时间条时长不对 {bar}'); check(bar['w'] > 100 and bar['h'] > 0, f'时间条看不见 {bar}')
-    shot(pg, 'bar')
-    # 老流程（秒答地图、Boss）的时间条也要在屏幕里
-    r = pg.evaluate("(()=>{const p=document.getElementById('play'),h=p.hidden;p.hidden=false;const r=document.getElementById('pFast').getBoundingClientRect(),o={top:r.top,bottom:r.bottom,w:r.width,vh:innerHeight};p.hidden=h;return o;})()")
-    check(r['bottom'] <= r['vh'] and r['top'] >= 0 and r['w'] > 100, f'老流程时间条在屏幕外 {r}')
+    # 时间条已去掉（Ben 11-07：明面上的进度条让孩子紧张）：页面上不能有；计时照旧
+    check(pg.evaluate("!document.getElementById('qFast') && !document.getElementById('pFast')"), '页面上不该有秒答时间条')
+    shot(pg, 'nobar')
     # 慢：对了，但不算
     ore0 = pg.evaluate('__sm.Q.ore'); mist0 = pg.evaluate("Object.keys(__sm.S.mistakes).length")
     id0 = qst(pg)['id']; lv0 = pg.evaluate(f"__sm.E.lv(__sm.S, {json.dumps(id0)})")
