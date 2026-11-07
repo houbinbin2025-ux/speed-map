@@ -147,6 +147,23 @@ with sync_playwright() as p:
     enter(pg, 'block'); tap(pg, '#back'); pg.wait_for_timeout(300)
     dup = pg.evaluate("[...document.querySelectorAll('[id]')].map(e => e.id).filter((x, i, a) => a.indexOf(x) !== i)")
     check(not dup, f'页面有重名 id {dup}')
+    # 做对 2 秒自动下一题（Ben 11-07）；不到 2 秒不切，切题后防连点，中途离开不切，「再找一种」能拦住
+    enter(pg, 'balance'); k1 = json.dumps(q(pg)); solve(pg, 'balance'); pg.wait_for_timeout(1300)
+    check(done(pg) and json.dumps(q(pg)) == k1, '做对后不到 2 秒不切题'); pg.wait_for_timeout(1000)
+    check(not done(pg) and json.dumps(q(pg)) != k1, '做对 2 秒后自动进下一题')
+    k1 = json.dumps(q(pg)); solve(pg, 'balance'); tap(pg, '#back'); pg.wait_for_timeout(2300)
+    check(pg.is_visible('#island') and json.dumps(q(pg)) == k1, '做对后离开，回岛不再切题')
+    enter(pg, 'balance'); k1 = json.dumps(q(pg)); pg.wait_for_timeout(600); tap(pg, '#dunno'); pg.wait_for_timeout(2600)
+    check(done(pg) and json.dumps(q(pg)) == k1, '不会：停住等继续，不自动切'); tap(pg, '#back'); pg.wait_for_timeout(300)
+    # 凑数矿还有别的解：2 秒内点「再找一种」留在这题；没点也自动走
+    enter(pg, 'target'); more = 0
+    for _ in range(40):
+        if len(q(pg)['solutions']) > 1: break
+        solve(pg, 'target'); tap(pg, '#cont'); pg.wait_for_timeout(650)
+    check(len(q(pg)['solutions']) > 1, '凑数矿找到多解题')
+    k1 = json.dumps(q(pg)); solve(pg, 'target'); pg.wait_for_timeout(600); tap(pg, '#more'); pg.wait_for_timeout(2300)
+    check(not done(pg) and json.dumps(q(pg)) == k1, '点「再找一种」后不自动切题')
+    tap(pg, '#back'); pg.wait_for_timeout(300)
     # 右滑返回
     enter(pg, 'clue'); pg.evaluate('history.back()'); pg.wait_for_timeout(500); check(pg.is_visible('#island'), '右滑回到岛上'); pg.close()
     # 英文日：四个地点全部技能，题面 / 不会 / 做对都不能有中文、不能叠字出屏；朗读文字也是英文
