@@ -65,8 +65,9 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 #demo h2{margin:0;font-size:32px}
 #demoBody .wk{zoom:1.6}
 #demo .tip{font-size:22px;color:#e6e3da;text-align:center;line-height:1.6;white-space:pre-line}
-#demo .st{opacity:0;animation:dshow .35s ease-out forwards}
-@keyframes dshow{to{opacity:1}}
+.hid{visibility:hidden}
+.wk .g .hi{background:#ffe08a;border-radius:6px}
+#demo .tip#demoTip{min-height:72px;font-size:26px;font-weight:700;color:#ffe08a}
 </style>
 </head>
 <body>
@@ -84,7 +85,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
     </div>
   </div>
 </div>
-<div id="demo"><h2>先看一遍怎么写</h2><div id="demoBody"></div><div class="tip" id="demoTip"></div><button class="btn go" id="demoGo" style="width:320px">我会了，开始写</button></div>
+<div id="demo"><h2>先看一遍怎么写</h2><div id="demoBody"></div><div class="tip" id="demoTip"></div><div style="display:flex;gap:14px"><button class="btn" id="demoAgain" style="width:200px" hidden>再看一遍</button><button class="btn go" id="demoGo" style="width:320px">我会了，开始写</button></div></div>
 <script src="../../../v2/ink.js"></script>
 <script>
 'use strict';
@@ -146,25 +147,34 @@ const BANK = {
     {tag: '乘法交换', left: '27 × ', right: ' = 54 × 27', ans: 54, work: ['27 × 54 = 54 × 27', '交换两个因数的位置，积不变'], why: '两个数相乘，换位置积不变\n27 × 54 = 54 × 27，方框里是 54'}]},
 };
 const DEMO = {
-  vert: {q: {a: 325, op: '+', b: 148}, tip: '从个位算起，一格写一个数\n满十进一：进位写在最上面那一行'},
-  mul: {q: {a: 23, b: 14}, tip: '先用下面的个位去乘，再用十位去乘\n十位乘出来的数，个位那一格空着\n两行加起来，写进蓝框'},
-  word: {q: {work: ['24 + 18 = 42', {a: 24, op: '+', b: 18}, '42 − 9 = 33', {a: 42, op: '−', b: 9}, '答：还剩 33 条。']}, say: '小猫有 24 条鱼，又买了 18 条，吃掉 9 条。还剩几条？', tip: '先在草稿上列算式、算竖式\n最后只把答案写进蓝框'},
-  div: {q: {a: 96, b: 4}, tip: '从最高位除起，商写在上面\n每一步：乘、减、落下下一位'},
-  steps: {q: {work: ['56 + 4 × 6', '= 56 + 24', '= 80']}, tip: '先算乘除，再算加减\n一步写一行，等号对齐'},
-  fill: {q: {work: ['3.4 + 1.2 = 4.6', {a: '3.4', op: '+', b: '1.2'}]}, tip: '先算出整个得数\n再把方框里那一位写进去'},
+  vert: {q: {a: 325, op: '+', b: 148}, tip: '从个位算起，满十向前一位进 1'},
+  mul: {q: {a: 23, b: 14}, tip: '先用个位乘，再用十位乘，最后两行相加'},
+  word: {q: {work: ['24 + 18 = 42', {a: 24, op: '+', b: 18}, '42 − 9 = 33', {a: 42, op: '−', b: 9}, '答：还剩 33 条。']}, say: '小猫有 24 条鱼，又买了 18 条，吃掉 9 条。还剩几条？', tip: '先列算式，算不出来就列竖式；最后写答句'},
+  div: {q: {a: 96, b: 4, ans: 24}, tip: '从最高位除起：商、乘、减、落下'},
+  steps: {q: {work: ['56 + 4 × 6', '= 56 + 24', '= 80']}, tip: '先算乘除，再算加减；一步写一行'},
+  fill: {q: {work: ['3.4 + 1.2 = 4.6', {a: '3.4', op: '+', b: '1.2'}]}, tip: '先算出整个得数，再把方框里那一位写进去'},
 };
 const seenDemo = k => { try { return localStorage.getItem('ipadproto.demo.' + k) === '1'; } catch (e) { return false; } };
+let demoT = null;
 function showDemo() {
-  const d = DEMO[Q.kind];
-  $('demoBody').innerHTML = (d.say ? `<div class="tip" style="margin-bottom:10px">${d.say}</div>` : '') + workOf(d.q).replace('正确写法', '例题');
-  $('demoTip').textContent = d.tip;
-  // 一行一行出现：竖式按行，算式按条
-  let k = 0;
-  $('demoBody').querySelectorAll('.wk > .eq, .wk > div:not(.g):not(h4)').forEach(el => { el.classList.add('st'); el.style.animationDelay = (k++ * 0.6) + 's'; });
-  $('demoBody').querySelectorAll('.g').forEach(g => { const cols = getComputedStyle(g).gridTemplateColumns.split(' ').length; [...g.children].forEach((c, i) => { c.classList.add('st'); c.style.animationDelay = (k * 0.6 + Math.floor(i / cols) * 0.6) + 's'; }); k += Math.ceil(g.children.length / cols); });
+  const d = DEMO[Q.kind], P = planOf(Q.kind, d.q);
+  $('demoBody').innerHTML = (d.say ? `<div class="tip" style="margin-bottom:10px">${d.say}</div>` : '') + `<div class="wk"><h4>例题</h4>${P.html}</div>`;
+  $('demoTip').textContent = '先看题'; $('demoAgain').hidden = true;
+  let k = 0; clearTimeout(demoT);
+  const step = () => {
+    $('demoBody').querySelectorAll('.hi').forEach(e => e.classList.remove('hi'));
+    if (k >= P.steps.length) { $('demoTip').textContent = d.tip; $('demoAgain').hidden = false; return; }
+    const s = P.steps[k++];
+    s.show.forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('hid'); });
+    (s.hi || []).forEach(id => { const e = document.getElementById(id); if (e) e.classList.add('hi'); });
+    $('demoTip').textContent = s.say;
+    demoT = setTimeout(step, 2800);
+  };
+  demoT = setTimeout(step, 1500);
   $('demo').classList.add('show');
 }
-$('demoGo').onclick = () => { $('demo').classList.remove('show'); try { localStorage.setItem('ipadproto.demo.' + Q.kind, '1'); } catch (e) {} Q.t0 = performance.now(); };
+$('demoGo').onclick = () => { clearTimeout(demoT); $('demo').classList.remove('show'); try { localStorage.setItem('ipadproto.demo.' + Q.kind, '1'); } catch (e) {} Q.t0 = performance.now(); };
+$('demoAgain').onclick = showDemo;
 $('seeDemo').onclick = () => { if (!Q.locked) showDemo(); };
 const KINDS = Object.keys(BANK);
 const Q = {kind: 'vert', i: 0, cells: [], pads: [], locked: false, t0: 0, touched: 0};
@@ -224,66 +234,155 @@ function render() {
 }
 function recCell(c) { const p = Q.pads[Q.cells.indexOf(c)], r = INK.recognize(p.strokes(), STORE); c.querySelector('.rec').textContent = r.text ? (r.text.length > 1 ? '?' : r.text) : (p.strokes().length ? '?' : ''); }
 
-// ---------- 完整写法（Ben 11-07：出答案时把整个正确写法写出来）：按数字现算，不手写 ----------
-// 一个格子：{v: 文字, c: 'u' 下划线 | 's' 小字（进位、退位点）| 'q' 蓝字（答案）}
-const grid = (rows, n) => `<div class="g" style="grid-template-columns:30px repeat(${n}, 40px)">${rows.map(r => r.map(x => `<div class="${x.c || ''}">${x.v === undefined ? '' : x.v}</div>`).join('')).join('')}</div>`;
-const cellsOf = (s, n, c) => { const a = String(s).split(''); return Array(n - a.length).fill({v: ''}).concat(a.map(v => ({v, c}))); };
-// 竖式加减，支持小数（按小数点对齐，小数点占一列）
-function vAddSub(A, op, B) {
-  const [ai, af = ''] = String(A).split('.'), [bi, bf = ''] = String(B).split('.'), fl = Math.max(af.length, bf.length), sc = 10 ** fl;
-  const x = Math.round(+A * sc), y = Math.round(+B * sc), r = op === '+' ? x + y : x - y;
+// ---------- 竖式（完整写法和示范共用，Ben 11-07）：按数字现算；每一步记下「写什么、看哪几个数、怎么说」 ----------
+// 格子：{v 文字, c 样式（u 下划线 · s 小字进位/退位点 · q 蓝框答案 · br 厂字 · t 上横线）, id, h 示范时先藏}
+let UID = 0;
+const mk = () => 'k' + (UID++);
+const blankCell = o => Object.assign({v: '', id: mk()}, o || {});
+function cellRow(s, n, extra) { const a = String(s).split(''); return Array(n - a.length).fill(0).map(() => blankCell()).concat(a.map(v => blankCell(Object.assign({v}, extra || {})))); }
+const PLACE = ['个位', '十位', '百位', '千位', '万位'];
+function renderB(B, all) { return `<div class="g" style="grid-template-columns:30px repeat(${B.n}, 40px)">${B.rows.map(r => r.map(x => `<div id="${x.id}" class="${x.c || ''}${x.h && !all ? ' hid' : ''}">${x.v}</div>`).join('')).join('')}</div>`; }
+// 加减（支持小数，小数点占一列）：从个位起一列一列算
+function bAddSub(A, op, Bv) {
+  const af = String(A).split('.')[1] || '', bf = String(Bv).split('.')[1] || '', fl = Math.max(af.length, bf.length), sc = 10 ** fl;
+  const x = Math.round(+A * sc), y = Math.round(+Bv * sc), r = op === '+' ? x + y : x - y;
   const fmt = v => { const s = String(v).padStart(fl + 1, '0'); return fl ? s.slice(0, -fl) + '.' + s.slice(-fl) : s; };
   const sa = fmt(x), sb = fmt(y), sr = fmt(r), n = Math.max(sa.length, sb.length, sr.length) + (op === '+' ? 1 : 0);
-  const da = cellsOf(sa, n), db = cellsOf(sb, n), dr = cellsOf(sr, n, 'q'), marks = Array(n).fill(0).map(() => ({v: '', c: 's'}));
-  let carry = 0;
+  const marks = Array(n).fill(0).map(() => blankCell({c: 's', h: true}));
+  const ra = cellRow(sa, n), rb = cellRow(sb, n).map(c => Object.assign(c, {c: 'u'})), rr = cellRow(sr, n, {c: 'q', h: true});
+  const pt = ra.findIndex(c => c.v === '.'), P = pt < 0 ? n : pt;
+  const name = i => (i < P ? PLACE[P - 1 - i] : ['', '十分位', '百分位', '千分位'][i - P]) || '';
+  const steps = []; let carry = 0;
+  const left = i => { let j = i - 1; if (j >= 0 && ra[j].v === '.') j--; return j; };
+  const eff = ra.map(c => (/\d/.test(c.v) ? +c.v : 0)), lent = {};   // eff：这一位实际剩下的数；lent：被借过
   for (let i = n - 1; i >= 0; i--) {
-    if (da[i].v === '.') continue;
-    const p = +(da[i].v || 0), q = +(db[i].v || 0);
-    if (op === '+') { const s = p + q + carry; carry = s >= 10 ? 1 : 0; let j = i - 1; if (j >= 0 && da[j].v === '.') j--; if (carry && j >= 0) marks[j].v = '1'; }
-    else { const s = p - q - carry; carry = s < 0 ? 1 : 0; let j = i - 1; if (j >= 0 && da[j].v === '.') j--; if (carry && j >= 0) marks[j].v = '·'; }
+    if (ra[i].v === '.') { if (steps.length) steps[steps.length - 1].show.push(rr[i].id); continue; }   // 小数点跟着上一位写
+    const j = left(i), q = +(rb[i].v || 0), hasA = ra[i].v !== '', hasB = rb[i].v !== '';
+    if (op === '+') {
+      if (!hasA && !hasB) { if (carry) steps.push({show: [rr[i].id], hi: [marks[i].id], say: `${name(i)}：进上来的 1，写 1`}); break; }
+      const p = eff[i], s = p + q + carry, nc = s >= 10 ? 1 : 0, show = [rr[i].id];
+      if (nc && j >= 0) { marks[j].v = '1'; show.push(marks[j].id); }
+      const terms = [hasA ? p : null, hasB ? q : null].filter(v => v !== null);
+      const expr = terms.join(' + ') + (carry ? ' + 进的 1' : '');
+      steps.push({show, hi: [ra[i].id, rb[i].id].concat(carry ? [marks[i].id] : []), say: `${name(i)}：${terms.length === 1 && !carry ? `只有 ${s}，写 ${s}` : `${expr} = ${s}，写 ${s % 10}${nc ? `，向${name(j)}进 1` : ''}`}`});
+      carry = nc;
+    } else {
+      if (!hasA && !hasB) break;
+      let pre = lent[i] !== undefined ? lent[i] : '', show = [];
+      let x = eff[i], how = '';
+      if (x < q) {   // 不够减：向前一位借；前一位是 0 就继续往前借，中间的 0 借来后变 9
+        const zeros = []; let k = j;
+        while (k >= 0 && eff[k] === 0) { zeros.push(k); k = left(k); }
+        eff[k] -= 1; lent[k] = `${ra[k].v} 被借走 1，剩 ${eff[k]}；`; marks[k].v = '·'; show.push(marks[k].id);
+        zeros.forEach(z => { eff[z] = 9; lent[z] = `借来的 10 又借出 1，剩 9；`; marks[z].v = '·'; show.push(marks[z].id); });
+        how = zeros.length ? `${x} 不够减 ${q}，${zeros.map(z => name(z)).join('、')}${zeros.length > 1 ? '都' : ''}是 0，向${name(k)}借 1，${zeros.map(z => name(z)).join('、')}变成 10，再借 1 给${name(i)}；${x + 10} − ${q} = ${x + 10 - q}`
+          : `${x} 不够减 ${q}，向${name(j)}借 1，${x + 10} − ${q} = ${x + 10 - q}`;
+        x += 10;
+      } else how = hasB ? `${x} − ${q} = ${x - q}` : `只有 ${x}，写 ${x}`;
+      if (rr[i].v !== '') show.unshift(rr[i].id);
+      if (rr[i].v === '' && !hasB) { pre = pre.replace(/；$/, ''); how = ''; }   // 最高位借完剩 0：不写
+      steps.push({show, hi: [ra[i].id, rb[i].id], say: `${name(i)}：${pre}${how}${rr[i].v === '' ? '，最高位的 0 不写' : ''}`});
+    }
   }
-  return grid([[{v: '', c: 's'}].concat(marks), [{v: ''}].concat(da), [{v: op, c: 'u'}].concat(db.map(d => ({v: d.v, c: 'u'}))), [{v: ''}].concat(dr)], n);
+  return {n, steps, rows: [[blankCell({c: 's'})].concat(marks), [blankCell()].concat(ra), [blankCell({v: op === '-' ? '−' : '+', c: 'u'})].concat(rb), [blankCell()].concat(rr)]};
 }
-// 竖式乘法：乘一位数一行；乘两位数两行部分积（每行上面小字是这一行的进位）再相加
-function vMul(a, b) {
-  const sa = String(a), bd = String(b).split('').reverse().map(Number), prod = a * b, n = Math.max(String(prod).length, sa.length, String(b).length) + 1;
-  const part = (d, shift) => {   // a × d，往左移 shift 位；返回 [进位行, 积行]
-    const p = a * d, carries = Array(n).fill(''), ad = sa.split('').map(Number); let c = 0;
-    for (let i = ad.length - 1; i >= 0; i--) { const v = ad[i] * d + c; c = Math.floor(v / 10); const col = n - 1 - shift - (ad.length - i); if (c && i > 0 && col >= 0) carries[col] = String(c); }
-    const row = cellsOf(String(p), n - shift).concat(Array(shift).fill({v: ''}));
-    return [[{v: '', c: 's'}].concat(carries.map(v => ({v, c: 's'}))), [{v: ''}].concat(row)];
+// 乘法：乘一位数一行；乘两位数先用个位乘、再用十位乘（末位对着十位），两行再相加。进位写在这一行积的正上方
+function bMul(a, b) {
+  const sa = String(a), sb = String(b), prod = a * b, n = Math.max(String(prod).length, sa.length, sb.length) + 1;
+  const ra = cellRow(sa, n), rb = cellRow(sb, n).map(c => Object.assign(c, {c: 'u'}));
+  const ad = sa.split('').map(Number), bd = sb.split('').map(Number).reverse(), steps = [];
+  const part = (d, shift, blue) => {
+    const C = Array(n).fill(0).map(() => blankCell({c: 's', h: true})), R = Array(n).fill(0).map(() => blankCell({h: true}));
+    let c = 0;
+    for (let k = ad.length - 1; k >= 0; k--) {
+      const col = n - 1 - shift - (ad.length - 1 - k), v = ad[k] * d + c, show = [], said = `${d} × ${ad[k]}${c ? ` + 进的 ${c}` : ''} = ${v}`;
+      const hiA = [ra[n - ad.length + k].id, rb[n - 1 - shift].id];   // 这一步乘的两个数（上面那个数补了前导空位）
+      if (k === 0) { const s = String(v); for (let u = 0; u < s.length; u++) { const cc = col - (s.length - 1 - u); R[cc].v = s[u]; show.push(R[cc].id); } steps.push({show, hi: hiA, say: `${said}，写 ${v}`}); }
+      else { R[col].v = String(v % 10); show.push(R[col].id); const nc = Math.floor(v / 10); if (nc) { C[col - 1].v = String(nc); show.push(C[col - 1].id); } steps.push({show, hi: hiA.concat(c ? [C[col].id] : []), say: `${said}，写 ${v % 10}${nc ? `，进 ${nc}` : ''}`}); c = nc; }
+    }
+    if (blue) R.forEach(x => { if (x.v !== '') x.c = 'q'; });
+    return [C, R];
   };
-  const head = [[{v: ''}].concat(cellsOf(sa, n)), [{v: '×', c: 'u'}].concat(cellsOf(String(b), n).map(x => ({v: x.v, c: 'u'})))];
-  if (bd.length === 1) { const [c1, r1] = part(bd[0], 0); return grid(head.concat([c1, r1.map((x, i) => i ? Object.assign({}, x, {c: x.v === '' ? '' : 'q'}) : x)]), n); }
-  const [c1, r1] = part(bd[0], 0), [c2, r2] = part(bd[1], 1);
-  return grid(head.concat([c1, r1, c2, r2.map(x => Object.assign({}, x, {c: 'u'})), [{v: ''}].concat(cellsOf(String(prod), n, 'q'))]), n);
+  const rows = [[blankCell()].concat(ra), [blankCell({v: '×', c: 'u'})].concat(rb)];
+  if (bd.length === 1) {
+    const [C, R] = part(bd[0], 0, true);
+    rows.push([blankCell({c: 's'})].concat(C), [blankCell()].concat(R));
+    return {n, rows, steps};
+  }
+  steps.push({show: [], hi: [rb[n - 1].id], say: `先用个位上的 ${bd[0]} 去乘 ${a}`});
+  const [C1, R1] = part(bd[0], 0, false);
+  steps.push({show: [], hi: [rb[n - 2].id], say: `再用十位上的 ${bd[1]} 去乘 ${a}，积的末位对着十位写，个位空着`});
+  const [C2, R2] = part(bd[1], 1, false);
+  const LN = Array(n + 1).fill(0).map(() => blankCell({c: 's u', h: true}));   // 两行相加前画的横线，整条一起出现
+  const S = cellRow(String(prod), n, {c: 'q', h: true});
+  let carry = 0;
+  steps.push({show: LN.map(x => x.id), say: '画横线，两行相加'});
+  for (let col = n - 1; col >= 0; col--) {
+    const p = +(R1[col].v || 0), q = +(R2[col].v || 0), has = R1[col].v !== '' || R2[col].v !== '';
+    if (!has && !carry) break;
+    const s = p + q + carry;
+    const terms = [R1[col].v, R2[col].v].filter(v => v !== ''), expr = terms.join(' + ') + (carry ? ' + 进的 1' : '');
+    steps.push({show: [S[col].id], hi: has ? [R1[col].id, R2[col].id] : [], say: `两行相加，${PLACE[n - 1 - col]}：${!has ? '进上来的 1，写 1' : terms.length === 1 && !carry ? `只有 ${s}，写 ${s}` : `${expr} = ${s}，写 ${s % 10}${s >= 10 ? '，进 1' : ''}`}`});
+    carry = s >= 10 ? 1 : 0;
+  }
+  rows.push([blankCell({c: 's'})].concat(C1), [blankCell()].concat(R1), [blankCell({c: 's'})].concat(C2), [blankCell()].concat(R2), LN, [blankCell()].concat(S));
+  return {n, rows, steps};
 }
-// 除法竖式（厂字形）：商在上，每一步写乘积、横线、余数并落下下一位
-function vDiv(a, b) {
-  const ds = String(a).split('').map(Number), L = ds.length, n = L + 2, rows = [], qd = [];
-  let cur = 0, started = false;
-  const at = (s, end) => Array(n).fill(0).map((_, k) => { const i = k - 2, st = end - String(s).length + 1; return {v: i >= st && i <= end ? String(s)[i - st] : ''}; });
-  const steps = [];
-  ds.forEach((d, i) => { cur = cur * 10 + d; const q = Math.floor(cur / b); if (q || started) { started = true; qd[i] = q; if (q) steps.push({end: i, prod: q * b, rest: cur - q * b}); cur -= q * b; } });
-  rows.push([{v: ''}].concat(Array(n).fill(0).map((_, k) => ({v: k >= 2 && qd[k - 2] !== undefined ? qd[k - 2] : '', c: k >= 2 && qd[k - 2] !== undefined ? 'q' : ''}))));
-  rows.push([{v: ''}, {v: b}, {v: '', c: 'br'}].concat(ds.map(d => ({v: d, c: 't'}))));
-  steps.forEach((s, k) => {
-    rows.push([{v: ''}].concat(at(s.prod, s.end).map((x, i) => (i - 2 <= s.end && i - 2 > s.end - String(s.prod).length ? Object.assign(x, {c: 'u'}) : x))));
-    const nx = steps[k + 1], end = nx ? nx.end : L - 1;   // 余数接着落下的数，直到下一步要用的那一位
-    let txt = String(s.rest); for (let j = s.end + 1; j <= end; j++) txt += ds[j];
-    rows.push([{v: ''}].concat(at(nx ? String(+txt) : txt.replace(/^0+(?=\d)/, ''), end)));
+// 除法（厂字形）：从最高位除起；每一步 商 → 乘 → 减 → 落下下一位
+function bDiv(a, b) {
+  const ds = String(a).split('').map(Number), Ln = ds.length, n = Ln + 2, steps = [];
+  const qrow = Array(Ln).fill(0).map(() => blankCell({h: true})), dcell = ds.map(d => blankCell({v: String(d), c: 't'}));
+  const rows = [[blankCell(), blankCell(), blankCell()].concat(qrow), [blankCell(), blankCell({v: String(b)}), blankCell({c: 'br'})].concat(dcell)];
+  const line = () => Array(n).fill(0).map(() => blankCell({h: true}));
+  const put = (row, s, end) => { const str = String(s), ids = []; for (let u = 0; u < str.length; u++) { const cc = 2 + end - (str.length - 1 - u); row[cc].v = str[u]; ids.push(row[cc].id); } return ids; };
+  let i = 0, cur = ds[0];
+  while (cur < b && i < Ln - 1) cur = cur * 10 + ds[++i];
+  steps.push({show: [], hi: dcell.slice(0, i + 1).map(c => c.id), say: i === 0 ? `从最高位除起，先看 ${cur}` : `${ds[0]} 不够除以 ${b}，看前 ${i + 1} 位：${cur}`});
+  let row = null;
+  for (;;) {
+    const q = Math.floor(cur / b), prod = q * b, rest = cur - prod, cn = String(cur).length;
+    qrow[i].v = String(q); qrow[i].c = 'q';
+    if (q === 0 && row) {
+      steps.push({show: [qrow[i].id], hi: [], say: `${cur} 不够除以 ${b}，商 0${i === Ln - 1 && cur ? `，余 ${cur}` : ''}`});
+      if (i === Ln - 1) break;
+      i++; cur = cur * 10 + ds[i];
+      steps.push({show: put(row, ds[i], i), hi: [dcell[i].id], say: `落下 ${ds[i]}，是 ${cur}`});
+      continue;
+    }
+    steps.push({show: [qrow[i].id], hi: [], say: `${cur} 里面有 ${q} 个 ${b}，商 ${q} 写在${PLACE[Ln - 1 - i]}上面`});
+    const pr = line(), ids = put(pr, prod, i);
+    for (let u = i - cn + 1; u <= i; u++) pr[2 + u].c = 'u';
+    rows.push([blankCell()].concat(pr));
+    steps.push({show: ids.concat(pr.filter(x => x.c === 'u').map(x => x.id)), hi: [qrow[i].id], say: `${q} × ${b} = ${prod}，写在 ${cur} 下面`});
+    row = line(); rows.push([blankCell()].concat(row));
+    if (i === Ln - 1) { steps.push({show: put(row, rest, i), hi: [], say: `${cur} − ${prod} = ${rest}${rest ? `，余 ${rest}` : '，正好除尽'}`}); break; }
+    steps.push({show: rest ? put(row, rest, i) : [], hi: [], say: `${cur} − ${prod} = ${rest}${rest ? '' : '，0 不写'}`});
+    i++; cur = rest * 10 + ds[i];
+    steps.push({show: put(row, ds[i], i), hi: [dcell[i].id], say: `落下 ${ds[i]}，是 ${cur}`});
+  }
+  return {n, rows, steps};
+}
+const buildV = w => (w.op === '×' ? bMul(w.a, w.b) : w.op === '÷' ? bDiv(w.a, w.b) : bAddSub(w.a, w.op === '−' || w.op === '-' ? '-' : '+', w.b));
+// 一道题的写法：竖式题直接是竖式；算式题按条，中间的竖式先「列竖式」再一步一步算
+function planOf(kind, q) {
+  if (kind === 'vert' || kind === 'mul' || kind === 'div') {
+    const B = buildV(kind === 'vert' ? q : {a: q.a, op: kind === 'mul' ? '×' : '÷', b: q.b});
+    let html = renderB(B, false), steps = B.steps.slice();
+    if (kind === 'div' && q.ans !== undefined) { const id = mk(); html += `<div class="eq hid" id="${id}">${q.a} ÷ ${q.b} = ${q.ans}${q.rem !== undefined ? ' 余 ' + q.rem : ''}</div>`; steps.push({show: [id], say: '写出得数'}); }
+    return {html, steps};
+  }
+  let html = '', steps = [];
+  (q.work || []).forEach(w => {
+    if (typeof w === 'string') { const id = mk(); html += `<div class="eq hid" id="${id}">${w}</div>`; steps.push({show: [id], say: w}); return; }
+    const B = buildV(w), first = [];
+    B.rows.forEach(r => r.forEach(c => { if (!c.h) { first.push(c.id); c.h = true; } }));
+    html += `<div style="margin:4px 0">${renderB(B, false)}</div>`;
+    steps.push({show: first, say: '列竖式'}); steps = steps.concat(B.steps);
   });
-  return grid(rows, n);
+  return {html, steps};
 }
-function workOf(q) {
-  const box = (title, body) => `<div class="wk"><h4>${title}</h4>${body}</div>`;
-  if (Q.kind === 'vert') return box('正确写法', vAddSub(q.a, q.op === '−' ? '-' : '+', q.b).replace(/>-</, '>−<'));
-  if (Q.kind === 'mul') return box('正确写法', vMul(q.a, q.b));
-  if (Q.kind === 'div') return box('正确写法', vDiv(q.a, q.b) + (q.rem !== undefined ? `<div class="eq">${q.a} ÷ ${q.b} = ${q.ans} 余 ${q.rem}</div>` : `<div class="eq">${q.a} ÷ ${q.b} = ${q.ans}</div>`));
-  if (Q.kind === 'steps') return box('正确写法', q.work.map(l => `<div class="eq">${l}</div>`).join(''));
-  const parts = (q.work || []).map(w => typeof w === 'string' ? `<div class="eq">${w}</div>` : `<div style="display:flex;gap:18px;align-items:flex-start;margin:4px 0">${w.op === '×' ? vMul(w.a, w.b) : w.op === '÷' ? vDiv(w.a, w.b) : vAddSub(w.a, w.op === '−' ? '-' : '+', w.b).replace(/>-</, '>−<')}</div>`);
-  return box('正确写法', parts.join(''));
-}
+// 答完显示的完整写法：同一套，全部显示
+function workOf(q) { const P = planOf(Q.kind, q); return `<div class="wk"><h4>正确写法</h4>${P.html.replace(/ hid(?=")/g, '').replace(/class="eq hid"/g, 'class="eq"')}</div>`; }
 
 // ---------- 判：答案格去掉前面的空格；中间空着算错 ----------
 function judge(dunno) {
