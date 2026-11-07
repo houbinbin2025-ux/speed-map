@@ -171,6 +171,7 @@ with sync_playwright() as p:
     pp.wait_for_timeout(600); check(cur(pp) == 'qsum' and pp.locator('#evBack').count() == 1, '答够题数出结果：' + pp.locator('#qsum').inner_text()[:40].replace(chr(10), ' ')); pp.screenshot(path=str(out / f'ev-won-{W}.png'))
     check(pp.locator('#evRetry').count() == 0, '完成了不用再挑战'); check(pp.evaluate("GEMUI.state().ev.log.length") == 1 and pp.evaluate("GEMUI.state().ev.log[0].won") == 1, '记录了这次完成')
     pp.click('#evBack'); pp.wait_for_timeout(600); check(cur(pp) == 'qplay' and not evc(pp) and pp.evaluate("__sm.Q.n") >= n0, f'回到原来的练习，计数接着算（{n0}）')
+    g = pp.evaluate("(()=>{const q=__sm.Q.gem||{};return Object.values(q).reduce((a,b)=>a+b,0)})()"); inv1 = pp.evaluate("JSON.stringify(GEMUI.state().inv)"); check(g >= 2, f'挑战得的碎片算进原练习的这次碎片（{g}）')
     pp = forced("GEMS.TUNE.qcShare=0; GEMS.TUNE.dblSec=2; GEMS.TUNE.dblMinN=20"); play(pp, 2); pp.wait_for_timeout(700); pp.click('#gemEv'); pp.wait_for_timeout(3200)
     check(cur(pp) == 'qsum' and pp.locator('#evRetry').count() == 1, '超时：可以再挑战一次'); pp.screenshot(path=str(out / f'ev-fail-{W}.png')); h1 = pp.evaluate("GEMUI.state().ev.h.dbl"); check(h1 < 0.85, f'失败后题目略易（{h1}）')
     pp.click('#evRetry'); pp.wait_for_timeout(3200); check(cur(pp) == 'qsum' and pp.locator('#evRetry').count() == 0 and pp.locator('#evBack').count() == 1, '再挑战一次也没完成：只能继续练习'); check(pp.evaluate(DAYK + ".dbl") == 1, '再挑战不占次数')

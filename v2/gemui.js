@@ -134,7 +134,7 @@
     evRun = c.curQ(); evTick();
   }
   function resume(prev) {
-    const keep = ['n', 'ups', 'passed', 'retries', 'wrong', 'secs', 'gem', 'crit', 'qcWon', 'streak', 'ev', 'exitAsked', 'restAt', 'mist0', 'ore'], o = Object.assign({}, prev.opts), restore = {}; delete o.extra;
+    const keep = ['n', 'ups', 'passed', 'retries', 'wrong', 'secs', 'gem', 'crit', 'qcWon', 'streak', 'ev', 'exitAsked', 'restAt', 'mist0', 'ore', 'fastN'], o = Object.assign({}, prev.opts), restore = {}; delete o.extra;
     keep.forEach(k => { if (prev[k] !== undefined) restore[k] = prev[k]; });
     o.restore = restore;   // 先恢复再出题：原练习没题了也能走结算页
     c.startQ(prev.kind, o);
@@ -144,6 +144,10 @@
   function evResult(q) {
     const v = q.opts.evc, res = G.evEnd(st, q.day, {kind: v.kind, n: v.n, done: v.done, earned: v.earned, retry: v.retry}); save();
     if (res.won && v.prev) { if (res.gem) v.prev.qcWon = (v.prev.qcWon || 0) + 1; }
+    if (v.prev) {   // 挑战里得的碎片（和翻倍的那份）算进原练习的「这次的碎片」
+      const pg = v.prev.gem = v.prev.gem || {s: 0, m: 0}, add = o => Object.keys(o || {}).forEach(t => { pg[t] = (pg[t] || 0) + o[t]; });
+      add(q.gem); if (res.bonus) add(v.earned);
+    }
     const canRetry = !res.won && v.kind === 'dbl' && !v.retry && !G.restDue(st);
     const name = v.kind === 'dbl' ? '双倍挑战' : '限时挑战';
     c.$('qsum').innerHTML = `<div class="col" style="flex:1;justify-content:center;align-items:center;gap:12px">
