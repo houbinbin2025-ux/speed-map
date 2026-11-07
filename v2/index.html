@@ -886,7 +886,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v99:4fb63904962f -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v103:21d40d97a672 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -896,24 +896,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=99"></script>
-<script src="i18n.js?v=99"></script>
-<script src="bank.js?v=99"></script>
-<script src="hardbank.js?v=99"></script>
-<script src="placebank.js?v=99"></script>
-<script src="core.js?v=99"></script>
-<script src="ink.js?v=99"></script>
-<script src="skills.js?v=99"></script>
-<script src="engine.js?v=99"></script>
-<script src="render.js?v=99"></script>
-<script src="world.js?v=99"></script>
-<script src="home.js?v=99"></script>
-<script src="puzzles.js?v=99"></script>
-<script src="thinking.js?v=99"></script>
-<script src="house.js?v=99"></script>
-<script src="kongmine.js?v=99"></script>
-<script src="gems.js?v=99"></script>
-<script src="gemui.js?v=99"></script>
+<script src="touchfix.js?v=103"></script>
+<script src="i18n.js?v=103"></script>
+<script src="bank.js?v=103"></script>
+<script src="hardbank.js?v=103"></script>
+<script src="placebank.js?v=103"></script>
+<script src="core.js?v=103"></script>
+<script src="ink.js?v=103"></script>
+<script src="skills.js?v=103"></script>
+<script src="engine.js?v=103"></script>
+<script src="render.js?v=103"></script>
+<script src="world.js?v=103"></script>
+<script src="home.js?v=103"></script>
+<script src="puzzles.js?v=103"></script>
+<script src="thinking.js?v=103"></script>
+<script src="house.js?v=103"></script>
+<script src="kongmine.js?v=103"></script>
+<script src="gems.js?v=103"></script>
+<script src="gemui.js?v=103"></script>
+<script src="vert.js?v=103"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1501,7 +1502,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const timers = () => { sayStop(); if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
   function startQ(kind, opts) {
     const day = today();
-    const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : kind === 'challenge' ? opts.sess : E.placement(S, day);
+    const sess = opts && opts.sess && kind !== 'challenge' ? opts.sess : kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : kind === 'challenge' ? opts.sess : E.placement(S, day);
     Q = {kind, opts: opts || {}, sess, day, ups: [], passed: 0, n: 0, fastN: 0, retries: 0, wrong: 0, secs: 0, picks: [], pickDelay: 0, mist0: Object.keys(S.mistakes).length,
       before: kind === 'place' ? Object.fromEntries(R.GROUPS.map(g => [g.id, R.groupStat(S, g.id).lit])) : null};
     try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => Q && (Q.lock = l)).catch(() => {}); } catch (e) {}
@@ -1539,11 +1540,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   new MutationObserver(fitBody).observe($('qBody'), {childList: true});
   addEventListener('resize', fitBody);
   function showQuestion(x) {
-    const inst = x.inst, v = R.question(inst);
+    const inst = x.inst, vp = vertOn(inst), v = vp ? Object.assign({}, R.question(inst), {input: 'vert', vp, flash: false, note: ''}) : R.question(inst);
     Object.assign(Q, {v, phase: 'q', peeked: false, oralWrong: false, wasLv: E.lv(S, inst.id), shownAt: performance.now(), t0: performance.now(), val: null});
     show('qplay');
     const wide = v.input !== 'write';
-    $('qplay').classList.toggle('wide', wide);
+    $('qplay').classList.toggle('wide', wide); $('qplay').classList.toggle('vert', !!vp);
+    $('qplay').querySelector('.qfoot').appendChild($('qNext'));   // 竖式题把「继续」挪进了讲解栏，换题前先放回原处（qWide 马上清空）
+    if (Q.vc) Q.vc.destroy();
+    Object.assign(Q, {vc: null, vfoot: null, vtip: '', vdemo: false});
     $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : Q.x.retry ? v.tag + ' · 再来一次' : v.tag;
     $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : v.note || '';
     $('qBody').innerHTML = v.html; $('qBody').hidden = false; $('qWide').after($('qNote'));   // 提示回到原位（宽版答错时挪到了「继续」下面）
@@ -1556,10 +1560,61 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (v.input === 'write') { qPad.fit(); qPad.clear(); qPad.enabled = !S.oral; }
     if (v.input === 'pick') showPick(v);
     if (v.input === 'line') showLine(v);
+    if (v.input === 'vert') showVert(v);
     if (v.flash) flashLook();
     // 画面刷新后再校准起点；已经落笔就不再挪
     requestAnimationFrame(() => requestAnimationFrame(() => { if (Q && Q.x === x && Q.phase === 'q' && !qPad.strokes().length && v.input === 'write') Q.t0 = performance.now(); }));
     qBar();
+  }
+  // ---------- iPad 竖式（docs/说明书-iPad竖式.md）：横屏、屏幕短边 ≥ 700 点（iPad；App 里网页按 932 宽缩放，所以看 screen）、非口答 ----------
+  const vertOn = inst => !S.oral && innerWidth > innerHeight && Math.min(screen.width, screen.height) >= 700 && VERT.parse(inst);
+  const VDEMO = TEST ? 'speedmap.test.vertdemo' : 'speedmap.vertdemo';   // 测试模式另起键，免得把空空的示范卡标成看过
+  const vSeen = () => { try { return JSON.parse(localStorage.getItem(VDEMO) || '{}') || {}; } catch (e) { return {}; } };
+  function showVert(v) {
+    $('qBody').innerHTML = '';
+    const q0 = Q;
+    Q.vc = VERT.mount($('qWide'), v.vp, {
+      can: () => Q === q0 && Q.phase === 'q' && !Q.vdemo,
+      onDone: vertDone,
+      onDunno: () => { if (guarded() || Q !== q0 || Q.phase !== 'q' || Q.vdemo) return; resolve({ok: false, dunno: true}); },
+      onDemo: () => { if (Q === q0 && Q.phase === 'q' && !Q.vdemo) vertDemo(v.vp, false); },
+    });
+    if (!vSeen()[VERT.demoKey(v.vp)] && Q.kind !== 'challenge') vertDemo(v.vp, false);   // 限时挑战不放示范，免得吃掉倒计时
+  }
+  // 示范卡：第一次见这种竖式先看一遍；看示范时不计时（关掉后、还没落笔就从头算）
+  function vertDemo(vp, replay) {
+    const k = VERT.demoKey(vp), q0 = Q;
+    if (!replay) Q.vdemo = true;
+    VERT.demo($('qWide'), replay ? {p: vp, title: I18N.on ? VERT.LAB.same[1] : VERT.LAB.same[0]} : VERT.DEMO[k], () => {
+      if (replay || Q !== q0) return;
+      Q.vdemo = false; const s = vSeen(); s[k] = 1; try { localStorage.setItem(VDEMO, JSON.stringify(s)); } catch (e) {}
+      if (Q.phase === 'q' && !Q.vc.touched()) { Q.t0 = performance.now(); Q.shownAt = performance.now(); }
+    });
+  }
+  // 写好了：每格单独认；认不出的格清掉重写，不算答错
+  // 拿不准的格同写字板（ink.js resolveWith）：只有把它们换成答案要的数字后整串正好等于答案才按答案认，按答案认的格不存字模
+  function vertDone() {
+    if (guarded() || !Q || Q.phase !== 'q' || Q.vdemo || !Q.vc) return;
+    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = String(inst.ans).padStart(n, ' ');
+    const recs = strokes.map(st => {
+      if (!st.length) return {t: ''};
+      const res = I.recognize(st, INKS);
+      if (res.text === null) return {t: '?'};
+      if (res.digits.length > 1) return {t: '两' + res.text};
+      return {t: res.digits[0].cands[0].d, d: res.digits[0]};
+    });
+    const unsure = recs.map((r, k) => (r.d && !r.d.sure ? k : -1)).filter(k => k >= 0);
+    if (unsure.length) {
+      const fixed = recs.map((r, k) => (unsure.includes(k) && r.d.cands.some(c => c.d === want[k]) ? want[k] : r.t));
+      if (VERT.judge(fixed, Q.v.vp).ok) unsure.forEach(k => { recs[k].t = want[k]; recs[k].byAns = true; });
+    }
+    const j = VERT.judge(recs.map(r => r.t), Q.v.vp, I18N.on), L = k => VERT.LAB[k][I18N.on ? 1 : 0];
+    if (j.retry) { tapGuard = performance.now() + 500; Q.vc.clearCells(recs.map(r => r.t === '?')); Q.vc.note(L('unclear')); return; }
+    if (j.empty) { Q.vc.note(L('empty')); return; }
+    Q.ms = Math.max(0, performance.now() - Q.t0 - VERT.TAP_MS);
+    if (j.ok) { recs.forEach(r => { if (r.d && r.d.sure && !r.byAns) I.addTemplate(INKS, r.t, r.d.strokes); }); saveInk(); }
+    Q.vtip = j.tip; Q.vc.mark(j.ok); Q.vc.done();
+    resolve({ok: j.ok, fast: j.ok && Q.ms <= qLimit(inst), typed: j.text});
   }
   // 看数：图案闪现 flashMs 后消失，用 requestAnimationFrame 记真实显示时长；「再看一次」再闪一遍，这题不点亮
   const FLASHLOG = [];
@@ -1681,7 +1736,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const x = Q.x, inst = x.inst;
     const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? (r.fast && !Q.peeked ? OK_MS : SLOW_MS) : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
-    const used = Q.v.input === 'write' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
+    const used = Q.v.input === 'write' || Q.v.input === 'vert' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
     r.bolt = !!r.fast && used <= qLimit(inst) * GEMS.BOLT;
     const gain = GM.answerQ(Q, x, r, secs);
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
@@ -1697,7 +1752,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const v = Q.v;
     if (r.ok) {
       const w0 = R.okWords(inst, out, Q.wasLv, r.fast ? null : {used, limit: qLimit(inst)}, gain), w = x.retry ? {big: w0.big, small: out.again ? '一会儿再来一次' : '明天再考你一次'} : w0, q0 = Q, n0 = Q.ore++;
-      if (Q.kind !== 'challenge') WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
+      if (Q.kind !== 'challenge') WORLD.flyOre(v.input === 'pick' || v.input === 'vert' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
       if (v.input === 'line') drawTarget(true);
       $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' && !w.small ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small.split(' · ').map(s => `<span>${s}</span>`).join(' · ')}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
       if (v.input === 'pick') $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.add(+b.dataset.n === inst.ans ? 'right' : 'wrong'));
@@ -1718,6 +1773,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       return waitNext();
     }
     if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); return waitNext(); }
+    if (v.input === 'vert') {   // 竖式：不描红，右边滑出整道题的正确写法和讲解；可以按这道题一步一步再看
+      $('qBody').innerHTML = ''; Q.vc.done();
+      const tip = Q.vtip ? `<div class="badline" style="color:#f0b46c">${Q.vtip}</div>` : '';
+      Q.vfoot = Q.vc.result(bad + tip, R.explain(inst), () => vertDemo(v.vp, true));
+      return waitNext();
+    }
     $('qBody').innerHTML = bad + R.explain(inst);
     if (S.oral) return waitNext();
     // 手写题：照着描一遍，描完点「继续」
@@ -1727,7 +1788,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qPad.enabled = true; waitNext('trace');
   }
   // 「继续」放在看得见的那一栏：点选、数线是宽版，右栏（写字板和底部按钮）整个收起，按钮挪到左栏讲解标题右边
-  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
+  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
   $('qNext').addEventListener('click', () => { if (!Q || !['wait', 'trace'].includes(Q.phase)) return; tapGuard = performance.now() + 500; $('qNext').hidden = true; nextQ(); });
   // 答对后左边显示完整的题（看数 → 数字）
   function answerLine(inst) {
@@ -1767,7 +1828,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const chip = id => `<span class="chip2" style="background:${lvColor(id)};color:${E.lv(S, id) === 3 ? '#fff' : '#1b1d22'}">${R.GNAME[K.BY[K.ITEM[id].skill].group] === '秒答地图' ? '秒答' : R.GNAME[K.BY[K.ITEM[id].skill].group]} · ${R.label(id)}</span>`;
   function finishQ(quit) {
     if (!Q) return;
-    timers(); clearInterval(Q.tick);
+    timers(); clearInterval(Q.tick); if (Q.vc) Q.vc.destroy();
     try { Q.lock && Q.lock.release(); } catch (e) {}
     const q = Q; Q = null; save();
     if (q.kind === 'place') return showPlaceResult(q, quit);
@@ -2182,7 +2243,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   GM.init({finishQ, goIsland, curQ: () => Q, leaveQ: () => { timers(); clearInterval(Q.tick); try { Q.lock && Q.lock.release(); } catch (e) {} const q = Q; Q = null; save(); return q; }, enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
     canWrite: () => !frozen && !S.readOnly && !S.stopped});
   GM.islandBtn(); $('btnForge').addEventListener('click', () => { if (!WD.entering) GM.openForge('island'); });
-  window.__sm = {TH, today, resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  window.__sm = {TH, today, resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad, startQ: (k, o) => startQ(k, o)}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();
