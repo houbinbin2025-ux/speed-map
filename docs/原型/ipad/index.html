@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>iPad 答题原型</title>
+<!-- iPad 答题布局原型（Ben 11-07 审过第 2 版布局）：按解题过程分竖式、乘两位数、应用题、除法竖式、递等式、填空 6 种；
+     手指尺寸；答案一格一位逐格识别，草稿不判；答完才说用时。只给空空试用，不进练习、不存进度。 -->
+<style>
+:root{--bg:#1b1d22;--panel:#24262b;--stone:#3a3d44;--paper:#f7f4ec;--ink:#2b2920;--mute:#8b8676;--blue:#2f6db5;--ok:#3f9a52;--bad:#c4472f}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{margin:0;height:100%;background:var(--bg);color:#f3f1ea;font-family:'PingFang SC',system-ui,sans-serif;overflow:hidden;touch-action:none}
+#stage{position:absolute;left:0;top:0;width:1194px;height:834px;transform-origin:0 0;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;gap:10px;align-items:center;height:48px}
+.tab{height:48px;padding:0 16px;border:2px solid #000;background:var(--stone);color:#f3f1ea;font-size:16px;font-weight:700;font-family:inherit}
+.tab.on{background:#f3f1ea;color:var(--ink)}
+.top .n{margin-left:auto;font-size:15px;color:#9a9da4}
+.main{flex:1;display:flex;gap:20px;min-height:0}
+.work{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:var(--panel);border:2px solid #000;min-width:0;overflow:hidden}
+.side{width:150px;flex:none;display:flex;flex-direction:column;gap:12px}
+.side .tag{padding:4px 8px;border:2px solid #000;background:var(--stone);font-size:14px;text-align:center}
+.btn{height:64px;border:2px solid #000;background:var(--stone);color:#f3f1ea;font-size:20px;font-weight:700;font-family:inherit}
+.btn.go{background:#4f8a3a;height:88px;font-size:24px}
+.card{background:var(--paper);border:3px solid #000;border-radius:12px;color:var(--ink);padding:18px 34px;display:flex;flex-direction:column;gap:6px}
+.row{display:grid;gap:10px;align-items:center;text-align:center}
+.lab{font-size:14px;color:var(--mute);text-align:left}
+.dig{font-size:72px;font-weight:800;line-height:96px}
+.line{border-bottom:5px solid var(--ink);padding-bottom:8px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.cell{position:relative;height:116px;border:3px solid var(--blue);border-radius:10px;background:#fff}
+.cell .rec{position:absolute;right:4px;top:2px;font-size:14px;color:var(--mute);pointer-events:none}
+.cell.ok{border-color:var(--ok);background:#eef7ef}.cell.bad{border-color:var(--bad);background:#fbeeea}
+.mini{height:60px;border:2px dashed #c9c1ac;border-radius:8px;background:transparent}
+.gap{height:60px;border-radius:8px;background:#e9e3d3;font-size:13px;color:var(--mute);display:flex;align-items:center;justify-content:center}
+.grid64{background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5;border-radius:10px}
+.say{font-size:30px;font-weight:800;line-height:1.45}
+.spk{width:60px;height:60px;flex:none;border:2px solid var(--ink);border-radius:8px;background:#e6e0d0;display:flex;align-items:center;justify-content:center}
+.sent{display:flex;align-items:center;gap:14px;font-size:32px;font-weight:800}
+.eqrow{display:flex;align-items:center;gap:18px;height:96px;border-bottom:2px solid #ddd6c5}
+.eqrow b{font-size:56px;width:48px}
+.result{position:absolute;right:0;top:0;bottom:0;width:420px;background:rgba(27,29,34,.97);border-left:3px solid #000;padding:22px;display:flex;flex-direction:column;gap:12px;transform:translateX(100%);transition:transform .25s}
+.result.show{transform:none}
+.result .big{font-size:34px;font-weight:900}
+.result .big.ok{color:#7fd38e}.result .big.bad{color:#f08c74}
+.result .why{font-size:19px;line-height:1.7;color:#e6e3da;white-space:pre-line}
+.result .muted{font-size:15px;color:#9a9da4}
+#fit{position:fixed;inset:0;display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="top" id="tabs"></div>
+  <div class="main">
+    <div class="work" id="work"></div>
+    <div class="side">
+      <div class="tag" id="tag"></div>
+      <div style="flex:1"></div>
+      <button class="btn go" id="done">写好了</button>
+      <button class="btn" id="clear">清空</button>
+      <button class="btn" id="dunno">不会</button>
+    </div>
+  </div>
+</div>
+<script src="../../../v2/ink.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+// ---------- 屏幕：按 1194 × 834 画，缩放到当前窗口 ----------
+function fitStage() { const k = Math.min(innerWidth / 1194, innerHeight / 834); $('stage').style.transform = `scale(${k})`; $('stage').style.left = (innerWidth - 1194 * k) / 2 + 'px'; $('stage').style.top = (innerHeight - 834 * k) / 2 + 'px'; }
+addEventListener('resize', fitStage); fitStage();
+
+// ---------- 识别模板：有空空校准过的笔迹就用，没有用标准字形 ----------
+const STORE = (() => {
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i); if (!/ink/.test(k)) continue;
+    try { const v = JSON.parse(localStorage.getItem(k)); if (v && v.t && Object.keys(v.t).some(d => (v.t[d] || []).length)) return Object.assign(INK.blankStore(), v); } catch (e) {}
+  }
+  const s = INK.blankStore();
+  Object.keys(INK.STD).forEach(d => INK.STD[d].forEach(form => INK.addTemplate(s, d, form.map(st => {
+    const o = []; for (let i = 0; i + 1 < st.length; i++) for (let k = 0; k < 8; k++) { const t = k / 8; o.push({x: (st[i][0] + t * (st[i + 1][0] - st[i][0])) * 100, y: (st[i][1] + t * (st[i + 1][1] - st[i][1])) * 100, t: 0}); }
+    const z = st[st.length - 1]; o.push({x: z[0] * 100, y: z[1] * 100, t: 0}); return o;
+  }))));
+  return s;
+})();
+
+// ---------- 写字板（同 v2：只认第一根手指） ----------
+function Pad(cv, width, onUp) {
+  const ctx = cv.getContext('2d'); let strokes = [], cur = null, active = null;
+  const fit = () => { const r = cv.getBoundingClientRect(), dpr = devicePixelRatio || 1, k = r.width / cv.offsetWidth || 1; cv.width = Math.round(cv.offsetWidth * dpr); cv.height = Math.round(cv.offsetHeight * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); redraw(); };
+  const pt = e => { const r = cv.getBoundingClientRect(), k = cv.offsetWidth / r.width; return {x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k, t: performance.now()}; };
+  function redraw() { ctx.clearRect(0, 0, cv.offsetWidth, cv.offsetHeight); ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = width; ctx.lineCap = ctx.lineJoin = 'round';
+    strokes.forEach(s => { ctx.beginPath(); s.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); if (s.length === 1) ctx.lineTo(s[0].x + .1, s[0].y); ctx.stroke(); }); }
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); if (Q.locked || active !== null) return; active = e.pointerId; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cur = [pt(e)]; strokes.push(cur); Q.touched = Q.touched || performance.now(); redraw(); });
+  cv.addEventListener('pointermove', e => { if (!cur || e.pointerId !== active) return; e.preventDefault(); const l = e.getCoalescedEvents ? e.getCoalescedEvents() : []; (l.length ? l : [e]).forEach(v => cur.push(pt(v))); redraw(); });
+  const end = e => { if (e.pointerId !== active) return; active = null; cur = null; onUp && onUp(); };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+  requestAnimationFrame(fit);
+  return {strokes: () => strokes, clear() { strokes = []; redraw(); }};
+}
+
+// ---------- 题（都来自题库的真题型） ----------
+const BANK = {
+  vert: {name: '竖式', qs: [
+    {tag: '三位数减法', a: 353, op: '−', b: 174, ans: 179, why: '个位 3 不够减 4，向十位借 1：13 − 4 = 9\n十位 5 借走 1 剩 4，不够减 7，向百位借 1：14 − 7 = 7\n百位 3 借走 1 剩 2：2 − 1 = 1\n得 179'},
+    {tag: '三位数加法', a: 276, op: '+', b: 376, ans: 652, why: '个位 6 + 6 = 12，写 2 进 1\n十位 7 + 7 + 1 = 15，写 5 进 1\n百位 2 + 3 + 1 = 6\n得 652'},
+    {tag: '三位数减法', a: 927, op: '−', b: 109, ans: 818, why: '个位 7 不够减 9，借 1：17 − 9 = 8\n十位 2 借走 1 剩 1：1 − 0 = 1\n百位 9 − 1 = 8\n得 818'}]},
+  mul: {name: '乘两位数', qs: [
+    {tag: '乘两位数', a: 19, b: 25, ans: 475, why: '19 × 5 = 95\n19 × 2 = 38，写在十位起，就是 380\n95 + 380 = 475'},
+    {tag: '乘一位数', a: 689, b: 6, ans: 4134, why: '9 × 6 = 54，写 4 进 5\n8 × 6 = 48，加 5 是 53，写 3 进 5\n6 × 6 = 36，加 5 是 41\n得 4134'}]},
+  word: {name: '应用题', qs: [
+    {tag: '两步题', say: '仓库有 700 箱货，运走 349 箱，又运来 119 箱。现在有几箱？', pre: '现在有', post: '箱。', ans: 470, why: '先算运走后剩下：700 − 349 = 351\n再加上运来的：351 + 119 = 470\n现在有 470 箱'},
+    {tag: '两步题', say: '每盒 9 支火把，买 39 盒，送出 143 支。还剩几支？', pre: '还剩', post: '支。', ans: 208, why: '先算一共几支：9 × 39 = 351\n再减去送出的：351 − 143 = 208\n还剩 208 支'},
+    {tag: '倍数', say: '甲是乙的 3 倍，甲比乙多 158。乙是几？', pre: '乙是', post: '。', ans: 79, why: '甲是 3 份，乙是 1 份，甲比乙多 2 份\n2 份是 158，1 份是 158 ÷ 2 = 79\n乙是 79'}]},
+  div: {name: '除法竖式', qs: [
+    {tag: '除以一位数', a: 1072, b: 8, ans: 134, why: '10 里面有 1 个 8，余 2\n落下 7，27 里面有 3 个 8，余 3\n落下 2，32 里面有 4 个 8，正好\n商是 134'},
+    {tag: '有余数', a: 730, b: 4, ans: 182, rem: 2, why: '7 里面有 1 个 4，余 3\n落下 3，33 里面有 8 个 4，余 1\n落下 0，10 里面有 2 个 4，余 2\n商 182，余 2'}]},
+  steps: {name: '递等式', qs: [
+    {tag: '先算括号', expr: '(210 − 42) ÷ 6', ans: 28, why: '先算括号：210 − 42 = 168\n再算除法：168 ÷ 6 = 28'},
+    {tag: '简便算法', expr: '207 − 39 − 61', ans: 107, why: '连着减两个数，等于减它们的和：39 + 61 = 100\n207 − 100 = 107'}]},
+  fill: {name: '填空', qs: [
+    {tag: '小数减法', left: '5.36 − 2.82 = 2.', right: '4', ans: 5, why: '5.36 − 2.82 = 2.54\n方框里是 5'},
+    {tag: '乘法交换', left: '27 × ', right: ' = 54 × 27', ans: 54, why: '两个数相乘，换位置积不变\n27 × 54 = 54 × 27，方框里是 54'}]},
+};
+const KINDS = Object.keys(BANK);
+const Q = {kind: 'vert', i: 0, cells: [], pads: [], locked: false, t0: 0, touched: 0};
+const digits = n => String(n).split('');
+
+// ---------- 画一道题 ----------
+function cellsRow(n, cols) { return Array.from({length: n}, () => '<div class="cell"><canvas></canvas><span class="rec"></span></div>').join(''); }
+function minis(n) { return Array.from({length: n}, () => '<div class="mini"><canvas></canvas></div>').join(''); }
+function render() {
+  const q = BANK[Q.kind].qs[Q.i], w = $('work'); let h = '';
+  if (Q.kind === 'vert') {
+    const n = Math.max(String(q.a).length, String(q.b).length) + (q.op === '+' ? 1 : 0), col = `80px repeat(${n}, 104px)`, pad = s => Array(n - s.length).fill('').concat(s.split(''));
+    h = `<div class="card"><div class="row" style="grid-template-columns:${col}"><div class="lab">${q.op === '+' ? '进位' : '退位点'}</div>${minis(n)}</div>
+      <div class="row dig" style="grid-template-columns:${col}"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
+      <div class="row dig line" style="grid-template-columns:${col}"><div>${q.op}</div>${pad(String(q.b)).map(d => `<div>${d}</div>`).join('')}</div>
+      <div class="row" style="grid-template-columns:${col};padding-top:10px"><div class="lab">答案</div>${cellsRow(n)}</div></div>`;
+  } else if (Q.kind === 'mul') {
+    const two = String(q.b).length > 1, n = String(q.a).length + String(q.b).length, col = `80px repeat(${n}, 96px)`, pad = s => Array(n - s.length).fill('').concat(s.split(''));
+    h = `<div class="card"><div class="row dig" style="grid-template-columns:${col};font-size:64px;line-height:80px"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
+      <div class="row dig line" style="grid-template-columns:${col};font-size:64px;line-height:80px"><div>×</div>${pad(String(q.b)).map(d => `<div>${d}</div>`).join('')}</div>
+      ${two ? `<div class="row" style="grid-template-columns:${col}"><div class="lab">草稿</div>${minis(n)}</div>
+      <div class="row line" style="grid-template-columns:${col}"><div class="lab">草稿</div>${minis(n - 1)}<div class="gap">空一位</div></div>` : `<div class="row" style="grid-template-columns:${col}"><div class="lab">进位</div>${minis(n)}</div>`}
+      <div class="row" style="grid-template-columns:${col};padding-top:8px"><div class="lab">答案</div>${cellsRow(n)}</div></div>`;
+  } else if (Q.kind === 'word') {
+    const n = String(q.ans).length + 1;
+    h = `<div class="card" style="position:absolute;inset:0;border-radius:0;border:0;padding:18px 24px;gap:12px">
+      <div style="display:flex;gap:14px;align-items:flex-start"><div class="say" style="flex:1">${q.say}</div><button class="spk" id="spk" aria-label="听题"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2b2920" stroke-width="2" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"></path><path d="M16 8c1.5 1.5 1.5 6.5 0 8"></path><path d="M19 5c3 3 3 11 0 14"></path></svg></button></div>
+      <div class="grid64 scratch" style="flex:1"><canvas></canvas></div>
+      <div class="sent"><div>${q.pre}</div><div style="display:grid;grid-template-columns:repeat(${n}, 96px);gap:8px">${cellsRow(n)}</div><div>${q.post}</div></div></div>`;
+  } else if (Q.kind === 'div') {
+    const n = String(q.a).length, col = `80px 18px repeat(${n}, 96px)`;
+    h = `<div class="card"><div class="row" style="grid-template-columns:${col}"><div class="lab">商</div><div></div>${cellsRow(n)}</div>
+      <div class="row dig" style="grid-template-columns:${col};font-size:66px;line-height:92px"><div>${q.b}</div><div style="border-left:5px solid #2b2920;border-top:5px solid #2b2920;border-top-left-radius:16px;height:92px"></div>${digits(q.a).map(d => `<div style="border-top:5px solid #2b2920">${d}</div>`).join('')}</div>
+      <div class="grid64 scratch" style="height:200px;margin-left:108px"><canvas></canvas></div>
+      ${q.rem !== undefined ? `<div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;font-size:30px;font-weight:800"><div>余</div><div style="width:96px" class="remc">${cellsRow(1)}</div></div>` : ''}</div>`;
+  } else if (Q.kind === 'steps') {
+    const n = String(q.ans).length + 1;
+    h = `<div class="card" style="width:820px"><div style="font-size:60px;font-weight:800;line-height:92px">${q.expr}</div>
+      <div class="eqrow"><b>=</b><div class="scratch" style="flex:1;height:92px"><canvas></canvas></div></div>
+      <div class="eqrow"><b>=</b><div class="scratch" style="flex:1;height:92px"><canvas></canvas></div></div>
+      <div style="display:flex;align-items:center;gap:18px;margin-top:8px"><b style="font-size:56px;width:48px">=</b><div style="display:grid;grid-template-columns:repeat(${n}, 96px);gap:8px">${cellsRow(n)}</div></div></div>`;
+  } else {
+    const n = String(q.ans).length + 1;
+    h = `<div style="position:absolute;inset:0;padding:28px;display:flex;flex-direction:column;gap:18px">
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:12px;font-size:76px;font-weight:800"><div>${q.left}</div><div style="display:grid;grid-template-columns:repeat(${n}, 96px);gap:8px">${cellsRow(n)}</div><div>${q.right}</div></div>
+      <div class="grid64 scratch" style="height:250px"><canvas></canvas></div></div>`;
+  }
+  w.innerHTML = h + '<div class="result" id="res"></div>';
+  $('tag').textContent = q.tag;
+  Q.cells = [...w.querySelectorAll('.cell')];
+  Q.pads = Q.cells.map(c => Pad(c.querySelector('canvas'), 8, () => recCell(c)));
+  Q.scratch = [...w.querySelectorAll('.scratch canvas, .mini canvas')].map(cv => Pad(cv, cv.closest('.mini') ? 4 : 5));
+  Q.locked = false; Q.t0 = performance.now(); Q.touched = 0;
+  const spk = $('spk'); if (spk) spk.onclick = () => { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(q.say); u.lang = 'zh-CN'; u.rate = .9; speechSynthesis.speak(u); } catch (e) {} };
+  drawTabs();
+}
+function recCell(c) { const p = Q.pads[Q.cells.indexOf(c)], r = INK.recognize(p.strokes(), STORE); c.querySelector('.rec').textContent = r.text ? r.text[0] : (p.strokes().length ? '?' : ''); }
+
+// ---------- 判：答案格去掉前面的空格；中间空着算错 ----------
+function judge(dunno) {
+  if (Q.locked) return; Q.locked = true;
+  const q = BANK[Q.kind].qs[Q.i], ms = performance.now() - Q.t0;
+  const read = Q.pads.map(p => { const r = INK.recognize(p.strokes(), STORE); return p.strokes().length ? (r.text ? r.text[0] : '?') : ''; });
+  const rem = q.rem !== undefined ? read.pop() : null;
+  const firstFilled = read.findIndex(x => x !== ''), body = firstFilled < 0 ? '' : read.slice(firstFilled).join('');
+  const okMain = !dunno && firstFilled >= 0 && read.slice(firstFilled).every(x => /^\d$/.test(x)) && +body === q.ans;
+  const ok = okMain && (q.rem === undefined || rem === String(q.rem));
+  Q.cells.forEach(c => c.classList.add(ok ? 'ok' : 'bad'));
+  const res = $('res');
+  res.innerHTML = `<div class="big ${ok ? 'ok' : 'bad'}">${ok ? '✓ 对了' : dunno ? '没关系，看一看' : '✗ 再看看'}</div>
+    ${dunno ? '' : `<div class="muted">认出来是：${body || '（空）'}${q.rem !== undefined ? ' 余 ' + (rem || '（空）') : ''} · 用了 ${Math.ceil(ms / 1000)} 秒</div>`}
+    <div class="why">${q.why}</div><div style="flex:1"></div><button class="btn go" id="next">下一题</button>`;
+  res.classList.add('show');
+  $('next').onclick = next;
+}
+function next() { const L = BANK[Q.kind].qs; Q.i = (Q.i + 1) % L.length; render(); }
+function drawTabs() {
+  $('tabs').innerHTML = KINDS.map(k => `<button class="tab${k === Q.kind ? ' on' : ''}" data-k="${k}">${BANK[k].name}</button>`).join('') + `<span class="n">第 ${Q.i + 1} / ${BANK[Q.kind].qs.length} 题 · 原型，不记进度</span>`;
+  $('tabs').querySelectorAll('.tab').forEach(b => b.onclick = () => { Q.kind = b.dataset.k; Q.i = 0; render(); });
+}
+$('done').onclick = () => judge(false);
+$('dunno').onclick = () => judge(true);
+$('clear').onclick = () => { if (Q.locked) return; Q.pads.concat(Q.scratch).forEach(p => p.clear()); Q.cells.forEach(c => { c.querySelector('.rec').textContent = ''; }); };
+render();
+</script>
+</body>
+</html>
