@@ -47,3 +47,12 @@ patch house.js "tap((e.clientX + camX) / P, e.clientY / P);" \
   "tap((e.clientX + camX) / P, (e.clientY - TOP()) / P);"
 patch index.html "#house #h_vp{position:absolute;inset:0;touch-action:none;background:#2a1d12}" \
   "#house #h_vp{position:absolute;inset:0;touch-action:none;background:repeating-linear-gradient(0deg,#3b2513 0 6px,#5a3a20 6px 34px)}"
+
+# 方块世界（~/03_个人/测试/minecraft-web）打包到 web/world/，和数学岛共用存储，答题后回去自动领奖励。只取它已提交的版本
+game="${KONG_WORLD_REPO:-$HOME/03_个人/测试/minecraft-web}"
+[ -d "$game/.git" ] || { echo "错误：找不到方块世界仓库 $game" >&2; exit 1; }
+mkdir -p "$here/web/world"
+git -C "$game" archive HEAD index.html quest.js rewards.js unlock.js tiles.js math-bank.js three.min.js audio.js | tar -x -C "$here/web/world"
+# 岛上加入口（只改打包副本，手机和网页不变）
+cp "$here/world-entry.js" "$here/web/world-entry.js"
+patch index.html "</body>" '<script src="world-entry.js"></script></body>'
