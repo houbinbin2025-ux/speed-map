@@ -32,6 +32,8 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .cell .rec{position:absolute;right:4px;top:2px;font-size:14px;color:var(--mute);pointer-events:none}
 .cell.ok{border-color:var(--ok);background:#eef7ef}.cell.bad{border-color:var(--bad);background:#fbeeea}
 .mini{height:60px;border:2px dashed #c9c1ac;border-radius:8px;background:transparent}
+.strip{height:84px;border:2px dashed #c9c1ac;border-radius:8px;background-image:repeating-linear-gradient(90deg,transparent 0 105px,#e3dccb 105px 106px);background-position:-5px 0}
+.strip.sm{height:56px}
 .gap{height:60px;border-radius:8px;background:#e9e3d3;font-size:13px;color:var(--mute);display:flex;align-items:center;justify-content:center}
 .grid64{background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5;border-radius:10px}
 .say{font-size:30px;font-weight:800;line-height:1.45}
@@ -39,12 +41,22 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .sent{display:flex;align-items:center;gap:14px;font-size:32px;font-weight:800}
 .eqrow{display:flex;align-items:center;gap:18px;height:96px;border-bottom:2px solid #ddd6c5}
 .eqrow b{font-size:56px;width:48px}
-.result{position:absolute;right:0;top:0;bottom:0;width:420px;background:rgba(27,29,34,.97);border-left:3px solid #000;padding:22px;display:flex;flex-direction:column;gap:12px;transform:translateX(100%);transition:transform .25s}
+.result{position:absolute;right:0;top:0;bottom:0;width:560px;overflow-y:auto;background:rgba(27,29,34,.97);border-left:3px solid #000;padding:22px;display:flex;flex-direction:column;gap:12px;transform:translateX(100%);transition:transform .25s}
 .result.show{transform:none}
 .result .big{font-size:34px;font-weight:900}
+.result #next{position:sticky;bottom:0;flex:none;box-shadow:0 -14px 0 rgba(27,29,34,.97)}
 .result .big.ok{color:#7fd38e}.result .big.bad{color:#f08c74}
 .result .why{font-size:19px;line-height:1.7;color:#e6e3da;white-space:pre-line}
 .result .muted{font-size:15px;color:#9a9da4}
+.wk{background:var(--paper);color:var(--ink);border-radius:10px;padding:12px 18px;align-self:flex-start}
+.wk .g{display:grid;font-family:'SF Mono',Menlo,monospace;font-size:30px;font-weight:700;line-height:40px;text-align:center}
+.wk .g .s{font-size:16px;line-height:20px;color:#b4512e;font-weight:700}
+.wk .g .u{border-bottom:3px solid var(--ink)}
+.wk .g .q{color:var(--blue)}
+.wk .g .br{border-left:3px solid var(--ink);border-top:3px solid var(--ink);border-top-left-radius:10px}
+.wk .g .t{border-top:3px solid var(--ink)}
+.wk .eq{font-size:26px;font-weight:700;line-height:44px}
+.wk h4{margin:0 0 6px;font-size:15px;color:var(--mute)}
 #fit{position:fixed;inset:0;display:none}
 </style>
 </head>
@@ -109,18 +121,18 @@ const BANK = {
     {tag: '乘两位数', a: 19, b: 25, ans: 475, why: '19 × 5 = 95\n19 × 2 = 38，写在十位起，就是 380\n95 + 380 = 475'},
     {tag: '乘一位数', a: 689, b: 6, ans: 4134, why: '9 × 6 = 54，写 4 进 5\n8 × 6 = 48，加 5 是 53，写 3 进 5\n6 × 6 = 36，加 5 是 41\n得 4134'}]},
   word: {name: '应用题', qs: [
-    {tag: '两步题', say: '仓库有 700 箱货，运走 349 箱，又运来 119 箱。现在有几箱？', pre: '现在有', post: '箱。', ans: 470, why: '先算运走后剩下：700 − 349 = 351\n再加上运来的：351 + 119 = 470\n现在有 470 箱'},
-    {tag: '两步题', say: '每盒 9 支火把，买 39 盒，送出 143 支。还剩几支？', pre: '还剩', post: '支。', ans: 208, why: '先算一共几支：9 × 39 = 351\n再减去送出的：351 − 143 = 208\n还剩 208 支'},
-    {tag: '倍数', say: '甲是乙的 3 倍，甲比乙多 158。乙是几？', pre: '乙是', post: '。', ans: 79, why: '甲是 3 份，乙是 1 份，甲比乙多 2 份\n2 份是 158，1 份是 158 ÷ 2 = 79\n乙是 79'}]},
+    {tag: '两步题', say: '仓库有 700 箱货，运走 349 箱，又运来 119 箱。现在有几箱？', pre: '现在有', post: '箱。', ans: 470, work: ['700 − 349 = 351', {a: 700, op: '−', b: 349}, '351 + 119 = 470', {a: 351, op: '+', b: 119}, '答：现在有 470 箱。'], why: '先算运走后剩下：700 − 349 = 351\n再加上运来的：351 + 119 = 470\n现在有 470 箱'},
+    {tag: '两步题', say: '每盒 9 支火把，买 39 盒，送出 143 支。还剩几支？', pre: '还剩', post: '支。', ans: 208, work: ['9 × 39 = 351', {a: 39, op: '×', b: 9}, '351 − 143 = 208', {a: 351, op: '−', b: 143}, '答：还剩 208 支。'], why: '先算一共几支：9 × 39 = 351\n再减去送出的：351 − 143 = 208\n还剩 208 支'},
+    {tag: '倍数', say: '甲是乙的 3 倍，甲比乙多 158。乙是几？', pre: '乙是', post: '。', ans: 79, work: ['3 − 1 = 2（甲比乙多 2 份）', '158 ÷ 2 = 79', {a: 158, op: '÷', b: 2}, '答：乙是 79。'], why: '甲是 3 份，乙是 1 份，甲比乙多 2 份\n2 份是 158，1 份是 158 ÷ 2 = 79\n乙是 79'}]},
   div: {name: '除法竖式', qs: [
     {tag: '除以一位数', a: 1072, b: 8, ans: 134, why: '10 里面有 1 个 8，余 2\n落下 7，27 里面有 3 个 8，余 3\n落下 2，32 里面有 4 个 8，正好\n商是 134'},
     {tag: '有余数', a: 730, b: 4, ans: 182, rem: 2, why: '7 里面有 1 个 4，余 3\n落下 3，33 里面有 8 个 4，余 1\n落下 0，10 里面有 2 个 4，余 2\n商 182，余 2'}]},
   steps: {name: '递等式', qs: [
-    {tag: '先算括号', expr: '(210 − 42) ÷ 6', ans: 28, why: '先算括号：210 − 42 = 168\n再算除法：168 ÷ 6 = 28'},
-    {tag: '简便算法', expr: '207 − 39 − 61', ans: 107, why: '连着减两个数，等于减它们的和：39 + 61 = 100\n207 − 100 = 107'}]},
+    {tag: '先算括号', expr: '(210 − 42) ÷ 6', ans: 28, work: ['(210 − 42) ÷ 6', '= 168 ÷ 6', '= 28'], why: '先算括号：210 − 42 = 168\n再算除法：168 ÷ 6 = 28'},
+    {tag: '简便算法', expr: '207 − 39 − 61', ans: 107, work: ['207 − 39 − 61', '= 207 − (39 + 61)', '= 207 − 100', '= 107'], why: '连着减两个数，等于减它们的和：39 + 61 = 100\n207 − 100 = 107'}]},
   fill: {name: '填空', qs: [
-    {tag: '小数减法', left: '5.36 − 2.82 = 2.', right: '4', ans: 5, why: '5.36 − 2.82 = 2.54\n方框里是 5'},
-    {tag: '乘法交换', left: '27 × ', right: ' = 54 × 27', ans: 54, why: '两个数相乘，换位置积不变\n27 × 54 = 54 × 27，方框里是 54'}]},
+    {tag: '小数减法', left: '5.36 − 2.82 = 2.', right: '4', ans: 5, work: ['5.36 − 2.82 = 2.54', {a: '5.36', op: '−', b: '2.82'}], why: '5.36 − 2.82 = 2.54\n方框里是 5'},
+    {tag: '乘法交换', left: '27 × ', right: ' = 54 × 27', ans: 54, work: ['27 × 54 = 54 × 27', '交换两个因数的位置，积不变'], why: '两个数相乘，换位置积不变\n27 × 54 = 54 × 27，方框里是 54'}]},
 };
 const KINDS = Object.keys(BANK);
 const Q = {kind: 'vert', i: 0, cells: [], pads: [], locked: false, t0: 0, touched: 0};
@@ -139,10 +151,10 @@ function render() {
       <div class="row" style="grid-template-columns:${col};padding-top:10px"><div class="lab">答案</div>${cellsRow(n)}</div></div>`;
   } else if (Q.kind === 'mul') {
     const two = String(q.b).length > 1, n = String(q.a).length + String(q.b).length, col = `80px repeat(${n}, 96px)`, pad = s => Array(n - s.length).fill('').concat(s.split(''));
-    h = `<div class="card"><div class="row dig" style="grid-template-columns:${col};font-size:64px;line-height:80px"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
-      <div class="row dig line" style="grid-template-columns:${col};font-size:64px;line-height:80px"><div>×</div>${pad(String(q.b)).map(d => `<div>${d}</div>`).join('')}</div>
-      ${two ? `<div class="row" style="grid-template-columns:${col}"><div class="lab">草稿</div>${minis(n)}</div>
-      <div class="row line" style="grid-template-columns:${col}"><div class="lab">草稿</div>${minis(n - 1)}<div class="gap">空一位</div></div>` : `<div class="row" style="grid-template-columns:${col}"><div class="lab">进位</div>${minis(n)}</div>`}
+    const strip = (lab, cls) => `<div class="row" style="grid-template-columns:${col}"><div class="lab">${lab}</div><div class="strip ${cls || ''} scratch" style="grid-column:2/-1"><canvas></canvas></div></div>`;
+    h = `<div class="card">${strip('进位', 'sm')}<div class="row dig" style="grid-template-columns:${col};font-size:64px;line-height:76px"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
+      <div class="row dig line" style="grid-template-columns:${col};font-size:64px;line-height:76px"><div>×</div>${pad(String(q.b)).map(d => `<div>${d}</div>`).join('')}</div>
+      ${two ? strip('草稿') + `<div class="line">${strip('草稿')}</div>` : ''}
       <div class="row" style="grid-template-columns:${col};padding-top:8px"><div class="lab">答案</div>${cellsRow(n)}</div></div>`;
   } else if (Q.kind === 'word') {
     const n = String(q.ans).length + 1;
@@ -179,6 +191,67 @@ function render() {
 }
 function recCell(c) { const p = Q.pads[Q.cells.indexOf(c)], r = INK.recognize(p.strokes(), STORE); c.querySelector('.rec').textContent = r.text ? r.text[0] : (p.strokes().length ? '?' : ''); }
 
+// ---------- 完整写法（Ben 11-07：出答案时把整个正确写法写出来）：按数字现算，不手写 ----------
+// 一个格子：{v: 文字, c: 'u' 下划线 | 's' 小字（进位、退位点）| 'q' 蓝字（答案）}
+const grid = (rows, n) => `<div class="g" style="grid-template-columns:28px repeat(${n}, 34px)">${rows.map(r => r.map(x => `<div class="${x.c || ''}">${x.v === undefined ? '' : x.v}</div>`).join('')).join('')}</div>`;
+const cellsOf = (s, n, c) => { const a = String(s).split(''); return Array(n - a.length).fill({v: ''}).concat(a.map(v => ({v, c}))); };
+// 竖式加减，支持小数（按小数点对齐，小数点占一列）
+function vAddSub(A, op, B) {
+  const [ai, af = ''] = String(A).split('.'), [bi, bf = ''] = String(B).split('.'), fl = Math.max(af.length, bf.length), sc = 10 ** fl;
+  const x = Math.round(+A * sc), y = Math.round(+B * sc), r = op === '+' ? x + y : x - y;
+  const fmt = v => { const s = String(v).padStart(fl + 1, '0'); return fl ? s.slice(0, -fl) + '.' + s.slice(-fl) : s; };
+  const sa = fmt(x), sb = fmt(y), sr = fmt(r), n = Math.max(sa.length, sb.length, sr.length) + (op === '+' ? 1 : 0);
+  const da = cellsOf(sa, n), db = cellsOf(sb, n), dr = cellsOf(sr, n, 'q'), marks = Array(n).fill(0).map(() => ({v: '', c: 's'}));
+  let carry = 0;
+  for (let i = n - 1; i >= 0; i--) {
+    if (da[i].v === '.') continue;
+    const p = +(da[i].v || 0), q = +(db[i].v || 0);
+    if (op === '+') { const s = p + q + carry; carry = s >= 10 ? 1 : 0; let j = i - 1; if (j >= 0 && da[j].v === '.') j--; if (carry && j >= 0) marks[j].v = '1'; }
+    else { const s = p - q - carry; carry = s < 0 ? 1 : 0; let j = i - 1; if (j >= 0 && da[j].v === '.') j--; if (carry && j >= 0) marks[j].v = '·'; }
+  }
+  return grid([[{v: '', c: 's'}].concat(marks), [{v: ''}].concat(da), [{v: op, c: 'u'}].concat(db.map(d => ({v: d.v, c: 'u'}))), [{v: ''}].concat(dr)], n);
+}
+// 竖式乘法：乘一位数一行；乘两位数两行部分积（每行上面小字是这一行的进位）再相加
+function vMul(a, b) {
+  const sa = String(a), bd = String(b).split('').reverse().map(Number), prod = a * b, n = Math.max(String(prod).length, sa.length, String(b).length) + 1;
+  const part = (d, shift) => {   // a × d，往左移 shift 位；返回 [进位行, 积行]
+    const p = a * d, carries = Array(n).fill(''), ad = sa.split('').map(Number); let c = 0;
+    for (let i = ad.length - 1; i >= 0; i--) { const v = ad[i] * d + c; c = Math.floor(v / 10); const col = n - 1 - shift - (ad.length - i); if (c && i > 0 && col >= 0) carries[col] = String(c); }
+    const row = cellsOf(String(p), n - shift).concat(Array(shift).fill({v: ''}));
+    return [[{v: '', c: 's'}].concat(carries.map(v => ({v, c: 's'}))), [{v: ''}].concat(row)];
+  };
+  const head = [[{v: ''}].concat(cellsOf(sa, n)), [{v: '×', c: 'u'}].concat(cellsOf(String(b), n).map(x => ({v: x.v, c: 'u'})))];
+  if (bd.length === 1) { const [c1, r1] = part(bd[0], 0); return grid([c1].concat(head, [r1.map((x, i) => i ? Object.assign({}, x, {c: 'q'}) : x)]), n); }
+  const [c1, r1] = part(bd[0], 0), [c2, r2] = part(bd[1], 1);
+  return grid(head.concat([c1, r1, c2, r2.map(x => Object.assign({}, x, {c: 'u'})), [{v: ''}].concat(cellsOf(String(prod), n, 'q'))]), n);
+}
+// 除法竖式（厂字形）：商在上，每一步写乘积、横线、余数并落下下一位
+function vDiv(a, b) {
+  const ds = String(a).split('').map(Number), L = ds.length, n = L + 2, rows = [], qd = [];
+  let cur = 0, started = false;
+  const at = (s, end) => Array(n).fill(0).map((_, k) => { const i = k - 2, st = end - String(s).length + 1; return {v: i >= st && i <= end ? String(s)[i - st] : ''}; });
+  const steps = [];
+  ds.forEach((d, i) => { cur = cur * 10 + d; const q = Math.floor(cur / b); if (q || started) { started = true; qd[i] = q; if (q) steps.push({end: i, prod: q * b, rest: cur - q * b}); cur -= q * b; } });
+  rows.push([{v: ''}].concat(Array(n).fill(0).map((_, k) => ({v: k >= 2 && qd[k - 2] !== undefined ? qd[k - 2] : '', c: 'q'}))));
+  rows.push([{v: ''}, {v: b}, {v: '', c: 'br'}].concat(ds.map(d => ({v: d, c: 't'}))));
+  steps.forEach((s, k) => {
+    rows.push([{v: ''}].concat(at(s.prod, s.end).map((x, i) => (i - 2 <= s.end && i - 2 > s.end - String(s.prod).length ? Object.assign(x, {c: 'u'}) : x))));
+    const nx = steps[k + 1], end = nx ? nx.end : L - 1;   // 余数接着落下的数，直到下一步要用的那一位
+    let txt = String(s.rest); for (let j = s.end + 1; j <= end; j++) txt += ds[j];
+    rows.push([{v: ''}].concat(at(nx ? String(+txt) : txt.replace(/^0+(?=\d)/, ''), end)));
+  });
+  return grid(rows, n);
+}
+function workOf(q) {
+  const box = (title, body) => `<div class="wk"><h4>${title}</h4>${body}</div>`;
+  if (Q.kind === 'vert') return box('正确写法', vAddSub(q.a, q.op === '−' ? '-' : '+', q.b).replace(/>-</, '>−<'));
+  if (Q.kind === 'mul') return box('正确写法', vMul(q.a, q.b));
+  if (Q.kind === 'div') return box('正确写法', vDiv(q.a, q.b) + (q.rem !== undefined ? `<div class="eq">${q.a} ÷ ${q.b} = ${q.ans} 余 ${q.rem}</div>` : `<div class="eq">${q.a} ÷ ${q.b} = ${q.ans}</div>`));
+  if (Q.kind === 'steps') return box('正确写法', q.work.map(l => `<div class="eq">${l}</div>`).join(''));
+  const parts = (q.work || []).map(w => typeof w === 'string' ? `<div class="eq">${w}</div>` : `<div style="display:flex;gap:18px;align-items:flex-start;margin:4px 0">${w.op === '×' ? vMul(w.a, w.b) : w.op === '÷' ? vDiv(w.a, w.b) : vAddSub(w.a, w.op === '−' ? '-' : '+', w.b).replace(/>-</, '>−<')}</div>`);
+  return box('正确写法', parts.join(''));
+}
+
 // ---------- 判：答案格去掉前面的空格；中间空着算错 ----------
 function judge(dunno) {
   if (Q.locked) return; Q.locked = true;
@@ -192,7 +265,7 @@ function judge(dunno) {
   const res = $('res');
   res.innerHTML = `<div class="big ${ok ? 'ok' : 'bad'}">${ok ? '✓ 对了' : dunno ? '没关系，看一看' : '✗ 再看看'}</div>
     ${dunno ? '' : `<div class="muted">认出来是：${body || '（空）'}${q.rem !== undefined ? ' 余 ' + (rem || '（空）') : ''} · 用了 ${Math.ceil(ms / 1000)} 秒</div>`}
-    <div class="why">${q.why}</div><div style="flex:1"></div><button class="btn go" id="next">下一题</button>`;
+    ${workOf(q)}<div class="why">${q.why}</div><div style="flex:1"></div><button class="btn go" id="next">下一题</button>`;
   res.classList.add('show');
   $('next').onclick = next;
 }
