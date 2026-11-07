@@ -1,0 +1,71 @@
+# 方块世界时间设置在数学岛家长区（App 专用，ios/world-entry.js；Ben 2026-11-07 从方块世界的家长中心搬过来）
+# 先 bash ios/sync-web.sh 生成 ios/web，再跑：python3 tools/e2e/e2e-world-time.py <项目根> <截图目录>
+import sys, json, pathlib, datetime
+from playwright.sync_api import sync_playwright
+root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
+web = root / 'ios' / 'web'
+url = (web / 'index.html').as_uri()
+d = datetime.date.today().isoformat()
+seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'known': {}, 'settings': {'bilingual': False},
+        'stats': {d: {'sec': 120, 'n': 30, 'h': {'a': 30}}}}
+APP = "window.webkit = { messageHandlers: { backup: { postMessage() {} } } }; window.__kongK = () => 1;"   # 模拟 App：方块世界按 App 判定（每日时长门槛生效）；__kongK 由 App.swift 启动脚本提供
+fails, errs = [], []
+def check(ok, msg):
+    print(('ok  ' if ok else 'FAIL'), msg)
+    if not ok: fails.append(msg)
+def hold(pg, sel, ms):
+    bb = pg.locator(sel).bounding_box(); pg.mouse.move(bb['x'] + bb['width'] / 2, bb['y'] + bb['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(ms); pg.mouse.up(); pg.wait_for_timeout(250)
+mc = lambda pg: pg.evaluate("JSON.parse(localStorage.getItem('mc_unlock') || 'null')")
+panel = lambda pg: pg.inner_text('#worldPanel')
+with sync_playwright() as p:
+    b = p.chromium.launch(); ctx = b.new_context(viewport={'width': 1210, 'height': 834}, has_touch=True)
+    ctx.add_init_script(APP)
+    pg = ctx.new_page(); pg.on('pageerror', lambda e: None if 'pointer lock' in str(e).lower() else errs.append(str(e)))   # 桌面 Chromium 的鼠标锁定提示，iPad 没这个接口
+    pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(800)
+    hold(pg, '#gear', 2200)
+    check(pg.locator('#worldPanel').count() == 1 and pg.is_visible('#worldPanel'), '家长区有方块世界面板')
+    check(pg.evaluate("document.querySelector('#parent .pgrid').firstElementChild.id") == 'worldPanel', '面板排在最前')
+    t = panel(pg)
+    check('每天可玩' in t and '10 分钟' in t and '未达标' in t and '2 / 10 分钟' in t and '30 / 100 题' in t, '默认 10 分钟、显示数学岛进度：' + t.replace('\n', ' | '))
+    pg.click('#worldPanel [data-w="+5"]'); pg.wait_for_timeout(150)
+    s = mc(pg)
+    check(s and s['limits']['daily'] == 15 and s.get('total') is not None, f'+5 后每天 15 分钟，存档完整：{s and s.get("limits")}')
+    check('15 分钟' in panel(pg), '面板显示 15 分钟')
+    for _ in range(3): pg.click('#worldPanel [data-w="+5"]'); pg.wait_for_timeout(80)
+    for _ in range(12): pg.click('#worldPanel [data-w="-5"]'); pg.wait_for_timeout(60)
+    check(mc(pg)['limits']['daily'] == 5, '最少 5 分钟')
+    for _ in range(14): pg.click('#worldPanel [data-w="+5"]'); pg.wait_for_timeout(60)
+    check(mc(pg)['limits']['daily'] == 60, '最多 60 分钟')
+    for _ in range(10): pg.click('#worldPanel [data-w="-5"]'); pg.wait_for_timeout(60)
+    check(mc(pg)['limits']['daily'] == 10, '调回 10 分钟')
+    pg.click('#wExtra'); pg.wait_for_timeout(100); pg.click('#wExtra'); pg.wait_for_timeout(100)
+    s = mc(pg)
+    check(s['extra'] == {'day': d, 'min': 20} and '今天已加 20 分钟' in panel(pg), f'今天加 10 分钟两次：{s.get("extra")}')
+    pg.check('#wPass'); pg.wait_for_timeout(100)
+    check(mc(pg)['pass'] == {'day': d} and '未达标' not in panel(pg), '今天不需达标：开')
+    check('还可玩 30 分钟' in panel(pg), '达标 10 + 加时 20 = 还可玩 30 分钟：' + panel(pg).replace('\n', ' | '))
+    r = pg.evaluate("(()=>{const r=document.getElementById('worldPanel').getBoundingClientRect();return {r:r.right,w:innerWidth}})()")
+    check(r['r'] <= r['w'], f'面板不超屏 {r}')
+    pg.screenshot(path=str(out / 'world-time-panel.png'))
+    pg.uncheck('#wPass'); pg.wait_for_timeout(100)
+    check(mc(pg)['pass'] is None and '未达标' in panel(pg), '今天不需达标：关')
+    # 玩过之后再进家长区，面板跟着变
+    pg.evaluate(f"(()=>{{const s=JSON.parse(localStorage.getItem('mc_unlock')); s.play={{day:'{d}', sec:300}}; s.extra=null; s.welcomed=true; localStorage.setItem('mc_unlock', JSON.stringify(s));}})()")
+    pg.click('#parBack'); pg.wait_for_timeout(300); hold(pg, '#gear', 2200)
+    check('今天已玩 5 分钟' in panel(pg) and '还可玩 0 分钟' in panel(pg), '重进家长区刷新已玩时间：' + panel(pg).split('\n')[1])
+    # 进方块世界：未达标、试用已用完 → 弹窗写明去家长区；家长打开「今天不需达标」后能玩
+    pg.goto((web / 'world' / 'index.html').as_uri()); pg.wait_for_timeout(500)
+    pg.click('#btnStart'); pg.wait_for_function("() => window.__game && window.__game.playing", timeout=30000)
+    pg.wait_for_selector('.uGateT', timeout=20000)
+    t = pg.inner_text('.qPanel')
+    check('试用已结束' in t and '数学岛 · 家长区' in t and pg.locator('.qPanel button:has-text("家长中心")').count() == 0, '方块世界弹窗指向数学岛家长区：' + t.replace('\n', ' | '))
+    pg.screenshot(path=str(out / 'world-time-gate.png'))
+    pg.click('.qPanel button:has-text("回数学岛")'); pg.wait_for_timeout(1200)
+    hold(pg, '#gear', 2200); pg.check('#wPass'); pg.wait_for_timeout(150)
+    pg.goto((web / 'world' / 'index.html').as_uri()); pg.wait_for_timeout(500)
+    pg.click('#btnStart'); pg.wait_for_function("() => window.__game && window.__game.playing", timeout=30000); pg.wait_for_timeout(2500)
+    check(pg.locator('.uGateT').count() == 0 and '分' in pg.inner_text('#uChip'), '家长区放行后能玩：' + pg.inner_text('#uChip'))
+    b.close()
+print('页面报错:', errs[:3])
+if fails or errs: print('FAIL', len(fails), '项'); sys.exit(1)
+print('PASS 方块世界时间设置（数学岛家长区）')
