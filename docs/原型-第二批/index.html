@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>第二批原型</title>
+<!-- 第二批原型（docs/说明书-到四年级第二批.md 门 5）：讲解卡、线段图、条形图、方格、分步作答、选择题。
+     只读本机正式版的笔迹模板（speedmap.ink），不写正式版任何存档；试用结果存在 kongmath.proto2。 -->
+<style>
+:root{color-scheme:dark;--cave:#1b1d22;--stone:#2a2d34;--stone-hi:#3a3e47;--ink:#ecebe4;--mute:#b8bac3;--dim:#9a9ca6;--grass:#3d7524;--ok:#7bd88f;--warn:#f2c14e;--bad:#ffb4a8;--paper:#f4ecd8;--counter:#6ea8fe;
+  --f-num:ui-rounded,"SF Pro Rounded","Arial Rounded MT Bold","PingFang SC",system-ui,sans-serif;--f-cn:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --padL:max(16px,env(safe-area-inset-left));--padR:max(16px,env(safe-area-inset-right))}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--cave);color:var(--ink);font-family:var(--f-cn);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:3px solid #000;background:var(--stone);touch-action:manipulation;font-weight:900}
+.scr{position:fixed;inset:0;display:flex;gap:14px;padding:10px var(--padR) max(10px,env(safe-area-inset-bottom)) var(--padL)}
+.go{background:var(--grass);color:#fff;box-shadow:inset -4px -4px 0 rgba(0,0,0,.3)}
+.big{min-height:52px;min-width:110px;padding:0 18px;font-size:19px}
+.num{font-family:var(--f-num);font-weight:900;font-variant-numeric:tabular-nums}
+.spk{width:44px;height:44px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
+/* 家长说明页 */
+#intro{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+#intro h1{margin:0;font-size:24px}#intro p{margin:0;color:var(--mute);font-size:15px;line-height:1.5;max-width:640px}
+/* 讲解卡 */
+#card{flex-direction:column;gap:6px}
+#card .head{display:flex;align-items:center;gap:10px}
+#card .learn{background:var(--warn);color:#000;font-weight:900;padding:2px 10px;font-size:15px}
+#card .title{font-size:20px;font-weight:900}
+#card .dots{margin-left:auto;display:flex;gap:6px}#card .dots i{width:12px;height:12px;background:var(--stone-hi);border:2px solid #000}#card .dots i.on{background:var(--warn)}
+#card .fig{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+#card .fig>svg,#play .fig>svg{width:100%;height:100%;max-height:100%}
+#card .foot{display:flex;align-items:center;gap:12px}
+#card .line{flex:1;font-size:clamp(17px,3.2vw,24px);font-weight:900;line-height:1.3}
+/* 做题 */
+#play{gap:14px}
+#play .left{flex:1.25;min-width:0;display:flex;flex-direction:column;gap:6px}
+#play .say{display:flex;align-items:flex-start;gap:8px;font-size:clamp(16px,2.8vw,21px);font-weight:900;line-height:1.35}
+#play .say span{flex:1}
+#play .fig{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+#play .note{font-size:15px;color:var(--warn);font-weight:800;min-height:20px}
+#play .why{color:var(--ok);font-size:clamp(18px,3.4vw,28px);font-weight:900;text-align:center}
+#play .right{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+#pad{flex:1;min-height:0;position:relative;background:var(--paper);border:3px solid #000}
+#pad canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#pad .tip{position:absolute;left:0;right:0;bottom:6px;text-align:center;color:#8a7f66;font-size:13px;pointer-events:none}
+#play .btns{display:flex;gap:8px}#play .btns button{flex:1;min-height:48px;font-size:17px}
+.eq{font-size:clamp(22px,4.4vw,40px);text-align:center;line-height:1.4;white-space:nowrap}
+.slot{display:inline-flex;min-width:1.3em;height:1.25em;align-items:center;justify-content:center;border:4px solid #8a8d96;margin:0 4px;padding:0 4px;vertical-align:middle;background:#22252b}
+.slot.cur{border-color:var(--warn);box-shadow:0 0 0 3px rgba(242,193,78,.35)}
+.slot.ok{color:var(--ok);border-color:var(--ok)}.slot.bad{color:var(--bad)}
+.opts{flex:1;min-height:0;display:grid;gap:12px;align-content:center}
+.opts button{min-height:clamp(56px,16vh,96px);font-family:var(--f-num);font-size:clamp(26px,5vw,40px);box-shadow:0 5px 0 #000}
+.opts button.right{border-color:var(--ok);color:var(--ok)}.opts button.wrong{color:var(--dim)}.opts button.picked{border-color:var(--bad);color:var(--bad)}
+.fb{font-size:22px;font-weight:900;min-height:30px}.fb.ok{color:var(--ok)}.fb.bad{color:var(--bad)}
+/* 结果 */
+#done{flex-direction:column;gap:6px;overflow:auto}
+#done .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}#done .top button{min-height:44px;font-size:16px;padding:0 14px}
+#done .tabs{display:flex;gap:12px;align-items:flex-start}#done p{margin:0;font-size:14px}
+#done table{border-collapse:collapse;font-size:12px}#done td,#done th{border:1px solid #444;padding:1px 6px;text-align:left;line-height:1.35}
+#rot{display:none}
+@media (orientation:portrait){#rot{display:flex;position:fixed;inset:0;z-index:9;background:var(--cave);align-items:center;justify-content:center;font-size:26px;font-weight:900}}
+</style>
+</head>
+<body>
+<div id="rot">把手机横过来</div>
+
+<div class="scr" id="intro">
+  <h1>第二批原型 · 试用</h1>
+  <p>家长看：手机横过来、<b>打开静音</b>，交给空空，全程不提示、不讲解。约 5 分钟：3 张讲解卡、10 道题。<br>卡住超过 10 秒也先别帮，记下来就好。最后一页是结果，截图或点「复制结果」发给 Claude。</p>
+  <p id="inkInfo"></p>
+  <button class="big go" id="startBtn">开始</button>
+</div>
+
+<div class="scr" id="card" hidden>
+  <div class="head"><span class="learn">学一学</span><span class="title" id="cTitle"></span><div class="dots" id="cDots"></div></div>
+  <div class="fig" id="cFig"></div>
+  <div class="foot"><button class="big" id="cBack" style="min-width:90px">上一步</button><button class="spk" id="cSay" aria-label="朗读"><svg width="22" height="22" viewBox="0 0 11 11" shape-rendering="crispEdges" aria-hidden="true"><path fill="#f2c14e" d="M0 4h2v3H0zM2 3h1v5H2zM3 2h1v7H3zM4 1h1v9H4zM6 4h1v3H6zM8 2h1v7H8z"/></svg></button><div class="line" id="cLine"></div><button class="big go" id="cNext">下一步</button></div>
+</div>
+
+<div class="scr" id="play" hidden>
+  <div class="left">
+    <div class="say"><span id="qSay"></span><button class="spk" id="qSpk" aria-label="朗读"><svg width="22" height="22" viewBox="0 0 11 11" shape-rendering="crispEdges" aria-hidden="true"><path fill="#f2c14e" d="M0 4h2v3H0zM2 3h1v5H2zM3 2h1v7H3zM4 1h1v9H4zM6 4h1v3H6zM8 2h1v7H8z"/></svg></button></div>
+    <div class="fig" id="qFig"></div>
+    <div class="note" id="qNote"></div>
+  </div>
+  <div class="right" id="qRight">
+    <div class="fb" id="qFb"></div>
+    <div id="pad"><canvas></canvas><div class="tip" id="padTip">在这里写</div></div>
+    <div class="opts" id="qOpts" hidden></div>
+    <div class="btns"><button id="qClear">擦掉</button><button id="qDunno">不会</button><button class="go" id="qNext" hidden>继续</button></div>
+  </div>
+</div>
+
+<div class="scr" id="done" hidden>
+  <div class="top"><b style="font-size:20px">试用结果</b><button class="go" id="copyBtn">复制结果</button><button id="againBtn">再试一遍</button><span id="copied" style="color:var(--mute);font-size:13px"></span></div>
+  <div id="sum"></div>
+</div>
+
+<script src="../../v2/ink.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id), I = window.INK;
+  // ---------- 笔迹：优先用本机正式版学过的空空笔迹（只读），没有就用内置规范字形 ----------
+  function buildStore() {
+    try { const s = JSON.parse(localStorage.getItem('speedmap.ink') || 'null'); if (s && s.t && Object.keys(s.t).some(d => s.t[d].length)) return {store: Object.assign(I.blankStore(), s), mine: true}; } catch (e) {}
+    const st = I.blankStore(), fine = line => { const o = []; for (let i = 0; i + 1 < line.length; i++) for (let k = 0; k < 8; k++) { const t = k / 8; o.push({x: (line[i][0] + t * (line[i + 1][0] - line[i][0])) * 100, y: (line[i][1] + t * (line[i + 1][1] - line[i][1])) * 100, t: 0}); } const z = line[line.length - 1]; o.push({x: z[0] * 100, y: z[1] * 100, t: 0}); return o; };
+    Object.keys(I.STD).forEach(d => I.STD[d].forEach(form => I.addTemplate(st, d, form.map(fine))));
+    return {store: st, mine: false};
+  }
+  const INK = buildStore();
+  $('inkInfo').textContent = INK.mine ? '手写识别：用这台设备上空空的笔迹。' : '手写识别：这台设备上没有空空的笔迹，用标准字形，认字可能不准。最好用空空平时练习的那台设备。';
+
+  // ---------- 朗读（静音时不响，所以讲解不靠声音） ----------
+  const say = t => { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t.replace(/□/g, '方框').replace(/？/g, '')); u.lang = 'zh-CN'; u.rate = 0.9; speechSynthesis.speak(u); } catch (e) {} };
+
+  // ---------- 图 ----------
+  const C = {a: '#6ea8fe', b: '#f2c14e', red: '#e5534b', line: '#000', txt: '#ecebe4', ok: '#7bd88f'};
+  // 线段图：一条线分几段；segs = [{v, name, q?}]，total = 数或 '?'；show = 揭晓的答案
+  // seg.col = 颜色（跟着名字走，红花就是红色）；o.of = 按这个总数定比例（讲解卡各页长度不变）；o.cells = 画出一格一格
+  function barFig(segs, total, o = {}) {
+    const W = 420, x0 = 20, sum = segs.reduce((a, s) => a + s.v, 0), u = (W - 2 * x0) / (o.of || sum);
+    let x = x0, out = '';
+    segs.forEach((s, i) => {
+      const w = s.v * u, lab = s.q && !o.show ? '?' : s.v, col = s.col || (i % 2 ? C.b : C.a);
+      out += `<rect x="${x}" y="70" width="${w}" height="40" fill="${col}" stroke="${s.q && o.show ? C.ok : '#000'}" stroke-width="${s.q && o.show ? 5 : 3}"/>`;
+      if (o.cells) for (let k = 1; k < s.v; k++) out += `<line x1="${x + k * u}" x2="${x + k * u}" y1="70" y2="110" stroke="#000" stroke-width="2"/>`;
+      if (!o.cells) out += `<text x="${x + w / 2}" y="98" font-size="24" font-weight="900" text-anchor="middle" fill="#000">${lab}</text>`;
+      if (s.name) out += `<text x="${x + w / 2}" y="138" font-size="18" font-weight="800" text-anchor="middle" fill="${C.txt}">${s.name}</text>`;
+      x += w;
+    });
+    if (total !== undefined && total !== null) {
+      const xe = x, t = total === '?' ? (o.show ? sum : '?') : total, col = total === '?' && o.show ? C.ok : C.txt, mid = (x0 + xe) / 2;
+      out += `<path d="M${x0} 60 Q${x0} 44 ${x0 + 14} 44 L${mid - 10} 44 Q${mid} 44 ${mid} 30 Q${mid} 44 ${mid + 10} 44 L${xe - 14} 44 Q${xe} 44 ${xe} 60" fill="none" stroke="${col}" stroke-width="3"/>`;
+      out += `<text x="${mid}" y="22" font-size="24" font-weight="900" text-anchor="middle" fill="${col}">${t}${o.totalName ? ' ' + o.totalName : ''}</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} 150">${out}</svg>`;
+  }
+  // 一排小方块（实物）
+  const blocks = (n, col, gap) => `<svg viewBox="0 0 ${n * 34 + 8} 44" width="${n * 34 + 8}">${Array.from({length: n}, (_, i) => `<rect x="${4 + i * 34}" y="6" width="28" height="28" fill="${col}" stroke="#000" stroke-width="3"/>`).join('')}</svg>`;
+  // 条形图：bars = [[名字, 数]]，max = 纵轴最大；hi = 高亮第几根；show = 画到这根的虚线
+  function chartFig(bars, max, o = {}) {
+    const H = 250, top = 14, bot = 206, L = 50, bw = 56, gap = 34, W = L + bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / max;
+    let out = '';
+    for (let v = 0; v <= max; v++) out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${v ? '#3a3e47' : '#ecebe4'}" stroke-width="${v ? 1.5 : 3}"/><text x="${L - 8}" y="${y(v) + 7}" font-size="20" font-weight="800" text-anchor="end" fill="${C.txt}">${v}</text>`;
+    bars.forEach(([name, v], i) => {
+      const x = L + gap / 2 + i * (bw + gap), on = o.show && o.hi && o.hi.includes(i);
+      if (o.blocks) { for (let k = 0; k < v; k++) out += `<rect x="${x + 4}" y="${y(k + 1) + 2}" width="${bw - 8}" height="${y(0) - y(1) - 4}" fill="${C.a}" stroke="#000" stroke-width="2"/>`; }
+      else out += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${bot - y(v)}" fill="${on ? C.b : C.a}" stroke="#000" stroke-width="3"/>`;
+      out += `<text x="${x + bw / 2}" y="${bot + 28}" font-size="21" font-weight="800" text-anchor="middle" fill="${C.txt}">${name}</text>`;
+      if (on && o.show) out += `<line x1="${L}" x2="${x}" y1="${y(v)}" y2="${y(v)}" stroke="${C.ok}" stroke-width="3" stroke-dasharray="6 5"/><text x="${x + bw / 2}" y="${y(v) - 8}" font-size="20" font-weight="900" text-anchor="middle" fill="${C.ok}">${v}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}">${out}</svg>`;
+  }
+  // 方格：rows × cols；mode = 'plain' 只画外框 / 'grid' 画格子 / 'count' 格子里写 1、2、3…
+  function gridFig(rows, cols, mode, o = {}) {
+    const c = 40, W = cols * c + 8, H = rows * c + 8;
+    let out = `<rect x="4" y="4" width="${cols * c}" height="${rows * c}" fill="${o.show ? '#2f4a2a' : '#3b5f2a'}" stroke="#000" stroke-width="4"/>`;
+    if (mode !== 'plain') for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) {
+      out += `<rect x="${4 + k * c}" y="${4 + r * c}" width="${c}" height="${c}" fill="none" stroke="#000" stroke-width="2"/>`;
+      if (mode === 'count' || o.show) out += `<text x="${4 + k * c + c / 2}" y="${4 + r * c + c / 2 + 7}" font-size="18" font-weight="900" text-anchor="middle" fill="${o.show ? C.ok : '#fff'}">${r * cols + k + 1}</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}">${out}</svg>`;
+  }
+
+  // ---------- 内容 ----------
+  const CARDS = {
+    bar: {title: '线段图', pages: [
+      {fig: () => `<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><div style="font-size:18px;font-weight:900">小猫 ${blocks(7, C.a)}</div><div style="font-size:18px;font-weight:900">小狗 ${blocks(5, C.b)}</div></div>`, line: '小猫有 7 个苹果，小狗有 5 个苹果'},
+      {fig: () => barFig([{v: 7, name: '小猫'}, {v: 5, name: '小狗'}], null, {cells: true}), line: '一个苹果一格，排成一条线'},
+      {fig: () => barFig([{v: 7, name: '小猫'}, {v: 5, name: '小狗'}]), line: '不画格子，在线上写数'},
+      {fig: () => barFig([{v: 7, name: '小猫'}, {v: 5, name: '小狗'}], '?'), line: '合起来有几个？看整条线'},
+      {fig: () => barFig([{v: 7, name: '小猫'}, {v: 5, name: '小狗'}], '?', {show: true}), line: '7 + 5 = 12，合起来 12 个'},
+      {fig: () => barFig([{v: 7, name: '小猫'}, {v: 5, name: '小狗', q: true}], 12), line: '反过来：合起来 12 个，小猫 7 个，小狗几个？'},
+      {fig: () => barFig([{v: 7, name: '小猫'}, {v: 5, name: '小狗', q: true}], 12, {show: true}), line: '12 − 7 = 5，小狗 5 个'},
+    ]},
+    chart: {title: '条形图', pages: [
+      {fig: () => chartFig([['小猫', 6], ['小狗', 8], ['小羊', 3]], 10, {blocks: true}), line: '小猫钓了 6 条鱼，一条鱼画一块，摞起来'},
+      {fig: () => chartFig([['小猫', 6], ['小狗', 8], ['小羊', 3]], 10), line: '摞起来就是一根条，条越高越多'},
+      {fig: () => chartFig([['小猫', 6], ['小狗', 8], ['小羊', 3]], 10, {hi: [1], show: true}), line: '小狗的条顶对着左边的 8，小狗有 8 条鱼'},
+    ]},
+    area: {title: '有多大', pages: [
+      {fig: () => gridFig(3, 4, 'plain'), line: '这块草地有多大？'},
+      {fig: () => gridFig(3, 4, 'grid'), line: '铺满一样大的小方格'},
+      {fig: () => gridFig(3, 4, 'count'), line: '数一数，一共 12 格。草地有 12 格那么大'},
+    ]},
+  };
+  // 题：kind = write（ans 字符串）/ step（ans 数组，两格）/ choice（opts，ans = 编号）
+  const QS = [
+    {card: 'bar', id: 'bar1', kind: 'write', say: '红花 8 朵，黄花 6 朵。一共几朵？', fig: o => barFig([{v: 8, name: '红花', col: C.red}, {v: 6, name: '黄花', col: C.b}], '?', o), ans: '14', why: '8 + 6 = 14'},
+    {id: 'bar2', kind: 'write', say: '一共 15 个球，9 个是红球，剩下的是蓝球。蓝球几个？', fig: o => barFig([{v: 9, name: '红球', col: C.red}, {v: 6, name: '蓝球', col: C.a, q: true}], 15, o), ans: '6', why: '15 − 9 = 6'},
+    {card: 'chart', id: 'chart1', kind: 'write', say: '梨有几个？', fig: o => chartFig([['苹果', 9], ['梨', 7], ['桃', 6]], 10, Object.assign({hi: [1]}, o)), ans: '7', why: '梨的条顶对着 7'},
+    {id: 'chart2', kind: 'write', say: '苹果比桃多几个？', fig: o => chartFig([['苹果', 9], ['梨', 7], ['桃', 6]], 10, Object.assign({hi: [0, 2]}, o)), ans: '3', why: '苹果 9 个，桃 6 个，9 − 6 = 3'},
+    {card: 'area', id: 'area1', kind: 'write', say: '这块草地有几个小方格？', fig: o => gridFig(3, 5, 'grid', o), ans: '15', why: '一共 15 格'},
+    {id: 'area2', kind: 'write', say: '这块草地有几个小方格？', fig: o => gridFig(2, 7, 'grid', o), ans: '14', why: '一共 14 格'},
+    {id: 'step1', kind: 'step', say: '47 里有几个十、几个一？', eq: ['47 是 ', ' 个十 ', ' 个一'], ans: ['4', '7']},
+    {id: 'step2', kind: 'step', say: '60 里有几个十、几个一？', eq: ['60 是 ', ' 个十 ', ' 个一'], ans: ['6', '0']},
+    {id: 'pick1', kind: 'choice', say: '哪个算式等于 15？', opts: ['8 + 7', '9 + 5', '6 + 8'], ans: 0},
+    {id: 'pick2', kind: 'choice', say: '哪个数最大？', opts: ['38', '83', '58'], ans: 1},
+  ];
+
+  // ---------- 记录 ----------
+  let LOG, qi, Q, cardT0;
+  const show = id => ['intro', 'card', 'play', 'done'].forEach(s => { $(s).hidden = s !== id; });
+  const save = () => { try { localStorage.setItem('kongmath.proto2', JSON.stringify(LOG)); } catch (e) {} };
+
+  // ---------- 讲解卡 ----------
+  let CARD = null, tapT = 0;
+  const guard = () => { const n = performance.now(); if (n < tapT) return true; tapT = n + 500; return false; };
+  function openCard(key) {
+    CARD = {key, p: 0, t0: performance.now()}; show('card'); drawCard();
+  }
+  function drawCard() {
+    const c = CARDS[CARD.key], pg = c.pages[CARD.p];
+    $('cTitle').textContent = c.title; $('cFig').innerHTML = pg.fig(); $('cLine').textContent = pg.line;
+    $('cDots').innerHTML = c.pages.map((_, i) => `<i class="${i <= CARD.p ? 'on' : ''}"></i>`).join('');
+    $('cNext').textContent = CARD.p === c.pages.length - 1 ? '试一试' : '下一步'; $('cBack').style.visibility = CARD.p ? 'visible' : 'hidden';
+  }
+  $('cSay').onclick = () => say($('cLine').textContent);
+  $('cBack').onclick = () => { if (!CARD || !CARD.p || guard()) return; CARD.p--; CARD.backs = (CARD.backs || 0) + 1; drawCard(); };
+  $('cNext').onclick = () => {
+    if (guard()) return; const c = CARDS[CARD.key];
+    if (CARD.p < c.pages.length - 1) { CARD.p++; drawCard(); return; }
+    LOG.cards.push({card: CARD.key, secs: +((performance.now() - CARD.t0) / 1000).toFixed(1), says: CARD.says || 0, backs: CARD.backs || 0}); save(); CARD = null; startQ();
+  };
+
+  // ---------- 写字板 ----------
+  const cv = document.querySelector('#pad canvas'), ctx = cv.getContext('2d');
+  let strokes = [], cur = null, active = null, subT = null;
+  const fit = () => { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d); ctx.setTransform(d, 0, 0, d, 0, 0); redraw(); };
+  const pt = e => { const r = cv.getBoundingClientRect(); return {x: e.clientX - r.left, y: e.clientY - r.top, t: performance.now()}; };
+  function redraw() { const r = cv.getBoundingClientRect(); ctx.clearRect(0, 0, r.width, r.height); ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = Math.max(7, r.height / 34); ctx.lineCap = ctx.lineJoin = 'round'; strokes.forEach(s => { ctx.beginPath(); s.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); if (s.length === 1) ctx.lineTo(s[0].x + .1, s[0].y); ctx.stroke(); }); }
+  const clearPad = () => { strokes = []; cur = null; active = null; clearTimeout(subT); redraw(); };
+  cv.addEventListener('pointerdown', e => { e.preventDefault(); if (!Q || Q.done || active !== null || performance.now() < (Q.lockT || 0)) return; active = e.pointerId; try { cv.setPointerCapture(e.pointerId); } catch (x) {} cur = [pt(e)]; strokes.push(cur); clearTimeout(subT); $('padTip').hidden = true; redraw(); });
+  cv.addEventListener('pointermove', e => { if (!cur || e.pointerId !== active) return; e.preventDefault(); const list = e.getCoalescedEvents ? e.getCoalescedEvents() : []; (list.length ? list : [e]).forEach(v => cur.push(pt(v))); redraw(); });
+  const up = e => { if (e.pointerId !== active) return; active = null; if (!cur) return; cur = null; const need = want().length, have = I.groupStrokes(strokes).length; subT = setTimeout(submitInk, have < need ? 2500 : 900); };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  addEventListener('resize', () => setTimeout(fit, 60));
+  const want = () => (Q.kind === 'step' ? Q.ans[Q.k] : Q.ans);
+
+  // ---------- 做题 ----------
+  function startQ() {
+    if (qi >= QS.length) return finish();
+    const q = QS[qi]; if (q.card && !q._carded) { q._carded = true; return openCard(q.card); }
+    Q = Object.assign({}, q, {t0: performance.now(), k: 0, got: [], boxT: [], tries: 0, done: false});
+    show('play'); $('qSay').textContent = q.say; $('qFb').textContent = ''; $('qFb').className = 'fb'; $('qNext').hidden = true; $('qDunno').hidden = false;
+    const choice = q.kind === 'choice';
+    $('pad').hidden = choice; $('qClear').hidden = choice; $('qOpts').hidden = !choice;
+    if (choice) { $('qOpts').innerHTML = q.opts.map((t, i) => `<button data-i="${i}">${t}</button>`).join(''); $('qNote').textContent = '点一个'; }
+    else $('qNote').textContent = q.kind === 'step' ? '写第 1 个方框' : '在右边写出答案';
+    drawQ(); requestAnimationFrame(() => { fit(); clearPad(); $('padTip').hidden = false; $('padTip').textContent = q.kind === 'step' ? '写第 1 个方框' : '在这里写'; });
+  }
+  function drawQ(show) {
+    if (Q.kind === 'step') $('qFig').innerHTML = `<div class="eq num">${Q.eq[0]}${Q.ans.map((a, i) => `<span class="slot${!Q.done && i === Q.k ? ' cur' : ''}${Q.done ? (Q.got[i] === a ? ' ok' : ' bad') : ''}">${Q.got[i] !== undefined ? Q.got[i] : ''}</span>${Q.eq[i + 1]}`).join('')}</div>${show ? `<div class="eq num" style="color:var(--ok);font-size:clamp(18px,3.4vw,28px)">${Q.eq[0]}${Q.ans[0]}${Q.eq[1]}${Q.ans[1]}${Q.eq[2]}</div>` : ''}`;
+    else if (Q.kind === 'choice') $('qFig').innerHTML = '';
+    else $('qFig').innerHTML = Q.fig({show}) + (show && Q.why ? `<div class="why">${Q.why}</div>` : '');
+  }
+  function submitInk() {
+    if (!Q || Q.done) return;
+    const res = I.recognize(strokes, INK.store);
+    if (!res.text) { $('qFb').textContent = '没看清，再写一次'; $('qFb').className = 'fb'; clearPad(); return; }
+    const pick = I.resolveWith(res, want()).picked.join('');
+    if (Q.kind === 'step') {
+      if (pick.length > want().length) { Q.over = (Q.over || 0) + 1; $('qFb').textContent = '一个方框写一个数'; $('qFb').className = 'fb bad'; clearPad(); return; }
+      Q.got[Q.k] = pick; Q.boxT[Q.k] = +((performance.now() - (Q.k ? Q.box1At : Q.t0)) / 1000).toFixed(1); Q.box1At = performance.now(); clearPad(); $('qFb').textContent = '';
+      if (Q.k === 0) { Q.k = 1; Q.lockT = performance.now() + 500; $('qNote').textContent = '写第 2 个方框'; $('padTip').hidden = false; $('padTip').textContent = '写第 2 个方框'; drawQ(); return; }
+      return judge(Q.got.every((g, i) => g === Q.ans[i]), Q.got.join('、'));
+    }
+    Q.got = [pick]; return judge(pick === Q.ans, pick);
+  }
+  $('qOpts').onclick = e => { const b = e.target.closest('[data-i]'); if (!b || !Q || Q.done || guard()) return; const i = +b.dataset.i; Q.picked = i; $('qOpts').querySelectorAll('button').forEach((x, k) => x.classList.add(k === Q.ans ? 'right' : k === i ? 'picked' : 'wrong')); judge(i === Q.ans, Q.opts[i]); };
+  function judge(ok, given, dunno) {
+    Q.done = true; clearTimeout(subT);
+    LOG.qs.push({id: Q.id, say: Q.say, right: Q.kind === 'choice' ? Q.opts[Q.ans] : Q.kind === 'step' ? Q.ans.join('、') : Q.ans, ok, dunno: !!dunno, wrote: given || '', secs: +((performance.now() - Q.t0) / 1000).toFixed(1), boxT: Q.boxT && Q.boxT.length ? Q.boxT : undefined, over: Q.over || 0, backs: Q.backs || 0, says: Q.says || 0}); save();
+    $('qDunno').hidden = true; $('qClear').hidden = true; $('padTip').hidden = true;
+    if (ok) { $('qFb').textContent = '✓ 对了'; $('qFb').className = 'fb ok'; drawQ(true); setTimeout(next, 1200); return; }
+    $('qFb').textContent = dunno ? '没关系，看看答案' : `你写的是 ${given}`; if (Q.kind === 'choice' && !dunno) $('qFb').textContent = `你点的是 ${given}`;
+    $('qFb').className = 'fb bad'; drawQ(true); if (Q.kind === 'choice' && dunno) $('qOpts').querySelectorAll('button').forEach((x, k) => x.classList.add(k === Q.ans ? 'right' : 'wrong'));
+    $('qNote').textContent = Q.kind === 'choice' ? '' : '答案标成绿色了'; $('qNext').hidden = false; tapT = performance.now() + 500;
+  }
+  function next() { qi++; startQ(); }
+  // 擦掉：写字板上有字先擦字；空着时在第 2 格，回到第 1 格重写
+  $('qClear').onclick = () => { if (!Q || Q.done) return; if (!strokes.length && Q.kind === 'step' && Q.k === 1) { Q.k = 0; Q.got = []; Q.boxT = []; Q.backs = (Q.backs || 0) + 1; $('qNote').textContent = '写第 1 个方框'; $('padTip').hidden = false; $('padTip').textContent = '写第 1 个方框'; drawQ(); } clearPad(); $('qFb').textContent = ''; };
+  $('qDunno').onclick = () => { if (!Q || Q.done || guard()) return; judge(false, '', true); };
+  $('qNext').onclick = () => { if (guard()) return; next(); };
+  $('qSpk').onclick = () => { if (Q) { Q.says = (Q.says || 0) + 1; say(Q.say); } };
+  $('cSay').addEventListener('click', () => { if (CARD) CARD.says = (CARD.says || 0) + 1; });
+
+  // ---------- 结果 ----------
+  function finish() {
+    LOG.end = new Date().toISOString(); save(); show('done');
+    const ok = LOG.qs.filter(x => x.ok).length, total = LOG.qs.reduce((a, x) => a + x.secs, 0) + LOG.cards.reduce((a, x) => a + x.secs, 0);
+    $('sum').innerHTML = `<p>答对 ${ok} / ${LOG.qs.length}，点「不会」${LOG.qs.filter(x => x.dunno).length} 次，总用时 ${Math.round(total)} 秒。笔迹：${INK.mine ? '空空的' : '标准字形'}。</p>
+      <div class="tabs"><table><tr><th>讲解卡</th><th>停留（秒）</th><th>上一步</th><th>朗读</th></tr>${LOG.cards.map(c => `<tr><td>${CARDS[c.card].title}</td><td>${c.secs}</td><td>${c.backs}</td><td>${c.says}</td></tr>`).join('')}</table>
+      <table><tr><th>题目</th><th>答案</th><th>写的 / 点的</th><th>对错</th><th>用时（秒）</th><th>朗读</th></tr>${LOG.qs.map(x => `<tr><td>${x.say}</td><td>${x.right}</td><td>${x.wrote}</td><td>${x.ok ? '对' : x.dunno ? '不会' : '错'}</td><td>${x.secs}${x.boxT ? '（每格 ' + x.boxT.join('、') + '）' : ''}${x.over ? ' · 一格写多 ' + x.over + ' 次' : ''}</td><td>${x.says}</td></tr>`).join('')}</table></div>`;
+  }
+  $('copyBtn').onclick = () => { const t = '第二批原型试用结果\n' + JSON.stringify(LOG); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { $('copied').textContent = '已复制'; }, () => { $('copied').textContent = '复制不了，请截图'; }); };
+  $('againBtn').onclick = begin;
+  $('startBtn').onclick = begin;
+  function begin() { LOG = {start: new Date().toISOString(), ink: INK.mine ? 'mine' : 'std', w: innerWidth, h: innerHeight, cards: [], qs: []}; qi = 0; QS.forEach(q => { delete q._carded; }); startQ(); }
+  window.__p2 = {get Q() { return Q; }, get LOG() { return LOG; }, get CARD() { return CARD; }, submitInk, INK};
+})();
+</script>
+</body>
+</html>
