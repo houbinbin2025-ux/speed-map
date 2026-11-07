@@ -63,6 +63,137 @@
   const opSign = op => (op === '+' ? '+' : '−');
   const nearWord = d => (d === 1 ? '多 1' : d === -1 ? '少 1' : d === 10 ? '多 10' : '少 10');
 
+  // ---------- 第二批 2a 的图（说明书-到四年级第二批）：线段图、条形图、长方形。a = 答案（答错图解里标出来） ----------
+  const FC = {red: '#e5534b', yellow: '#f2c14e', blue: '#6ea8fe', white: '#e8e6df', gray: '#8a8d96'}, OK = '#7bd88f', TXT = '#ecebe4';
+  const svgT = (x, y, t, o) => `<text x="${x}" y="${y}" font-size="${(o && o.size) || 20}" font-weight="900" text-anchor="${(o && o.anchor) || 'middle'}" fill="${(o && o.fill) || TXT}">${t}</text>`;
+  const brace = (x0, x1, y, up) => { const m = (x0 + x1) / 2, d = up ? -1 : 1; return `M${x0} ${y} Q${x0} ${y + 14 * d} ${x0 + 12} ${y + 14 * d} L${m - 10} ${y + 14 * d} Q${m} ${y + 14 * d} ${m} ${y + 28 * d} Q${m} ${y + 14 * d} ${m + 10} ${y + 14 * d} L${x1 - 12} ${y + 14 * d} Q${x1} ${y + 14 * d} ${x1} ${y}`; };
+  // 线段图：data = {rows: [{name?, segs: [{v, label, name?, col?, ask?}], sum?}], top?, side?}
+  function barSvg(d, a, o) {
+    o = o || {};
+    const rowSum = r => r.segs.reduce((m, g) => m + g.v, 0), maxSum = Math.max(...d.rows.map(rowSum)), named = d.rows.some(r => r.name);
+    const L = named ? 96 : 16, R = d.side ? 96 : d.rows.some(r => r.sum) ? 70 : 16, W = 460, u = (W - L - R) / (o.of || maxSum), top = d.top ? 46 : 8, rowH = d.rows.some(r => r.segs.some(g => g.name)) ? 78 : 58;
+    let out = '', y = top;
+    d.rows.forEach((r, ri) => {
+      let x = L;
+      if (r.name) out += svgT(L - 10, y + 27, r.name, {anchor: 'end', size: 19});
+      r.segs.forEach((g, gi) => {
+        const w = g.v * u, show = g.ask && a !== undefined, col = g.col ? FC[g.col] : (gi % 2 ? FC.yellow : FC.blue);
+        out += `<rect x="${x}" y="${y}" width="${w}" height="38" fill="${col}" stroke="${show ? OK : '#000'}" stroke-width="${show ? 5 : 3}"/>`;
+        if (o.cells) for (let k = 1; k < g.v; k++) out += `<line x1="${x + k * u}" x2="${x + k * u}" y1="${y}" y2="${y + 38}" stroke="#000" stroke-width="2"/>`;
+        const lab = show ? String(a) : g.label; if (lab && !o.cells) out += svgT(x + w / 2, y + 27, lab, {fill: show ? '#0b3d17' : '#000', size: 22});
+        if (g.name) out += svgT(x + w / 2, y + 64, g.name, {size: 18});
+        x += w;
+      });
+      if (r.sum) out += svgT(x + 12, y + 27, r.sum.ask && a !== undefined ? a : r.sum.label, {anchor: 'start', fill: r.sum.ask && a !== undefined ? OK : TXT, size: 22});
+      y += rowH;
+    });
+    if (d.top) { const x1 = L + rowSum(d.rows[0]) * u, show = d.top.ask && a !== undefined, c = show ? OK : TXT; out += `<path d="${brace(L, x1, top - 6, true)}" fill="none" stroke="${c}" stroke-width="3"/>` + svgT((L + x1) / 2, 18, show ? a : d.top.label, {fill: c, size: 22}); }
+    if (d.side) { const xr = L + maxSum * u + 8, y0 = top, y1 = top + (d.rows.length - 1) * rowH + 38, show = d.side.ask && a !== undefined, c = show ? OK : TXT, m = (y0 + y1) / 2;
+      out += `<path d="M${xr} ${y0} Q${xr + 14} ${y0} ${xr + 14} ${y0 + 12} L${xr + 14} ${m - 10} Q${xr + 14} ${m} ${xr + 28} ${m} Q${xr + 14} ${m} ${xr + 14} ${m + 10} L${xr + 14} ${y1 - 12} Q${xr + 14} ${y1} ${xr} ${y1}" fill="none" stroke="${c}" stroke-width="3"/>` + svgT(xr + 34, m + 8, show ? a : d.side.label, {anchor: 'start', fill: c, size: 22}); }
+    return `<svg class="fig2" viewBox="0 0 ${W} ${y - rowH + (rowH > 60 ? 78 : 50)}" role="img" aria-label="线段图">${out}</svg>`;
+  }
+  // 条形图：data = {bars: [[名字, 数]], max, step, ask}；hi = 高亮哪几根（答错图解）
+  function chartSvg(d, a, o) {
+    o = o || {};
+    const n = d.max / d.step, H = 250, top = 14, bot = 206, L = 52, bw = 58, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
+    const hi = a === undefined ? [] : d.ask.kind === 'read' ? [d.ask.i] : [d.ask.i, d.ask.j];
+    let out = '';
+    for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 8, y(v) + 7, v, {anchor: 'end', size: 19}); }
+    d.bars.forEach(([name, v], i) => {
+      const x = L + gap / 2 + i * (bw + gap), on = hi.includes(i);
+      if (o.blocks) { for (let k = 0; k < v / d.step; k++) out += `<rect x="${x + 4}" y="${y((k + 1) * d.step) + 2}" width="${bw - 8}" height="${y(0) - y(d.step) - 4}" fill="${FC.blue}" stroke="#000" stroke-width="2"/>`; }
+      else out += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${bot - y(v)}" fill="${on ? FC.yellow : FC.blue}" stroke="#000" stroke-width="3"/>`;
+      out += svgT(x + bw / 2, bot + 28, name, {size: 20});
+      if (on) out += `<line x1="${L}" x2="${x}" y1="${y(v)}" y2="${y(v)}" stroke="${OK}" stroke-width="3" stroke-dasharray="6 5"/>` + svgT(x + bw / 2, y(v) - 8, v, {fill: OK});
+    });
+    return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="条形图">${out}</svg>`;
+  }
+  // 长方形：data = {w, h, labels: 'all'|'two'|'one'|'none', grid?}；a 有值时标出答案
+  function rectSvg(d, a, o) {
+    o = o || {};
+    const cell = Math.min(36, 300 / d.w, 160 / d.h), long = d.w > 15 || d.h > 9, sc = long ? Math.min(300 / d.w, 150 / d.h) : cell, w = d.w * sc, h = d.h * sc, x0 = 46, y0 = 30, W = w + 100, H = h + 72;
+    let out = `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#3b5f2a" stroke="#000" stroke-width="4"/>`;
+    if (d.grid || o.grid) for (let r = 0; r < d.h; r++) for (let c = 0; c < d.w; c++) { out += `<rect x="${x0 + c * sc}" y="${y0 + r * sc}" width="${sc}" height="${sc}" fill="none" stroke="#000" stroke-width="2"/>`; if (o.count) out += svgT(x0 + c * sc + sc / 2, y0 + r * sc + sc / 2 + 6, r * d.w + c + 1, {size: Math.min(17, sc * .5)}); }
+    const lab = (t, x, y, anchor) => svgT(x, y, `${t} 厘米`, {anchor: anchor || 'middle', size: 18});
+    if (d.labels !== 'none') { out += lab(d.w, x0 + w / 2, y0 - 9); if (d.labels !== 'one') out += lab(d.h, x0 + w + 8, y0 + h / 2 + 6, 'start'); }
+    if (d.labels === 'all') { out += lab(d.w, x0 + w / 2, y0 + h + 24); out += lab(d.h, x0 - 8, y0 + h / 2 + 6, 'end'); }
+    if (a !== undefined) out += svgT(x0 + w / 2, y0 + h + (d.labels === 'all' ? 50 : 30), d.ask === 'perim' ? `周长 ${a} 厘米` : `面积 ${a} 平方厘米`, {fill: OK, size: 20});
+    return `<svg class="fig2" viewBox="0 0 ${W} ${H + (d.labels === 'all' && a !== undefined ? 26 : 0)}" role="img" aria-label="长方形">${out}</svg>`;
+  }
+  const FIGS = {bar: barSvg, chart: chartSvg, rect: rectSvg};
+  // 讲解卡用的小图：一排苹果（可分组装盘）、分成 10 份的条、两行数（高亮共有的）
+  function dotsSvg(n, per) {
+    const g = per ? Math.ceil(n / per) : 1, W = 470, r = 13;
+    let out = '';
+    if (!per) { for (let i = 0; i < n; i++) out += `<circle cx="${22 + i * 31}" cy="40" r="${r}" fill="${FC.red}" stroke="#000" stroke-width="3"/>`; return `<svg class="fig2" viewBox="0 0 ${W} 80">${out}</svg>`; }
+    for (let k = 0; k < g; k++) {
+      const m = Math.min(per, n - k * per), full = m === per, x0 = 8 + k * 116;
+      if (full) out += `<rect x="${x0}" y="14" width="108" height="56" fill="none" stroke="${TXT}" stroke-width="3"/>`;
+      for (let i = 0; i < m; i++) out += `<circle cx="${x0 + 18 + (i % 4) * 24}" cy="${42}" r="${r - 3}" fill="${full ? FC.red : FC.yellow}" stroke="#000" stroke-width="3"/>`;
+    }
+    return `<svg class="fig2" viewBox="0 0 ${W} 84">${out}</svg>`;
+  }
+  function tenthSvg(full, parts, label) {
+    let out = '', y = 20;
+    for (let b = 0; b <= full; b++) {
+      const on = b < full ? 10 : parts; if (b === full && !parts) break;
+      for (let i = 0; i < 10; i++) out += `<rect x="${20 + i * 40}" y="${y}" width="40" height="40" fill="${i < on ? FC.blue : '#3a3e47'}" stroke="#000" stroke-width="3"/>`;
+      y += 52;
+    }
+    if (label) out += svgT(220, y + 22, label, {fill: OK, size: 26});
+    return `<svg class="fig2" viewBox="0 0 440 ${y + (label ? 36 : 0)}">${out}</svg>`;
+  }
+  const numRows = (rows, hi) => `<div class="nrows">${rows.map(([t, l]) => `<div><b>${t}</b>${l.map(n => `<span class="num${hi && hi.includes(n) ? ' on' : ''}">${n}</span>`).join('')}</div>`).join('')}</div>`;
+  // 讲解卡（新概念第一次出现时，代替 3 秒示范卡）：每页一张图 + 一句话；不靠声音也看得懂（静音时朗读不响）
+  const B2 = (a, b, o) => ({rows: [{segs: [{v: 7, name: '小猫', label: a}, {v: 5, name: '小狗', label: b, ask: o && o.part}]}], top: o && o.top});
+  const CH = [['小猫', 6], ['小狗', 8], ['小羊', 3]], chD = b => ({bars: b, max: 10, step: 1, ask: {kind: 'read', i: 1}});
+  const TM = {rows: [{name: '小猫', segs: [{v: 3, label: '3'}]}, {name: '小狗', segs: [3, 3, 3, 3].map(v => ({v, label: '3'})), sum: {label: '?', ask: true}}]};
+  const CARDS = {
+    bar: {title: '线段图', pages: [
+      [barSvg(B2('', ''), undefined, {cells: true, of: 12}), '一个苹果一格：小猫 7 个，小狗 5 个'],
+      [barSvg(B2('7', '5')), '不画格子，在线上写数'],
+      [barSvg(B2('7', '5', {top: {label: '?', ask: true}})), '合起来有几个？看整条线'],
+      [barSvg(B2('7', '5', {top: {label: '?', ask: true}}), 12), '7 + 5 = 12，合起来 12 个'],
+      [barSvg(B2('7', '?', {top: {label: '12'}, part: true}), 5), '反过来：一共 12 个，小猫 7 个，小狗 12 − 7 = 5 个']]},
+    chart: {title: '条形图', pages: [
+      [chartSvg(chD(CH), undefined, {blocks: true}), '小猫钓了 6 条鱼，一条鱼画一块，摞起来'],
+      [chartSvg(chD(CH)), '摞起来就是一根条，条越高越多'],
+      [chartSvg(chD(CH), 8), '小狗的条顶对着左边的 8，小狗钓了 8 条']]},
+    perim: {title: '周长', pages: [
+      [rectSvg({w: 6, h: 4, labels: 'two'}), '长方形：长 6 厘米，宽 4 厘米'],
+      [rectSvg({w: 6, h: 4, labels: 'all'}), '对边一样长：上下都是 6，左右都是 4'],
+      [rectSvg({w: 6, h: 4, labels: 'all', ask: 'perim'}, 20), '绕一圈：6 + 4 + 6 + 4 = 20，这一圈的长度叫周长']]},
+    area: {title: '面积', pages: [
+      [rectSvg({w: 4, h: 3, labels: 'none'}), '这块地有多大？'],
+      [rectSvg({w: 4, h: 3, labels: 'none', grid: true}), '铺满 1 平方厘米的小方格'],
+      [rectSvg({w: 4, h: 3, labels: 'none', grid: true}, undefined, {count: true}), '数一数：12 格，面积是 12 平方厘米'],
+      [rectSvg({w: 4, h: 3, labels: 'two', grid: true, ask: 'area'}, 12), '一行 4 格，有 3 行：4 × 3 = 12。长 × 宽 = 面积']]},
+    times: {title: '倍', pages: [
+      [barSvg(TM), '小狗的鱼是 4 个 3'],
+      [barSvg(TM), '小狗的是小猫的 4 倍'],
+      [barSvg(TM, 12), '4 倍就是 4 个 3：3 × 4 = 12']]},
+    rem: {title: '余数', pages: [
+      [dotsSvg(14), '14 个苹果，每盘放 4 个'],
+      [dotsSvg(14, 4), '放满 3 盘，还剩 2 个'],
+      [`${dotsSvg(14, 4)}<div class="eq num sm">14 ÷ 4 = 3 余 ${ans(2)}</div>`, '剩下的 2 叫余数，余数比 4 小']]},
+    avg: {title: '平均数', pages: [
+      [chartSvg({bars: [['小猫', 4], ['小狗', 8], ['小羊', 6]], max: 10, step: 1, ask: {kind: 'read', i: 0}}, undefined, {blocks: true}), '三个小伙伴钓的鱼：4、8、6'],
+      [chartSvg({bars: [['小猫', 6], ['小狗', 6], ['小羊', 6]], max: 10, step: 1, ask: {kind: 'read', i: 0}}, undefined, {blocks: true}), '多的分给少的，变得一样多'],
+      [`<div class="eq num sm">(4 + 8 + 6) ÷ 3 = ${ans(6)}</div>`, '每个都是 6 条，6 叫平均数']]},
+    factor: {title: '公倍数和公因数', pages: [
+      [numRows([['4', [4, 8, 12, 16, 20, 24]], ['6', [6, 12, 18, 24]]]), '4 的倍数和 6 的倍数'],
+      [numRows([['4', [4, 8, 12, 16, 20, 24]], ['6', [6, 12, 18, 24]]], [12, 24]), '两行都有的 12、24 叫公倍数，最小的是 12'],
+      [numRows([['12', [1, 2, 3, 4, 6, 12]], ['18', [1, 2, 3, 6, 9, 18]]]), '12 和 18 能被哪些数整除'],
+      [numRows([['12', [1, 2, 3, 4, 6, 12]], ['18', [1, 2, 3, 6, 9, 18]]], [1, 2, 3, 6]), '两行都有的叫公因数，最大的是 6']]},
+    dec: {title: '小数', pages: [
+      [tenthSvg(0, 3), '一条分成 10 份，涂了 3 份'],
+      [tenthSvg(0, 3, '0.3'), '3 份就是 0.3，读作零点三'],
+      [tenthSvg(1, 3, '1.3'), '1 整条加 3 份是 1.3']]},
+  };
+  const card = c => { const k = CARDS[c]; return k && {title: k.title, pages: k.pages.map(([fig, line]) => ({fig, line}))}; };
+  // 讲解卡的一页：标题 + 页码点、图、一句话（喇叭可读）
+  const cardPage = (c, p) => { const k = card(c), pg = k.pages[p]; return `<div class="demo dcard"><div class="dhead"><span class="learn">学一学</span><span class="dtitle">${k.title}</span><span class="cdots">${k.pages.map((x, i) => `<i${i <= p ? ' class="on"' : ''}></i>`).join('')}</span></div><div class="cfig">${pg.fig}</div><div class="cline">${nbSay({say: pg.line})}</div></div>`; };
+
   // ---------- 题面 ----------
   // 返回 {input:'write'|'pick'|'line', tag, html（左栏题目）, note（左栏底部小字）, flash（看数：要闪现的部分）, pick:[a,b], line:{max, target, mid}}
   // 挑战题的图：点阵、百格、百十个、算式
@@ -70,6 +201,7 @@
     if (q.view === 'grid') return `<div class="hgrid" style="grid-template-columns:repeat(${q.cols},26px)">${dot().repeat(q.rows * q.cols)}</div>`;
     if (q.view === 'h100') return `<div class="h100">${Array.from({length: 100}, (_, i) => `<i${i < q.n ? ' class="on"' : ''}></i>`).join('')}</div>`;
     if (q.view === 'hto') return `<div class="hto"><div class="hsqs">${'<i class="hsq"></i>'.repeat(q.h)}</div>${rods(q.t, q.o)}</div>`;
+    if (FIGS[q.view]) return `<div class="fig2w">${FIGS[q.view](q.data, a)}</div>`;
     if (q.view === 'story') return a === undefined ? nbSay(q) : `<div class="eq num sm">${q.text.replace('□', ans(a))}</div>`;
     if (q.view === 'clock5') return clockSvg(q.h, q.m) + (a === undefined ? nbSay(q) : `<div class="say2">${q.text.replace('□', ans(a))}</div>`);
     const t = q.text || ''; return `<div class="eq num${t.length > 22 ? ' xs' : t.length > 11 ? ' sm' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
@@ -107,8 +239,9 @@
   function question(inst) {
     const it = K.ITEM[inst.id], s = skillOf(inst.id), q = inst.q, tag = tagOf(inst.id);
     if (s.nb) return Object.assign({input: s.input, tag, html: s.input === 'pick' && q.view === 'clock' ? `<div class="nbrow">${nbSay(q)}${nbFig(q)}</div>` : nbSay(q) + nbFig(q), note: ''}, nbOpts(q));
+    if (s.hard && s.input === 'pick' && q.view === 'choice') return {input: 'pick', tag, html: nbSay(q), pick: q.opts.map((o, i) => i), pickText: q.opts, note: '点一个'};   // 选择题：按选项编号判（第二批 §6）
     if (s.hard && s.input === 'pick') return {input: 'pick', tag, html: '<div class="say2">哪个大？点它</div>', pick: [q.a, q.b], pickText: q.la ? [q.la, q.lb] : null};
-    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (q.text === '□' ? '' : hardFig(q)) : hardFig(q), note: /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
+    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (FIGS[q.view] || q.text !== '□' ? hardFig(q) : '') : hardFig(q), note: /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
     if (s.hard && s.input === 'write') return {input: 'write', tag, html: hardFig(q), note: q.view === 'hto' ? '方块是 100，一根是 10，一块是 1' : q.view === 'grid' ? '一排一排数，写在右边' : q.view === 'h100' ? '一行是 10，一共涂了几格？' : '在右边写出答案'};
     if (s.speed) return {input: 'write', tag, html: `<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} =</div>`, note: '在右边写出答案，写完停一下就好'};
     if (s.group === 'look') return {input: 'write', tag, html: `<div class="look">${pattern(q)}</div>`, flash: true, note: '有几个？写在右边'};
@@ -170,6 +303,7 @@
     const s = skillOf(inst.id), q = inst.q, a = inst.ans;
     const pack = (fig, line) => `<div class="explain">${fig}<div class="why">${line}</div></div>`;
     if (s.nb) return pack(`${q.view === 'clock' ? clockSvg(q.h, q.m) : ''}<div class="say2">${s.input === 'pick' && q.view !== 'bad' ? '应该是 ' : ''}${nbAns(q, a)}</div>`, q.why);
+    if (s.hard && s.input === 'pick' && q.view === 'choice') return pack(`<div class="say2">应该是 <span class="num" style="font-size:32px">${q.opts[a]}</span></div>`, q.why);
     if (s.hard && s.input === 'pick') return pack(`<div class="say2"><span class="num" style="font-size:32px">${pickWord(q, a)}</span> 更大</div>`, q.why);
     if (s.hard && s.input === 'write') return pack((q.qk && q.say ? `<div class="whysay">${q.say}</div>` : '') + hardFig(q, a), q.why);
     if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
@@ -251,7 +385,8 @@
       foot = s.input === 'pick' ? '点错了会告诉你答案' : '不会就点「不会」，会告诉你答案';
     } else if (s.hard && s.input !== 'line') {
       title = (s.group === 'speedH' && /^g34:/.test(s.id) ? '计算' : GNAME[s.group]) + '：' + s.name;
-      body = s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
+      body = s.input === 'pick' && q.view === 'choice' ? step(1, `<div class="cards2">${q.opts.map(t => `<b class="sm">${t}</b>`).join('')}</div>`, q.say) + arrow + step(2, `<div class="cards2"><b class="sm win">${q.opts[ex.ans]}</b></div>`, '点它')
+        : s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
       foot = q.why;
     } else if (s.speed) {
@@ -320,6 +455,7 @@
     const q = m.q || {}, s = skillOf(m.uid);
     if (s.hard && q.view === 'clock5') return clockSvg(q.h, q.m);
     if (s.nb) return q.view === 'clock' ? clockSvg(q.h, q.m) : q.view === 'bad' ? q.l.join('、') : q.view === 'pat' ? `<span class="prow">${q.seq.map(blk).join('')}<span class="pblk qm">？</span></span>` : q.eq ? q.eq.replace(/=.*$/, '= ？') : s.name;   // 错题标签只给题面，不露答案
+    if (s.hard && s.input === 'pick' && q.view === 'choice') return `${q.say} ${q.opts.join('、')}`;
     if (s.hard && s.input === 'pick') return `${q.la || q.a} 和 ${q.lb || q.b} 谁大`;
     if (s.hard && s.input === 'write') return q.text === '□' ? q.say : q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;
     if (s.group === 'look') return `看数 · ${q.n}`;
@@ -334,5 +470,5 @@
     return `数线 · ${q.target}`;
   }
 
-  return {setSprite, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
+  return {setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });

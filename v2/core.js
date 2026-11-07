@@ -404,6 +404,7 @@
     }
     if (!M.placedAt) delete M.placedAt;
     if (S.lvTop || v.lvTop) { const hi = (v.lvTop || 0) > (S.lvTop || 0) ? v : S; M.lvTop = hi.lvTop; M.lvTopDay = hi.lvTopDay; }   // 自动开级放行到哪一级：取大，不退回去
+    if (S.introStat || v.introStat) { M.introStat = Object.assign({}, v.introStat || {}); for (const c in S.introStat || {}) if (!M.introStat[c] || S.introStat[c][0] >= M.introStat[c][0]) M.introStat[c] = S.introStat[c]; }   // 讲解卡后前 5 题：每个概念取题数多的（同数取本机）
     if (S.lvMax !== undefined || v.lvMax !== undefined) M.lvMax = Math.max(S.lvMax || 0, v.lvMax || 0); else delete M.lvMax;   // 到过的最高级别：取大；两边都没有就等下次练习迁移（第二批 §6）
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
     for (const d in v.stats || {}) {

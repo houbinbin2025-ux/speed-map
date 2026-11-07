@@ -16,6 +16,17 @@
   const FAST_OUT = 3, FAST_PER_DAY = 2, MIST_EVERY = 2, MIST_DAY = 15;   // MIST_EVERY：每出 2 道别的题插 1 道到期错题；MIST_DAY：今日练习一天最多复习几道，多的顺延
 
   const skillOf = id => K.BY[K.ITEM[id].skill];
+  // 讲解卡（说明书-到四年级第二批 §2、§6）：按概念出，看过记在 S.demoSeen['c:概念']；每天最多 2 张，每张最多计 90 秒
+  const CARD_PER_DAY = 2, CARD_MAX_SEC = 90, INTRO_N = 5;
+  // 返回：概念（今天出讲解卡）/ null（不用）/ false（要讲解但今天已经 2 张了）
+  function cardFor(S, Dy, sid) {
+    const c = K.BY[sid].concept; if (!c || S.demoSeen['c:' + c]) return null;
+    Dy.cards = Dy.cards || []; if (Dy.cards.includes(c)) return c;
+    if (Dy.cards.length >= CARD_PER_DAY) return false;
+    Dy.cards.push(c); return c;
+  }
+  // 这个技能今天还不能开始：一开始就要出讲解卡，但今天已经 2 张了（不改记录，只看）
+  const cardWait = (S, Dy, sid) => { const c = K.BY[sid].concept, l = Dy.cards || []; return !!c && !S.demoSeen[sid] && !(S.known && S.known[sid]) && !S.demoSeen['c:' + c] && !l.includes(c) && l.length >= CARD_PER_DAY; };
   // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级
   const AUTO_PASS = 0.7, ALL_ITEMS = K.SKILLS.concat(K.HARD).flatMap(s => s.items);
   const CELLS = K.LEVELS.map(l => ALL_ITEMS.filter(it => K.itemLevels(it.id)[0] === l.n));
@@ -248,6 +259,8 @@
   // 一题作答之后的共同处理：升级、错题、维持复习档位、统计
   function settle(S, x, res, day, onTime) {
     if (x.afterDemo) S.demoSeen[x.afterDemo] = true;
+    if (x.afterConcept) { S.demoSeen['c:' + x.afterConcept] = true; S.introStat = S.introStat || {}; S.introStat[x.afterConcept] = S.introStat[x.afterConcept] || [0, 0, 0]; }
+    { const c = skillOf(x.inst.id).concept, st = c && S.introStat && S.introStat[c]; if (st && st[0] < INTRO_N && !x.retry && !res.peeked) { st[0]++; if (res.ok) st[1]++; if (res.dunno) st[2]++; } }   // 讲解卡后这个概念的前 5 题：题数、答对、不会（只记录）
     const id = x.inst.id, p = prog(S, id);
     if (!x.retry && !res.peeked) { let known = false; try { known = isKnown(S, x.inst, p.lv); } catch (e) {} noteAnswer(S, day, x.inst, res, known); }   // 先于这次作答判断
     const lv0 = p.lv, out = record(S, id, res, day);
@@ -358,7 +371,7 @@
       const chosen = [];
       for (const s of front.slice(0, FRONT)) {
         // 摸底判为"会"的技能不占"一天最多开始 3 个新技能"的名额（照常从灰开始学，通常一次就过）
-        if (!started(s.id) && !S.known[s.id] && !Dy.fresh.includes(s.id)) { if (Dy.fresh.length >= NEW_PER_DAY) continue; Dy.fresh.push(s.id); }
+        if (!started(s.id) && !S.known[s.id] && !Dy.fresh.includes(s.id)) { if (Dy.fresh.length >= NEW_PER_DAY || cardFor(S, Dy, s.id) === false) continue; Dy.fresh.push(s.id); }   // 今天讲解卡满 2 张：要讲解的新技能明天再开始
         chosen.push(s);
       }
       return chosen;
@@ -378,7 +391,7 @@
       K.SKILLS.concat(hardOn(S)).forEach(s => s.items.forEach(it => {
         const p = peek(S, it.id), seen = lastSeen(p);
         if (!room(it.id) || outOf(S, it.id) || !itemOn(S, it.id)) return;
-        if (chosen(S)) { learning.push(it); return; }   // 家长手选：这几级的题都能出，不等到期
+        if (chosen(S)) { if (!(p.lv === 0 && cardWait(S, Dy, it.skill))) learning.push(it); return; }   // 家长手选：这几级的题都能出，不等到期；要讲解但今天讲解卡满了的新技能明天再出
         if (p.lv === 0 || p.lastDay === day) return;
         if ((p.lv === 1 && p.d[0] < day) || (p.lv === 2 && C.dayDiff(p.d[1], day) >= C.GAP_DAYS)) due.push(it);
         else if (p.lv < 3) learning.push(it);
@@ -413,22 +426,26 @@
     }
     const api = {
       get elapsed() { return Dy.sec; }, get done() { return Dy.done; }, get tally() { return Dy.tally; },
+      demoTime(sec) { const extra = Math.max(0, Math.min(CARD_MAX_SEC, sec) - DEMO_SEC); Dy.sec += extra; stat(S, day).sec += extra; },   // 讲解卡按实际停留计时，最多 90 秒
       next() {
         if (pending.length) { cur = pending.shift(); return cur; }
         if (Dy.sec < Dy.budget) {
           const rt = RT.due(false); if (rt) { cur = rt; return cur; }
           if (Dy.sinceM >= (dueCount(S, day) > BACKLOG ? 1 : MIST_EVERY)) { const m = nextMistake(); if (m) { Dy.sinceM = 0; cur = m; return cur; } }
         }
-        for (let guard = 0; guard < 6; guard++) {
+        for (let guard = 0, skips = 0; guard < 6; guard++) {
           if (Dy.sec >= Dy.budget) { finished(); cur = null; return null; }
           if (!advance()) { const rt = RT.due(true); if (rt) { cur = rt; return cur; } finished(); cur = null; return null; }
           const x = pick(queue);
           if (!x) { queue = []; continue; }
           const sid = K.ITEM[x.inst.id].skill;
           if (x.seg === 'new' && !S.demoSeen[sid] && !S.known[sid]) {
+            const c0 = cardFor(S, Dy, sid);
+            if (c0 === false) { queue = queue.filter(y => K.ITEM[y.inst.id].skill !== sid); if (++skips < 50) guard--; continue; }   // 今天讲解卡满 2 张：这个新技能的题今天不出，换下一道（不算进 guard）
             Dy.sec += DEMO_SEC; stat(S, day).sec += DEMO_SEC;
-            pending.push(Object.assign({kind: 'q', afterDemo: sid}, x));      // 孩子答了示范卡后面那题，才算看过
-            cur = {kind: 'demo', skill: sid}; return cur;
+            const c = c0 || undefined;
+            pending.push(Object.assign({kind: 'q', afterDemo: sid, afterConcept: c}, x));      // 孩子答了示范卡后面那题，才算看过
+            cur = {kind: 'demo', skill: sid, concept: c}; return cur;
           }
           cur = Object.assign({kind: 'q'}, x); return cur;
         }
@@ -466,7 +483,7 @@
     const r = opts.rnd || Math.random, n = opts.n || (opts.mistOnly ? Infinity : FREE_N);
     topMemo = null;
     S.demoSeen = S.demoSeen || {}; S.known = S.known || {}; sweep(S);
-    const skills = hardOn(S).concat(K.SKILLS).filter(s => inGroup(s, group)), inSet = id => skills.includes(skillOf(id));
+    const Dd = daily(S, day), skills = hardOn(S).concat(K.SKILLS).filter(s => inGroup(s, group) && !cardWait(S, Dd, s.id)), inSet = id => skills.includes(skillOf(id));   // 讲解卡满了的新技能今天不出
     const FREE_EXTRA = 6, asked = {}, recent = [], pick = picker(S, asked, recent, FREE_EXTRA);
     let since = 0;
     const mist = dueMistakes(S, day, inSet).map(m => ({inst: instOfMistake(m), mkey: m.key, seg: 'review'}));
@@ -487,6 +504,7 @@
     let cur = null, count = 0;
     const pending = [], RT = retrier(S, {}, id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + (K.ITEM[id].gen ? FREE_EXTRA : 0));
     return {
+      demoTime(sec) { stat(S, day).sec += Math.max(0, Math.min(CARD_MAX_SEC, sec) - DEMO_SEC); },
       next() {
         if (pending.length) { cur = pending.shift(); return cur; }
         const rt = RT.due(count >= n); if (rt) { cur = rt; return cur; }
@@ -498,8 +516,11 @@
         if (!x) { cur = RT.due(true); return cur; }        // 题出完了：收尾再来一次（见 retrier）
         const sid = K.ITEM[x.inst.id].skill;
         if (lv(S, x.inst.id) === 0 && !S.demoSeen[sid] && !S.known[sid]) {
+          const c0 = cardFor(S, daily(S, day), sid);
+          if (c0 === false) { [queue, mist].forEach(l => { for (let i = l.length - 1; i >= 0; i--) if (K.ITEM[l[i].inst.id].skill === sid) l.splice(i, 1); }); return this.next(); }   // 今天讲解卡满 2 张：这个新技能今天不出
           stat(S, day).sec += DEMO_SEC;
-          pending.push(Object.assign({kind: 'q', afterDemo: sid}, x)); cur = {kind: 'demo', skill: sid}; return cur;
+          const c = c0 || undefined;
+          pending.push(Object.assign({kind: 'q', afterDemo: sid, afterConcept: c}, x)); cur = {kind: 'demo', skill: sid, concept: c}; return cur;
         }
         cur = Object.assign({kind: 'q'}, x); return cur;
       },

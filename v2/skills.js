@@ -130,6 +130,14 @@
   g34('speedH', '乘两位数', ['speed:g13:mul3']); g34('speedH', '两位除数', ['speed:g13:div2']); g34('speedH', '四则混合', ['speed:g13:order']); g34('place', '取整', ['place:g13:round']); g34('dock', '归一', ['dock:g13:unit']); g34('dock', '路程', ['dock:g13:speed']); g34('dock', '平均分', ['dock:g13:share']);
   g34('speedH', '运算律', ['speed:g14:law', 'speed:g14:lawfill']); g34('speedH', '两位小数', ['speed:g14:dec2']); g34('speedH', '小数点移动', ['speed:g14:move']); g34('dock', '平均数', ['dock:g14:avg']); g34('dock', '相遇', ['dock:g14:meet']); g34('dock', '内角和', ['dock:g14:tri']); g34('market', '小数换算', ['market:g14:unit']);
   g34('place', '公倍数', ['place:g15:lcm']); g34('place', '公因数', ['place:g15:gcd']); g34('dock', '多步应用题', ['dock:g15:three']); g34('dock', '和差', ['dock:g15:sumdiff']); g34('dock', '和倍差倍', ['dock:g15:timessum']); g34('dock', '鸡兔同笼', ['dock:g15:legs']); g34('dock', '年龄', ['dock:g15:age']);
+  // 第二批 2a（说明书-到四年级第二批）：late = 引入 lvMax 之后加的（迁移不算它们，见 engine.js FROZEN）；concept = 第一次碰到时出讲解卡
+  const g2 = (group, name, ids, concept, o) => hard(Object.assign({id: 'g34:' + ids[0].split(':').slice(1).join(':'), group, name, ids, late: true, concept}, o));
+  g2('dock', '线段图', ['dock:g7:bar'], 'bar'); g2('dock', '条形图', ['dock:g8:chart'], 'chart'); g2('place', '边长相加', ['place:g8:side'], 'perim');
+  g2('dock', '条形图比较', ['dock:g9:chart2'], 'chart'); g2('dock', '倍的线段图', ['dock:g9:times'], 'times'); g2('dock', '和倍入门', ['dock:g9:sumtimes'], 'bar');
+  g2('dock', '一格代表几', ['dock:g10:chart5'], 'chart'); g2('dock', '看图求周长', ['dock:g11:perim2'], 'perim'); g2('place', '数方格求面积', ['place:g12:area2'], 'area');
+  g2('cmp', '小数比大小', ['cmp:g12:deccmp'], 'dec', {input: 'pick'}); g2('cmp', '两位小数比大小', ['cmp:g14:deccmp'], 'dec', {input: 'pick'}); g2('dock', '和差线段图', ['dock:g15:barsum'], 'bar');
+  // 第一批已上线、当时没讲解的技能也挂上概念（第二批 §2）
+  Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec'}).forEach(([id, c]) => { BY[id].concept = c; });
 
   // ---------- 15 级难度（说明书-难度分级）：每道题一个级别，按题算，题库数据不改 ----------
   const LEVELS = [
@@ -210,6 +218,7 @@
     'speed:g12:mul2': 30, 'speed:g12:dec': 6, 'dock:g12:area': 25, 'dock:g12:price': 30, 'market:g12:24': 4, 'market:g12:year': 15,
     'speed:g13:mul3': 45, 'speed:g13:div2': 25, 'speed:g13:order': 20, 'place:g13:round': 5, 'dock:g13:unit': 25, 'dock:g13:speed': 25, 'dock:g13:share': 25,
     'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 8, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
+    'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };
   const READ_MS = 400, EN_READ = 1.5;   // 题面每个汉字；英文日读得慢，多给一半（按中文字数估）
