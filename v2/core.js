@@ -405,7 +405,7 @@
     if (!M.placedAt) delete M.placedAt;
     if (S.lvTop || v.lvTop) { const hi = (v.lvTop || 0) > (S.lvTop || 0) ? v : S; M.lvTop = hi.lvTop; M.lvTopDay = hi.lvTopDay; }   // 自动开级放行到哪一级：取大，不退回去
     if (S.introStat || v.introStat) { M.introStat = Object.assign({}, v.introStat || {}); for (const c in S.introStat || {}) if (!M.introStat[c] || S.introStat[c][0] >= M.introStat[c][0]) M.introStat[c] = S.introStat[c]; }   // 讲解卡后前 5 题：每个概念取题数多的（同数取本机）
-    if (S.lvMax !== undefined || v.lvMax !== undefined) M.lvMax = Math.max(S.lvMax || 0, v.lvMax || 0); else delete M.lvMax;   // 到过的最高级别：取大；两边都没有就等下次练习迁移（第二批 §6）
+    { const ok = x => Number.isInteger(x) && x >= 0 && x <= 15; if (ok(S.lvMax) && ok(v.lvMax)) M.lvMax = Math.max(S.lvMax, v.lvMax); else delete M.lvMax; }   // 到过的最高级别：两边都有就取大；任一边没有（或坏值）就等下次练习按合并后的进度重新迁移，不会按 0 算掉级（第二批 §6、代码审查 R2）
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
     for (const d in v.stats || {}) {
       const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;

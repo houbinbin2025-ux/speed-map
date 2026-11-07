@@ -49,9 +49,10 @@
   // 每次练习开始时调用：到了该开新级的时候，一次只放行一级
   const capTop = S => Math.max(HOLD_FROM, S.lvTop || 0);
   const frozenLevel = S => Math.min(rawLevel(S, FROZEN), capTop(S));   // 冻结格子只会越练越亮，按它算的级别只升不降
-  const floorOf = S => (Number.isFinite(S.lvMax) ? Math.max(S.lvMax, 0) : frozenLevel(S));   // 还没写 lvMax（第一次练习前）或坏值：临时按冻结格子算，不写存档
+  const okMax = v => Number.isInteger(v) && v >= 0 && v <= K.LEVELS.length;   // 只认 0–15 的整数，坏值（存档损坏、导入的字符串）当没有
+  const floorOf = S => (okMax(S.lvMax) ? S.lvMax : frozenLevel(S));   // 还没写 lvMax（第一次练习前）或坏值：临时按冻结格子算，不写存档
   function tickLevel(S, day) {
-    if (!Number.isFinite(S.lvMax)) delete S.lvMax;   // 坏值（存档损坏）当没有
+    if (!okMax(S.lvMax)) delete S.lvMax;
     S.lvMax = Math.max(S.lvMax || 0, frozenLevel(S));   // 迁移 + 兜底：每次都取冻结格子算出的级别，导入备份、整份替换后也不掉（代码审查 R1 第 1 条）；写在最前面，第 9 级以下的孩子也要有
     const raw = rawLevel(S);
     if (raw > HOLD_FROM) {

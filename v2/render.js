@@ -65,29 +65,30 @@
 
   // ---------- 第二批 2a 的图（说明书-到四年级第二批）：线段图、条形图、长方形。a = 答案（答错图解里标出来） ----------
   const FC = {red: '#e5534b', yellow: '#f2c14e', blue: '#6ea8fe', white: '#e8e6df', gray: '#8a8d96'}, OK = '#7bd88f', TXT = '#ecebe4';
-  const svgT = (x, y, t, o) => `<text x="${x}" y="${y}" font-size="${(o && o.size) || 20}" font-weight="900" text-anchor="${(o && o.anchor) || 'middle'}" fill="${(o && o.fill) || TXT}">${t}</text>`;
+  // o.fit = 最多多宽（图里的单位）：翻成英文后太长，页面会把字横向压紧（index.html fitSvgText），不裁不叠
+  const svgT = (x, y, t, o) => `<text${o && o.fit ? ` data-fit="${Math.floor(o.fit)}"` : ''} x="${x}" y="${y}" font-size="${(o && o.size) || 20}" font-weight="900" text-anchor="${(o && o.anchor) || 'middle'}" fill="${(o && o.fill) || TXT}">${t}</text>`;
   const brace = (x0, x1, y, up) => { const m = (x0 + x1) / 2, d = up ? -1 : 1; return `M${x0} ${y} Q${x0} ${y + 14 * d} ${x0 + 12} ${y + 14 * d} L${m - 10} ${y + 14 * d} Q${m} ${y + 14 * d} ${m} ${y + 28 * d} Q${m} ${y + 14 * d} ${m + 10} ${y + 14 * d} L${x1 - 12} ${y + 14 * d} Q${x1} ${y + 14 * d} ${x1} ${y}`; };
   // 线段图：data = {rows: [{name?, segs: [{v, label, name?, col?, ask?}], sum?}], top?, side?}
   function barSvg(d, a, o) {
     o = o || {};
     const rowSum = r => r.segs.reduce((m, g) => m + g.v, 0), maxSum = Math.max(...d.rows.map(rowSum)), named = d.rows.some(r => r.name);
-    const L = named ? 96 : 16, R = d.side ? 96 : d.rows.some(r => r.sum) ? 70 : 16, W = 460, u = (W - L - R) / (o.of || maxSum), top = d.top ? 46 : 8, rowH = d.rows.some(r => r.segs.some(g => g.name)) ? 78 : 58;
+    const L = named ? 96 : 16, R = d.side ? 96 : d.rows.some(r => r.sum) ? 70 : 16, W = 460, u = (W - L - R) / (o.of || maxSum), top = d.top ? 70 : 8, rowH = d.rows.some(r => r.segs.some(g => g.name)) ? 78 : 58;
     let out = '', y = top;
     d.rows.forEach((r, ri) => {
       let x = L;
-      if (r.name) out += svgT(L - 10, y + 27, r.name, {anchor: 'end', size: 19});
+      if (r.name) out += svgT(L - 10, y + 27, r.name, {anchor: 'end', size: 19, fit: L - 16});
       r.segs.forEach((g, gi) => {
         const w = g.v * u, show = g.ask && a !== undefined, col = g.col ? FC[g.col] : (gi % 2 ? FC.yellow : FC.blue);
         out += `<rect x="${x}" y="${y}" width="${w}" height="38" fill="${col}" stroke="${show ? OK : '#000'}" stroke-width="${show ? 5 : 3}"/>`;
         if (o.cells) for (let k = 1; k < g.v; k++) out += `<line x1="${x + k * u}" x2="${x + k * u}" y1="${y}" y2="${y + 38}" stroke="#000" stroke-width="2"/>`;
         const lab = show ? String(a) : g.label; if (lab && !o.cells) out += svgT(x + w / 2, y + 27, lab, {fill: show ? '#0b3d17' : '#000', size: 22});
-        if (g.name) out += svgT(x + w / 2, y + 64, g.name, {size: 18});
+        if (g.name) out += svgT(x + w / 2, y + 64, g.name, {size: 18, fit: Math.max(w - 4, 60)});
         x += w;
       });
       if (r.sum) out += svgT(x + 12, y + 27, r.sum.ask && a !== undefined ? a : r.sum.label, {anchor: 'start', fill: r.sum.ask && a !== undefined ? OK : TXT, size: 22});
       y += rowH;
     });
-    if (d.top) { const x1 = L + rowSum(d.rows[0]) * u, show = d.top.ask && a !== undefined, c = show ? OK : TXT; out += `<path d="${brace(L, x1, top - 6, true)}" fill="none" stroke="${c}" stroke-width="3"/>` + svgT((L + x1) / 2, 18, show ? a : d.top.label, {fill: c, size: 22}); }
+    if (d.top) { const x1 = L + rowSum(d.rows[0]) * u, show = d.top.ask && a !== undefined, c = show ? OK : TXT; out += `<path d="${brace(L, x1, top - 6, true)}" fill="none" stroke="${c}" stroke-width="3"/>` + svgT((L + x1) / 2, 28, show ? a : d.top.label, {fill: c, size: 22}); }   // 数字在大括号尖的上面，不贴图的上沿（svgclip.py）
     if (d.side) { const xr = L + maxSum * u + 8, y0 = top, y1 = top + (d.rows.length - 1) * rowH + 38, show = d.side.ask && a !== undefined, c = show ? OK : TXT, m = (y0 + y1) / 2;
       out += `<path d="M${xr} ${y0} Q${xr + 14} ${y0} ${xr + 14} ${y0 + 12} L${xr + 14} ${m - 10} Q${xr + 14} ${m} ${xr + 28} ${m} Q${xr + 14} ${m} ${xr + 14} ${m + 10} L${xr + 14} ${y1 - 12} Q${xr + 14} ${y1} ${xr} ${y1}" fill="none" stroke="${c}" stroke-width="3"/>` + svgT(xr + 34, m + 8, show ? a : d.side.label, {anchor: 'start', fill: c, size: 22}); }
     return `<svg class="fig2" viewBox="0 0 ${W} ${y - rowH + (rowH > 60 ? 78 : 50)}" role="img" aria-label="线段图">${out}</svg>`;
@@ -95,7 +96,7 @@
   // 条形图：data = {bars: [[名字, 数]], max, step, ask}；hi = 高亮哪几根（答错图解）
   function chartSvg(d, a, o) {
     o = o || {};
-    const n = d.max / d.step, H = 262, top = 16, bot = 212, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
+    const n = d.max / d.step, H = 270, top = 36, bot = 220, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
     const hi = a === undefined ? [] : d.ask.kind === 'read' ? [d.ask.i] : [d.ask.i, d.ask.j];
     let out = '';
     for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 10, y(v) + 8, v, {anchor: 'end', size: 24}); }
@@ -103,8 +104,8 @@
       const x = L + gap / 2 + i * (bw + gap), on = hi.includes(i);
       if (o.blocks) { for (let k = 0; k < v / d.step; k++) out += `<rect x="${x + 4}" y="${y((k + 1) * d.step) + 2}" width="${bw - 8}" height="${y(0) - y(d.step) - 4}" fill="${FC.blue}" stroke="#000" stroke-width="2"/>`; }
       else out += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${bot - y(v)}" fill="${on ? FC.yellow : FC.blue}" stroke="#000" stroke-width="3"/>`;
-      out += svgT(x + bw / 2, bot + 34, name, {size: 24});
-      if (on) out += `<line x1="${L}" x2="${x}" y1="${y(v)}" y2="${y(v)}" stroke="${OK}" stroke-width="3" stroke-dasharray="6 5"/>` + svgT(x + bw / 2 + bw / 2 + 6, y(v) + 8, v, {fill: OK, size: 24, anchor: 'start'});   // 答案写在条顶右边，不压纵轴的字
+      out += svgT(x + bw / 2, bot + 34, name, {size: 24, fit: bw + gap - 6});
+      if (on) out += `<line x1="${L}" x2="${x}" y1="${y(v)}" y2="${y(v)}" stroke="${OK}" stroke-width="3" stroke-dasharray="6 5"/>` + svgT(x + bw / 2, y(v) - 10, v, {fill: OK, size: 24});   // 答案写在条顶正上方（顶上留了 36，最高的条也放得下）
     });
     return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="条形图">${out}</svg>`;
   }
@@ -112,14 +113,15 @@
   function rectSvg(d, a, o) {
     o = o || {};
     // 边距按标注留够（11-07 走查：左边的「12 厘米」画到图外），字号 26，手机上缩小后还看得清
-    const sc = Math.min(40, 300 / d.w, 170 / d.h), w = d.w * sc, h = d.h * sc, L = d.labels === 'all' ? 112 : 16, Rm = d.labels === 'none' || d.labels === 'one' ? 16 : 112, x0 = L, y0 = d.labels === 'none' ? 8 : 40;
-    const W = L + w + Rm, H = y0 + h + (d.labels === 'all' ? 40 : 10) + (a !== undefined ? 40 : 0);
+    const sc = Math.min(40, 300 / d.w, 170 / d.h), w = d.w * sc, h = d.h * sc, L = d.labels === 'all' ? 112 : 16, Rm = d.labels === 'none' || d.labels === 'one' ? 16 : 112, y0 = d.labels === 'none' ? 8 : 40; let x0 = L;
+    const need = a !== undefined ? 330 : 0, W0 = L + w + Rm, W = Math.max(W0, need), H = y0 + h + (d.labels === 'all' ? 48 : 10) + (a !== undefined ? 40 : 0);   // 答案「面积 18 平方厘米」要 330 宽
+    x0 += (W - W0) / 2;
     let out = `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="#3b5f2a" stroke="#000" stroke-width="4"/>`;
     if (d.grid || o.grid) for (let r = 0; r < d.h; r++) for (let c = 0; c < d.w; c++) { out += `<rect x="${x0 + c * sc}" y="${y0 + r * sc}" width="${sc}" height="${sc}" fill="none" stroke="#000" stroke-width="2"/>`; if (o.count) out += svgT(x0 + c * sc + sc / 2, y0 + r * sc + sc / 2 + 6, r * d.w + c + 1, {size: Math.min(17, sc * .5)}); }
     const lab = (t, x, y, anchor) => svgT(x, y, `${t} 厘米`, {anchor: anchor || 'middle', size: 26});
     if (d.labels !== 'none') { out += lab(d.w, x0 + w / 2, y0 - 10); if (d.labels !== 'one') out += lab(d.h, x0 + w + 10, y0 + h / 2 + 9, 'start'); }
     if (d.labels === 'all') { out += lab(d.w, x0 + w / 2, y0 + h + 32); out += lab(d.h, x0 - 10, y0 + h / 2 + 9, 'end'); }
-    if (a !== undefined) out += svgT(W / 2, H - 10, d.ask === 'perim' ? `周长 ${a} 厘米` : `面积 ${a} 平方厘米`, {fill: OK, size: 28});
+    if (a !== undefined) out += svgT(W / 2, H - 10, d.ask === 'perim' ? `周长 ${a} 厘米` : `面积 ${a} 平方厘米`, {fill: OK, size: 28, fit: W - 12});
     return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="长方形">${out}</svg>`;
   }
   const FIGS = {bar: barSvg, chart: chartSvg, rect: rectSvg};

@@ -896,7 +896,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v103:1caa8efcee5b -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v105:fcc52a8cd847 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -906,24 +906,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=103"></script>
-<script src="i18n.js?v=103"></script>
-<script src="bank.js?v=103"></script>
-<script src="hardbank.js?v=103"></script>
-<script src="placebank.js?v=103"></script>
-<script src="core.js?v=103"></script>
-<script src="ink.js?v=103"></script>
-<script src="skills.js?v=103"></script>
-<script src="engine.js?v=103"></script>
-<script src="render.js?v=103"></script>
-<script src="world.js?v=103"></script>
-<script src="home.js?v=103"></script>
-<script src="puzzles.js?v=103"></script>
-<script src="thinking.js?v=103"></script>
-<script src="house.js?v=103"></script>
-<script src="kongmine.js?v=103"></script>
-<script src="gems.js?v=103"></script>
-<script src="gemui.js?v=103"></script>
+<script src="touchfix.js?v=105"></script>
+<script src="i18n.js?v=105"></script>
+<script src="bank.js?v=105"></script>
+<script src="hardbank.js?v=105"></script>
+<script src="placebank.js?v=105"></script>
+<script src="core.js?v=105"></script>
+<script src="ink.js?v=105"></script>
+<script src="skills.js?v=105"></script>
+<script src="engine.js?v=105"></script>
+<script src="render.js?v=105"></script>
+<script src="world.js?v=105"></script>
+<script src="home.js?v=105"></script>
+<script src="puzzles.js?v=105"></script>
+<script src="thinking.js?v=105"></script>
+<script src="house.js?v=105"></script>
+<script src="kongmine.js?v=105"></script>
+<script src="gems.js?v=105"></script>
+<script src="gemui.js?v=105"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1547,6 +1547,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (k < 0.99) b.style.zoom = Math.max(0.5, k).toFixed(3);
   }
   new MutationObserver(fitBody).observe($('qBody'), {childList: true});
+  // 图里的字（data-fit = 最多多宽）：翻成英文后太长就横向压紧，不裁不叠（第二批代码审查 R2）
+  function fitSvgText() { document.querySelectorAll('svg.fig2 text[data-fit]').forEach(t => { try { t.removeAttribute('textLength'); const max = +t.dataset.fit; if (t.getComputedTextLength() > max) { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } } catch (e) {} }); }
+  let svgFitRaf = 0; new MutationObserver(() => { if (svgFitRaf) return; svgFitRaf = requestAnimationFrame(() => { svgFitRaf = 0; fitSvgText(); }); }).observe(document.body, {childList: true, subtree: true, characterData: true});
+  window.__fitSvg = fitSvgText;
   addEventListener('resize', fitBody);
   function showQuestion(x) {
     const inst = x.inst, v = R.question(inst);
@@ -1967,7 +1971,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="panel"><div class="ptitle">熟题</div>${row('作答', a.k + ' 题')}${row('失误', a.ks + ' 次')}${row('失误率', pctOf(a.ks, a.k) + prevOf(a.ks, a.k, b.ks, b.k))}<div class="muted" style="font-size:12px;line-height:1.5">熟题：格子已到淡红，或这道题已在不同的日子算过 2 次秒答。失误：熟题答错，不含点「不会」。写对但被识别错，也会计入</div></div>
       <div class="panel"><div class="ptitle">书写</div><div class="kv">书写评分（试运行）：<b>${digs || '--'}</b></div>${row('免确认识别率', pctOf(a.ic, a.ia))}<div class="muted" style="font-size:12px;line-height:1.5">书写评分和规范字形比，0–100，还没有校准。不同数字之间不可比，所以按数字显示（括号里是个数），也不做前后对比。请对照下面的字判断是否准确。免确认识别率是识别的把握，不代表工整</div></div>
       <div class="panel"><div class="ptitle">读题</div>${row('文字题平均用时', a.wn ? (a.ws / a.wn).toFixed(0) + ' 秒' : '--')}${row('朗读次数', a.say + ' 次')}</div>
-      <div class="panel"><div class="ptitle">讲解卡后前 5 题</div>${Object.keys(S.introStat || {}).length ? Object.entries(S.introStat).map(([c, v]) => row((R.card(c) || {title: c}).title, `${v[0]} 题 · 答对 ${v[1]} · 不会 ${v[2]}`)).join('') : '<div class="muted">还没看过讲解卡</div>'}<div class="muted" style="font-size:12px;line-height:1.5">新概念第一次出现时先看讲解卡。5 题里答对少、点「不会」多，说明这张讲解卡没讲明白。</div></div>
+      <div class="panel"><div class="ptitle">讲解卡后前 5 题</div>${Object.keys(S.introStat || {}).length ? Object.entries(S.introStat).filter(([c, v]) => Array.isArray(v)).map(([c, v]) => row((R.card(c) || {title: c}).title, `${v[0] || 0} 题 · 答对 ${v[1] || 0} · 不会 ${v[2] || 0}`)).join('') : '<div class="muted">还没看过讲解卡</div>'}<div class="muted" style="font-size:12px;line-height:1.5">新概念第一次出现时先看讲解卡。5 题里答对少、点「不会」多，说明这张讲解卡没讲明白。</div></div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${String(m.d).slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 认定为 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
   }

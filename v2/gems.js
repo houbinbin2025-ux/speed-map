@@ -249,7 +249,7 @@
   }
   // 出题：高 1～2 级（到顶时第 14、15 级）；没下架、今天没作答过、互不重复
   // 挑战不出还没讲过的概念（第二批：线段图、条形图、周长等要先看讲解卡，代码审查 R1 第 3 条）
-  const taught = (S, it) => { const c = K.BY[it.skill].concept; return !c || !!(S.demoSeen && S.demoSeen['c:' + c]); };
+  const taught = (S, it) => { const c = K.BY[it.skill].concept, seen = S.demoSeen || {}; return !c || !!seen['c:' + c] || !!seen[it.skill] || !!(S.known && S.known[it.skill]) || E.lv(S, it.id) > 0; };   // 看过讲解卡、看过旧示范卡、摸底会、点亮过，任一条都算讲过（代码审查 R2）
   function pickChallenge(S, topLevel, r, st) {
     const hi = topLevel < 10 ? Math.min(topLevel + 2, 9) : Math.min(topLevel + 2, 15), lo = Math.min(topLevel + 1, 14, hi), seen = (st && st.seen.keys) || {};
     const items = K.SKILLS.concat(K.HARD).flatMap(s => s.items).filter(it => K.itemLevels(it.id).some(L => L >= lo && L <= hi) && taught(S, it));
