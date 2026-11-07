@@ -24,7 +24,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:#f3f1ea;font-family:'P
 .btn.go{background:#4f8a3a;height:88px;font-size:24px}
 .card{background:var(--paper);border:3px solid #000;border-radius:12px;color:var(--ink);padding:18px 34px;display:flex;flex-direction:column;gap:6px}
 .row{display:grid;gap:10px;align-items:center;text-align:center}
-.lab{font-size:14px;color:var(--mute);text-align:left}
+.lab{font-size:17px;color:#6b6555;font-weight:700;text-align:left}
 .dig{font-size:72px;font-weight:800;line-height:96px}
 .line{border-bottom:5px solid var(--ink);padding-bottom:8px}
 canvas{display:block;width:100%;height:100%;touch-action:none}
@@ -49,15 +49,24 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .result .why{font-size:19px;line-height:1.7;color:#e6e3da;white-space:pre-line}
 .result .muted{font-size:15px;color:#9a9da4}
 .wk{background:var(--paper);color:var(--ink);border-radius:10px;padding:12px 18px;align-self:flex-start}
-.wk .g{display:grid;font-family:'SF Mono',Menlo,monospace;font-size:30px;font-weight:700;line-height:40px;text-align:center}
+.wk .g{display:grid;gap:3px 0;font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:42px;text-align:center;align-items:center}
+.wk .g>div{min-height:42px;display:flex;align-items:center;justify-content:center}
+.wk .g>.s{min-height:20px}
 .wk .g .s{font-size:16px;line-height:20px;color:#b4512e;font-weight:700}
-.wk .g .u{border-bottom:3px solid var(--ink)}
-.wk .g .q{color:var(--blue)}
+.wk .g .u{border-bottom:3px solid var(--ink);align-self:stretch}
+.wk .g .q{color:var(--blue);border:2px solid var(--blue);border-radius:6px;background:#fff;margin:0 3px}
 .wk .g .br{border-left:3px solid var(--ink);border-top:3px solid var(--ink);border-top-left-radius:10px}
 .wk .g .t{border-top:3px solid var(--ink)}
-.wk .eq{font-size:26px;font-weight:700;line-height:44px}
+.wk .eq{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:26px;line-height:44px}
 .wk h4{margin:0 0 6px;font-size:15px;color:var(--mute)}
 #fit{position:fixed;inset:0;display:none}
+#demo{position:absolute;inset:0;z-index:5;background:rgba(27,29,34,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#demo.show{display:flex}
+#demo h2{margin:0;font-size:32px}
+#demoBody .wk{zoom:1.6}
+#demo .tip{font-size:22px;color:#e6e3da;text-align:center;line-height:1.6;white-space:pre-line}
+#demo .st{opacity:0;animation:dshow .35s ease-out forwards}
+@keyframes dshow{to{opacity:1}}
 </style>
 </head>
 <body>
@@ -67,6 +76,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
     <div class="work" id="work"></div>
     <div class="side">
       <div class="tag" id="tag"></div>
+      <button class="btn" id="seeDemo" style="height:52px;font-size:17px">看示范</button>
       <div style="flex:1"></div>
       <button class="btn go" id="done">写好了</button>
       <button class="btn" id="clear">清空</button>
@@ -74,6 +84,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
     </div>
   </div>
 </div>
+<div id="demo"><h2>先看一遍怎么写</h2><div id="demoBody"></div><div class="tip" id="demoTip"></div><button class="btn go" id="demoGo" style="width:320px">我会了，开始写</button></div>
 <script src="../../../v2/ink.js"></script>
 <script>
 'use strict';
@@ -131,9 +142,30 @@ const BANK = {
     {tag: '先算括号', expr: '(210 − 42) ÷ 6', ans: 28, work: ['(210 − 42) ÷ 6', '= 168 ÷ 6', '= 28'], why: '先算括号：210 − 42 = 168\n再算除法：168 ÷ 6 = 28'},
     {tag: '简便算法', expr: '207 − 39 − 61', ans: 107, work: ['207 − 39 − 61', '= 207 − (39 + 61)', '= 207 − 100', '= 107'], why: '连着减两个数，等于减它们的和：39 + 61 = 100\n207 − 100 = 107'}]},
   fill: {name: '填空', qs: [
-    {tag: '小数减法', left: '5.36 − 2.82 = 2.', right: '4', ans: 5, work: ['5.36 − 2.82 = 2.54', {a: '5.36', op: '−', b: '2.82'}], why: '5.36 − 2.82 = 2.54\n方框里是 5'},
+    {tag: '小数减法', left: '5.36 − 2.82 = 2.', right: '4', ans: 5, blank: 1, work: ['5.36 − 2.82 = 2.54', {a: '5.36', op: '−', b: '2.82'}], why: '5.36 − 2.82 = 2.54\n方框里是 5'},
     {tag: '乘法交换', left: '27 × ', right: ' = 54 × 27', ans: 54, work: ['27 × 54 = 54 × 27', '交换两个因数的位置，积不变'], why: '两个数相乘，换位置积不变\n27 × 54 = 54 × 27，方框里是 54'}]},
 };
+const DEMO = {
+  vert: {q: {a: 325, op: '+', b: 148}, tip: '从个位算起，一格写一个数\n满十进一：进位写在最上面那一行'},
+  mul: {q: {a: 23, b: 14}, tip: '先用下面的个位去乘，再用十位去乘\n十位乘出来的数，个位那一格空着\n两行加起来，写进蓝框'},
+  word: {q: {work: ['24 + 18 = 42', {a: 24, op: '+', b: 18}, '42 − 9 = 33', {a: 42, op: '−', b: 9}, '答：还剩 33 条。']}, say: '小猫有 24 条鱼，又买了 18 条，吃掉 9 条。还剩几条？', tip: '先在草稿上列算式、算竖式\n最后只把答案写进蓝框'},
+  div: {q: {a: 96, b: 4}, tip: '从最高位除起，商写在上面\n每一步：乘、减、落下下一位'},
+  steps: {q: {work: ['56 + 4 × 6', '= 56 + 24', '= 80']}, tip: '先算乘除，再算加减\n一步写一行，等号对齐'},
+  fill: {q: {work: ['3.4 + 1.2 = 4.6', {a: '3.4', op: '+', b: '1.2'}]}, tip: '先算出整个得数\n再把方框里那一位写进去'},
+};
+const seenDemo = k => { try { return localStorage.getItem('ipadproto.demo.' + k) === '1'; } catch (e) { return false; } };
+function showDemo() {
+  const d = DEMO[Q.kind];
+  $('demoBody').innerHTML = (d.say ? `<div class="tip" style="margin-bottom:10px">${d.say}</div>` : '') + workOf(d.q).replace('正确写法', '例题');
+  $('demoTip').textContent = d.tip;
+  // 一行一行出现：竖式按行，算式按条
+  let k = 0;
+  $('demoBody').querySelectorAll('.wk > .eq, .wk > div:not(.g):not(h4)').forEach(el => { el.classList.add('st'); el.style.animationDelay = (k++ * 0.6) + 's'; });
+  $('demoBody').querySelectorAll('.g').forEach(g => { const cols = getComputedStyle(g).gridTemplateColumns.split(' ').length; [...g.children].forEach((c, i) => { c.classList.add('st'); c.style.animationDelay = (k * 0.6 + Math.floor(i / cols) * 0.6) + 's'; }); k += Math.ceil(g.children.length / cols); });
+  $('demo').classList.add('show');
+}
+$('demoGo').onclick = () => { $('demo').classList.remove('show'); try { localStorage.setItem('ipadproto.demo.' + Q.kind, '1'); } catch (e) {} Q.t0 = performance.now(); };
+$('seeDemo').onclick = () => { if (!Q.locked) showDemo(); };
 const KINDS = Object.keys(BANK);
 const Q = {kind: 'vert', i: 0, cells: [], pads: [], locked: false, t0: 0, touched: 0};
 const digits = n => String(n).split('');
@@ -145,16 +177,16 @@ function render() {
   const q = BANK[Q.kind].qs[Q.i], w = $('work'); let h = '';
   if (Q.kind === 'vert') {
     const n = Math.max(String(q.a).length, String(q.b).length) + (q.op === '+' ? 1 : 0), col = `80px repeat(${n}, 104px)`, pad = s => Array(n - s.length).fill('').concat(s.split(''));
-    h = `<div class="card"><div class="row" style="grid-template-columns:${col}"><div class="lab">${q.op === '+' ? '进位' : '退位点'}</div>${minis(n)}</div>
+    h = `<div class="card"><div class="row" style="grid-template-columns:${col}"><div class="lab">进位<br>退位</div>${minis(n)}</div>
       <div class="row dig" style="grid-template-columns:${col}"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
       <div class="row dig line" style="grid-template-columns:${col}"><div>${q.op}</div>${pad(String(q.b)).map(d => `<div>${d}</div>`).join('')}</div>
       <div class="row" style="grid-template-columns:${col};padding-top:10px"><div class="lab">答案</div>${cellsRow(n)}</div></div>`;
   } else if (Q.kind === 'mul') {
     const two = String(q.b).length > 1, n = String(q.a).length + String(q.b).length, col = `80px repeat(${n}, 96px)`, pad = s => Array(n - s.length).fill('').concat(s.split(''));
     const strip = (lab, cls) => `<div class="row" style="grid-template-columns:${col}"><div class="lab">${lab}</div><div class="strip ${cls || ''} scratch" style="grid-column:2/-1"><canvas></canvas></div></div>`;
-    h = `<div class="card">${strip('进位', 'sm')}<div class="row dig" style="grid-template-columns:${col};font-size:64px;line-height:76px"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
+    h = `<div class="card"><div class="row dig" style="grid-template-columns:${col};font-size:64px;line-height:76px"><div></div>${pad(String(q.a)).map(d => `<div>${d}</div>`).join('')}</div>
       <div class="row dig line" style="grid-template-columns:${col};font-size:64px;line-height:76px"><div>×</div>${pad(String(q.b)).map(d => `<div>${d}</div>`).join('')}</div>
-      ${two ? strip('草稿') + `<div class="line">${strip('草稿')}</div>` : ''}
+      ${strip('进位', 'sm')}${two ? strip('草稿') + strip('进位', 'sm') + `<div class="line">${strip('草稿')}</div>` : ''}
       <div class="row" style="grid-template-columns:${col};padding-top:8px"><div class="lab">答案</div>${cellsRow(n)}</div></div>`;
   } else if (Q.kind === 'word') {
     const n = String(q.ans).length + 1;
@@ -166,7 +198,7 @@ function render() {
     const n = String(q.a).length, col = `80px 18px repeat(${n}, 96px)`;
     h = `<div class="card"><div class="row" style="grid-template-columns:${col}"><div class="lab">商</div><div></div>${cellsRow(n)}</div>
       <div class="row dig" style="grid-template-columns:${col};font-size:66px;line-height:92px"><div>${q.b}</div><div style="border-left:5px solid #2b2920;border-top:5px solid #2b2920;border-top-left-radius:16px;height:92px"></div>${digits(q.a).map(d => `<div style="border-top:5px solid #2b2920">${d}</div>`).join('')}</div>
-      <div class="grid64 scratch" style="height:200px;margin-left:108px"><canvas></canvas></div>
+      <div class="row" style="grid-template-columns:${col}"><div class="lab">草稿</div><div></div><div class="strip scratch" style="grid-column:3/-1;height:230px;background-image:repeating-linear-gradient(90deg,transparent 0 101px,#e3dccb 101px 102px),repeating-linear-gradient(transparent 0 57px,#e3dccb 57px 58px);background-position:-3px 0"><canvas></canvas></div></div>
       ${q.rem !== undefined ? `<div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;font-size:30px;font-weight:800"><div>余</div><div style="width:96px" class="remc">${cellsRow(1)}</div></div>` : ''}</div>`;
   } else if (Q.kind === 'steps') {
     const n = String(q.ans).length + 1;
@@ -175,7 +207,7 @@ function render() {
       <div class="eqrow"><b>=</b><div class="scratch" style="flex:1;height:92px"><canvas></canvas></div></div>
       <div style="display:flex;align-items:center;gap:18px;margin-top:8px"><b style="font-size:56px;width:48px">=</b><div style="display:grid;grid-template-columns:repeat(${n}, 96px);gap:8px">${cellsRow(n)}</div></div></div>`;
   } else {
-    const n = String(q.ans).length + 1;
+    const n = q.blank || String(q.ans).length + 1;
     h = `<div style="position:absolute;inset:0;padding:28px;display:flex;flex-direction:column;gap:18px">
       <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:12px;font-size:76px;font-weight:800"><div>${q.left}</div><div style="display:grid;grid-template-columns:repeat(${n}, 96px);gap:8px">${cellsRow(n)}</div><div>${q.right}</div></div>
       <div class="grid64 scratch" style="height:250px"><canvas></canvas></div></div>`;
@@ -188,12 +220,13 @@ function render() {
   Q.locked = false; Q.t0 = performance.now(); Q.touched = 0;
   const spk = $('spk'); if (spk) spk.onclick = () => { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(q.say); u.lang = 'zh-CN'; u.rate = .9; speechSynthesis.speak(u); } catch (e) {} };
   drawTabs();
+  if (!seenDemo(Q.kind)) showDemo();
 }
-function recCell(c) { const p = Q.pads[Q.cells.indexOf(c)], r = INK.recognize(p.strokes(), STORE); c.querySelector('.rec').textContent = r.text ? r.text[0] : (p.strokes().length ? '?' : ''); }
+function recCell(c) { const p = Q.pads[Q.cells.indexOf(c)], r = INK.recognize(p.strokes(), STORE); c.querySelector('.rec').textContent = r.text ? (r.text.length > 1 ? '?' : r.text) : (p.strokes().length ? '?' : ''); }
 
 // ---------- 完整写法（Ben 11-07：出答案时把整个正确写法写出来）：按数字现算，不手写 ----------
 // 一个格子：{v: 文字, c: 'u' 下划线 | 's' 小字（进位、退位点）| 'q' 蓝字（答案）}
-const grid = (rows, n) => `<div class="g" style="grid-template-columns:28px repeat(${n}, 34px)">${rows.map(r => r.map(x => `<div class="${x.c || ''}">${x.v === undefined ? '' : x.v}</div>`).join('')).join('')}</div>`;
+const grid = (rows, n) => `<div class="g" style="grid-template-columns:30px repeat(${n}, 40px)">${rows.map(r => r.map(x => `<div class="${x.c || ''}">${x.v === undefined ? '' : x.v}</div>`).join('')).join('')}</div>`;
 const cellsOf = (s, n, c) => { const a = String(s).split(''); return Array(n - a.length).fill({v: ''}).concat(a.map(v => ({v, c}))); };
 // 竖式加减，支持小数（按小数点对齐，小数点占一列）
 function vAddSub(A, op, B) {
@@ -221,7 +254,7 @@ function vMul(a, b) {
     return [[{v: '', c: 's'}].concat(carries.map(v => ({v, c: 's'}))), [{v: ''}].concat(row)];
   };
   const head = [[{v: ''}].concat(cellsOf(sa, n)), [{v: '×', c: 'u'}].concat(cellsOf(String(b), n).map(x => ({v: x.v, c: 'u'})))];
-  if (bd.length === 1) { const [c1, r1] = part(bd[0], 0); return grid([c1].concat(head, [r1.map((x, i) => i ? Object.assign({}, x, {c: 'q'}) : x)]), n); }
+  if (bd.length === 1) { const [c1, r1] = part(bd[0], 0); return grid(head.concat([c1, r1.map((x, i) => i ? Object.assign({}, x, {c: x.v === '' ? '' : 'q'}) : x)]), n); }
   const [c1, r1] = part(bd[0], 0), [c2, r2] = part(bd[1], 1);
   return grid(head.concat([c1, r1, c2, r2.map(x => Object.assign({}, x, {c: 'u'})), [{v: ''}].concat(cellsOf(String(prod), n, 'q'))]), n);
 }
@@ -232,7 +265,7 @@ function vDiv(a, b) {
   const at = (s, end) => Array(n).fill(0).map((_, k) => { const i = k - 2, st = end - String(s).length + 1; return {v: i >= st && i <= end ? String(s)[i - st] : ''}; });
   const steps = [];
   ds.forEach((d, i) => { cur = cur * 10 + d; const q = Math.floor(cur / b); if (q || started) { started = true; qd[i] = q; if (q) steps.push({end: i, prod: q * b, rest: cur - q * b}); cur -= q * b; } });
-  rows.push([{v: ''}].concat(Array(n).fill(0).map((_, k) => ({v: k >= 2 && qd[k - 2] !== undefined ? qd[k - 2] : '', c: 'q'}))));
+  rows.push([{v: ''}].concat(Array(n).fill(0).map((_, k) => ({v: k >= 2 && qd[k - 2] !== undefined ? qd[k - 2] : '', c: k >= 2 && qd[k - 2] !== undefined ? 'q' : ''}))));
   rows.push([{v: ''}, {v: b}, {v: '', c: 'br'}].concat(ds.map(d => ({v: d, c: 't'}))));
   steps.forEach((s, k) => {
     rows.push([{v: ''}].concat(at(s.prod, s.end).map((x, i) => (i - 2 <= s.end && i - 2 > s.end - String(s.prod).length ? Object.assign(x, {c: 'u'}) : x))));
@@ -256,15 +289,16 @@ function workOf(q) {
 function judge(dunno) {
   if (Q.locked) return; Q.locked = true;
   const q = BANK[Q.kind].qs[Q.i], ms = performance.now() - Q.t0;
-  const read = Q.pads.map(p => { const r = INK.recognize(p.strokes(), STORE); return p.strokes().length ? (r.text ? r.text[0] : '?') : ''; });
+  const read = Q.pads.map(p => { const r = INK.recognize(p.strokes(), STORE); return p.strokes().length ? (r.text && r.text.length === 1 ? r.text : r.text ? '两' : '?') : ''; });
   const rem = q.rem !== undefined ? read.pop() : null;
   const firstFilled = read.findIndex(x => x !== ''), body = firstFilled < 0 ? '' : read.slice(firstFilled).join('');
-  const okMain = !dunno && firstFilled >= 0 && read.slice(firstFilled).every(x => /^\d$/.test(x)) && +body === q.ans;
+  const tip = read.includes('两') ? '一格只写一个数' : Q.kind === 'div' && read[firstFilled] === '0' ? '商的最高位不写 0' : '';
+  const okMain = !dunno && !tip && firstFilled >= 0 && read.slice(firstFilled).every(x => /^\d$/.test(x)) && +body === q.ans;
   const ok = okMain && (q.rem === undefined || rem === String(q.rem));
   Q.cells.forEach(c => c.classList.add(ok ? 'ok' : 'bad'));
   const res = $('res');
   res.innerHTML = `<div class="big ${ok ? 'ok' : 'bad'}">${ok ? '✓ 对了' : dunno ? '没关系，看一看' : '✗ 再看看'}</div>
-    ${dunno ? '' : `<div class="muted">认出来是：${body || '（空）'}${q.rem !== undefined ? ' 余 ' + (rem || '（空）') : ''} · 用了 ${Math.ceil(ms / 1000)} 秒</div>`}
+    ${tip ? `<div class="why" style="color:#f0b46c">${tip}</div>` : ''}${dunno ? '' : `<div class="muted">认出来是：${body || '（空）'}${q.rem !== undefined ? ' 余 ' + (rem || '（空）') : ''} · 用了 ${Math.ceil(ms / 1000)} 秒</div>`}
     ${workOf(q)}<div class="why">${q.why}</div><div style="flex:1"></div><button class="btn go" id="next">下一题</button>`;
   res.classList.add('show');
   $('next').onclick = next;

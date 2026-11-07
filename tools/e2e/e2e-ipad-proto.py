@@ -30,6 +30,17 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.wait_for_timeout(300)
     kinds = pg.evaluate("KINDS")
+    # 第一次进每种版面先出示范卡（另一组数字，一行一行出现），点「我会了」才开始写
+    for k in kinds:
+        pg.evaluate(f"localStorage.removeItem('ipadproto.demo.{k}'); Q.kind='{k}'; Q.i=0; render()"); pg.wait_for_timeout(200)
+        check(pg.locator('#demo').is_visible(), f'{k} 第一次出示范卡')
+        ex = pg.evaluate("JSON.stringify(DEMO[Q.kind].q)"); q0 = pg.evaluate("JSON.stringify(BANK[Q.kind].qs.map(q=>q.ans))")
+        if k == kinds[0]: pg.wait_for_timeout(4000); pg.screenshot(path=str(out / 'demo.png'))
+        pg.click('#demoGo'); pg.wait_for_timeout(150)
+        check(not pg.locator('#demo').is_visible(), f'{k} 点「我会了」关掉示范')
+        pg.evaluate(f"render()"); pg.wait_for_timeout(150)
+        check(not pg.locator('#demo').is_visible(), f'{k} 看过以后不再自动出')
+    pg.click('#seeDemo'); pg.wait_for_timeout(200); check(pg.locator('#demo').is_visible(), '「看示范」能再看'); pg.click('#demoGo')
     for k in kinds:
         n = pg.evaluate(f"BANK['{k}'].qs.length")
         for i in range(n):
@@ -55,6 +66,24 @@ with sync_playwright() as p:
     pg.evaluate("Q.kind='vert'; Q.i=0; render()"); pg.wait_for_timeout(200)
     cells = pg.locator('.cell'); write(pg, cells.nth(0), 1); write(pg, cells.nth(2), 9); pg.click('#done'); pg.wait_for_timeout(300)
     check('再看看' in pg.inner_text('#res .big'), '中间空一格判错')
+    # 除法商的最高位写 0：不规范，判错并提示
+    pg.evaluate("Q.kind='div'; Q.i=0; render()"); pg.wait_for_timeout(200)
+    cells = pg.locator('.cell'); [write(pg, cells.nth(i), d) for i, d in enumerate([0, 1, 3, 4])]; pg.click('#done'); pg.wait_for_timeout(300)
+    check('最高位不写 0' in pg.inner_text('#res'), '商最高位写 0 判错并提示')
+    # 一格写两个数：提示一格一个
+    pg.evaluate("Q.kind='vert'; Q.i=0; render()"); pg.wait_for_timeout(200)
+    c0 = pg.locator('.cell').nth(0); bb = c0.bounding_box()
+    for k, d in enumerate([1, 7]):
+        h = bb['height'] * .5; w = h * .6; x0 = bb['x'] + 8 + k * (w + 10); y0 = bb['y'] + bb['height'] * .25
+        for st in D[d]:
+            pts = [(x0 + x * w / .6, y0 + y * h) for x, y in st]; pg.mouse.move(*pts[0]); pg.mouse.down()
+            for q2 in pts[1:]: pg.mouse.move(*q2, steps=2)
+            pg.mouse.up()
+    pg.click('#done'); pg.wait_for_timeout(300)
+    check('一格只写一个数' in pg.inner_text('#res'), '一格写两个数会提示')
+    # 填空 2.□4 只有一个方框
+    pg.evaluate("Q.kind='fill'; Q.i=0; render()"); pg.wait_for_timeout(200)
+    check(pg.locator('.cell').count() == 1, '2.□4 只有一个方框')
     b.close()
 print('错误', errs or '无'); print('不通过', fails or '无')
 sys.exit(1 if fails or errs else 0)
