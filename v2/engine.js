@@ -25,22 +25,32 @@
   // 三四年级（第 10 级起）开得慢一点（说明书-到四年级第一批，模拟）：上一级至少一半格子到淡红，上次开级后还要练满 HOLD_DAYS 个练习日。
   // 只看格子的话，一年级孩子两三个月就能开到四年级内容。S.lvTop = 已放行到第几级，S.lvTopDay = 放行那天。手选难度不受限
   const HOLD_FROM = 9, HOLD_DAYS = 25, HOLD_PASS = 0.5;
-  const rawLevel = S => { let top = K.LEVELS.length;
-    for (let i = 0; i < CELLS.length; i++) { const hold = i >= HOLD_FROM - 1, need = hold ? 2 : 1, share = l => (l.length ? l.filter(it => lv(S, it.id) >= need || (S.known && S.known[it.skill])).length / l.length : -1), c = CELLS[i];
+  // 级别只升不降（说明书-到四年级第二批 §6）：在已开放的级别里加新的灰格子，会让刚过线的孩子掉一级。
+  // S.lvMax = 自动模式到过的最高级别（受 lvTop 限制之后），每次练习开始时写。旧存档第一次按「冻结的格子」算：
+  // 引入 lvMax 之后加的技能都标 late（tests/lvmax.test.js 查冻结格子数），不算进迁移，否则新题一上线就把孩子关回去
+  const FROZEN = CELLS.map(c => c.filter(it => !K.BY[it.skill].late));
+  const rawLevel = (S, cells) => { let top = K.LEVELS.length; cells = cells || CELLS;
+    for (let i = 0; i < cells.length; i++) { const hold = i >= HOLD_FROM - 1, need = hold ? 2 : 1, share = l => (l.length ? l.filter(it => lv(S, it.id) >= need || (S.known && S.known[it.skill])).length / l.length : -1), c = cells[i];
       // 理解和秒答分开算，有一条线过 70% 就算过：摸底不测秒答，不能因为秒答还灰把会的数位关掉
       if (c.length && Math.max(share(c.filter(it => skillOf(it.id).speed)), share(c.filter(it => !skillOf(it.id).speed))) < (hold ? HOLD_PASS : AUTO_PASS)) { top = Math.min(hold ? i + 1 : i + 2, K.LEVELS.length); break; } }
     return top; };
   const practiceDays = (S, since) => Object.keys(S.stats || {}).filter(d => d > since && S.stats[d].sec > 0).length;
   // 每次练习开始时调用：到了该开新级的时候，一次只放行一级
+  const capTop = S => Math.max(HOLD_FROM, S.lvTop || 0);
+  const floorOf = S => (S.lvMax !== undefined ? S.lvMax : Math.min(rawLevel(S, FROZEN), capTop(S)));   // 还没写 lvMax（第一次练习前）：临时按冻结格子算，不写存档
   function tickLevel(S, day) {
-    const raw = rawLevel(S); if (raw <= HOLD_FROM) return;
-    if (!S.lvTop) { S.lvTop = HOLD_FROM; S.lvTopDay = day; }
-    if (raw > S.lvTop && S.lvTop < K.LEVELS.length && (practiceDays(S, S.lvTopDay) >= HOLD_DAYS || (topMemo = null, allOut(S, day)))) { S.lvTop++; S.lvTopDay = day; }   // 开放的题全出完了就不用等，否则练不了、也攒不到练习日
+    if (S.lvMax === undefined) S.lvMax = Math.min(rawLevel(S, FROZEN), capTop(S));   // 迁移：写在最前面，第 9 级以下的孩子也要有
+    const raw = rawLevel(S);
+    if (raw > HOLD_FROM) {
+      if (!S.lvTop) { S.lvTop = HOLD_FROM; S.lvTopDay = day; }
+      if (raw > S.lvTop && S.lvTop < K.LEVELS.length && (practiceDays(S, S.lvTopDay) >= HOLD_DAYS || (topMemo = null, allOut(S, day)))) { S.lvTop++; S.lvTopDay = day; }   // 开放的题全出完了就不用等，否则练不了、也攒不到练习日
+    }
+    S.lvMax = Math.max(S.lvMax, Math.min(raw, capTop(S)));
     topMemo = null;
   }
   function autoLevel(S) {
     if (topMemo && topMemo.S === S) return topMemo.top;
-    const top = Math.min(rawLevel(S), Math.max(HOLD_FROM, S.lvTop || 0));
+    const top = Math.max(Math.min(rawLevel(S), capTop(S)), floorOf(S));
     topMemo = {S, top};
     return top;
   }
