@@ -349,3 +349,36 @@ test('近 14 天炼出的文字有英文', () => {
     assert.equal(I18N.text('杂色碎片'), 'Odd shards');
   });
 })();
+
+// ---------- 伙伴罐（反例来自 minecraft-web/tools/pal-jar-sim.js） ----------
+const jarDay = n => new Date(Date.UTC(2026, 10, 1 + n)).toISOString().slice(0, 10);
+const jarSt = (forged, target) => { const st = G.blank(); forged.forEach((f, i) => { st.days[jarDay(i)] = Object.assign({ok: 1, n: 1}, {forged: f}); }); st.palJar = {bal: 0, moved: {}, target}; return st; };
+const nets = (st, d) => G.items(st, d).split(',').map(s => +s.split('.')[1]);
+test('伙伴罐：炼 5 留 2，领走 3，再炼 1 待领 1；花罐不影响矿场', () => {
+  const st = jarSt([5], 2), d = jarDay(0);
+  assert.equal(G.jarWant(st, d), 2, '预览和实际一致');
+  assert.equal(G.reserve(st, d), 2); assert.equal(st.palJar.bal, 2);
+  G.markSent(st, d); assert.deepEqual(nets(st, d), [3]);
+  assert.equal(G.unsent(st, d), 0, '不是负数');
+  st.days[d].forged = 6; assert.equal(G.unsent(st, d), 1);
+  G.markSent(st, d); assert.deepEqual(nets(st, d), [4], '4 + 罐里 2 = 6，一颗不多');
+  st.palJar.bal -= 2; assert.deepEqual(nets(st, d), [4]);
+});
+test('伙伴罐：已领走的留不了；同一天不再多留；攒 3 天待领 8 上限 4', () => {
+  let st = jarSt([3], 5); G.markSent(st, jarDay(0)); assert.equal(G.reserve(st, jarDay(0)), 0);
+  st = jarSt([4, 2, 2], 12);
+  assert.equal(G.reserve(st, jarDay(2)), 4); assert.equal(G.reserve(st, jarDay(2)), 0);
+  assert.equal(st.palJar.moved[jarDay(0)], 4, '从最早的日子移');
+});
+test('伙伴罐：只炼 1 颗全留，净值 0；没有目标不留，也不建罐', () => {
+  const st = jarSt([1], 5), d = jarDay(0); G.reserve(st, d);
+  assert.equal(st.palJar.bal, 1); assert.equal(G.netTotal(st, d), 0);
+  const s2 = G.blank(); s2.days[d] = {forged: 3, ok: 1, n: 1};
+  assert.equal(G.reserve(s2, d), 0); assert.equal(s2.palJar, undefined); assert.equal(G.unsent(s2, d), 3);
+});
+test('伙伴罐：删旧日子时一起删 moved；存读不丢', () => {
+  const st = jarSt([4], 2), d = jarDay(0); G.reserve(st, d);
+  const back = G.parse(JSON.stringify(st)); assert.equal(back.palJar.bal, 2); assert.equal(back.palJar.moved[d], 2);
+  for (let i = 1; i <= 15; i++) st.days[jarDay(i)] = {forged: 1, ok: 1, n: 1};   // 记录只留最近 14 天
+  G.prune(st, jarDay(15)); assert.equal(st.days[d], undefined); assert.equal(st.palJar.moved[d], undefined); assert.equal(st.palJar.bal, 2, '罐不过期');
+});

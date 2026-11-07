@@ -881,7 +881,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v95:2a2f1eed7957 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v96:8ef5bef53bb5 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -891,24 +891,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=95"></script>
-<script src="i18n.js?v=95"></script>
-<script src="bank.js?v=95"></script>
-<script src="hardbank.js?v=95"></script>
-<script src="placebank.js?v=95"></script>
-<script src="core.js?v=95"></script>
-<script src="ink.js?v=95"></script>
-<script src="skills.js?v=95"></script>
-<script src="engine.js?v=95"></script>
-<script src="render.js?v=95"></script>
-<script src="world.js?v=95"></script>
-<script src="home.js?v=95"></script>
-<script src="puzzles.js?v=95"></script>
-<script src="thinking.js?v=95"></script>
-<script src="house.js?v=95"></script>
-<script src="kongmine.js?v=95"></script>
-<script src="gems.js?v=95"></script>
-<script src="gemui.js?v=95"></script>
+<script src="touchfix.js?v=96"></script>
+<script src="i18n.js?v=96"></script>
+<script src="bank.js?v=96"></script>
+<script src="hardbank.js?v=96"></script>
+<script src="placebank.js?v=96"></script>
+<script src="core.js?v=96"></script>
+<script src="ink.js?v=96"></script>
+<script src="skills.js?v=96"></script>
+<script src="engine.js?v=96"></script>
+<script src="render.js?v=96"></script>
+<script src="world.js?v=96"></script>
+<script src="home.js?v=96"></script>
+<script src="puzzles.js?v=96"></script>
+<script src="thinking.js?v=96"></script>
+<script src="house.js?v=96"></script>
+<script src="kongmine.js?v=96"></script>
+<script src="gems.js?v=96"></script>
+<script src="gemui.js?v=96"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
