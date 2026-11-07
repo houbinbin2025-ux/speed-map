@@ -7,7 +7,9 @@
 })(typeof self !== 'undefined' ? self : this, function (K, E) {
   'use strict';
   const KEY = 'speedmap.gems';
-  const VALUE = {s: 5, m: 10, l: 50}, GEM = 100, SLOTS = 12, DAY_MAX = 30, CH_N = 5, CLAIM_DAYS = 7, KEEP_DAYS = 14, RECENT_DAYS = 14;
+  // 杂色碎片（Ben 11-07）：印 4、6、7、8、12、13，给孩子自己凑 100 做算数。数量要少，核心还是普通碎片
+  const VALUE = {s: 5, m: 10, l: 50, o4: 4, o6: 6, o7: 7, o8: 8, o12: 12, o13: 13}, ODD = ['o4', 'o6', 'o7', 'o8', 'o12', 'o13'], ODD_RATE = 0.1, ODD_OF = {s: ['o4', 'o6', 'o7', 'o8'], m: ['o8', 'o12', 'o13']};
+  const GEM = 100, SLOTS = 12, DAY_MAX = 30, CH_N = 5, CLAIM_DAYS = 7, KEEP_DAYS = 14, RECENT_DAYS = 14;
   const blank = () => ({v: 1, inv: {s: 0, m: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
@@ -22,7 +24,7 @@
     const has = k => o[k] === undefined || isObj(o[k]);
     if (!['inv', 'days', 'seen', 'lvMax', 'sent'].every(has)) return null;
     const b = blank(), inv = Object.assign(b.inv, o.inv), seen = Object.assign(b.seen, o.seen);
-    if (!['s', 'm', 'l'].every(t => Number.isInteger(inv[t]) && inv[t] >= 0) || !isObj(seen.keys) || !isObj(seen.cells)) return null;
+    if (!Object.keys(inv).filter(t => VALUE[t]).every(t => Number.isInteger(inv[t]) && inv[t] >= 0) || !isObj(seen.keys) || !isObj(seen.cells)) return null;
     if (!Object.values(o.days || {}).every(isObj) || (o.tickets !== undefined && !Number.isInteger(o.tickets))) return null;
     return Object.assign(b, o, {inv, seen});
   }
@@ -65,9 +67,16 @@
     const cell = cellOf(o), first = !seen.cells[cell];
     seen.cells[cell] = 1;
     const mid = o.mistake || (first && (o.lv < 2 || K_levelOf(o.inst) >= o.top));
-    st.inv[mid ? 'm' : 's']++;
+    const got = oddFor(mid ? 'm' : 's', o.rand);
+    st.inv[got] = (st.inv[got] || 0) + 1;
     if (mid) D.m++;
-    return mid ? 'm' : 's';
+    return got;
+  }
+  // 小碎片、中碎片有 10% 换成价值相近的杂色碎片；大碎片不换。不给随机数就不换
+  function oddFor(t, rand) {
+    const list = ODD_OF[t];
+    if (!list || !rand || rand() >= ODD_RATE) return t;
+    return list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
   }
   const K_levelOf = inst => { try { return K.ITEM[inst.id] ? K.levelOf(inst) : 0; } catch (e) { return 0; } };
 
@@ -81,18 +90,19 @@
   }
 
   // ---------- 锻造：炉子最多 12 个，一炉一颗，多的变废料；不够也开炉，全部变废料（开炉前由界面提醒） ----------
-  const sum = r => r.s * VALUE.s + r.m * VALUE.m + r.l * VALUE.l;
+  const sum = r => Object.keys(r).reduce((n, t) => n + r[t] * VALUE[t], 0);
+  const count = r => Object.keys(r).reduce((n, t) => n + r[t], 0);
   const enough = r => sum(r) >= GEM;
   const dayFull = (st, day) => !!st.days[day] && st.days[day].forged >= DAY_MAX;
   function forge(st, r, day) {
-    const bad = ['s', 'm', 'l'].some(t => !Number.isInteger(r[t]) || r[t] < 0 || r[t] > st.inv[t]);
+    const bad = Object.keys(r).some(t => !VALUE[t] || !Number.isInteger(r[t]) || r[t] < 0 || r[t] > (st.inv[t] || 0));
     if (bad) return {ok: false, why: 'lack'};
-    if (r.s + r.m + r.l > SLOTS) return {ok: false, why: 'full'};
+    if (count(r) > SLOTS) return {ok: false, why: 'full'};
     const v = sum(r);
     if (v === 0) return {ok: false, why: 'empty'};
     const D = dayOf(st, day);
     if (D.forged >= DAY_MAX) return {ok: false, why: 'daily'};
-    ['s', 'm', 'l'].forEach(t => { st.inv[t] -= r[t]; });
+    Object.keys(r).forEach(t => { st.inv[t] = (st.inv[t] || 0) - r[t]; });
     const gems = v >= GEM ? 1 : 0, waste = gems ? v - GEM : v;
     D.forged += gems; D.waste += waste;
     return {ok: true, gems, waste};
@@ -162,6 +172,6 @@
   const unsent = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, st.days[d].forged - (st.sent[d] || 0)), 0);
   function markSent(st, today) { recentDays(st, today).forEach(d => { st.sent[d] = st.days[d].forged; }); }
 
-  return {KEY, VALUE, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent};
 });
