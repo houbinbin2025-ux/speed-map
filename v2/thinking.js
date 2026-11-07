@@ -109,7 +109,7 @@ function fit() {
 }
 addEventListener('resize', fit);
 const hush = () => o.stopSay();   // 朗读走页面的 sayIt（App 里是原生语音）
-const OK_NEXT_MS = 2000;   // 做对后自动进下一题（Ben 11-07）；不会的讲解停住，等孩子点「继续」
+const OK_NEXT_MS = 1500;   // 做对后自动进下一题（Ben 11-07）；不会的讲解停住，等孩子点「继续」
 const cancelAuto = () => { clearTimeout(G.autoT); G.autoT = null; };
 const autoNext = () => { cancelAuto(); G.autoT = setTimeout(() => { G.autoT = null; G.tap = performance.now() + 500; next(); }, OK_NEXT_MS); };   // 正要点「继续」时刚好切题，这一下不能落到新题上
 document.addEventListener('visibilitychange', () => { if (document.hidden) { hush(); cancelAuto(); } });
@@ -149,7 +149,7 @@ function shell(say, sub) {
   return $s.querySelector('#main');
 }
 const guarded = () => performance.now() < G.tap;
-function finish(ok, msg, fbEl) {   // ok = 孩子做出来了，2 秒后自动下一题（也可以点「继续」）；false = 点了不会，等孩子点「继续」
+function finish(ok, msg, fbEl) {   // ok = 孩子做出来了，1.5 秒后自动下一题（也可以点「继续」）；false = 点了不会，等孩子点「继续」
   G.done = true; G.tap = performance.now() + 500; if (ok) earn();
   fbEl.className = 'fb ' + (ok ? 'ok' : 'bad'); fbEl.textContent = msg;
   const a = $s.querySelector('#acts'); a.innerHTML = '<button class="go" id="cont">继续</button>';

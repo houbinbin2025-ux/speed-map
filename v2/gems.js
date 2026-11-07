@@ -20,6 +20,7 @@
     h0: 0.85, hUp: 0.03, hDown: 0.07, hMin: 0.5, hMax: 1.1, stretch: 0.25,   // 难度：赢了略难、输了略易，稳定在约 70% 完成（0.03 ÷ 0.1 = 30% 完不成）；稍难题比例
     restAt: 1800, restSec: 300, restGrace: 30,   // 连续有效学习 30 分钟：30 秒内结束，休息 5 分钟
   };
+  const BOLT = 0.6, BOLT_DAY = 20;   // 闪电秒答：用时不到秒答时间的 60%，多得 1 个中碎片，一天最多 20 个（小碎片单独炼不出宝石，给小的等于没奖励）
   const blank = () => ({v: 1, inv: {s: 0, m: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
@@ -62,7 +63,7 @@
   const levelOfCell = (st, S, id) => Math.max(st.lvMax[id] || 0, ((S.cards || {})[id] || (S.skills || {})[id] || {}).lv || 0);
 
   // 记一次作答，返回得到的碎片 's' | 'm' | null。判定一出来就调，在显示答案之前
-  // o = {day, inst, ok, top, lv, dunno, peeked, oral, retry, mistake, guard}
+  // o = {day, inst, ok, slow, top, lv, dunno, peeked, oral, retry, mistake, guard}；slow = 答对但没秒答：只给 1 个小碎片
   function answer(st, o) {
     if (o.oral || o.retry) return null;
     const seen = seenToday(st, o.day), k = key(o.inst);
@@ -74,6 +75,7 @@
     if (!o.ok) { D.bad++; return null; }
     D.ok++;
     if (o.guard) return null;
+    if (o.slow) { st.inv.s++; return 's'; }
     const cell = cellOf(o), first = !seen.cells[cell];
     seen.cells[cell] = 1;
     const mid = o.mistake || (first && (o.lv < TUNE.midLv || K_levelOf(o.inst) >= o.top));
@@ -173,6 +175,13 @@
     if (!list || !rand || rand() >= ODD_RATE) return t;
     return list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
   }
+  // 秒答且这题得了碎片才调：多发 1 个小碎片，闪电秒答再发 1 个中碎片（一天最多 BOLT_DAY 个）；返回 {extra, bolt}
+  function speedBonus(st, day, fast) {
+    const D = dayOf(st, day), bolt = !!fast && (D.bolt || 0) < BOLT_DAY;
+    st.inv.s++;
+    if (bolt) { D.bolt = (D.bolt || 0) + 1; st.inv.m++; }
+    return {extra: 1, bolt};
+  }
   const K_levelOf = inst => { try { return K.ITEM[inst.id] ? K.levelOf(inst) : 0; } catch (e) { return 0; } };
 
   // 结算：认真奖励发差额，只加不扣
@@ -228,7 +237,9 @@
     D.n++;
     if (o.dunno) return null;
     if (!o.ok) { D.bad++; return null; }
-    D.ok++; st.inv.m++;
+    D.ok++;
+    if (o.slow) { st.inv.s++; return 's'; }   // 挑战题慢答：答对也有，但不算过
+    st.inv.m++;
     return 'm';
   }
   function finishChallenge(st, o) {
@@ -267,6 +278,6 @@
   const unsent = (st, today) => recentDays(st, today).reduce((n, d) => n + Math.max(0, st.days[d].forged - (st.sent[d] || 0)), 0);
   function markSent(st, today) { recentDays(st, today).forEach(d => { st.sent[d] = st.days[d].forged; }); }
 
-  return {TUNE, critChance, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, exitOffer, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {TUNE, critChance, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, exitOffer, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent};
 });

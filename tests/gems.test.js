@@ -47,6 +47,21 @@ test('每道题每天只有第一次作答算数；错了当天再做不给，�
   assert.equal(ans(st, {day: '2026-11-07', top: 99}), 's');
 });
 
+test('秒答多 1 个小碎片；闪电再多 1 个中碎片，一天最多 20 次，超过仍有小碎片', () => {
+  const st = G.blank();
+  assert.deepEqual(G.speedBonus(st, DAY, false), {extra: 1, bolt: false});
+  for (let i = 0; i < G.BOLT_DAY; i++) assert.deepEqual(G.speedBonus(st, DAY, true), {extra: 1, bolt: true});
+  assert.deepEqual(G.speedBonus(st, DAY, true), {extra: 1, bolt: false});
+  assert.equal(st.inv.s, G.BOLT_DAY + 2); assert.equal(st.inv.m, G.BOLT_DAY);
+  assert.equal(G.speedBonus(st, '2026-11-07', true).bolt, true, '隔天重新算');
+});
+
+test('挑战题慢答：不算错，给 1 个小碎片，不算过', () => {
+  const st = G.blank(), inst = {id: 'x', q: {a: 1}, ans: 1};
+  assert.equal(G.challengeAnswer(st, {day: DAY, inst, ok: true, slow: true}), 's');
+  assert.equal(st.days[DAY].bad, 0); assert.equal(st.inv.s, 1); assert.equal(st.inv.m, 0);
+});
+
 test('当场再来一次不给碎片，也不计正确率', () => {
   const st = G.blank();
   assert.equal(ans(st, {retry: true}), null);

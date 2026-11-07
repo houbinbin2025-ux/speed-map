@@ -40,17 +40,17 @@ test('新题写错进错题本，键短，还能复习', () => {
   const k = Object.keys(S.mistakes)[0]; assert.ok(k.length < 50, k); assert.equal(S.mistakes[k].q.say, x.q.say);
 });
 // ---------- 下架 ----------
-test('新题答对 4 次（一天最多记 2 次）就下架，不要求秒答', () => {
+test('新题秒答 3 次（一天最多记 2 次）就下架', () => {
   const S = blank(); S.settings = {levels: [11]}; const id = 'dock:g11:speed', x = HB.pools[id][0], inst = {id, q: x.q, ans: x.ans};
-  assert.equal(E.countsRight(inst), true);
-  [0, 0, 0, 1, 1].forEach(d => E.addFast(S, inst, D(d), 0));
+  [0, 0, 0, 1].forEach(d => E.addFast(S, inst, D(d), 0));
   assert.equal(E.spent(S, inst), true);
-  assert.equal(E.countsRight(K.make('dock:t:join', seeded(1))), false, '旧题还要秒答');
 });
-test('真实练习：只答对不够快，新题的次数也会累计', () => {
+test('真实练习：只答对不够快，新题不计次；秒答才计次', () => {
   const S = blank(); S.settings = {levels: [12]};
   for (let d = 0; d < 3; d++) { const s = E.session(S, D(d), {rnd: seeded(5 + d)}); for (let x = s.next(), n = 0; x && n < 80; x = s.next(), n++) { if (x.kind === 'q') s.answer({ok: true, fast: false, secs: 5}); } }
-  assert.ok(Object.keys(S.fast || {}).some(k => /:g12:/.test(k)), '新题应该开始计次');
+  assert.ok(!Object.keys(S.fast || {}).some(k => /:g12:/.test(k)), '慢答不计次');
+  const s = E.session(S, D(3), {rnd: seeded(9)}); for (let x = s.next(), n = 0; x && n < 80; x = s.next(), n++) if (x.kind === 'q') s.answer({ok: true, fast: true, secs: 5});
+  assert.ok(Object.keys(S.fast || {}).some(k => /:g12:/.test(k)), '秒答开始计次');
 });
 // ---------- 题目 ----------
 const gcdB = (a, b) => { a = a < 0n ? -a : a; while (b) [a, b] = [b, a % b]; return a || 1n; };

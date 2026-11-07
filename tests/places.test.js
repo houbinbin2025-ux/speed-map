@@ -48,7 +48,7 @@ test('每道题都能画题面和图解；示范卡、错题名、标签齐全�
   });
 });
 test('错了进错题本；判对错；不计时', () => {
-  K.SKILLS.filter(s => G.includes(s.group)).forEach(s => { assert.equal(s.timedFrom, null); assert.equal(E.kindOf(s.items[0].id), 'type8'); });
+  K.SKILLS.filter(s => G.includes(s.group)).forEach(s => { assert.equal(E.kindOf(s.items[0].id), 'type8'); });
   const inst = K.make('dock:t:join', seeded(1)); assert.ok(K.judge(K.ITEM['dock:t:join'], inst, inst.ans).ok); assert.ok(!K.judge(K.ITEM['dock:t:join'], inst, inst.ans + 1).ok);
   const S = C.blank(); E.addMistake(S, inst, D(0)); assert.equal(Object.values(S.mistakes)[0].src, 'dock');
 });

@@ -36,31 +36,34 @@
   // ---------- 记作答：判定一出来就调，在显示答案和存进度之前 ----------
   const oddRand = () => (window.__gemRand || Math.random)();   // 测试可固定
   const oddChips = (o, plus) => G.ODD.filter(t => o[t] > 0).map(t => `${chip(t)}<span>${plus}${o[t]}</span>`).join('');
-  function credit(run, got) { if (got) { run.gem = run.gem || {s: 0, m: 0}; run.gem[got] = (run.gem[got] || 0) + 1; floatShard(got); } }
+  function credit(run, got, i) { if (got) { run.gem = run.gem || {s: 0, m: 0}; run.gem[got] = (run.gem[got] || 0) + 1; floatShard(got, i); } }   // i：这题第几个，错开飞，看得出多
   function topOf(run) { if (run.gemTop === undefined) { G.sync(st, S(), auto()); run.gemTop = G.top(st, auto()); } return run.gemTop; }
   const clock = () => Date.now() / 1000;
   const evOn = q => on && !!q && ['today', 'free', 'review'].includes(q.kind) && !S().oral && c.canWrite();
   function answerQ(q, x, r, secs) {
-    if (!on || q.kind === 'place' || !c.canWrite()) return;
+    if (!on || q.kind === 'place' || !c.canWrite()) return null;
+    let got = null, more = null;
     const secBefore = (st.days[q.day] || {}).sec || 0, evc = q.opts && q.opts.evc;
     secs = Math.min(30, secs || 0);
     G.noteRest(st, secs, clock());
     if (!S().oral) { G.addSec(st, q.day, secs); if (!x.retry) G.notePace(st, secs, r.ok && !r.dunno); }
     if (evc) {
-      const got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, rand: oddRand});
+      got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, rand: oddRand});
       credit(q, got); if (got) evc.earned[got] = (evc.earned[got] || 0) + 1;
       if (r.ok && !r.dunno && !q.peeked) evc.done++;
       evLater();
     } else if (q.kind === 'challenge') {
-      const got = G.challengeAnswer(st, {day: q.day, inst: x.inst, ok: r.ok && !q.peeked, dunno: r.dunno || q.peeked, oral: S().oral});
-      q.chDone = (q.chDone || 0) + 1; if (got) q.chWon = (q.chWon || 0) + 1;
+      got = G.challengeAnswer(st, {day: q.day, inst: x.inst, ok: r.ok && !q.peeked, slow: r.ok && !r.fast, dunno: r.dunno || q.peeked, oral: S().oral});
+      q.chDone = (q.chDone || 0) + 1; if (got === 'm') q.chWon = (q.chWon || 0) + 1;
       credit(q, got);
     } else {
-      const got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand});
+      got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand});
       credit(q, got);
+      if (got && r.fast) { more = G.speedBonus(st, q.day, r.bolt); credit(q, 's', 1); if (more.bolt) credit(q, 'm', 2); }
       if (evOn(q)) afterAnswer(q, x, r, got, secBefore);
     }
     save();
+    return {got, extra: more ? more.extra : 0, bolt: !!more && more.bolt};
   }
   // ---------- 练习中的正反馈：暴击、连对、弹出挑战 ----------
   let evRun = null;
@@ -178,13 +181,17 @@
     let e, R; try { e = G.evStats(st); R = st.rest || {}; } catch (x) { return ''; }
     return `<b>挑战数据</b><div>最近 ${e.n} 次，完成 ${e.won} 次${e.n ? `（${Math.round(e.rate * 100)}%）` : ''}。目标约 70%，会自动调题数</div><div>难度系数：双倍 ${e.dbl.toFixed(2)}，限时 ${e.qc.toFixed(2)}。最近每题 ${e.sec.toFixed(1)} 秒，正确率 ${Math.round(e.acc * 100)}%</div><div>连续已练 ${Math.round((R.sec || 0) / 60)} 分钟，满 ${G.TUNE.restAt / 60} 分钟休息 ${G.TUNE.restSec / 60} 分钟</div>`;
   }
-  function answerP(p, inst, c0) {   // 老秒答流程。Boss 和摸底不给
-    if (!on || p.kind === 'boss' || p.kind === 'scan' || p.kind === 'final' || !c.canWrite()) return;
+  function answerP(p, inst, c0, limit) {   // 老秒答流程。Boss 和摸底不给
+    if (!on || p.kind === 'boss' || p.kind === 'scan' || p.kind === 'final' || !c.canWrite()) return null;
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
     { const secs = Math.min(30, (p.ms || 0) / 1000); G.noteRest(st, secs, clock()); G.addSec(st, p.gemDay, secs); evRun = null; }
-    credit(p, G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay), rand: oddRand}));
+    const got = G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', slow: p.result === 'slow', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay), rand: oddRand});
+    credit(p, got);
+    let more = null;
+    if (got && p.result === 'fast') { more = G.speedBonus(st, p.gemDay, p.ms <= limit * G.BOLT); credit(p, 's', 1); if (more.bolt) credit(p, 'm', 2); }
     save();
+    return {got, extra: more ? more.extra : 0, bolt: !!more && more.bolt};
   }
 
   // ---------- 结算页的碎片区块 ----------
@@ -232,9 +239,9 @@
     save();
     c.$('qsum').innerHTML = `<div class="col" style="flex:1;justify-content:center;align-items:center;gap:14px">
       <div style="font-size:28px;font-weight:900">挑战结束</div>
-      <div style="font-size:18px">答对 ${won} / ${G.CH_N} 题</div>
+      <div style="font-size:18px">秒答 ${won} / ${G.CH_N} 题</div>
       ${r.big ? `<div class="bigwin"><span class="rays"></span><img src="${shardURL('l')}" alt=""></div><div style="font-size:18px;font-weight:900;color:var(--warn)">大碎片 +1</div>` : ''}
-      <div class="gemline">${chip('m')} +${won}</div>
+      <div class="gemline">${chip('m')} +${won}${q.gem && q.gem.s ? ` ${chip('s')} +${q.gem.s}` : ''}</div>
       <div class="gembtns"><button class="btn go" id="chForge">去锻造</button><button class="btn" id="chHome">回到岛上</button></div></div>`;
     c.show('qsum');
     if (r.big) blip([[523, 0, 0.1], [659, 0.1, 0.1], [784, 0.2, 0.1], [1046, 0.3, 0.3]]);
@@ -429,7 +436,8 @@
     b.classList.toggle('go', left > 0);
   }
   // 答题时碎片从屏幕中间飞向顶部
-  function floatShard(t) { try { const to = c.$('qMined') && c.$('qMined').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], t === 'm' ? 28 : 20, 480, 30); if (t === 'm') blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
+  function floatShard(t, i) { setTimeout(() => floatNow(t), (i || 0) * 160); }
+  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), to = q && q.width ? q : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], t === 'm' ? 28 : 20, 480, 30); if (t === 'm') blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };

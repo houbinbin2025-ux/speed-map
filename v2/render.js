@@ -10,11 +10,11 @@
   // ---------- 技能组（首页 6 块地） ----------
   const GROUPS = [
     {id: 'look', name: '看数', rule: '看一眼，写出有几个'},
-    {id: 'bond', name: '分合', rule: '先做对，再做快'},
+    {id: 'bond', name: '分合', rule: '秒答才算学会'},
     {id: 'place', name: '数位', rule: '一根是 10，一块是 1'},
     {id: 'cmp', name: '比大小', rule: '看清楚，再点大的'},
     {id: 'line', name: '数线', rule: '把旗子插到这个数的位置'},
-    {id: 'speed', name: '秒答地图', rule: '又对又快'},
+    {id: 'speed', name: '秒答地图', rule: '秒答才算学会'},
     {id: 'garden', name: '规律花园', rule: '找到规律，接下去'},
     {id: 'market', name: '钟楼集市', rule: '看钟、买东西'},
     {id: 'dock', name: '故事码头', rule: '看图想一想，写答案'},
@@ -227,14 +227,14 @@
   }
 
   // ---------- 答对时的字（说明书 3.4「孩子看到的字」） ----------
-  function okWords(inst, out, wasLv) {
-    const s = skillOf(inst.id), timed = s.timedFrom !== null && wasLv >= s.timedFrom, card = !K.ITEM[inst.id].gen;
-    if (s.input === 'line') return {big: '很接近！', small: ''};
-    if (s.speed) return out.pass ? {big: '⚡ 秒答！', small: out.up ? '点亮了' : ''} : {big: '✓ 对了', small: '再快一点就能升级'};
-    if (timed && !out.pass) return {big: '✓ 对了', small: '再快一点就能升级'};
-    if (out.up) return {big: card ? '✓ 对了！点亮了' : '✓ 点亮了！', small: ''};
-    if (timed) return {big: '⚡ 又对又快！', small: ''};
-    return {big: '✓ 对了！', small: ''};
+  // t = {used, limit}（毫秒）：这次用时和秒答时间
+  // g = {got, bolt}：这次得的碎片
+  const SHARD = {s: '+1 小碎片', m: '+1 中碎片', l: '+1 大碎片'};
+  const shardWord = t => SHARD[t] || `+1 碎片（${t.slice(1)}）`;   // 杂色碎片 o12 → 面值
+  const shards = g => (g && g.got ? [shardWord(g.got)].concat(Array(g.extra || 0).fill('+1 小碎片'), g.bolt ? ['+1 中碎片'] : []) : []);
+  function okWords(inst, out, wasLv, t, g) {
+    if (out.pass) return {big: g && g.bolt ? '⚡⚡ 闪电秒答！' : '⚡ 秒答！', small: (out.up ? ['点亮了'] : []).concat(shards(g)).join(' · ')};
+    return {big: skillOf(inst.id).input === 'line' ? '✓ 很接近' : '✓ 对了', small: (out.peeked ? [] : [t ? `这次 ${Math.ceil(t.used / 1000)} 秒，秒答要 ${Math.floor(t.limit / 1000)} 秒内` : '再快一点才算学会']).concat(shards(g)).join(' · ')};
   }
 
   // ---------- 「学一学」示范卡：三步动画（具体 → 图形 → 抽象），约 3 秒 ----------
@@ -257,7 +257,7 @@
     } else if (s.speed) {
       title = '秒答：看到算式，马上写答案';
       const it = s.items.find(x => !x.gen) || s.items[0], e = K.example(it.id);
-      body = step(1, `<div class="eq num">${e.q.a} ${opSign(e.q.op)} ${e.q.b} =</div>`, '看到算式') + arrow + step(2, `<div class="eq num">${ans(e.ans)}</div>`, '马上写答案') + arrow + step(3, '<div class="say2">⚡</div>', '又对又快就点亮');
+      body = step(1, `<div class="eq num">${e.q.a} ${opSign(e.q.op)} ${e.q.b} =</div>`, '看到算式') + arrow + step(2, `<div class="eq num">${ans(e.ans)}</div>`, '马上写答案') + arrow + step(3, '<div class="say2">⚡</div>', '秒答就点亮');
       foot = '不会就点「不会」，会告诉你答案';
     } else if (s.group === 'look') {
       title = '看数：看一眼，写出有几个';

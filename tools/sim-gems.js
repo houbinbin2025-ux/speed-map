@@ -5,6 +5,9 @@ const fs = require('fs');
 let seed = 1; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; Math.random = rnd;
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), G = require('../v2/gems.js');
 if (process.env.TUNE) Object.assign(G.TUNE, JSON.parse(process.env.TUNE));
+// 秒答假设（拿不到空空的真实秒答比例）：答对里秒答的比例 FAST，秒答里闪电秒答的比例 BOLTP
+const FAST = +(process.env.FAST || 0.6), BOLTP = +(process.env.BOLTP || 0.4);
+const speed = ok => { const fast = ok && rnd() < FAST; return {fast, bolt: fast && rnd() < BOLTP}; };
 const S0 = JSON.parse(JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['speedmap.v2']);
 const DAYS = +process.argv[3] || 10, SEEDS = +process.argv[4] || 4;
 const input = i => K.BY[K.ITEM[i.id].skill].input;
@@ -53,7 +56,7 @@ function round(st, S, day, kind, retry, kid, top) {
     let s1 = kid.s(); const hard = K.levelOf(inst) > top || E.lv(S, inst.id) === 0, p = kid.p({inst}) * (hard ? 0.8 : 1), ok = rnd() < p; if (!ok) s1 += 4;
     if (t + s1 > tg.T) { t = tg.T; break; }
     t += s1; G.addSec(st, day, Math.min(30, s1)); G.notePace(st, s1, ok);
-    const got = G.answer(st, {day, inst, ok, top, lv: G.levelOfCell(st, S, inst.id), rand: rnd}); if (got) earned[got] = (earned[got] || 0) + 1;
+    const sp = speed(ok), got = G.answer(st, {day, inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, inst.id), rand: rnd}); if (got) earned[got] = (earned[got] || 0) + 1;
     if (ok) done++;
     if (done >= tg.n) break;
   }
@@ -79,15 +82,16 @@ for (const name of Object.keys(KIDS)) {
           const secs = Math.min(30, s1); clock += s1; const effNow = G.addSec(st, day, secs); eff += secs; qn++; if (!x.retry) G.notePace(st, secs, ok);
           const e = G.eventStep(st, day, R, effNow, clock, rnd);
           if (e.offer && rnd() < (kid.take || 0)) { const k = G.acceptOffer(R, clock); if (k) { let r2 = false; for (;;) { const w = round(st, S, day, k, r2, kid, top); eff += w.t; clock += w.t; if (k === 'qc') { qcT++; if (w.won) qcW++; } else { dbT++; if (w.won) dbW++; } if (w.won || k !== 'dbl' || r2 || rnd() > 0.8) break; r2 = true; } } }
-          const got = G.answer(st, {day, inst: x.inst, ok, top, lv: G.levelOfCell(st, S, x.inst.id), dunno: du, retry: x.retry, mistake: !!x.mkey, rand: rnd});
-          sess.answer({ok, fast: ok && rnd() < 0.75, secs});
+          const sp = speed(ok), got = G.answer(st, {day, inst: x.inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, x.inst.id), dunno: du, retry: x.retry, mistake: !!x.mkey, rand: rnd});
+          if (got && sp.fast) G.speedBonus(st, day, sp.bolt);
+          sess.answer({ok, fast: sp.fast, secs});
         }
         if (o.ticket && sess.done && cnt >= 10 && G.earnTicket(st, {done: true, n: cnt})) tickets++;
       };
       kid.plan(S, day, run);
       if (kid.ch) while (st.tickets > 0 && G.startChallenge(st)) {
         ticketsN++; const qs = G.pickChallenge(S, G.top(st, E.autoLevel(S)), rnd, st); let w = 0;
-        for (const inst of qs) { const secs = Math.min(30, kid.s() * 1.5); G.addSec(st, day, secs); eff += secs; if (G.challengeAnswer(st, {day, inst, ok: rnd() < kid.ch})) w++; }
+        for (const inst of qs) { const secs = Math.min(30, kid.s() * 1.5); G.addSec(st, day, secs); eff += secs; { const ok = rnd() < kid.ch, sp = speed(ok); if (G.challengeAnswer(st, {day, inst, ok, slow: ok && !sp.fast}) === 'm') w++; } }
         G.finishChallenge(st, {won: w, n: qs.length === G.CH_N ? G.CH_N : 0});
       }
       G.settle(st, day);
