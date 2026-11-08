@@ -96,10 +96,11 @@
   // 条形图：data = {bars: [[名字, 数]], max, step, ask}；hi = 高亮哪几根（答错图解）
   function chartSvg(d, a, o) {
     o = o || {};
-    const n = d.max / d.step, H = 270, top = 36, bot = 220, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
+    // 顶上为答案留的空只有答错图解要（a 有值）；题面时收回来，矮屏（874×297）上条形图能大一点（中控 11-08）
+    const n = d.max / d.step, top = a === undefined ? 14 : 36, bot = top + 184, H = bot + 50, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
     const hi = a === undefined ? [] : d.ask.kind === 'read' ? [d.ask.i] : [d.ask.i, d.ask.j];
     let out = '';
-    for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 10, y(v) + 8, v, {anchor: 'end', size: 24}); }
+    for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 10, y(v) + 7, v, {anchor: 'end', size: 20}); }   // 刻度间隔 18.4，字 20 不互相挤
     d.bars.forEach(([name, v], i) => {
       const x = L + gap / 2 + i * (bw + gap), on = hi.includes(i);
       if (o.blocks) { for (let k = 0; k < v / d.step; k++) out += `<rect x="${x + 4}" y="${y((k + 1) * d.step) + 2}" width="${bw - 8}" height="${y(0) - y(d.step) - 4}" fill="${FC.blue}" stroke="#000" stroke-width="2"/>`; }
@@ -460,6 +461,7 @@
     if (s.nb) return q.view === 'clock' ? clockSvg(q.h, q.m) : q.view === 'bad' ? q.l.join('、') : q.view === 'pat' ? `<span class="prow">${q.seq.map(blk).join('')}<span class="pblk qm">？</span></span>` : q.eq ? q.eq.replace(/=.*$/, '= ？') : s.name;   // 错题标签只给题面，不露答案
     if (s.hard && s.input === 'pick' && q.view === 'choice') return `${q.say} ${q.opts.join('、')}`;
     if (s.hard && s.input === 'pick') return `${q.la || q.a} 和 ${q.lb || q.b} 谁大`;
+    if (s.hard && s.input === 'write' && (q.view === 'chart' || q.view === 'rect')) return `<span style="display:inline-block;height:52px;vertical-align:middle;margin-right:6px">${FIGS[q.view](q.data).replace('<svg class="fig2"', '<svg class="fig2" style="height:100%;width:auto"')}</span>${q.say}`;   // 同类看图题题干一样，错题宝箱里带一张不含答案的小图才分得清（中控 11-08）
     if (s.hard && s.input === 'write') return q.text === '□' ? q.say : q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;
     if (s.group === 'look') return `看数 · ${q.n}`;
     if (s.group === 'bond') {
