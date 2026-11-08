@@ -101,3 +101,8 @@ test('填空的正确写法把方框填上；应用题没有正确写法框（�
   assert.match(V.worked(V.parse({id: 'place:g10:thou', q: {view: 'eq', text: '2000 + 300 + 9 ='}, ans: 2309})), /= <b class="vfillv">2309<\/b>/, '没有方框的题，正确写法也要写出得数');
   BALL.filter(i => V.parse(i).kind === 'fill').forEach(i => assert.match(V.worked(V.parse(i)), /vfillv/, i.q.text));
 });
+
+test('故事题题干只出现一次（单位换算曾经连喇叭重复两行）', () => {
+  const R = require('../v2/render.js');
+  ['market:g10:conv', 'market:g14:unit', 'dock:g10:two'].forEach(id => { const x = K.rawPool(id)[0], h = R.question({id, q: x.q, ans: x.ans}).html; assert.equal((h.match(/class="nbsay"/g) || []).length, 1, id); });
+});
