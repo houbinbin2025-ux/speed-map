@@ -1781,7 +1781,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (!Q.pickDelay && ((last5.length >= 5 && last5.filter(p => !p.ok).length >= 3) || (last3.length >= 3 && last3.every(p => p.ms < 400)))) {
       Q.pickDelay = 1000; $('calm').hidden = false; setTimeout(() => { $('calm').hidden = true; }, 2000);
     }
-    resolve({ok, fast: ok && ms <= qLimit(Q.x.inst), typed: Q.v.pickText ? b.textContent.trim() : String(n)});   // 错题记录「写了什么」= 点的选项文字
+    resolve({ok, fast: ok && ms <= qLimit(Q.x.inst), typed: pickTyped(n, b)});   // 错题记录「写了什么」= 点的选项
   });
 
   // 数线：手指在线上下 60 点内按下出现蓝旗（画在手指上方），可拖动，抬手停 1.2 秒自动提交；屏幕左右边缘 20 点内不接收
@@ -1878,6 +1878,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; Q.vc.refit(); return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
   $('qNext').addEventListener('click', () => { if (!Q || !['wait', 'trace'].includes(Q.phase)) return; tapGuard = performance.now() + 500; $('qNext').hidden = true; nextQ(); });
   // 答对后左边显示完整的题（看数 → 数字）
+  // 点选题记哪个选项：选择题记原始选项（分数记「1/2」）；图案选项记读法；其他记显示的字，取不到记编号（审查 R1）
+  const pickTyped = (n, b) => { const v = Q.v, q = Q.x.inst.q, i = v.pick.indexOf(n);
+    return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : (v.pickText && b.textContent.trim()) || String(n); };
   // 孩子写的数按题目的小数位数加回小数点（小数点写不写都认，写字板不记它）；蓝框的 □ 等非数字原样
   const typedText = (q, t) => q && q.dp && /^\d+$/.test(t) && t.length > q.dp ? t.slice(0, -q.dp) + '.' + t.slice(-q.dp) : t;
   function answerLine(inst) {
