@@ -537,8 +537,8 @@
   }
   // 答题时碎片从屏幕中间飞向顶部
   function floatShard(t, i) { setTimeout(() => floatNow(t), (i || 0) * 160); }
-  // 碎片飞到练习页的计数；思维地点飞到矿石计数（审查 11-08）
-  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), th = document.querySelector('#think:not([hidden]) #oreN'), to = q && q.width ? q : th ? th.getBoundingClientRect() : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
+  // 碎片飞到练习页的计数；思维地点飞到矿石数字正中（审查 11-08：原偏移按练习页宽计数定，在矿石数字上会落到右边、窄屏出界）
+  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), th = document.querySelector('#think:not([hidden]) #oreN'), to = q && q.width ? q : th ? th.getBoundingClientRect() : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], th && !(q && q.width) ? [to.left + to.width / 2, to.top + to.height / 2] : [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
