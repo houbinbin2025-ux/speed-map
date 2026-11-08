@@ -49,7 +49,7 @@ test('两位除数：从前几位够除的地方起商', () => {
   assert.equal(s[0], '15 不够除以 29，看前 3 位：150');
 });
 test('判：前面空格不算；中间空着、一格两个数、最高位写 0 都错；认不出要重写；没写要提示', () => {
-  const p = {ans: 179};
+  const p = {kind: 'vert', ans: 179};
   assert.deepEqual(V.judge(['', '1', '7', '9'], p), {ok: true, text: '179', tip: ''});
   assert.equal(V.judge(['1', '', '9'], p).ok, false);
   assert.equal(V.judge(['0', '1', '7', '9'], p).tip, '最高位不写 0');
@@ -105,4 +105,12 @@ test('填空的正确写法把方框填上；应用题没有正确写法框（�
 test('故事题题干只出现一次（单位换算曾经连喇叭重复两行）', () => {
   const R = require('../v2/render.js');
   ['market:g10:conv', 'market:g14:unit', 'dock:g10:two'].forEach(id => { const x = K.rawPool(id)[0], h = R.question({id, q: x.q, ans: x.ans}).html; assert.equal((h.match(/class="nbsay"/g) || []).length, 1, id); });
+});
+
+test('蓝框题（递等式 / 填空 / 应用题）靠左写也判对；竖式仍要个位对齐（捣蛋鬼第 1 轮 P1）', () => {
+  assert.equal(V.judge(['2', ''], {kind: 'fill', ans: 2}).ok, true);
+  assert.equal(V.judge(['5', '8', '1', ''], {kind: 'word', ans: 581}).ok, true);
+  assert.equal(V.judge(['', '5', '8', '1'], {kind: 'word', ans: 581}).ok, true);
+  assert.equal(V.judge(['5', '', '1', ''], {kind: 'word', ans: 51}).ok, false, '中间空格仍算错');
+  assert.equal(V.judge(['1', '7', '9', ''], {kind: 'vert', ans: 179}).tip, '个位写在最右边的格子里');
 });
