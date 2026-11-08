@@ -5,7 +5,7 @@
   else root.THINKING = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
-  const CSS = `#think{--bg:#1b1d22;--panel:#23262d;--stone:#2c2f38;--ink:#ecebe4;--mute:#b8bac3;--dim:#9a9ca6;--go:#6fae3a;--go-dk:#3f7a22;--warn:#f2c14e;--bad:#ff9d8a;--ok:#7ad98a;--counter:#6ea8fe;--plank:#c08a52;--paper:#f4ecd8}
+  const CSS = `#think{--bg:var(--cave);--panel:#23262d;--go-dk:#3f7a22}   /* 颜色用全局 :root（视觉规范 1.2，E-3）；这里只定思维页自己才有的面板色和深绿按钮 */
 #think button{font:inherit;color:var(--ink);background:var(--stone);border:3px solid #000;min-height:60px;cursor:pointer;font-size:20px;font-weight:700;padding:0 12px}
 #think button:active{transform:translateY(2px)}
 #think button[disabled]{opacity:.35}
@@ -91,7 +91,7 @@
 #think .mods span{font-size:16px;font-weight:500;color:var(--mute);line-height:1.35}
 #think :where(*:not(svg,svg *)){all:revert;box-sizing:border-box}
 #think{padding:0;display:block;touch-action:manipulation;-webkit-user-select:none;user-select:none;color:var(--ink)}
-#think .tstage{position:absolute;left:50%;top:50%;width:860px;height:360px;transform-origin:center;color:var(--ink);font-family:"PingFang SC",system-ui,sans-serif;font-size:16px}
+#think .tstage{position:absolute;left:50%;top:50%;width:860px;height:360px;transform-origin:center;color:var(--ink);font-family:var(--f-cn);font-size:16px}
 #think{background:var(--bg)}
 #think button{color:var(--ink);box-sizing:border-box}
 #think .col,#think .bar,#think .main{box-sizing:border-box}`;
@@ -102,10 +102,12 @@
   const $s = root.querySelector('.tstage');
 const G = {mod: null, tier: 0, q: null, ore: 0, st: {}, done: false, tap: 0, wrong: 0, got: false, up: false};
 // 留边，底部按钮不贴屏幕边；iPhone 刘海和底部横条用 env 留出来
+// --padL / --padR 是 max(16px, env(...))，getPropertyValue 拿到的是这串字，parseFloat 会变成 0（E-5：iPad 上内容离屏幕边只有 4px，刘海屏会压到刘海下）。放一个看不见的格子量出真实像素
+const padPx = v => { const e = document.createElement('div'); e.style.cssText = `position:absolute;visibility:hidden;height:0;width:var(${v})`; root.appendChild(e); const x = e.getBoundingClientRect().width; e.remove(); return x || 16; };
 function fit() {
   const w = root.clientWidth, h = root.clientHeight; if (!w || !h) return;
-  const c = getComputedStyle(document.documentElement), pad = v => parseFloat(c.getPropertyValue(v)) || 0;
-  const s = Math.min((w - pad('--padL') - pad('--padR') - 8) / 860, (h - 8) / 360, 1.7);
+  const side = Math.max(padPx('--padL'), padPx('--padR'));   // 整页居中，两边按宽的那边留
+  const s = Math.min((w - side * 2 - 8) / 860, (h - 8) / 360, 1.7);
   $s.style.transform = `translate(-50%,-50%) scale(${s})`;
 }
 addEventListener('resize', fit);
