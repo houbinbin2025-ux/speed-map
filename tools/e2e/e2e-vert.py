@@ -176,7 +176,7 @@ with sync_playwright() as p:
     res = pg.inner_text('.vres'); check('正确写法' in res and f'= {q["ans"]}' in res and hit(pg, '.vres .vstep'), f'递等式不会：一行一行的正确写法：{res[:120]!r}')
     pg.screenshot(path=str(out / 'step-res.png'))
     pg.click('#qNext'); pg.wait_for_timeout(400)
-    q = inst(pg); check(q['id'] == 'speed:g12:dec' and not pg.locator('.vdemo').is_visible() and pg.locator('.vcell').count() == 1, '小数填空：没有示范，一个蓝框')
+    q = inst(pg); check(q['id'] == 'speed:g12:dec' and not pg.locator('.vdemo').is_visible() and pg.locator('.vcell').count() == 4 and pg.locator('.vdotc').count() == 1, '小数加减写完整得数：没有示范，4 个蓝框中间印小数点（11-08 改，原来是 2.□ 一个蓝框）')
     check(not pg.locator('.vdemoB').is_visible() or pg.evaluate("getComputedStyle(document.querySelector('.vdemoB')).visibility") == 'hidden', '没有示范的版面不显示「看示范」')
     pg.screenshot(path=str(out / 'fill.png'))
     answer(pg, q['ans']); pg.click('.vdone'); pg.wait_for_timeout(300); check(right(pg), f'小数填空写对判对 {q["ans"]}')

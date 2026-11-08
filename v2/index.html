@@ -1702,7 +1702,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     Q.x.asked = true;   // 弹过确认，这道题就不算免确认
     Q.phase = 'confirm'; qPad.enabled = false;
     const i = Q.unsure[0], d = Q.rec.digits[i];
-    $('qcShown').innerHTML = Q.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
+    const dp = Q.x.inst.q && Q.x.inst.q.dp, np = Q.picked.length;   // 小数题：确认时也带小数点（写字板不记点）
+    $('qcShown').innerHTML = Q.picked.map((x, k) => (dp && np > dp && k === np - dp ? '.' : '') + (k === i ? '<span class="slot"></span>' : x)).join('');
     $('qcA').textContent = d.cands[0].d; $('qcB').textContent = d.cands[1].d;
     $('qConfirm').hidden = false;
   }
@@ -1810,7 +1811,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const inBox = Object.values(S.mistakes || {}).some(m => m.uid === inst.id && m.due !== null && m.due > Q.day);   // 用这次练习的日子：练到过了午夜也不写错
     $('qNote').textContent = out.again ? '已放进错题宝箱，一会儿再来' : inBox ? '已放进错题宝箱，明天再来' : '记住它，下次再来';
     const bad = r.dunno ? '<div class="badline">没关系，记住它</div>'
-      : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${typedText(inst.q, r.typed)}</s></div>`
+      : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${v.input === 'vert' && Q.vtip ? r.typed : typedText(inst.q, r.typed)}</s></div>`
       : v.input === 'pick' && Q.pickedN != null ? `<div class="badline">✗ 你点的是 <s class="num">${v.pickText ? v.pickText[v.pick.indexOf(Q.pickedN)] : Q.pickedN}</s></div>`
       : v.input === 'line' ? '' : '<div class="badline">✗ 这题答错了</div>';
     if (v.input === 'line') {
