@@ -572,6 +572,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gemline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:700}
 .gemsum .gemline .frag{animation:fragLand .35s}
 .gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
+/* 结算页右栏（捣蛋鬼 1-12）：要做的事（战利品箱、珠子）→ 今天点亮的 → 错题 → 碎片；手机横屏碎片明细收成一行 */
+.qsList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.qsChips .chip2.more{background:var(--stone);color:var(--mute)}
+.qsList.tight{gap:6px}.qsList.tight .chip2{font-size:14px;padding:3px 8px;margin:0 5px 5px 0}.qsList.tight .gemsum.fold{padding:6px 8px;gap:6px}
+.gemsum.fold>b,.gemsum.fold:not(.open)>.gemline{display:none}
+.gemfold{min-height:44px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;font-size:16px;font-weight:800;background:var(--stone-hi);text-align:left}
+.gemfold::after{content:'▸';color:var(--mute)}.gemsum.open .gemfold::after{content:'▾'}
 </style>
 </head>
 <body class="write">
@@ -927,7 +934,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v117:cd136dd567a3 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v118:2fa292f217cd -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -937,25 +944,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=117"></script>
-<script src="i18n.js?v=117"></script>
-<script src="bank.js?v=117"></script>
-<script src="hardbank.js?v=117"></script>
-<script src="placebank.js?v=117"></script>
-<script src="core.js?v=117"></script>
-<script src="ink.js?v=117"></script>
-<script src="skills.js?v=117"></script>
-<script src="engine.js?v=117"></script>
-<script src="render.js?v=117"></script>
-<script src="world.js?v=117"></script>
-<script src="home.js?v=117"></script>
-<script src="puzzles.js?v=117"></script>
-<script src="thinking.js?v=117"></script>
-<script src="house.js?v=117"></script>
-<script src="kongmine.js?v=117"></script>
-<script src="gems.js?v=117"></script>
-<script src="gemui.js?v=117"></script>
-<script src="vert.js?v=117"></script>
+<script src="touchfix.js?v=118"></script>
+<script src="i18n.js?v=118"></script>
+<script src="bank.js?v=118"></script>
+<script src="hardbank.js?v=118"></script>
+<script src="placebank.js?v=118"></script>
+<script src="core.js?v=118"></script>
+<script src="ink.js?v=118"></script>
+<script src="skills.js?v=118"></script>
+<script src="engine.js?v=118"></script>
+<script src="render.js?v=118"></script>
+<script src="world.js?v=118"></script>
+<script src="home.js?v=118"></script>
+<script src="puzzles.js?v=118"></script>
+<script src="thinking.js?v=118"></script>
+<script src="house.js?v=118"></script>
+<script src="kongmine.js?v=118"></script>
+<script src="gems.js?v=118"></script>
+<script src="gemui.js?v=118"></script>
+<script src="vert.js?v=118"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1888,6 +1895,26 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // ---------- 6 结算 / 2b 摸底结果 ----------
   const lvColor = id => ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][E.lv(S, id) || 0];
   const chip = id => `<span class="chip2" style="background:${lvColor(id)};color:${E.lv(S, id) === 3 ? '#fff' : '#1b1d22'}">${R.GNAME[K.BY[K.ITEM[id].skill].group] === '秒答地图' ? '秒答' : R.gName(K.BY[K.ITEM[id].skill])} · ${R.label(id)}</span>`;
+  // 结算页碎片区：手机横屏只留一行「这次的碎片 +N」和碎片按钮，点这一行再看明细（捣蛋鬼 1-12）。碎片区的内容由 gemui.js 出，这里只加开关
+  function foldGems(q, tight) {
+    const gs = $('qsum').querySelector('.gemsum'); if (!gs || !tight) return;
+    const n = Object.values(q.gem || {}).reduce((a, b) => a + (+b || 0), 0);
+    const t = document.createElement('button'); t.type = 'button'; t.id = 'qsGemFold'; t.className = 'gemfold'; t.setAttribute('aria-expanded', 'false');
+    t.textContent = n ? `这次的碎片 +${n}` : '这次的碎片';
+    t.addEventListener('click', () => { const open = gs.classList.toggle('open'); t.setAttribute('aria-expanded', String(open)); if (open) gs.scrollIntoView({block: 'nearest'}); });
+    gs.classList.add('fold'); gs.prepend(t);
+  }
+  // 点亮的格子只留前 rows 行，其余并成「+N」（翻成英文后再量，所以在 show 之后调）
+  function trimChips(total, rows) {
+    const box = $('qsum').querySelector('.qsChips'); if (!box) return;
+    I18N.flush();
+    let more = box.querySelector('.more'); if (!more) { more = document.createElement('span'); more.className = 'chip2 more'; box.appendChild(more); }
+    const all = [...box.querySelectorAll('.chip2:not(.more)')], tops = [...new Set(all.map(c => c.offsetTop))].sort((a, b) => a - b), limit = tops[Math.min(rows, tops.length) - 1];
+    if (!all.length) return;
+    let keep = all.filter(c => c.offsetTop <= limit).length;
+    const fit = () => { all.forEach((c, i) => { c.hidden = i >= keep; }); more.textContent = `+${total - keep}`; more.hidden = total - keep <= 0; return more.hidden || more.offsetTop <= limit; };
+    while (!fit() && keep > 1) keep--;
+  }
   function finishQ(quit) {
     if (!Q) return;
     timers(); clearInterval(Q.tick); if (Q.vc) Q.vc.destroy();
@@ -1903,6 +1930,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
     const ore = q.n - q.wrong;
     HOME.addOre(S, ore); HOME.sync(S, today()); save(); const box = S.home.loot.length;
+    const tight = innerHeight < 560, upMax = 16;   // 手机横屏：点亮的格子最多摆两行、碎片明细收起（捣蛋鬼 1-12）
     $('qsum').innerHTML = `<canvas class="scnbg px" id="qsBg"></canvas>
       <div class="col" style="width:330px;flex:none;justify-content:center;gap:10px">
         <div style="display:flex;align-items:flex-end;gap:12px"><div class="sumHero${ore ? '' : ' still'}"><canvas class="px" id="qsHero"></canvas><canvas class="px" id="qsDog"></canvas></div><div style="font-size:28px;font-weight:900;line-height:1.1">${title}</div></div>
@@ -1916,20 +1944,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         </div>
       </div>
       <div class="col" style="flex:1;gap:10px;min-height:0">
-        <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
-        ${GM.summary(q, q.day, {todayRun: q.kind === 'today'})}
-        <div style="font-size:16px;font-weight:700;margin-top:auto">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
-        <div>${q.ups.slice(0, 16).map(chip).join('')}</div>
-        ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
+        <div class="qsList${tight ? ' tight' : ''}">
+        ${box ? '<div id="qsBox" style="font-size:16px;color:var(--warn);font-weight:800">家门口有 1 个战利品箱</div>' : ''}
         ${full ? '<div style="font-size:15px;color:var(--warn);font-weight:700">练满 10 分钟了，去墙上贴 1 颗珠子</div>' : ''}
-        ${box ? '<div style="font-size:16px;color:var(--warn);font-weight:800">家门口有 1 个战利品箱</div>' : ''}
+        <div id="qsUps" style="font-size:16px;font-weight:700">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
+        ${q.ups.length ? `<div class="qsChips">${q.ups.slice(0, upMax).map(chip).join('')}${q.ups.length > upMax ? `<span class="chip2 more">+${q.ups.length - upMax}</span>` : ''}</div>` : ''}
+        ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
+        ${GM.summary(q, q.day, {todayRun: q.kind === 'today'})}
         </div>
         <div style="display:flex;gap:12px;flex:none">
           ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
           ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">${full && !box ? '贴好珠子，回到岛上' : '回到岛上'}</button>
         </div>
       </div>`;
-    show('qsum'); GM.bind($('qsum'), 'qsum');
+    show('qsum'); GM.bind($('qsum'), 'qsum'); foldGems(q, tight); if (tight) trimChips(q.ups.length, 2);
     WORLD.sceneBg($('qsBg'), q.zone, innerWidth, innerHeight); WORLD.drawSprite($('qsHero'), WORLD.HERO, 'a'); WORLD.drawSprite($('qsDog'), WORLD.DOG, 'b');
     $('qsBag').querySelectorAll('i').forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 60));
     // 回到岛上：这次点亮的格子所在的木牌闪一下

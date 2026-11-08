@@ -411,7 +411,7 @@
     [/^你写的是 (\d+)$/, (m, a) => `You wrote ${a}`], [/^答案是 (.+)$/, (m, a) => `The answer is ${a}`], [/^蓝旗是你插的，绿旗是 (\d+) 的位置$/, (m, a) => `The blue flag is yours. The green flag marks ${a}`], [/^再往(右|左)(一点)?$/, (m, d, n) => `${n ? 'A little more' : 'Move'} to the ${d === '右' ? 'right' : 'left'}`], [/^(\d+) 在绿旗这里$/, (m, a) => `${a} is at the green flag`],
     // 结算
     [/^(秒答|达标) (\d+) 题就能打败 Boss，想打随时再来$/, (m, w, a) => `${w === '秒答' ? 'Answer' : 'Hit the target on'} ${a} ${w === '秒答' ? 'fast ' : ''}to beat the Boss. Try again anytime`], [/^(秒答|达标) (\d+) 题$/, (m, w, a) => `${w === '秒答' ? 'Fast' : 'On target'}: ${a}`], [/^慢了 (\d+) 题$/, (m, a) => `Slow: ${a}`], [/^写错 (\d+) 题$/, (m, a) => `Wrong: ${a}`], [/^用时约 (\d+) 分钟$/, (m, a) => `About ${pl(a, 'minute')}`], [/^写对的平均 ([\d.–]+) 秒$/, (m, a) => (a === '–' ? 'Average when right: –' : `Average when right: ${a} seconds`)],
-    [/^挖到 (\d+) 块矿石$/, (m, a) => `Mined ${pl(a, 'ore')}`], [/^新进错题本 (\d+) 道，明天再来$/, (m, a) => `${pl(a, 'new mistake')} added. Back tomorrow`],
+    [/^挖到 (\d+) 块矿石$/, (m, a) => `Mined ${pl(a, 'ore')}`], [/^这次的碎片 \+(\d+)$/, (m, a) => `Shards this round +${a}`], [/^新进错题本 (\d+) 道，明天再来$/, (m, a) => `${pl(a, 'new mistake')} added. Back tomorrow`],
     // 摸底结果
     [/^亮了 (\d+) 格$/, (m, a) => `${pl(a, 'square')} lit`], [/^(.+) 会了$/, (m, l) => { const a = l.split(/(?<!\d)、|、(?!\d)/).map(one); return a.includes(null) ? null : `Got it: ${a.join(', ')}`; }], [/^还有 (\d+) 分钟，接着练今天的$/, (m, a) => `${pl(a, 'minute')} left. Keep going with today's practice`],
     // 技能地图、错题

@@ -168,3 +168,8 @@ test('页面接入：先于所有脚本加载；保存、判题、题库都不�
   // 判题读的是题目数据（data-n 和 Q.x.inst.ans），候选数字只有数字，不会被翻译
   ['core.js', 'engine.js', 'skills.js', 'bank.js', 'render.js', 'home.js'].forEach(f => assert.doesNotMatch(read('../v2/' + f), /I18N/, f + ' 不该用翻译层'));
 });
+
+test('结算页碎片收起行（捣蛋鬼 1-12）有英文', () => {
+  assert.equal(txt('这次的碎片 +16'), 'Shards this round +16');
+  assert.equal(txt('这次的碎片'), 'Shards this round');
+});
