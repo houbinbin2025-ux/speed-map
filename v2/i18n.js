@@ -230,6 +230,7 @@
     [/^小船 (\d+) 小时行 (\d+) 千米。照这样，(\d+) 小时行几千米？$/, (m, a, b, c) => `A boat goes ${b} km in ${pl(a, 'hour')}. At that speed, how many km in ${pl(c, 'hour')}?`],
     [new RegExp(`^(\\d+) ${U3}${G3}的(一半|四分之一)是几${U3}？$`), (m, n, t, f) => `What is ${f === '一半' ? 'half' : 'one quarter'} of ${th2(n, t)}?`],
     [/^小数点对齐，十分位算到 (\d+)，是 ([\d.]+)$/, (m, d, n) => `Line up the decimal points. The tenths digit is ${d}, so it is ${n}`],
+    [/^小数点对齐：([\d.]+) ([+−]) ([\d.]+) = ([\d.]+)$/, (m, x, o, y, z) => `Line up the decimal points: ${x} ${o} ${y} = ${z}`],
     [new RegExp(`^${G3}每${U3} (\\d+) 元，买 (\\d+) ${U3}，付 (\\d+) 元。找回几元？$`), (m, t, p, c, a) => `${TP(t)[0].toUpperCase()}${TP(t).slice(1)} cost ${p} yuan each. You buy ${c} and pay ${a} yuan. How much change?`],
     [new RegExp(`^${G3}每${U3} (\\d+) 元，买 (\\d+) ${U3}。一共几元？$`), (m, t, p, n) => `${TP(t)[0].toUpperCase()}${TP(t).slice(1)} cost ${p} yuan each. You buy ${n}. How many yuan in all?`],
     [new RegExp(`^(\\d+) ${U3}${G3}共 (\\d+) 元。同样的${G3} (\\d+) ${U3}要几元？$`), (m, a, t, b, t2, n) => `${th2(a, t)} cost ${b} yuan. How many yuan for ${n} of the same?`],
