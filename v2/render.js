@@ -36,6 +36,13 @@
   const dot = cls => `<i class="dot${cls ? ' ' + cls : ''}"></i>`;
   const N = n => `<span class="num">${n}</span>`;
   const box = '<span class="box"></span>';
+  // 分数（2b-1）：题目文字里的 a/b、□/b、a/□ 画成上下结构；只用于分数题的文字，不碰界面上的「3 / 10」计数。样式写在行内，不依赖页面 CSS
+  const FR_RE = /(\d+|□)\/(\d+|□)/g, hasFr = t => typeof t === 'string' && /(\d|□)\/(\d|□)/.test(t);
+  const frPart = (x, slot) => x === '□' ? slot : x;
+  const frBox = '<span class="box" style="width:.9em;height:.9em;margin:.04em 0"></span>';
+  const fr = (t, slot, em) => String(t).replace(FR_RE, (m, a, b) => `<span class="frac" role="img" aria-label="${frRead(m)}" style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .25em;font-size:max(${em || .86}em,15px)"><span style="padding:0 .12em">${frPart(a, slot || frBox)}</span><span style="align-self:stretch;border-top:.09em solid currentColor;margin-top:.04em;padding:0 .12em;text-align:center">${frPart(b, slot || frBox)}</span></span>`);
+  const CNUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+  const frRead = m => { const [a, b] = m.split('/'); return `${b === '□' ? '几' : CNUM[b] || b}分之${a === '□' ? '几' : CNUM[a] || a}`; };
   const ans = n => `<span class="num ansv">${n}</span>`;
   // 十格框：两行各 5 格，先填满上一行；cells = 每格的样子（'' 空 / 'on' 点 / 'moved' 挪来的 / 'gone' 挪走的虚线）
   const frame = cells => `<div class="tf">${cells.map(c => `<i class="cell">${c ? dot(c) : ''}</i>`).join('')}</div>`;
@@ -142,6 +149,16 @@
     }
     return `<svg class="fig2" viewBox="0 0 ${W} 84">${out}</svg>`;
   }
+  // 分数条：data = {n, on: [涂色的格子]}，或 {rows: [{n, on, label}]} 画几条对齐的分数条（讲解卡比大小、等值用）
+  function fracSvg(d) {
+    const rows = d.rows || [d], lab = rows.some(r => r.label), L = lab ? 92 : 16, W = rows.length > 1 ? 560 : 440, rh = 56, gap = 18;   // 两条的图画宽一点，同宽时更矮（讲解卡 667 英文两行说明放得下）
+    let out = '';
+    rows.forEach((r, j) => { const y = 12 + j * (rh + gap), w = (W - L - 16) / r.n, on = r.on || [...Array(r.k || 0).keys()];
+      for (let i = 0; i < r.n; i++) out += `<rect x="${L + i * w}" y="${y}" width="${w}" height="${rh}" fill="${on.includes(i) ? FC.blue : '#3a3e47'}" stroke="#000" stroke-width="3"/>`;
+      if (r.label) { const m = /^(\d+)\/(\d+)$/.exec(r.label), cx = L / 2 - 2, cy = y + rh / 2;
+        out += m ? svgT(cx, cy - 6, m[1], {size: 24}) + `<line x1="${cx - 16}" x2="${cx + 16}" y1="${cy}" y2="${cy}" stroke="${TXT}" stroke-width="3"/>` + svgT(cx, cy + 24, m[2], {size: 24}) : svgT(L - 12, cy + 9, r.label, {anchor: 'end', size: 26, fit: L - 16}); } });
+    return `<svg class="fig2" viewBox="0 0 ${W} ${24 + rows.length * rh + (rows.length - 1) * gap}" role="img" aria-label="分数条">${out}</svg>`;
+  }
   function tenthSvg(full, parts, label) {
     let out = '', y = 20;
     for (let b = 0; b <= full; b++) {
@@ -194,14 +211,36 @@
       [numRows([['4', [4, 8, 12, 16, 20, 24]], ['6', [6, 12, 18, 24]]], [12, 24]), '两行都有的 12、24 叫公倍数，最小的是 12'],
       [numRows([['12', [1, 2, 3, 4, 6, 12]], ['18', [1, 2, 3, 6, 9, 18]]]), '12 和 18 能被哪些数整除'],
       [numRows([['12', [1, 2, 3, 4, 6, 12]], ['18', [1, 2, 3, 6, 9, 18]]], [1, 2, 3, 6]), '两行都有的叫公因数，最大的是 6']]},
+    frac: {title: '分数', pages: [
+      [fracSvg({n: 4, k: 0}), '一条平均分成 4 份，每份一样大'],
+      [fracSvg({n: 4, k: 1}), '涂了 1 份，是 4 份里的 1 份：1/4'],
+      [fracSvg({n: 8, k: 3}), '平均分成 8 份，涂了 3 份：3/8'],
+      [fracSvg({n: 8, k: 3}), '下面是分母，写一共几份；上面是分子，写涂了几份']]},
+    fracadd: {title: '分数加减', pages: [
+      [fracSvg({rows: [{n: 8, k: 3, label: '3/8'}]}), '涂了 3 份：3/8'],
+      [fracSvg({rows: [{n: 8, k: 3, label: '3/8'}, {n: 8, on: [3, 4], label: '2/8'}]}), '再涂 2 份：2/8'],
+      [fracSvg({rows: [{n: 8, k: 5, label: '5/8'}]}), '3 份加 2 份是 5 份，一共还是 8 份：5/8'],
+      [fracSvg({rows: [{n: 8, k: 5, label: '5/8'}]}), '分母（下面的数）不变，分子（上面的数）相加减']]},
+    fraccmp: {title: '分数比大小', pages: [
+      [fracSvg({rows: [{n: 8, k: 3, label: '3/8'}, {n: 8, k: 5, label: '5/8'}]}), '分母一样，每份一样大'],
+      [fracSvg({rows: [{n: 8, k: 3, label: '3/8'}, {n: 8, k: 5, label: '5/8'}]}), '5 份比 3 份多，大的是：5/8'],
+      [fracSvg({rows: [{n: 8, k: 3, label: '3/8'}, {n: 8, k: 5, label: '5/8'}]}), '分母一样，比分子：分子大的大']]},
+    fraccmp2: {title: '同分子比大小', pages: [
+      [fracSvg({rows: [{n: 3, k: 1, label: '1/3'}, {n: 6, k: 1, label: '1/6'}]}), '分子一样，都涂了 1 份'],
+      [fracSvg({rows: [{n: 3, k: 1, label: '1/3'}, {n: 6, k: 1, label: '1/6'}]}), '分成 6 份，每份更小'],
+      [fracSvg({rows: [{n: 3, k: 1, label: '1/3'}, {n: 6, k: 1, label: '1/6'}]}), '分母越大，每份越小，大的是：1/3']]},
+    equiv: {title: '等值分数', pages: [
+      [fracSvg({rows: [{n: 3, k: 2, label: '2/3'}, {n: 6, k: 4, label: '4/6'}]}), '两条一样长，涂的一样多'],
+      [fracSvg({rows: [{n: 3, k: 2, label: '2/3'}, {n: 6, k: 4, label: '4/6'}]}), '分母乘 2，分子也乘 2：2/3 = 4/6'],
+      [fracSvg({rows: [{n: 6, k: 4, label: '4/6'}, {n: 3, k: 2, label: '2/3'}]}), '反过来，上下都除以 2：4/6 = 2/3']]},
     dec: {title: '小数', pages: [
       [tenthSvg(0, 3), '一条分成 10 份，涂了 3 份'],
       [tenthSvg(0, 3, '0.3'), '3 份就是 0.3，读作零点三'],
       [tenthSvg(1, 3, '1.3'), '1 整条加 3 份是 1.3']]},
   };
-  const card = c => { const k = CARDS[c]; return k && {title: k.title, pages: k.pages.map(([fig, line]) => ({fig, line}))}; };
+  const card = c => { const k = CARDS[c]; return k && {title: k.title, pages: k.pages.map(([fig, line]) => ({fig, line, read: hasFr(line) ? line.replace(FR_RE, frRead) : undefined}))}; };
   // 讲解卡的一页：标题 + 页码点、图、一句话（喇叭可读）
-  const cardPage = (c, p) => { const k = card(c), pg = k.pages[p]; return `<div class="demo dcard"><div class="dhead"><span class="learn">学一学</span><span class="dtitle">${k.title}</span><span class="cdots">${k.pages.map((x, i) => `<i${i <= p ? ' class="on"' : ''}></i>`).join('')}</span></div><div class="cfig">${pg.fig}</div><div class="cline">${nbSay({say: pg.line})}</div></div>`; };
+  const cardPage = (c, p) => { const k = card(c), pg = k.pages[p]; return `<div class="demo dcard"><div class="dhead"><span class="learn">学一学</span><span class="dtitle">${k.title}</span><span class="cdots">${k.pages.map((x, i) => `<i${i <= p ? ' class="on"' : ''}></i>`).join('')}</span></div><div class="cfig">${pg.fig}</div><div class="cline">${nbSay({say: pg.line, show: hasFr(pg.line) ? fr(pg.line, undefined, .72) : undefined, read: pg.read})}</div></div>`; };
 
   // ---------- 题面 ----------
   // 返回 {input:'write'|'pick'|'line', tag, html（左栏题目）, note（左栏底部小字）, flash（看数：要闪现的部分）, pick:[a,b], line:{max, target, mid}}
@@ -210,10 +249,12 @@
     if (q.view === 'grid') return `<div class="hgrid" style="grid-template-columns:repeat(${q.cols},26px)">${dot().repeat(q.rows * q.cols)}</div>`;
     if (q.view === 'h100') return `<div class="h100">${Array.from({length: 100}, (_, i) => `<i${i < q.n ? ' class="on"' : ''}></i>`).join('')}</div>`;
     if (q.view === 'hto') return `<div class="hto"><div class="hsqs">${'<i class="hsq"></i>'.repeat(q.h)}</div>${rods(q.t, q.o)}</div>`;
+    if (q.view === 'fracbar') return `<div class="fig2w">${fracSvg(q.data)}</div><div class="eq num sm">${fr(q.text, a === undefined ? undefined : ans(a), a === undefined ? undefined : .72)}</div>`;
     if (FIGS[q.view]) return `<div class="fig2w">${FIGS[q.view](q.data, a)}</div>`;
     if (q.view === 'story') return a === undefined ? nbSay(q) : `<div class="eq num sm">${q.text.replace('□', ans(a))}</div>`;
     if (q.view === 'clock5') return clockSvg(q.h, q.m) + (a === undefined ? nbSay(q) : `<div class="say2">${q.text.replace('□', ans(a))}</div>`);
-    const t = q.text || ''; return `<div class="eq num${t.length > 22 ? ' xs' : t.length > 11 ? ' sm' : ''}${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
+    const t = q.text || ''; if (hasFr(t)) return `<div class="eq num sm">${fr(t, a === undefined ? undefined : ans(a), a === undefined ? undefined : .72)}</div>` + (a === undefined && q.read ? `<div class="nbsay" style="justify-content:center"><button class="spk" type="button" data-say="${q.read}" aria-label="朗读题目">${SPK}</button></div>` : '');   // 算式分数题：题干只有算式，喇叭单独放在下面，读「七分之二加七分之三」
+    return `<div class="eq num${t.length > 22 ? ' xs' : t.length > 11 ? ' sm' : ''}${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}">${a === undefined ? t.replace('□', box) : t.includes('□') ? t.replace('□', ans(a)) : `${t} ${ans(a)}`}</div>`;
   };
   // ---------- 三个新地方的图 ----------
   let SPRITE = () => '';   // 页面注入：名字 → 图片地址（node 里没有画布，返回空）
@@ -240,7 +281,7 @@
     return '';
   }
   const SPK = '<svg width="22" height="22" viewBox="0 0 11 11" shape-rendering="crispEdges" aria-hidden="true"><path fill="#f2c14e" d="M0 4h2v3H0zM2 3h1v5H2zM3 2h1v7H3zM4 1h1v9H4zM6 4h1v3H6zM8 2h1v7H8z"/></svg>';
-  const nbSay = q => `<div class="nbsay"><span>${q.say}</span><button class="spk" type="button" data-say="${q.say}" aria-label="朗读题目">${SPK}</button></div>`;
+  const nbSay = q => `<div class="nbsay"><span>${q.show || q.say}</span><button class="spk" type="button" data-say="${q.read || q.say}" aria-label="朗读题目">${SPK}</button></div>`;   // 分数题：显示用上下结构（show），喇叭读「八分之三」（read）
   const halfWord = v => (v % 10 === 3 ? `${Math.floor(v / 10)} 点半` : `${v / 10} 点`);
   const nbOpts = q => (q.view === 'pat' ? {pick: q.opts, pickText: q.opts.map(blk), pickAria: q.opts.map(c => PATN[c])} : q.view === 'bad' ? {pick: q.l, pickText: q.l.map(String)} : q.opts ? {pick: q.opts, pickText: q.opts.map(halfWord)} : {});
   const nbAns = (q, a) => (q.view === 'pat' ? blk(a) : q.view === 'bad' ? `${a} 是错的` : q.opts ? halfWord(a) : q.eq.replace(new RegExp(`${a}( 点)?$`), (m, u) => ans(a) + (u || '')));
@@ -248,10 +289,10 @@
   function question(inst) {
     const it = K.ITEM[inst.id], s = skillOf(inst.id), q = inst.q, tag = tagOf(inst.id);
     if (s.nb) return Object.assign({input: s.input, tag, html: s.input === 'pick' && q.view === 'clock' ? `<div class="nbrow">${nbSay(q)}${nbFig(q)}</div>` : nbSay(q) + nbFig(q), note: ''}, nbOpts(q));
-    if (s.hard && s.input === 'pick' && q.view === 'choice') return {input: 'pick', tag, html: nbSay(q), pick: q.opts.map((o, i) => i), pickText: q.opts, note: '点一个'};   // 选择题：按选项编号判（第二批 §6）
+    if (s.hard && s.input === 'pick' && q.view === 'choice') return {input: 'pick', tag, html: nbSay(q), pick: q.opts.map((o, i) => i), pickText: q.opts.map(o => hasFr(o) ? fr(o) : o), pickAria: q.opts.map(o => hasFr(o) ? frRead(o) : o), note: '点一个'};   // 选择题：按选项编号判（第二批 §6）
     if (s.hard && s.input === 'pick') return {input: 'pick', tag, html: '<div class="say2">哪个大？点它</div>', pick: [q.a, q.b], pickText: q.la ? [q.la, q.lb] : null};
     // 故事题的 hardFig 画的也是题干，题干已有就不再画（单位换算曾经重复两行）
-    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (FIGS[q.view] ? hardFig(q) : q.text === '□' || q.view === 'story' ? '' : hardFig(q)) : hardFig(q), note: /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
+    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (FIGS[q.view] ? hardFig(q) : q.text === '□' || q.view === 'story' ? '' : hardFig(q)) : hardFig(q), note: q.view === 'fracbar' ? '写方框里的数' : /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
     if (s.hard && s.input === 'write') return {input: 'write', tag, html: hardFig(q), note: q.view === 'hto' ? '方块是 100，一根是 10，一块是 1' : q.view === 'grid' ? '一排一排数，写在右边' : q.view === 'h100' ? '一行是 10，一共涂了几格？' : '在右边写出答案'};
     if (s.speed) return {input: 'write', tag, html: `<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} =</div>`, note: '在右边写出答案，写完停一下就好'};
     if (s.group === 'look') return {input: 'write', tag, html: `<div class="look">${pattern(q)}</div>`, flash: true, note: '有几个？写在右边'};
@@ -311,11 +352,11 @@
   // ---------- 答错时的图解（左栏）：图 + 一句话；正确答案用 --ok 绿色 ----------
   function explain(inst) {
     const s = skillOf(inst.id), q = inst.q, a = inst.ans;
-    const pack = (fig, line) => `<div class="explain">${fig}<div class="why">${line}</div></div>`;
+    const pack = (fig, line) => `<div class="explain">${fig}<div class="why">${hasFr(line) ? fr(line) : line}</div></div>`;
     if (s.nb) return pack(`${q.view === 'clock' ? clockSvg(q.h, q.m) : ''}<div class="say2">${s.input === 'pick' && q.view !== 'bad' ? '应该是 ' : ''}${nbAns(q, a)}</div>`, q.why);
-    if (s.hard && s.input === 'pick' && q.view === 'choice') return pack(`<div class="say2">应该是 <span class="num" style="font-size:32px">${q.opts[a]}</span></div>`, q.why);
+    if (s.hard && s.input === 'pick' && q.view === 'choice') return pack(`<div class="say2">应该是 <span class="num" style="font-size:32px">${hasFr(q.opts[a]) ? fr(q.opts[a]) : q.opts[a]}</span></div>`, q.why);
     if (s.hard && s.input === 'pick') return pack(`<div class="say2"><span class="num" style="font-size:32px">${pickWord(q, a)}</span> 更大</div>`, q.why);
-    if (s.hard && s.input === 'write') return pack((q.qk && q.say ? `<div class="whysay">${q.say}</div>` : '') + hardFig(q, a), q.why);
+    if (s.hard && s.input === 'write') return pack((q.qk && q.say ? `<div class="whysay">${q.say}</div>` : '') + hardFig(q, a), q.view === 'fracbar' ? q.why.replace(/：[^：]*$/, '') : q.why);   // 分数读图：算式行已写出答案，讲解句不再重复分数（矮屏放得下）
     if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
     if (s.group === 'look') {
       const five = q.layout === 'tf' && q.n > 5 ? `5 和 ${q.n - 5}，是 ${ans(q.n)}` : q.layout === 'tf2' ? `10 和 ${q.n - 10}，是 ${ans(q.n)}` : `一共是 ${ans(q.n)}`;
@@ -393,10 +434,11 @@
       foot = s.input === 'pick' ? '点错了会告诉你答案' : '不会就点「不会」，会告诉你答案';
     } else if (s.hard && s.input !== 'line') {
       title = (s.group === 'speedH' && /^g34:/.test(s.id) ? '计算' : gName(s)) + '：' + s.name;
-      body = s.input === 'pick' && q.view === 'choice' ? step(1, `<div class="cards2">${q.opts.map(t => `<b class="sm">${t}</b>`).join('')}</div>`, q.say) + arrow + step(2, `<div class="cards2"><b class="sm win">${q.opts[ex.ans]}</b></div>`, '点它')
+      body = s.input === 'pick' && q.view === 'choice' ? step(1, `<div class="cards2">${q.opts.map(t => `<b class="sm">${fr(t)}</b>`).join('')}</div>`, q.say) + arrow + step(2, `<div class="cards2"><b class="sm win">${fr(q.opts[ex.ans])}</b></div>`, '点它')
         : s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
+        : q.view === 'fracbar' ? step(1, `<div class="fig2w">${fracSvg(q.data)}</div>`, '看题') + arrow + step(2, `<div class="eq num sm">${fr(q.text, ans(ex.ans), .72)}</div>`, '写答案')   // 分数读图：图只画一次（demofit 812）
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
-      foot = q.why;
+      foot = hasFr(q.why) ? fr(q.why) : q.why;
     } else if (s.speed) {
       title = '秒答：看到算式，马上写答案';
       const it = s.items.find(x => !x.gen) || s.items[0], e = K.example(it.id);
@@ -463,9 +505,11 @@
     const q = m.q || {}, s = skillOf(m.uid);
     if (s.hard && q.view === 'clock5') return clockSvg(q.h, q.m);
     if (s.nb) return q.view === 'clock' ? clockSvg(q.h, q.m) : q.view === 'bad' ? q.l.join('、') : q.view === 'pat' ? `<span class="prow">${q.seq.map(blk).join('')}<span class="pblk qm">？</span></span>` : q.eq ? q.eq.replace(/=.*$/, '= ？') : s.name;   // 错题标签只给题面，不露答案
-    if (s.hard && s.input === 'pick' && q.view === 'choice') return `${q.say} ${q.opts.join('、')}`;
+    if (s.hard && s.input === 'pick' && q.view === 'choice') return `${q.say} ${q.opts.map(o => hasFr(o) ? fr(o) : o).join('、')}`;
     if (s.hard && s.input === 'pick') return `${q.la || q.a} 和 ${q.lb || q.b} 谁大`;
     if (s.hard && s.input === 'write' && (q.view === 'chart' || q.view === 'rect')) return `<span style="display:inline-block;height:52px;vertical-align:middle;margin-right:6px">${FIGS[q.view](q.data).replace('<svg class="fig2"', '<svg class="fig2" style="height:100%;width:auto"')}</span>${q.say}`;   // 同类看图题题干一样，错题宝箱里带一张不含答案的小图才分得清（中控 11-08）
+    if (s.hard && s.input === 'write' && q.view === 'fracbar') return `<span style="display:inline-block;height:40px;vertical-align:middle;margin-right:6px">${fracSvg(q.data).replace('<svg class="fig2"', '<svg class="fig2" style="height:100%;width:auto"')}</span>${fr(q.text, '□')}`;
+    if (s.hard && s.input === 'write' && hasFr(q.text)) return fr(q.text, '□');
     if (s.hard && s.input === 'write') return q.text === '□' ? q.say : q.text ? q.text.replace(/ =$/, '') : q.view === 'grid' ? `${q.rows} 排 ${q.cols} 个` : q.view === 'h100' ? `百格 ${q.n}` : `${q.h} 百 ${q.t} 十 ${q.o} 个`;
     if (s.group === 'look') return `看数 · ${q.n}`;
     if (s.group === 'bond') {
