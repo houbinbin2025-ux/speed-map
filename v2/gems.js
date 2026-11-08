@@ -133,6 +133,13 @@
     if (mid) D.m++;
     return give(st, mid ? 'M' : 'S', o.mult, o.rand);
   }
+  // 摸底答对：固定 1 个普通小碎片（Ben 11-08 所有题都有激励；摸底题多、间隔短，按平时规则一轮能拿约 4 颗宝石，审查 11-08 改固定）。
+  // 不记当天作答和正确率、不占闪电次数、不算「今天答过的题」：摸底故意出难题，不能压住当天的暴击和认真奖励
+  function placeAnswer(st, o) {
+    if (!o.ok) return null;
+    st.inv.a = (st.inv.a || 0) + 1;
+    return ['a'];
+  }
   // 改对的、今天答过的题：1 个普通小碎片（1），不翻倍、不算秒答奖励，一天最多 fillMax 个。标 rep（不能叫 fill：数组自带 fill 方法，永远为真），调用方据此不发秒答奖励
   function filler(st, day) {
     const D = dayOf(st, day); if ((D.fill || 0) >= TUNE.fillMax) return null;
@@ -440,6 +447,6 @@
     return got;
   }
 
-  return {mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });

@@ -21,6 +21,22 @@ test('页面上每类题判完都会走到碎片模块（接线没有条件）',
   assert.match(h, /gem: o => GM\.answerThink\(o\)/, '思维地点接上');
   assert.match(th, /if \(o\.gem\) o\.gem\(/, 'thinking.js 答对处调 gem');
   // 碎片模块里不再按题型挡掉
-  assert.doesNotMatch(ui, /kind === 'boss'|kind === 'scan'|kind === 'final'|kind === 'place'/, 'gemui 里不再按 Boss / 摸底挡碎片');
+  assert.doesNotMatch(ui, /kind === '(boss|scan|final|place)'[^\n]*?(return null|return '')/, 'gemui 里不再按 Boss / 摸底挡碎片（摸底只改成固定 1 个小碎片）');
+  assert.match(ui, /kind === 'place'\) \{ const got = G\.placeAnswer/, '新流程摸底给固定碎片');
+  assert.match(ui, /kind === 'scan'\) \{ const got = G\.placeAnswer/, '秒答区摸底给固定碎片');
   assert.doesNotMatch(ui, /function answerThink[\s\S]{0,120}S\(\)\.oral/, '思维地点口答也给');
+});
+
+test('摸底答对：固定 1 个小碎片，不占当天统计（审查 11-08：摸底一轮原来能拿约 4 颗宝石，还吃掉闪电次数、拉低当天正确率）', () => {
+  const st = G.blank();
+  assert.deepEqual([...G.placeAnswer(st, {day: DAY, ok: true})], ['a']);
+  assert.equal(G.placeAnswer(st, {day: DAY, ok: false}), null, '答错不给');
+  assert.equal(st.inv.a, 1);
+  assert.equal(st.days[DAY], undefined, '不记当天作答、正确率、闪电次数');
+  assert.equal(Object.keys(st.seen.keys || {}).length, 0, '不占「今天答过的题」');
+});
+
+test('老流程口答点「下一题」也发碎片（审查 11-08：原来口答绕开 feedback，碎片一个不给）', () => {
+  const h = fs.readFileSync(require.resolve('../v2/index.html'), 'utf8');
+  assert.match(h, /\$\('btnOralNext'\)\.addEventListener\('click', \(\) => \{[^\n]*GM\.answerP\(/);
 });

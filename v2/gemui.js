@@ -63,6 +63,7 @@
   // limitMs = 这道题的标准时间（秒答时限）：有效时间最多算它的 3 倍
   function answerQ(q, x, r, secs, limitMs) {
     if (!on || !c.canWrite()) return null;   // 摸底也给（Ben 11-08：所有题都有激励）
+    if (q.kind === 'place') { const got = G.placeAnswer(st, {ok: r.ok && !r.dunno && !q.peeked}); credit(q, got); save(); return {got, words: words(got || []), bolt: false, rep: false}; }   // 摸底：固定 1 个小碎片，不进当天统计
     let got = null, more = null;
     const evc = q.opts && q.opts.evc;
     secs = G.effSecs(secs, limitMs); q.effSec = (q.effSec || 0) + secs; q.limitMs = limitMs;
@@ -260,6 +261,7 @@
   }
   function answerP(p, inst, c0, limit) {   // 老秒答流程：今日练习、Boss、摸底都给（Ben 11-08：所有题都有激励）
     if (!on || !c.canWrite()) return null;
+    if (p.kind === 'scan') { const got = G.placeAnswer(st, {ok: p.result !== 'wrong' && !p.dunno}); credit(p, got); save(); return {got, words: words(got || []), bolt: false}; }   // 秒答区摸底：同上
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
     { const secs = G.effSecs((p.ms || 0) / 1000, limit); G.noteRest(st, secs, clock()); G.addSec(st, p.gemDay, secs); evRun = null; }

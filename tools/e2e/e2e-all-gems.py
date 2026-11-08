@@ -21,15 +21,25 @@ with sync_playwright() as p:
     if pg.is_visible('#piGo'): pg.click('#piGo'); pg.wait_for_timeout(900)
     kind = pg.evaluate("__sm.Q && __sm.Q.kind")
     t0 = total(pg); pg.evaluate("__sm.Q.t0 = performance.now(); __sm.Q.ms = 500; __sm.resolve({ok: true, fast: true})"); pg.wait_for_timeout(300)
-    check(kind == 'place' and total(pg) > t0, f'摸底答对给碎片：{kind}，{t0}→{total(pg)}'); pg.screenshot(path=str(out / 'place.png'))
+    check(kind == 'place' and total(pg) == t0 + 1, f'摸底答对给 1 个小碎片：{kind}，{t0}→{total(pg)}'); pg.screenshot(path=str(out / 'place.png'))
+    check(pg.evaluate("Object.keys(GEMUI.state().days).length") == 0, '摸底不进当天统计（正确率、闪电次数）')
     # 2 其余题型：用页面里真的碎片模块，按 Boss / 老流程摸底 / 口答各答对一题
     inst = "(() => { const s = __sm.K.SKILLS.find(s => s.items && s.items.length && !s.speed); const it = s.items[0]; return {id: it.id, q: it.q || {}, ans: it.ans}; })()"
-    for k in ['boss', 'scan', 'final']:
+    for k in ['boss', 'scan']:   # 最终 Boss 也是 'boss'；scan = 秒答区摸底
         t0 = total(pg)
         got = pg.evaluate(f"(() => {{ const i = {inst}; return GEMUI.answerP({{kind: '{k}', ms: 900, result: 'fast'}}, i, {{id: i.id}}, 5000); }})()")
         check(bool(got and got.get('got')) and total(pg) > t0, f'{k} 答对给碎片：{(got or {}).get("got")}')
     check(pg.evaluate("GEMUI.summary({kind: 'boss', gem: {}}, __sm.today()) !== ''"), 'Boss 结算页也显示碎片')
-    pg.evaluate("__sm.S.oral = true")
+    # 老流程（秒答区加法练习）口答：真点「看答案」→「下一题」（审查 11-08：原来口答绕开发碎片那一步）
+    pg.evaluate("__sm.S.oral = true"); pg.evaluate("(() => { const b = [...document.querySelectorAll('button')].find(x => x.offsetParent && /返回|回到/.test(x.textContent)); if (b) b.click(); })()"); pg.wait_for_timeout(600)
+    pg.evaluate("__sm.S.oral = true"); pg.reload(); pg.wait_for_timeout(800)
+    started = pg.evaluate("(() => { const b = document.querySelector('[data-series=add]'); if (!b) return false; b.click(); return true; })()"); pg.wait_for_timeout(1500)
+    t0 = total(pg); n = 0
+    for _ in range(3):
+        if not pg.evaluate("!!(__sm.P && __sm.P.phase === 'q')"): break
+        pg.evaluate("document.getElementById('oralTap').click()"); pg.wait_for_timeout(250)
+        pg.evaluate("document.getElementById('btnOralNext').click()"); pg.wait_for_timeout(900); n += 1
+    check(started and n == 3 and total(pg) > t0, f'秒答区口答真点按钮答对 {n} 题给碎片：{t0}→{total(pg)}')
     t0 = total(pg)
     got = pg.evaluate(f"(() => {{ const i = {inst}; return GEMUI.answerP({{kind: 'daily', ms: 900, result: 'fast'}}, Object.assign(i, {{id: i.id + '#oral'}}), {{id: i.id}}, 5000); }})()")
     check(bool(got) and got.get('got') == ['b'] and total(pg) == t0 + 1, f'口答模式答对给 1 个小碎片、没有秒答奖励：{(got or {}).get("got")}')
