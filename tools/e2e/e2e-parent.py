@@ -124,6 +124,15 @@ def run_broken(pg, tag, url):
     check(pg.evaluate(f"(() => {{ try {{ return !!JSON.parse(localStorage.getItem('{PK}')).v; }} catch (e) {{ return false; }} }})()"), f'{tag} 主存档写回了能读的进度')
     parent(pg); check(not pg.is_visible('#parNote'), f'{tag} 刷新后家长区不再提示读不了')
 
+def run_broken_nocopy(pg, tag, url):
+    # 复制失败（剪贴板不让写）：提示手动复制，「删掉它」也出来，家长不会卡住
+    fresh(pg, url, f"localStorage.setItem('{PK}', '{{坏的'); ")
+    pg.evaluate("() => { navigator.clipboard.writeText = () => Promise.reject(new Error('no')); }")
+    parent(pg); tap(pg, '#btnBrokenOut', f'{tag} 导出读不了的存档（复制失败）')
+    check(not pg.is_visible('#btnBrokenDel'), f'{tag} 复制前不出「删掉它」')
+    tap(pg, '#ioCopy', f'{tag} 点复制（会失败）')
+    check('手动复制' in pg.inner_text('#ioMsg') and pg.is_visible('#btnBrokenDel'), f'{tag} 复制失败：提示手动复制，「删掉它」出来')
+
 def run_nogems(pg, tag, url):
     # 碎片关着（测试模式默认）：挑战数据整块隐藏，开发参数格只在测试模式留着；正式版碎片关着时整格隐藏（index.html renderParent `!h && !TEST`），网页走查进不了正式版碎片关的状态，这里锁住前半句
     fresh(pg, url); parent(pg)
@@ -141,7 +150,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     for tag, vw in [('iphone', {'width': 844, 'height': 390}), ('ipad', {'width': 1194, 'height': 834})]:
         ctx = b.new_context(viewport=vw, has_touch=True, permissions=['clipboard-read', 'clipboard-write']); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
-        run(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_nogems(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')
+        run(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_broken_nocopy(pg, tag, base + '#test'); run_nogems(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')
         ctx.close()
     b.close()
 check(not errs, f'页面无报错 {errs[:3]}')
