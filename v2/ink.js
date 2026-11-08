@@ -179,5 +179,16 @@
     return s[Math.floor(s.length / 2)];
   }
 
-  return {STD, legibility, sketch, pushRecent, groupStrokes, recognize, resolveWith, rankGroup, addTemplate, blankStore, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
+  // 读本机笔迹存档（speedmap.ink）：坏了不能被空白覆盖，笔迹样本攒了很久（F 模块梳理 11-08）
+  // raw = 读到的字符串（没有 = null）；readErr = 读的时候报错
+  // → {store, backup: 要先另存的坏原值（没有 = null）, lock: 这次打开不写笔迹（读报错，不知道里面有什么）}
+  function loadStore(raw, readErr) {
+    if (readErr) return {store: blankStore(), backup: null, lock: true};
+    if (raw == null) return {store: blankStore(), backup: null, lock: false};
+    try { const v = JSON.parse(raw); if (v && typeof v === 'object' && !Array.isArray(v)) return {store: Object.assign(blankStore(), v), backup: null, lock: false}; } catch (e) {}
+    return {store: blankStore(), backup: String(raw), lock: false};
+  }
+  // 坏值另存的键：按内容算，同一份坏值反复读只存一份
+  const brokenKey = (key, raw) => { let h = 5381; for (let i = 0; i < raw.length; i++) h = ((h * 33) ^ raw.charCodeAt(i)) >>> 0; return key + '.broken.' + h.toString(36); };
+  return {STD, legibility, sketch, pushRecent, groupStrokes, recognize, resolveWith, rankGroup, addTemplate, blankStore, loadStore, brokenKey, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
 });

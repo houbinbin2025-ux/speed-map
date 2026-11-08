@@ -235,7 +235,7 @@
   const worked = (p, en) => { const h = plan(p, true).html; return h ? `<div class="vwk"><h4>${en ? 'The right way' : '正确写法'}</h4>${h}</div>` : ''; };
 
   // ---------- 输入版面（手指尺寸，同原型） ----------
-  const LAB = {carry: ['进位<br>退位', 'Carry<br>Borrow'], carry1: ['进位', 'Carry'], ans: ['答案', 'Answer'], quo: ['商', 'Quotient'], draft: ['草稿', 'Work'],
+  const LAB = {carry1: ['进位', 'Carry'], borrow: ['退位', 'Borrow'], gap: ['中间空了一格', 'A box in the middle is empty'], ans: ['答案', 'Answer'], quo: ['商', 'Quotient'], draft: ['草稿', 'Work'],
     done: ['写好了', 'Done'], clear: ['擦一笔', 'Undo'], dunno: ['不会', "I don't know"], demo: ['看示范', 'Show me'], step: ['一步一步看', 'Step by step'],
     demoH: ['先看一遍怎么写', 'Watch how to write it'], go: ['我会了，开始写', 'Got it, let me write'], again: ['再看一遍', 'Watch again'], ex: ['例题', 'Example'], first: ['先看题', 'Look at the problem'],
     empty: ['在蓝框里写答案', 'Write the answer in the blue boxes'], unclear: ['这一格没看清，再写一次', "Couldn't read that box. Write it again"],
@@ -253,7 +253,7 @@
     }
     if (p.kind === 'vert') {
       const n = Math.max(String(p.a).length, String(p.b).length) + (p.op === '+' ? 1 : 0), col = `80px repeat(${n}, 104px)`;
-      return `<div class="vcard"><div class="vrow" style="grid-template-columns:${col}"><div class="vlab">${L('carry', en)}</div>${minis(n)}</div>
+      return `<div class="vcard"><div class="vrow" style="grid-template-columns:${col}"><div class="vlab">${L(p.op === '+' ? 'carry1' : 'borrow', en)}</div>${minis(n)}</div>
         <div class="vrow vdig" style="grid-template-columns:${col}"><div></div>${digs(p.a, n)}</div>
         <div class="vrow vdig vline" style="grid-template-columns:${col}"><div>${p.op === '-' ? '−' : '+'}</div>${digs(p.b, n)}</div>
         <div class="vrow" style="grid-template-columns:${col};padding-top:10px"><div class="vlab">${L('ans', en)}</div>${cells(n)}</div></div>`;
@@ -280,10 +280,10 @@
     const f = read.findIndex(x => x !== '');
     if (f < 0) return {empty: true};
     let l = read.length - 1; while (read[l] === '') l--;
-    const body = read.slice(f, l + 1), text = body.map(x => (x === '' ? '_' : x.charAt(0) === '两' ? x.slice(1) || '?' : x)).join('');
+    const body = read.slice(f, l + 1), text = body.map(x => (x === '' ? '□' : x.charAt(0) === '两' ? x.slice(1) || '?' : x)).join('');
     // 竖式的答案格对着数位，个位必须在最右；递等式 / 填空 / 应用题的蓝框只是一排格子，靠左写也算（捣蛋鬼第 1 轮 P1）
     const columns = p.kind === 'vert' || p.kind === 'mul' || p.kind === 'div';
-    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L('place', en) : '';
+    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.includes('') ? L('gap', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L('place', en) : '';
     return {ok: !tip && body.every(x => /^\d$/.test(x)) && text === String(p.ans), text, tip};
   }
 
@@ -319,10 +319,10 @@
 .vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
 .vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}
 .vls{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:48px}.vls .vfillv{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;padding:0 6px;font-weight:400}
-.vq .vres{position:absolute;right:0;top:0;bottom:0;width:min(560px,100%);background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
+.vq .vres{position:absolute;right:0;top:0;bottom:0;width:55%;background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
 .vq .vres.show{transform:none}
 .vq .vres .explain{color:#e6e3da}
-.vq .vres .vresc{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.vq .vres .vresc{flex:1;min-height:0;overflow-y:auto}.vq .vres .vresi{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .vq .vres .vresh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .vq .vres .vfoot{flex:none;display:flex;align-items:center;gap:12px}
 .vq .vres .vfoot #qNext{flex:1}.vq .vres .vfoot .qnote{flex:1;font-size:14px}
@@ -371,10 +371,20 @@
       <div class="vside"><button class="btn vdemoB"${DEMO[demoKey(p)] ? '' : ' style="visibility:hidden"'}>${L('demo', E)}</button><div style="flex:1"></div><div class="vnote"></div>
       <button class="big go vdone">${L('done', E)}</button><button class="big vclear">${L('clear', E)}</button><button class="big vdunno">${L('dunno', E)}</button></div></div>`;
     const box = host.querySelector('.vq'), area = box.querySelector('.varea'), fitEl = box.querySelector('.vfit'), note = box.querySelector('.vnote');
+    // 答错后右边滑出讲解栏：孩子自己写的竖式缩到左边留着，好对照（捣蛋鬼第 1 轮第 16 条）
+    const resEl = () => box.querySelector('.vres.show');
     const fitNow = () => {
       fitEl.style.transform = '';
-      const k = Math.min(1.15, (area.clientWidth - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
-      fitEl.style.transform = `translate(${Math.max(0, (area.clientWidth - fitEl.offsetWidth * k) / 2)}px,${Math.max(0, (area.clientHeight - fitEl.offsetHeight * k) / 2)}px) scale(${k})`;
+      const rv = resEl(), w = area.clientWidth - (rv ? rv.offsetWidth : 0);
+      const k = Math.min(1.15, (w - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
+      fitEl.style.transform = `translate(${Math.max(0, (w - fitEl.offsetWidth * k) / 2)}px,${Math.max(0, (area.clientHeight - fitEl.offsetHeight * k) / 2)}px) scale(${k})`;
+      fitRes();
+    };
+    // 讲解栏放不下（iPad App 932×651）：整体按比例缩小，不用滑（捣蛋鬼第 1 轮第 7 条）；缩到 0.6 还放不下才允许滑
+    const fitRes = () => {
+      const rv = resEl(), c = rv && rv.querySelector('.vresc'), i = c && c.querySelector('.vresi'); if (!i) return;
+      i.style.zoom = ''; const k = Math.min(1, c.clientHeight / i.offsetHeight, c.clientWidth / i.scrollWidth);
+      if (k < 1) i.style.zoom = String(Math.max(0.6, Math.floor(k * 100) / 100));
     };
     if (root.I18N && root.I18N.flush) root.I18N.flush();   // 英文日先翻好再量尺寸（英文题面更长）
     fitNow();
@@ -402,9 +412,10 @@
       result(top, explainHtml, onStep) {
         const r = box.querySelector('.vres'), E2 = en();
         const can = plan(p).steps.length > 0;
-        r.innerHTML = `<div class="vresc"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div><div class="vfoot"></div>`;
+        r.innerHTML = `<div class="vresc"><div class="vresi"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div></div><div class="vfoot"></div>`;
         if (can) r.querySelector('.vstep').onclick = onStep;
-        r.classList.add('show');
+        box.querySelector('.vside').style.display = 'none';   // 答完右边按钮用不上了，让出地方给讲解栏和孩子的竖式
+        r.classList.add('show'); fitNow();
         return r.querySelector('.vfoot');
       },
       destroy() { root.removeEventListener('resize', onR); if (ro) ro.disconnect(); clearTimeout(demoT); },

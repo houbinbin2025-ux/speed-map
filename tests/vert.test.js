@@ -51,9 +51,9 @@ test('两位除数：从前几位够除的地方起商', () => {
 test('判：前面空格不算；中间空着、一格两个数、最高位写 0 都错；认不出要重写；没写要提示', () => {
   const p = {kind: 'vert', ans: 179};
   assert.deepEqual(V.judge(['', '1', '7', '9'], p), {ok: true, text: '179', tip: ''});
-  assert.equal(V.judge(['1', '', '9'], p).ok, false);
+  assert.deepEqual(V.judge(['1', '', '9'], p), {ok: false, text: '1□9', tip: '中间空了一格'}, '中间空格显示成空框，提示说清楚（捣蛋鬼第 1 轮第 18 条）');
   assert.equal(V.judge(['0', '1', '7', '9'], p).tip, '最高位不写 0');
-  assert.deepEqual(V.judge(['两17', '', '9'], p), {ok: false, text: '17_9', tip: '一格只写一个数'});
+  assert.deepEqual(V.judge(['两17', '', '9'], p), {ok: false, text: '17□9', tip: '一格只写一个数'});
   assert.deepEqual(V.judge(['1', '7', '9', ''], p), {ok: false, text: '179', tip: '个位写在最右边的格子里'});
   assert.deepEqual(V.judge(['1', '?', '9'], p), {retry: true});
   assert.deepEqual(V.judge(['', '', ''], p), {empty: true});
@@ -113,4 +113,11 @@ test('蓝框题（递等式 / 填空 / 应用题）靠左写也判对；竖式�
   assert.equal(V.judge(['', '5', '8', '1'], {kind: 'word', ans: 581}).ok, true);
   assert.equal(V.judge(['5', '', '1', ''], {kind: 'word', ans: 51}).ok, false, '中间空格仍算错');
   assert.equal(V.judge(['1', '7', '9', ''], {kind: 'vert', ans: 179}).tip, '个位写在最右边的格子里');
+});
+
+test('加法竖式的进位格只写「进位」，减法只写「退位」（捣蛋鬼第 1 轮第 13 条）', () => {
+  const add = V.layout({kind: 'vert', a: 360, op: '+', b: 268, ans: 628}, false), sub = V.layout({kind: 'vert', a: 802, op: '-', b: 468, ans: 334}, false);
+  assert.ok(add.includes('>进位<') && !add.includes('退位'), '加法');
+  assert.ok(sub.includes('>退位<') && !sub.includes('进位'), '减法');
+  assert.ok(V.layout({kind: 'vert', a: 360, op: '+', b: 268, ans: 628}, true).includes('>Carry<'));
 });

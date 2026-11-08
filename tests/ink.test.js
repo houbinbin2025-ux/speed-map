@@ -143,3 +143,23 @@ test('答案定夺：一位数答案、答案为 0、只有 1 个候选、答案
   // 第 1 位拿不准（0/8），答案要的 8 出现在第 2 位的候选里也不算：每一位只看自己的候选
   assert.deepEqual(I.resolveWith({text: '06', digits: [dg('0', '6', false), dg('6', '8', true)]}, 86), {picked: ['0', '6'], unsure: [0], byAnswer: []});
 });
+
+// 笔迹存档 speedmap.ink 读坏了不能被空白覆盖（F 模块梳理 11-08 · 捣蛋鬼第 1 轮转 B）
+test('笔迹存档：好的照读，没有的给空白，坏的先另存原值，读的时候报错这次就不写', () => {
+  const good = JSON.stringify({done: true, speed: 620, templates: {3: [[[{x: 1, y: 2, t: 0}]]]}});
+  const a = I.loadStore(good, false);
+  assert.equal(a.store.speed, 620); assert.equal(a.store.done, true); assert.equal(a.backup, null); assert.equal(a.lock, false);
+  const b = I.loadStore(null, false);
+  assert.deepEqual(b.store, I.blankStore()); assert.equal(b.backup, null); assert.equal(b.lock, false);
+  for (const bad of ['{"done":tr', 'null', '42', '[1,2]', '"x"']) {
+    const c = I.loadStore(bad, false);
+    assert.deepEqual(c.store, I.blankStore(), bad); assert.equal(c.backup, bad, '坏的原值要另存：' + bad); assert.equal(c.lock, false);
+  }
+  const d = I.loadStore(null, true);
+  assert.equal(d.lock, true, '读报错 = 不知道里面有什么，这次打开不写'); assert.equal(d.backup, null);
+});
+
+test('笔迹存档：坏值另存的键名按内容定，同一份坏值重复读只存一份，不同坏值各存一份', () => {
+  const k1 = I.brokenKey('speedmap.ink', '{"a":'), k2 = I.brokenKey('speedmap.ink', '{"a":'), k3 = I.brokenKey('speedmap.ink', '{"b":');
+  assert.equal(k1, k2); assert.notEqual(k1, k3); assert.match(k1, /^speedmap\.ink\.broken\.[0-9a-z]+$/);
+});
