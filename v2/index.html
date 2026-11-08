@@ -510,7 +510,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #forgeSlots.big{grid-template-columns:repeat(6,calc(min(8.4vh,34px)));grid-auto-rows:calc(min(8.4vh,34px));gap:2px;padding:4px}#forgeSlots.big .frag img{width:16px}#forgeSlots.big .frag b{font-size:10px}
 .frag.t-a img,.frag.t-b img{width:18px}
 .fslot{display:flex;align-items:center;justify-content:center;background:#46301f;border:2px solid #000;box-shadow:inset 2px 2px 0 #2a1d14;padding:0}
-#forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
+#forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}
+/* iPhone Safari 的 vh 按收起地址栏后的高度算，横屏实际只剩约 290 点：锻造台按「看得见的高度」svh 算，不支持的浏览器用上面的 vh */
+@supports (height:1svh){#forgeSlots{grid-template-columns:repeat(4,calc(min(14svh,52px)));grid-auto-rows:calc(min(14svh,52px))}#forgeSlots.big{grid-template-columns:repeat(6,calc(min(8.4svh,34px)));grid-auto-rows:calc(min(8.4svh,34px))}#forgeGo{height:calc(min(15svh,60px))}}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
 #forgeMsg{font-size:18px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
 #forgeMsg.pop{animation:fragLand .28s}
 #gemEv{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:calc(env(safe-area-inset-left) + 112px);z-index:30;min-height:44px;width:236px;padding:4px 10px;line-height:1.25;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;font-size:14px;font-weight:800;text-align:left}#gemEv[hidden]{display:none}#gemEv[disabled]{min-height:32px;font-size:14px;color:var(--warn);opacity:1}#gemEv.offer{background:var(--warn);color:#1b1d22;box-shadow:0 4px 0 #000;animation:fragLand .3s}
