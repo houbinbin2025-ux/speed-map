@@ -368,25 +368,34 @@
     return M;
   }
 
-  const exportText = S => JSON.stringify(clean(S));
+  // 备份文字 = 进度 JSON + 顶层 gems（speedmap.gems 整份，碎片关着时不加；捣蛋鬼第 1 轮第 11 条）。gems 不进进度，导入时拿掉
+  const exportText = (S, gems) => JSON.stringify(gems ? Object.assign(clean(S), {gems}) : clean(S));
+  const gemsOf = text => { const v = parse(text); return v && v.gems && typeof v.gems === 'object' && !Array.isArray(v.gems) ? v.gems : null; };
   // 「整份替换（会覆盖）」：好存档基准跟着重置
   function importText(text) {
     const v = parse(text);
     if (!valid(v)) throw new Error('不是有效的备份');
+    delete v.gems;
     return Object.assign(upgrade(v), {goodReset: true});
   }
   // 家（说明书-v5-家 §6）：得到过的取并集、日期取早，矿石取大；备份里没开的箱子，这边已得到过就不再进箱；摆放按当前设备
+  // 带回家的伙伴：两边都有就取并集，本机在前、去重、最多 4 个（图鉴上限）；只有一边有用那一边；都没选过是 null。只增不减（C 模块，中控 11-08：原来空数组会盖掉另一边）
+  function mergePets(a, b) {
+    if (!Array.isArray(a) && !Array.isArray(b)) return null;
+    return [...new Set([].concat(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []))].slice(0, 4);
+  }
   function mergeHome(a, b) {
     a = a || {}; b = b || {};
     const ga = a.got || {}, gb = b.got || {}, got = Object.assign({}, gb, ga);
     Object.keys(gb).forEach(k => { if (ga[k] && gb[k] < ga[k]) got[k] = gb[k]; });
     return Object.assign({}, b, a, {got, ore: Math.max(a.ore || 0, b.ore || 0), sec: Math.max(a.sec || 0, b.sec || 0), go: Math.max(a.go || 0, b.go || 0),
-      loot: (a.loot || []).concat((b.loot || []).filter(k => !ga[k])), place: Object.assign({}, b.place, a.place), pets: a.pets || b.pets || null});
+      loot: (a.loot || []).concat((b.loot || []).filter(k => !ga[k])), place: Object.assign({}, b.place, a.place), pets: mergePets(a.pets, b.pets)});
   }
   // 「导入进度」：按格子取高合并，旧备份不会把新进度退回去；错题、摸底记录取并集
   function importMerge(S, text) {
     const v = parse(text);
     if (!valid(v)) throw new Error('不是有效的备份');
+    delete v.gems;
     const M = upgrade(mergeProgress(S, v));
     M.skills = mergeCards(S.skills || {}, v.skills || {});
     M.mistakes = Object.assign({}, v.mistakes || {}, S.mistakes || {});
@@ -423,7 +432,7 @@
     upgrade, LEVEL_REMAP, isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
+    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, mergePets, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
     _resetDecks: () => { DECKS = {}; }, useDecks,

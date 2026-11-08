@@ -115,3 +115,18 @@ test('审查：进一次家（只记 home 秒数）或练 1 分钟理解题，�
   const S = C.blank(); S.log[D(0)] = {ups: [], n: 30}; E.stat(S, D(0)).home = 5; S.stats[D(0)].sec = 60;
   assert.equal(H.stats(S).days, 1);
 });
+
+// 带回家的伙伴合并（C 模块，中控 11-08）：原来 `a.pets || b.pets`，空数组会盖掉另一边，iPad 合并手机进度后伙伴变 0 只
+test('伙伴合并：取并集、本机在前、去重、最多 4 个；空数组不再盖掉另一边', () => {
+  assert.deepEqual(C.mergePets([], ['a', 'b']), ['a', 'b'], '旧漏洞：本机是空数组');
+  assert.deepEqual(C.mergePets(['a'], ['b', 'c', 'd', 'e']), ['a', 'b', 'c', 'd'], '最多 4 个，本机的排前面');
+  assert.deepEqual(C.mergePets(['c', 'a'], ['a', 'b']), ['c', 'a', 'b'], '去重');
+  assert.deepEqual(C.mergePets(null, ['b']), ['b']);
+  assert.deepEqual(C.mergePets(['a'], null), ['a']);
+  assert.equal(C.mergePets(null, null), null, '都没选过：还是 null');
+  assert.equal(C.mergePets(undefined, undefined), null);
+  const A = C.blank(), B = C.blank(); A.home = {ore: 1, got: {}, loot: [], place: {}, pets: [], sec: 0, go: 0}; B.home = {ore: 2, got: {}, loot: [], place: {}, pets: ['look1', 'look2'], sec: 0, go: 0};
+  assert.deepEqual(C.importMerge(A, C.exportText(B)).home.pets, ['look1', 'look2'], '导入进度：伙伴回来');
+  const old = C.blank(); old.home = {ore: 1, got: {}, loot: [], place: {}, sec: 0, go: 0};   // 更早的备份没有 pets 字段
+  assert.deepEqual(C.importMerge(A, C.exportText(old)).home.pets, [], '旧备份没有 pets：本机的照旧（空数组进屋时会自动补）');
+});

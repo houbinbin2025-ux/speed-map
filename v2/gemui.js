@@ -11,6 +11,15 @@
   const auto = () => c.E.autoLevel(S());
   function syncNow() { if (on) { G.sync(st, S(), auto()); save(); } }
 
+  // 备份（捣蛋鬼第 1 轮第 11 条）：导出带上整份碎片；导入时 merge = 只增不减，all = 整份替换。内存里的 st 一起换掉再存，不然下次保存会盖回去
+  function exportState() { return on && st ? JSON.parse(JSON.stringify(st)) : null; }
+  function importBackup(obj, mode) {
+    if (!on || !obj) return false;
+    const next = mode === 'all' ? G.parse(JSON.stringify(obj)) : G.mergeBackup(st, obj);
+    if (!next) return false;
+    st = next; G.prune(st, c.today()); syncNow(); save();
+    return true;
+  }
   function init(ctx) {
     c = ctx;
     on = ctx.enabled;
@@ -520,7 +529,7 @@
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
-  const api = {init: safe(init), enabled: () => on, syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), importBackup: safe(importBackup, false), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();
