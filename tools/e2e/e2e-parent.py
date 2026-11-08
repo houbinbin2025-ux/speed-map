@@ -73,7 +73,10 @@ def run(pg, tag, url):
         h = pg.evaluate(HIT, sel); check(h.get('ok'), f'{tag} {name}：点得到（{h.get("top")}）')
     # ---- 加 3 道错题，作为「进度」的标志 ----
     pg.click('#parBack'); pg.wait_for_timeout(300); pg.evaluate("document.querySelector('#testBar [data-t=mist]').click()"); pg.wait_for_timeout(200)
-    nm = S(pg, 'Object.keys(S.mistakes).length'); check(nm >= 1, f'{tag} 造出 {nm} 道错题'); parent(pg)
+    nm = S(pg, 'Object.keys(S.mistakes).length'); check(nm >= 1, f'{tag} 造出 {nm} 道错题')
+    # 错题记录新字段（docs/方案-错题数据字段.md）：给第一道错题记上，导出 → 清空 → 导入合并后要还在
+    pg.evaluate("() => { const S = __sm.S, m = Object.values(S.mistakes)[0]; m.wrongs = 2; m.hist = [{d: '2026-11-01', k: 'w', w: '7', s: 4.2}, {d: '2026-11-02', k: 'd', w: null}]; S.mistStat = {sk: {w: 1, d: 1, s: 0, p: 0, last: '2026-11-02'}}; }")
+    parent(pg)
     # ---- 导出 ----
     tap(pg, '#btnExport', f'{tag} 导出进度'); check(pg.is_visible('#ioPanel'), f'{tag} 导出面板出来了')
     h = pg.evaluate(HIT, '#ioText'); check(h['ok'], f'{tag} 导出文字框点得到')
@@ -92,6 +95,8 @@ def run(pg, tag, url):
     tap(pg, '#btnImport', f'{tag} 导入进度'); pg.fill('#ioText', text); tap(pg, '#ioApply', f'{tag} 确认导入')
     check(pg.inner_text('#ioMsg') == '已导入', f'{tag} 导入提示「已导入」（实际：{pg.inner_text("#ioMsg")}）')
     st = stored(pg); check(len(st['mistakes']) == nm and st['known'].get('look1') and st['home'].get('ore') == 77, f'{tag} 导入合并后错题、已学、家都回来了')
+    mw = [m for m in st['mistakes'].values() if m.get('wrongs') == 2]
+    check(len(mw) == 1 and len(mw[0].get('hist', [])) == 2 and st.get('mistStat', {}).get('sk', {}).get('d') == 1, f'{tag} 导入合并后错题记录（错几次、经过、技能累计）还在')
     tap(pg, '#ioClose', f'{tag} 关闭导入面板')
     # 坏文字被拒，进度不动
     tap(pg, '#btnImport', f'{tag} 再点导入'); pg.fill('#ioText', '{不是备份'); tap(pg, '#ioApply', f'{tag} 确认导入坏文字')
