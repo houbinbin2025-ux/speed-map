@@ -835,7 +835,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <button class="btn" id="btnSyncOut">发送进度</button>
       <button class="btn" id="btnSyncIn">接收进度</button>
       <input type="file" id="syncFile" accept=".json,application/json,text/plain" hidden>
-      <div class="muted" style="font-size:12px;line-height:1.5">手机和 iPad 各发一次给对方（隔空投送），两边进度就一致；接收只会变多，不会变少。</div>
+      <div class="muted" style="font-size:12px;line-height:1.5">手机和 iPad 各发一次给对方（隔空投送），两边进度合在一起；接收只会变多，不会变少。</div>
       <span class="msg" id="syncMsg"></span>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
       <button class="btn" id="btnImport">导入进度（只会变多，不会变少）</button>
@@ -934,7 +934,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v120:bc45d449146d -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v122:000a9b8bad45 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -944,25 +944,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=120"></script>
-<script src="i18n.js?v=120"></script>
-<script src="bank.js?v=120"></script>
-<script src="hardbank.js?v=120"></script>
-<script src="placebank.js?v=120"></script>
-<script src="core.js?v=120"></script>
-<script src="ink.js?v=120"></script>
-<script src="skills.js?v=120"></script>
-<script src="engine.js?v=120"></script>
-<script src="render.js?v=120"></script>
-<script src="world.js?v=120"></script>
-<script src="home.js?v=120"></script>
-<script src="puzzles.js?v=120"></script>
-<script src="thinking.js?v=120"></script>
-<script src="house.js?v=120"></script>
-<script src="kongmine.js?v=120"></script>
-<script src="gems.js?v=120"></script>
-<script src="gemui.js?v=120"></script>
-<script src="vert.js?v=120"></script>
+<script src="touchfix.js?v=122"></script>
+<script src="i18n.js?v=122"></script>
+<script src="bank.js?v=122"></script>
+<script src="hardbank.js?v=122"></script>
+<script src="placebank.js?v=122"></script>
+<script src="core.js?v=122"></script>
+<script src="ink.js?v=122"></script>
+<script src="skills.js?v=122"></script>
+<script src="engine.js?v=122"></script>
+<script src="render.js?v=122"></script>
+<script src="world.js?v=122"></script>
+<script src="home.js?v=122"></script>
+<script src="puzzles.js?v=122"></script>
+<script src="thinking.js?v=122"></script>
+<script src="house.js?v=122"></script>
+<script src="kongmine.js?v=122"></script>
+<script src="gems.js?v=122"></script>
+<script src="gemui.js?v=122"></script>
+<script src="vert.js?v=122"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -2023,7 +2023,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const red = K.understand.filter(s => s.items.every(it => E.lv(S, it.id) === 3)).length;
     $('weekly').innerHTML = `最近 7 天练了 ${last7.length} 天 · 每天中位 ${med.toFixed(0)} 分钟<br>新点亮 ${last7.reduce((n, x) => n + (x.ups || 0), 0)} 格<br>练完后剩下的错题：最多 ${last7.reduce((n, x) => Math.max(n, x.over || 0), 0)} 道<br>最久没练的技能：${E.gapNow(S, t)} 天<br>${K.understand.length} 个理解技能里，已牢固 ${red} 个${placed ? ` · 摸底后练了 ${practiced} 天` : ''}`;
     const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
-    { let at = null; try { at = +store.getItem(SYNC_KEY) || null; } catch (e) { at = null; } const ago = C.syncAgo(at, Date.now()); $('syncInfo').innerHTML = ago === null ? '还没在两台设备之间同步过' : `上次同步：<b>${ago === 0 ? '今天' : ago + ' 天前'}</b>` + (ago > 3 ? '<br><span class="syncOld">超过 3 天没同步，可以两台设备各发一次</span>' : ''); }   // 只在家长区提示，不打扰孩子
+    { let at = null; try { at = +store.getItem(SYNC_KEY) || null; } catch (e) { at = null; } const ago = C.syncAgo(at, Date.now()); $('syncInfo').innerHTML = ago === null ? '还没在两台设备之间同步过' : `上次同步：<b>${ago === 0 ? '今天' : ago + ' 天前'}</b>` + (ago > 3 ? '<br><span class="syncOld">超过 3 天没同步，两台设备各发一次</span>' : ''); }   // 只在家长区提示，不打扰孩子
     $('bkInfo').innerHTML = days === null ? '还没备份过<br>建议每周备份一次' : `上次备份是 <b>${days} 天前</b>（${C.dayOf(S.lastBackup)}）<br>建议每周备份一次`;
     // 设置
     $('segFlash').innerHTML = [[1000, '1 秒'], [1500, '1.5 秒'], [2500, '2.5 秒']].map(([v, l]) => `<button class="${flashMs() === v ? 'on' : ''}" data-flash="${v}">${l}</button>`).join('');
@@ -2253,14 +2253,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const sent = () => { S.lastBackup = Date.now(); save(); renderParent(); };
     let f = null; try { f = new File([text], name, {type: 'application/json'}); } catch (e) { f = null; }
     if (f && navigator.share && navigator.canShare && navigator.canShare({files: [f]})) {
-      try { await navigator.share({files: [f]}); sent(); msg('已发送'); } catch (e) { msg(e && e.name === 'AbortError' ? '' : '没有发出去，请再试一次'); }
+      try { await navigator.share({files: [f]}); sent(); msg('已发送'); } catch (e) { msg(e && e.name === 'AbortError' ? '' : '发送失败，请重试'); }
       return;
     }
+    if (inApp) { msg('这台设备现在不能分享文件，请用「导出进度」'); return; }   // App 里下载会被外壳拦掉，不能报成功（审查 R1）
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'application/json'})); a.download = name;   // 不能分享文件的浏览器：下载文件
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-    sent(); msg('已下载进度文件，用隔空投送发到另一台设备');
+    sent(); msg('进度文件已下载，用隔空投送发到另一台设备');
   }
+  let syncBusy = false;   // 正在接收：连着触发两次时后一次不盖掉前一次的结果（审查 R1）
   async function syncReceive(file) {
+    if (syncBusy) return; syncBusy = true;
+    try { await syncReceive1(file); } finally { syncBusy = false; }
+  }
+  async function syncReceive1(file) {
     const msg = t => { $('syncMsg').textContent = t; };
     let text = ''; try { text = await file.text(); } catch (e) { msg('文件读不了，请重新选择'); return; }
     const before = JSON.parse(JSON.stringify({cards: S.cards, skills: S.skills, mistakes: S.mistakes})), g0 = GM.total();

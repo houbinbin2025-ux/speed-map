@@ -35,8 +35,8 @@ def receive(pg, path):
     with pg.expect_file_chooser() as fc: pg.click('#btnSyncIn')
     fc.value.set_files(str(path)); pg.wait_for_timeout(600)
     return pg.inner_text('#syncMsg')
-def state(pg):   # 两边要一致的：每格档位、错题、碎片背包
-    return pg.evaluate("({lv: Object.fromEntries(Object.entries(__sm.S.skills).map(([k, v]) => [k, v.lv]).sort()), mist: Object.keys(__sm.S.mistakes).sort(), inv: GEMUI.state().inv, lit: [__sm.S.cards, __sm.S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0)})")
+def state(pg):   # 两边要一致的：每格档位、错题（整条比，审查 R1：只比编号测不出过关状态不一致）、碎片背包
+    return pg.evaluate("({lv: Object.fromEntries(Object.entries(__sm.S.skills).map(([k, v]) => [k, v.lv]).sort()), mist: JSON.stringify(Object.keys(__sm.S.mistakes).sort().map(k => __sm.S.mistakes[k])),  inv: GEMUI.state().inv, lit: [__sm.S.cards, __sm.S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0)})")
 with sync_playwright() as p:
     b = p.chromium.launch()
     ca, A = open_dev(b); cb, B = open_dev(b)
@@ -51,23 +51,24 @@ with sync_playwright() as p:
     check(A.evaluate("__sm.S.lastBackup") > 0 and A.inner_text('#syncMsg') == '已发送', '发送后算一次备份：' + A.inner_text('#syncMsg'))
     pa = out / 'from-phone.json'; pa.write_text(fa['text'], encoding='utf-8')
     b0 = state(B); msg = receive(B, pa); b1 = state(B)
-    check(msg.startswith('已合并：新增 ') and '格点亮' in msg and '1 道错题' in msg and '碎片 +4' in msg, '接收结果一句话：' + msg)
-    check(b1['lit'] > b0['lit'] and len(b1['mist']) == 3 and b1['inv']['a'] == 5 and b1['inv']['s'] == 4, f'iPad 合并后只增不减：{b0["lit"]}→{b1["lit"]} 格，错题 {len(b1["mist"])}，碎片 {b1["inv"]}')
+    check(msg.startswith('已合并：') and '新点亮' in msg and '新错题 1 道' in msg and '碎片 +4 个' in msg, '接收结果一句话：' + msg)
+    check(b1['lit'] > b0['lit'] and len(json.loads(b1['mist'])) == 3 and b1['inv']['a'] == 5 and b1['inv']['s'] == 4, f'iPad 合并后只增不减：{b0["lit"]}→{b1["lit"]} 格，错题 {len(json.loads(b1["mist"]))}，碎片 {b1["inv"]}')
     check(B.inner_text('#syncInfo').startswith('上次同步：今天'), '上次同步：' + B.inner_text('#syncInfo'))
     B.locator('#syncInfo').locator('xpath=..').screenshot(path=str(out / 'sync-received.png'))   # 只截「进度备份」这一栏
     # 2 iPad 发回手机：两边一致
     fb = send(B); pb = out / 'from-ipad.json'; pb.write_text(fb['text'], encoding='utf-8')
-    receive(A, pb)
+    msg = receive(A, pb)
+    check('升级 ' in msg, '手机上 look1 从 2 档到 3 档，结果里有升级：' + msg)
     sa, sb = state(A), state(B)
     check(sa == sb, '互相发一次，两边一致：' + ('一致' if sa == sb else f'{sa} ≠ {sb}'))
     # 3 同一份收两次：不翻倍
     msg = receive(B, pa)
-    check(state(B) == sb and msg == '已合并：没有新内容，两台设备的进度已经一致', '同一份收两次不翻倍：' + msg)
+    check(state(B) == sb and msg == '已合并：没有新内容', '同一份收两次不翻倍：' + msg)
     # 4 旧格式文件（升级前的导出文字，没有碎片）
     cc, Cpg = open_dev(b); seed(Cpg, [['look4', 1]], [], {'a': 2, 'b': 0, 'g': 0, 's': 0, 'm': 0, 'h': 0, 'l': 0}); Cpg.reload(); Cpg.wait_for_timeout(800)
     old = {k: v for k, v in json.loads(fa['text']).items() if k != 'gems'}; po = out / 'old.json'; po.write_text(json.dumps(old), encoding='utf-8')
     parent(Cpg); i0 = state(Cpg)['inv']; msg = receive(Cpg, po)
-    check(msg.startswith('已合并：新增 ') and state(Cpg)['inv'] == i0, '旧格式文件能收，碎片不动：' + msg)
+    check(msg.startswith('已合并：新点亮') and state(Cpg)['inv'] == i0, '旧格式文件能收，碎片不动：' + msg)
     # 5 不是进度文件
     bad = out / 'bad.json'; bad.write_text('{"x":1}', encoding='utf-8')
     check(receive(Cpg, bad) == '这个文件不是进度文件，请重新选择', '选错文件有提示')
@@ -76,7 +77,7 @@ with sync_playwright() as p:
     D.evaluate("navigator.canShare = undefined")
     D.locator('#btnSyncOut').scroll_into_view_if_needed()
     with D.expect_download() as dl: D.click('#btnSyncOut')
-    check(dl.value.suggested_filename.startswith('空空数学岛-进度-') and D.inner_text('#syncMsg').startswith('已下载进度文件'), '不能分享：下载文件 ' + dl.value.suggested_filename)
+    check(dl.value.suggested_filename.startswith('空空数学岛-进度-') and D.inner_text('#syncMsg').startswith('进度文件已下载'), '不能分享：下载文件 ' + dl.value.suggested_filename)
     # 7 超过 3 天没同步：家长区轻提示；孩子的首页不出现
     D.evaluate(f"localStorage.setItem('{SK}', String(Date.now() - 4 * 864e5))"); D.reload(); D.wait_for_timeout(900)
     check('同步' not in D.inner_text('body'), '首页（孩子看到的）没有同步提示')

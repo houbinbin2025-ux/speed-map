@@ -45,23 +45,50 @@ test('同一份文件收两次：不翻倍，第二次没有新内容', () => {
   const d1 = receive(B, file), once = snap();
   const d2 = receive(B, file);
   assert.equal(snap(), once);
-  assert.deepEqual(d1, {lit: 1, mist: 1});
-  assert.deepEqual(d2, {lit: 0, mist: 0});
+  assert.deepEqual(d1, {lit: 1, up: 0, mist: 1, mistUp: 0});
+  assert.deepEqual(d2, {lit: 0, up: 0, mist: 0, mistUp: 0});
 });
 
 test('旧格式文件（没有碎片的导出文字）也能收：进度合并，碎片不动', () => {
   const A = phone(), B = ipad(), old = C.exportText(A.S), inv = Object.assign({}, B.g.inv);
   const d = receive(B, old);
-  assert.deepEqual(d, {lit: 1, mist: 1});
+  assert.deepEqual(d, {lit: 1, up: 0, mist: 1, mistUp: 0});
   assert.deepEqual(B.g.inv, inv);
 });
 
-test('结果一句话：新增点亮、错题、碎片；没有新内容时说两边一致', () => {
-  assert.equal(C.syncText({lit: 3, mist: 2}, 40), '已合并：新增 3 格点亮、2 道错题、碎片 +40');
-  assert.equal(C.syncText({lit: 1, mist: 0}, 0), '已合并：新增 1 格点亮');
-  assert.equal(C.syncText({lit: 0, mist: 0}, 40), '已合并：碎片 +40', '只有碎片多了');
-  assert.equal(C.syncText({lit: 0, mist: 0}, 0), '已合并：没有新内容，两台设备的进度已经一致');
-  assert.equal(C.syncText({lit: 0, mist: 0}, null), '已合并：没有新内容，两台设备的进度已经一致', '碎片关着：不提碎片');
+test('结果一句话：点亮、升级、新错题、错题进度、碎片个数；没有变化只说没有新内容', () => {
+  assert.equal(C.syncText({lit: 3, up: 1, mist: 2, mistUp: 1}, 40), '已合并：新点亮 3 格、升级 1 格、新错题 2 道、错题进度更新 1 道、碎片 +40 个');
+  assert.equal(C.syncText({lit: 1, up: 0, mist: 0, mistUp: 0}, 0), '已合并：新点亮 1 格');
+  assert.equal(C.syncText({lit: 0, up: 2, mist: 0, mistUp: 0}, null), '已合并：升级 2 格', '只升了档位（审查 R1）');
+  assert.equal(C.syncText({lit: 0, up: 0, mist: 0, mistUp: 0}, 40), '已合并：碎片 +40 个');
+  assert.equal(C.syncText({lit: 0, up: 0, mist: 0, mistUp: 0}, 0), '已合并：没有新内容');
+  assert.equal(C.syncText({lit: 0, up: 0, mist: 0, mistUp: 0}, null), '已合并：没有新内容', '碎片关着：不提碎片');
+});
+
+test('只升了档位：算升级，不算没有新内容（审查 R1）', () => {
+  const A = phone(), B = ipad();
+  A.S.skills = {look1: sk(1, '2026-11-01')}; A.S.mistakes = {};
+  B.S.skills = {look1: sk(3, '2026-11-05')}; B.S.mistakes = {};
+  assert.deepEqual(receive(A, send(B)), {lit: 0, up: 1, mist: 0, mistUp: 0});
+});
+
+test('同一道错题两边状态不同：取最近一次复习的那条，互发一次两边一致（审查 R1）', () => {
+  const A = phone(), B = ipad();
+  const passed = Object.assign(mist('cmp1:a', '2026-11-05'), {due: null, passes: 5, last: '2026-11-05'});
+  const review = Object.assign(mist('cmp1:a', '2026-11-02'), {passes: 1, last: '2026-11-02'});
+  A.S.mistakes = {'cmp1:a': passed}; B.S.mistakes = {'cmp1:a': review};
+  const d = receive(B, send(A));
+  assert.equal(B.S.mistakes['cmp1:a'].due, null, 'iPad 收到手机上已过关的：过关');
+  assert.equal(d.mistUp, 1);
+  receive(A, send(B));
+  assert.deepEqual(A.S.mistakes['cmp1:a'], B.S.mistakes['cmp1:a'], '两边一样');
+  // 之后 iPad 上又答错（last 更晚）：手机收到后跟着回到复习
+  B.S.mistakes['cmp1:a'] = Object.assign({}, review, {passes: 0, due: '2026-11-08', last: '2026-11-07'});
+  receive(A, send(B));
+  assert.equal(A.S.mistakes['cmp1:a'].due, '2026-11-08');
+  // 同一天：已过关的优先，再看过了几关
+  assert.equal(C.newerMistake({last: 'd', due: null, passes: 5}, {last: 'd', due: 'x', passes: 2}).due, null);
+  assert.equal(C.newerMistake({last: 'd', due: 'x', passes: 1}, {last: 'd', due: 'y', passes: 3}).passes, 3);
 });
 
 test('文件名带日期；「上次同步」几天前', () => {
@@ -70,4 +97,7 @@ test('文件名带日期；「上次同步」几天前', () => {
   assert.equal(C.syncAgo(null, now), null);
   assert.equal(C.syncAgo(now - 3600e3, now), 0);
   assert.equal(C.syncAgo(now - 4 * 864e5, now), 4);
+  assert.equal(C.syncAgo(Date.parse('2026-11-07T23:00:00+08:00'), Date.parse('2026-11-08T08:00:00+08:00')), 1, '按日历天：昨晚同步、今早看是 1 天前（审查 R1）');
+  assert.equal(C.syncAgo(-5, now), null, '坏值当没同步过');
+  assert.equal(C.syncAgo(now + 864e5, now), null, '未来时间当没同步过');
 });

@@ -394,21 +394,39 @@
   // 「导入进度」：按格子取高合并，旧备份不会把新进度退回去；错题、摸底记录取并集
   // 家长一键同步（C 暂代 F，中控 11-08 派单）：文件就是导出文字，接收走 importMerge。下面只是给家长看的结果和文件名
   const mistOf = S => Object.keys(S.mistakes || {}).length;
-  const syncDiff = (a, b) => ({lit: Math.max(0, litOf(b) - litOf(a)), mist: Math.max(0, mistOf(b) - mistOf(a))});
-  function syncText(d, shards) {
-    const parts = [d.lit ? `${d.lit} 格点亮` : '', d.mist ? `${d.mist} 道错题` : ''].filter(Boolean);
-    if (shards > 0) parts.push(`碎片 +${shards}`);
-    return parts.length ? (parts[0].startsWith('碎片') ? `已合并：${parts.join('、')}` : `已合并：新增 ${parts.join('、')}`) : '已合并：没有新内容，两台设备的进度已经一致';
+  const lvOf = S => Object.assign({}, ...[S.cards, S.skills].map(o => Object.fromEntries(Object.entries(o || {}).map(([k, c]) => [k, (c && c.lv) || 0]))));
+  function syncDiff(a, b) {   // a = 合并前，b = 合并后
+    const la = lvOf(a), lb = lvOf(b), ma = a.mistakes || {}, mb = b.mistakes || {};
+    const lit = Object.keys(lb).filter(k => lb[k] > 0 && !(la[k] > 0)).length, up = Object.keys(lb).filter(k => la[k] > 0 && lb[k] > la[k]).length;   // 升级 = 原来就亮、档位变高（审查 R1：只升档位也要说）
+    const mistUp = Object.keys(mb).filter(k => ma[k] && JSON.stringify(ma[k]) !== JSON.stringify(mb[k])).length;
+    return {lit, up, mist: Math.max(0, mistOf(b) - mistOf(a)), mistUp};
+  }
+  function syncText(d, shards) {   // shards = 碎片多了几个（个数，不是面值；碎片关着传 null）
+    const parts = [d.lit ? `新点亮 ${d.lit} 格` : '', d.up ? `升级 ${d.up} 格` : '', d.mist ? `新错题 ${d.mist} 道` : '', d.mistUp ? `错题进度更新 ${d.mistUp} 道` : '', shards > 0 ? `碎片 +${shards} 个` : ''].filter(Boolean);
+    return parts.length ? `已合并：${parts.join('、')}` : '已合并：没有新内容';   // 只收一次只能保证本机不比对方少，不说「两边一致」（审查 R1）
   }
   const syncName = day => `空空数学岛-进度-${day}.json`;
-  const syncAgo = (at, now) => (at ? Math.max(0, Math.floor((now - at) / 864e5)) : null);
+  const syncAgo = (at, now) => (Number.isFinite(at) && at > 0 && at <= now + 6e4 ? dayDiff(dayOf(at), dayOf(now)) : null);   // 按日历天；坏值、未来时间当没同步过（审查 R1）
+  // 同一道错题两边都有：取最近一次复习的那条（last 晚的，每次复习都会更新 last）；同一天取进度靠后的：已过关优先，再看过了几关；完全一样留本机
+  function newerMistake(a, b) {
+    if (!a) return b; if (!b) return a;
+    const la = a.last || '', lb = b.last || '';
+    if (la !== lb) return lb > la ? b : a;
+    if ((a.due === null) !== (b.due === null)) return b.due === null ? b : a;
+    return (b.passes || 0) > (a.passes || 0) ? b : a;
+  }
+  function mergeMistakes(local, other) {
+    const M = Object.assign({}, other, local);
+    for (const k in other) if (local[k]) M[k] = newerMistake(local[k], other[k]);
+    return M;
+  }
   function importMerge(S, text) {
     const v = parse(text);
     if (!valid(v)) throw new Error('不是有效的备份');
     delete v.gems;
     const M = upgrade(mergeProgress(S, v));
     M.skills = mergeCards(S.skills || {}, v.skills || {});
-    M.mistakes = Object.assign({}, v.mistakes || {}, S.mistakes || {});
+    M.mistakes = mergeMistakes(S.mistakes || {}, v.mistakes || {});   // 同一道错题取最近一次复习的那条（原来以本机为准：两台设备互发后过关状态对不上，审查 11-08）
     M.known = Object.assign({}, v.known || {}, S.known || {});
     M.demoSeen = Object.assign({}, v.demoSeen || {}, S.demoSeen || {});
     M.placedAt = S.placedAt || v.placedAt;
@@ -442,7 +460,7 @@
     upgrade, LEVEL_REMAP, isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, mergePets, syncDiff, syncText, syncName, syncAgo, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
+    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, mergePets, syncDiff, syncText, syncName, syncAgo, newerMistake, mergeMistakes, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
     _resetDecks: () => { DECKS = {}; }, useDecks,
