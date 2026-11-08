@@ -15,6 +15,7 @@
 #think .tabs{display:flex;gap:4px;flex:1;min-width:0}
 #think .tabs button{flex:1;min-width:0;padding:0 2px;font-size:15px;font-weight:500;color:var(--mute);white-space:nowrap}
 #think .tabs button.on{border-color:var(--warn);color:var(--ink);font-weight:700}
+#think .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.25}#think .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}#think .tabs .tlv{font-size:12px;font-weight:500;color:var(--dim)}
 #think .ore{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;padding:0 10px;height:46px;background:#000}
 #think .ore i{width:18px;height:18px;background:var(--warn);border:2px solid #7a5a12;display:block}
 #think .main{display:flex;gap:14px;height:304px;margin-top:4px}
@@ -141,7 +142,9 @@ function paintTabs() {
 function bindCont(a) { a.querySelector('#cont').onclick = () => { if (guarded()) return; G.tap = performance.now() + 500; next(); }; }
 function tabsHtml() {   // 没开放的技能点不了；当前技能显示还差几题
   const pr = P.progress(o.S(), G.mod.id);
-  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > pr.tier ? 'disabled' : ''}>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</button>`).join('');
+  // 每档的建议级别（A 定在 skills.js THINK_LEVEL，只作参考、不锁）：小字给家长看
+  const lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
+  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > pr.tier ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</span>${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}</button>`).join('');
 }
 function shell(say, sub) {
   $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
