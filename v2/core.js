@@ -169,7 +169,7 @@
   }
   // 复习过关（due 变成 null）后调用一次；同一天重复调用不重复算
   function notePassed(S, key, day, skill) {
-    const m = S.mistakes && S.mistakes[key]; if (!m || m.due !== null || m.pd === day) return;
+    const m = S.mistakes && S.mistakes[key]; if (!m || m.due !== null || m.out || m.pd === day) return;   // m.out：秒答下架（engine.js），不是复习过关
     m.pd = day;
     if (Array.isArray(m.hist)) m.hist = m.hist.slice(-1);
     const t = mistStatOf(S, skill, day); if (t) t.p++;
@@ -200,9 +200,12 @@
     const a = S.mistakes || {}, b = v.mistakes || {};
     for (const k in M.mistakes) {
       const x = a[k], y = b[k]; if (!x || !y || typeof x !== 'object' || typeof y !== 'object') continue;
-      const m = M.mistakes[k] = Object.assign({}, x), seen = new Set();
-      const h = [].concat(Array.isArray(x.hist) ? x.hist : [], Array.isArray(y.hist) ? y.hist : []).map(histItem).filter(Boolean)
-        .filter(e => { const id = histKey(e); if (seen.has(id)) return false; seen.add(id); return true; }).sort((p, q) => p.d.localeCompare(q.d));
+      const m = M.mistakes[k] = Object.assign({}, x), cnt = {};
+      // 同样内容的经过：每种取两边条数多的那边（同一天两次一模一样的「不会」是两条，不是重复）
+      const side = arr => (Array.isArray(arr) ? arr : []).map(histItem).filter(Boolean), hx = side(x.hist), hy = side(y.hist);
+      hy.forEach(e => { const id = histKey(e); cnt[id] = (cnt[id] || 0) + 1; });
+      const h = hx.concat(hy.filter(e => { const id = histKey(e), inX = hx.filter(f => histKey(f) === id).length; if (cnt[id] > inX) { cnt[id]--; return true; } return false; }))
+        .sort((p, q) => p.d.localeCompare(q.d));
       const nw = Math.max(posInt(x.wrongs) ? x.wrongs : 0, posInt(y.wrongs) ? y.wrongs : 0, h.filter(e => e.k !== 's').length);
       if (nw) m.wrongs = nw; else delete m.wrongs;
       const keep = m.due === null ? h.slice(-1) : h.slice(-HIST_MAX); if (keep.length) m.hist = keep; else delete m.hist;
@@ -211,13 +214,13 @@
     const sa = S.mistStat, sb = v.mistStat;
     if ((sa && typeof sa === 'object') || (sb && typeof sb === 'object')) {
       const out = {};
-      [sa, sb].forEach(src => { if (!src || typeof src !== 'object') return; for (const id in src) { const t = src[id]; if (!t || typeof t !== 'object') continue;
+      [sa, sb].forEach(src => { if (!src || typeof src !== 'object') return; for (const id in src) { const t = src[id]; if (id === '__proto__' || !t || typeof t !== 'object') continue;
         const o = out[id] = out[id] || {w: 0, d: 0, s: 0, p: 0}; MSTAT.forEach(f => { if (Number.isInteger(t[f]) && t[f] > o[f]) o[f] = t[f]; });
         if (typeof t.last === 'string' && (!o.last || t.last > o.last)) o.last = t.last; } });
       M.mistStat = out;
     }
     for (const d in v.stats || {}) {   // 每日新增 / 过关按天取大（没有习惯记录的日子也合并）
-      const vs = v.stats[d]; if (!vs || typeof vs !== 'object') continue;
+      const vs = v.stats[d]; if (d === '__proto__' || !vs || typeof vs !== 'object') continue;
       ['mn', 'mp'].forEach(f => { if (Number.isInteger(vs[f]) && vs[f] > 0) { const st = dayStat(M, d); if (!(st[f] >= vs[f])) st[f] = vs[f]; } });
     }
   }
@@ -480,6 +483,7 @@
     if (!valid(v)) throw new Error('不是有效的备份');
     delete v.gems;
     const M = upgrade(mergeProgress(S, v));
+    if (M.stats && typeof M.stats === 'object') M.stats = Object.fromEntries(Object.entries(M.stats).map(([d, x]) => [d, x && typeof x === 'object' ? Object.assign({}, x, x.h && typeof x.h === 'object' ? {h: Object.assign({}, x.h, x.h.ds && typeof x.h.ds === 'object' ? {ds: Object.assign({}, x.h.ds)} : {})} : {}) : x]));   // 合并不改动本机 S.stats（审查：原来是同一个对象）
     M.skills = mergeCards(S.skills || {}, v.skills || {});
     M.mistakes = Object.assign({}, v.mistakes || {}, S.mistakes || {});
     M.known = Object.assign({}, v.known || {}, S.known || {});
@@ -500,14 +504,14 @@
     { const ok = x => Number.isInteger(x) && x >= 0 && x <= 15; if (ok(S.lvMax) && ok(v.lvMax)) M.lvMax = Math.max(S.lvMax, v.lvMax); else delete M.lvMax; }   // 到过的最高级别：两边都有就取大；任一边没有（或坏值）就等下次练习按合并后的进度重新迁移，不会按 0 算掉级（第二批 §6、代码审查 R2）
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
     for (const d in v.stats || {}) {
-      const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;
+      const vh = v.stats[d] && v.stats[d].h; if (d === '__proto__' || !vh) continue;
       M.stats = M.stats || {}; const day = M.stats[d] = M.stats[d] || {sec: 0, n: 0, ups: 0, over: 0, gap: 0}, h = day.h = day.h || {};
       for (const k in vh) {
         if (k === 'ds') { const ds = h.ds = h.ds || {}; for (const d in vh.ds) if (!ds[d] || ds[d][0] < vh.ds[d][0]) ds[d] = vh.ds[d]; }
         else if (!(h[k] >= vh[k])) h[k] = vh[k];
       }
     }
-    mergeMist(M, S, v);   // 错题记录的新字段（docs/方案-错题数据字段.md §4）
+    mergeMist(M, S, v); cleanMist(M);   // 错题记录的新字段（docs/方案-错题数据字段.md §4）；只在备份里有的错题也洗一遍
     if (S.slips || v.slips) { const seen = new Set(); M.slips = [].concat(S.slips || [], v.slips || []).filter(m => { const k = JSON.stringify(m); if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => String(a.d).localeCompare(String(b.d))).slice(-30); }
     return M;
   }

@@ -125,6 +125,28 @@ test('T8 导入合并：新旧备份互导、导两次不翻倍、本机已过�
   M = C.importMerge(X, JSON.stringify(Y)); assert.equal(M.stats[D(5)].mn, 3); assert.equal(M.stats[D(5)].mp, 1); assert.equal(M.stats[D(5)].sec, 60);
 });
 
+test('T8b 导入合并补充：同样内容的经过不被吞、只在备份里有的错题也清洗、不改本机 S、备份里的 __proto__ 不污染', () => {
+  const S = blank(), i = instN(1), key = wrong(S, i, D(0), {k: 'd', w: null, s: undefined});
+  wrong(S, i, D(0), {k: 'd', w: null, s: undefined});
+  assert.equal(S.mistakes[key].hist.length, 2);
+  let M = C.importMerge(clone(S), JSON.stringify(S));
+  assert.equal(M.mistakes[key].hist.length, 2); assert.equal(M.mistakes[key].wrongs, 2);
+  const bk = clone(S); bk.mistakes.only = {key: 'only', uid: typeIt.id, q: {}, ans: 1, passes: 0, due: D(1), added: D(0), last: D(0), hist: [null, 5], wrongs: 'zz', part: 7};
+  M = C.importMerge(clone(S), JSON.stringify(bk));
+  assert.equal(M.mistakes.only.hist, undefined); assert.equal(M.mistakes.only.wrongs, undefined); assert.equal(M.mistakes.only.part, undefined); assert.equal(M.mistakes.only.due, D(1));
+  const L = clone(S), before = clone(L.stats), Y = blank(); Y.stats = {[D(9)]: {sec: 0, n: 0, mn: 4}};
+  M = C.importMerge(L, JSON.stringify(Y));
+  assert.deepEqual(L.stats, before); assert.notEqual(M.stats, L.stats); assert.equal(M.stats[D(9)].mn, 4);
+  const evil = '{"v":2,"cards":{},"mistakes":{},"stats":{"__proto__":{"mn":4,"h":{"a":3}}},"mistStat":{"__proto__":{"w":5}}}';
+  M = C.importMerge(clone(S), evil);
+  assert.equal(({}).mn, undefined); assert.equal(({}).w, undefined); assert.equal(({}).h, undefined);
+});
+
+test('T5b 秒答下架（m.out）不算过关', () => {
+  const S = blank(), key = wrong(S, instN(1), D(0)); S.mistakes[key].due = null; S.mistakes[key].out = 1;
+  C.notePassed(S, key, D(0), SK); assert.equal(S.mistStat[SK].p, 0); assert.equal(S.stats[D(0)].mp, undefined);
+});
+
 test('T9 整份替换：以备份为准，并过一遍清洗', () => {
   const S = blank(), key = wrong(S, instN(1), D(0)), bk = clone(S);
   bk.mistakes[key].hist.push({d: D(0), k: 'bad'}); bk.mistStat[SK].w = 'x';
