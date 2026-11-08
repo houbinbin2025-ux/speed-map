@@ -694,6 +694,18 @@ test('秒答示范卡只出一次：看过任一个秒答技能的示范，其�
   const A = C.blank(); A.placedAt = 1; A.demoSeen = {'speed:L1:1': true};
   assert.deepEqual(demosOf(A), [], '旧进度看过 speed:L1:1');
   const B = C.blank(); B.placedAt = 1;
-  const d = demosOf(B); assert.ok(d.length <= 1, '新进度最多看一张：' + d);
+  const d = demosOf(B); assert.equal(d.length, 1, '新进度正好看一张：' + d);
   assert.ok(E.demoDone(A, 'speed:L4:1') && !E.demoDone(A, 'bond3'), '只管秒答技能，别的技能照旧按自己记');
+});
+
+test('20 以内分合加前置凑十：旧进度里分合已点亮、凑十还灰，已点亮的题照常复习，等级不掉', () => {
+  const S = C.blank(); S.placedAt = 1; S.settings = S.settings || {};
+  const lit = K.BY.bondH3.items.map(it => it.id);
+  S.settings.levels = [...new Set(lit.flatMap(id => K.itemLevels(id)))];   // 打开这几道题所在的级别
+  lit.forEach(id => Object.assign(E.prog(S, id), {lv: 2, d: [D(-30), D(-20)], seen: 5, lastDay: D(-20)}));
+  assert.ok(K.BY.bond3.items.every(it => E.lv(S, it.id) === 0), '凑十还灰');
+  const asked = new Set(), f = E.session(S, D(0), {rnd: seeded(5)});
+  for (let x = f.next(), g = 0; x && g < 200; x = f.next(), g++) { if (x.kind === 'q') { asked.add(x.inst.id); f.answer(ok); } }
+  assert.ok(lit.some(id => asked.has(id)), '已点亮的 20 以内分合还会出来复习');
+  lit.forEach(id => assert.ok(E.lv(S, id) >= 2, id + ' 等级不掉'));
 });
