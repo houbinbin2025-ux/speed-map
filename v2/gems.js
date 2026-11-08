@@ -114,7 +114,7 @@
   // 记一次作答，返回得到的碎片 's' | 'm' | null。判定一出来就调，在显示答案之前
   // o = {day, inst, ok, slow, top, lv, dunno, peeked, oral, retry, mistake, guard}；slow = 答对但没秒答：只给 1 个小碎片
   function answer(st, o) {
-    if (o.oral) return null;
+    if (o.oral) o = Object.assign({}, o, {slow: true});   // 口答：家长点的对错，不算秒答，答对给 1 个小碎片（Ben 11-08：所有题都有激励）
     const clean = o.ok && !o.peeked && !o.dunno;
     if (o.retry) return clean ? filler(st, o.day) : null;   // 答错后当场改对：不算正确率，给 1 个普通小碎片（Ben 11-07：答对就要有碎片）
     const seen = seenToday(st, o.day), k = key(o.inst);

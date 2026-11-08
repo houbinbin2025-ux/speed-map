@@ -102,12 +102,12 @@ with sync_playwright() as p:
     m1, l1 = pg.evaluate("[GEMUI.state().inv.m,GEMUI.state().inv.l]"); check((m1 - m0, l1 - l0) == (5, 1), f'全对：中 +{m1-m0} 大 +{l1-l0}')
     pg.screenshot(path=str(out / f'challenge-done-{W}.png'))
     pg.click('#chHome'); pg.wait_for_timeout(300)
-    # 5 刷新不丢；口答完全不算
+    # 5 刷新不丢；口答答对也给碎片（Ben 11-08：所有题都有激励）
     before = pg.evaluate("JSON.stringify(GEMUI.state().inv)"); pg.reload(); pg.wait_for_timeout(600)
     check(pg.evaluate("JSON.stringify(GEMUI.state().inv)") == before, '刷新后碎片还在')
-    pg.evaluate("__sm.S.oral=true"); n0 = pg.evaluate("Object.values(GEMUI.state().days).reduce((a,d)=>a+d.n,0)")
+    pg.evaluate("__sm.S.oral=true"); i0 = pg.evaluate("Object.values(GEMUI.state().inv).reduce((a,x)=>a+(x||0),0)")
     start_today(pg); play(pg, 3); quit_(pg)
-    check(pg.evaluate("Object.values(GEMUI.state().days).reduce((a,d)=>a+d.n,0)") == n0, '口答模式不记作答')
+    check(pg.evaluate("Object.values(GEMUI.state().inv).reduce((a,x)=>a+(x||0),0)") > i0, '口答模式答对也给碎片')
     # 6 手机网页（没带 gems=1）：没有碎片
     pg2 = ctx.new_page(); pg2.goto((root / 'v2' / 'index.html').as_uri() + '#test'); pg2.wait_for_timeout(600)
     check(pg2.evaluate("GEMUI.enabled()") is False, '测试模式没带 gems=1 不开碎片')
