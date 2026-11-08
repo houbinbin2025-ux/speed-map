@@ -162,10 +162,10 @@
     return null;
   }
   // 下架的题不再以错题身份回来：对应的错题算过关
-  function sweep(S) {
+  function sweep(S, day) {
     for (const k in S.mistakes || {}) {
       const m = S.mistakes[k]; if (m.due === null || !K.ITEM[m.uid]) continue;
-      if (spent(S, instOfMistake(m))) { m.due = null; m.out = 1; }   // out：不算「过完 5 次复习」
+      if (spent(S, instOfMistake(m))) { m.due = null; m.out = 1; if (day) m.last = day; }   // out：不算「过完 5 次复习」；写 last：两台设备合并时按 last 取新，不把已下架的题带回复习（F 11-08）
     }
   }
   // 还有题能出吗（一格、一组、全部）：先看都到深红了没有，到了才真的试着抽，平时不动发牌进度
@@ -189,6 +189,7 @@
       if (m) { m.passes = 0; m.due = C.addDays(day, C.INTERVALS[0]); m.last = day; }
       else S.mistakes[key] = {key, uid: inst.id, src: s.group, q: inst.q, ans: inst.ans, passes: 0, due: C.addDays(day, C.INTERVALS[0]), added: day, last: day};
     }
+    if (S.mistakes[key]) delete S.mistakes[key].out;   // 秒答下架过的题又错了：重新进本，不再算下架（F 11-08）
     if (K.ITEM[inst.id].gen) {
       const same = Object.values(S.mistakes).filter(m => m.uid === inst.id && m.due !== null && m.key !== key)
         .sort((a, b) => (a.last || a.added).localeCompare(b.last || b.added));
@@ -196,6 +197,8 @@
     }
     return key;
   }
+  // 这道题进错题本会用哪个键（addMistake 同一算法；不写进存档）
+  const mistKeyOf = (S, inst) => { const s = skillOf(inst.id); return s.speed ? C.mkeyOf({id: inst.id, a: inst.q.a, op: inst.q.op, b: inst.q.b}) : K.mkey(inst); };
   const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !(m.q && C.isLow(m.q));
   // 手选难度时只回来选中级别的错题，其他的暂停不丢
   const mistOn = (S, m) => !!K.ITEM[m.uid] && activeItem(S, m.uid) && (!chosen(S) || chosen(S).includes(K.levelOf(instOfMistake(m))));
@@ -271,14 +274,25 @@
     const lv0 = p.lv, out = record(S, id, res, day);
     const counted = res.ok && res.fast;
     if (counted && !res.peeked && !x.retry && addFast(S, x.inst, day, lv0)) out.up = true;
-    if (counted) sweep(S);
+    if (counted) sweep(S, day);
     if (x.keep) {
       if (out.pass && p.keepDay !== day) { p.keep = (p.keep || 0) + 1; p.keepDay = day; }
       if (!out.pass && !out.peeked) p.keep = 0;
     }
     const m = x.mkey && S.mistakes[x.mkey];
-    if (m && isDue(m, day)) C.reviewMistake(S, x.mkey, out.pass ? 'fast' : res.ok ? 'slow' : 'wrong', day);
-    else if (!res.ok) addMistake(S, x.inst, day);   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉
+    // 错题记录（docs/方案-错题数据字段.md §6）：只记录，不改排课；再来一次、看过提示的不记（同能力观察口径）
+    const note = !x.retry && !res.peeked, skill = K.ITEM[id].skill;
+    const ev = (k, fresh) => ({k, w: k === 'd' || res.oral || res.typed === undefined ? null : res.typed, s: res.secs, o: res.oral ? 1 : 0, skill, fresh});
+    if (m && isDue(m, day)) {
+      const r = out.pass ? 'fast' : res.ok ? 'slow' : 'wrong';
+      C.reviewMistake(S, x.mkey, r, day);
+      if (note && r !== 'fast') C.noteMistake(S, x.mkey, ev(r === 'slow' ? 's' : res.dunno ? 'd' : 'w', false), day);
+      if (S.mistakes[x.mkey] && S.mistakes[x.mkey].due === null) C.notePassed(S, x.mkey, day, skill);
+    } else if (!res.ok) {   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉
+      const k0 = mistKeyOf(S, x.inst), m0 = k0 && S.mistakes[k0], fresh = !m0 || m0.due === null;   // 先判断是不是新进本（已过关 / 下架的算新）
+      const key = addMistake(S, x.inst, day);
+      if (note) C.noteMistake(S, key, ev(res.dunno ? 'd' : 'w', fresh), day);
+    }
     const st = stat(S, day); st.sec += res.secs || 0; st.n++; if (out.up) st.ups++;
     st.over = dueCount(S, day); st.gap = gapNow(S, day);
     if (onTime) onTime(res.secs || 0);
@@ -357,7 +371,7 @@
     if (!Dy.seg || Dy.seg === 'review') Dy.seg = 'new';
     Dy.sinceM = Dy.sinceM || 0;
     // 到期错题不再集中在开头，穿插进练习（Ben 11-05）；错题积压时每隔 1 题插一道
-    sweep(S); Dy.mistN = Dy.mistN || 0;
+    sweep(S, day); Dy.mistN = Dy.mistN || 0;
     const nextMistake = () => { if (Dy.mistN >= MIST_DAY) return null; const m = dueMistakes(S, day).find(y => room(y.uid)); return m && {kind: 'q', inst: instOfMistake(m), mkey: m.key, seg: 'review'}; };
     const started = sid => K.BY[sid].items.some(it => peek(S, it.id).seen > 0);
     // 学新的：同时最多 2 个技能（理解技能和秒答各占一个，缺一类时另一类补）；一天最多开始 3 个从没练过的技能
@@ -487,7 +501,7 @@
     opts = opts || {};
     const r = opts.rnd || Math.random, n = opts.n || (opts.mistOnly ? Infinity : FREE_N);
     topMemo = null;
-    S.demoSeen = S.demoSeen || {}; S.known = S.known || {}; sweep(S);
+    S.demoSeen = S.demoSeen || {}; S.known = S.known || {}; sweep(S, day);
     const Dd = daily(S, day), skills = hardOn(S).concat(K.SKILLS).filter(s => inGroup(s, group) && !cardWait(S, Dd, s.id)), inSet = id => skills.includes(skillOf(id));   // 讲解卡满了的新技能今天不出
     const FREE_EXTRA = 6, asked = {}, recent = [], pick = picker(S, asked, recent, FREE_EXTRA);
     let since = 0;
@@ -602,7 +616,7 @@
     };
   }
 
-  return {qkey, demoDone, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
+  return {qkey, demoDone, settle, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
     prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,
