@@ -184,11 +184,11 @@
   // → {store, backup: 要先另存的坏原值（没有 = null）, lock: 这次打开不写笔迹（读报错，不知道里面有什么）}
   function loadStore(raw, readErr) {
     if (readErr) return {store: blankStore(), backup: null, lock: true};
-    if (raw == null) return {store: blankStore(), backup: null, lock: false};
+    if (raw == null || raw === '' || raw === 'null') return {store: blankStore(), backup: null, lock: false};   // 空的不算坏
     try { const v = JSON.parse(raw); if (v && typeof v === 'object' && !Array.isArray(v)) return {store: Object.assign(blankStore(), v), backup: null, lock: false}; } catch (e) {}
     return {store: blankStore(), backup: String(raw), lock: false};
   }
   // 坏值另存的键：按内容算，同一份坏值反复读只存一份
-  const brokenKey = (key, raw) => { let h = 5381; for (let i = 0; i < raw.length; i++) h = ((h * 33) ^ raw.charCodeAt(i)) >>> 0; return key + '.broken.' + h.toString(36); };
+  const brokenKey = (key, raw) => { let h = 5381; for (let i = 0; i < raw.length; i++) h = ((h * 33) ^ raw.charCodeAt(i)) >>> 0; return key + '.' + h.toString(36) + '.broken'; };   // 以 .broken 结尾：iPad App 恢复备份时跳过（ios/App/App.swift）
   return {STD, legibility, sketch, pushRecent, groupStrokes, recognize, resolveWith, rankGroup, addTemplate, blankStore, loadStore, brokenKey, medianSpeed, writeMs, cloud, SURE_RATIO, MAX_PER_DIGIT};
 });

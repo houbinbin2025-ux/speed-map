@@ -917,7 +917,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v114:6a32ec8edcde -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v115:86339a85dd28 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -927,25 +927,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=114"></script>
-<script src="i18n.js?v=114"></script>
-<script src="bank.js?v=114"></script>
-<script src="hardbank.js?v=114"></script>
-<script src="placebank.js?v=114"></script>
-<script src="core.js?v=114"></script>
-<script src="ink.js?v=114"></script>
-<script src="skills.js?v=114"></script>
-<script src="engine.js?v=114"></script>
-<script src="render.js?v=114"></script>
-<script src="world.js?v=114"></script>
-<script src="home.js?v=114"></script>
-<script src="puzzles.js?v=114"></script>
-<script src="thinking.js?v=114"></script>
-<script src="house.js?v=114"></script>
-<script src="kongmine.js?v=114"></script>
-<script src="gems.js?v=114"></script>
-<script src="gemui.js?v=114"></script>
-<script src="vert.js?v=114"></script>
+<script src="touchfix.js?v=115"></script>
+<script src="i18n.js?v=115"></script>
+<script src="bank.js?v=115"></script>
+<script src="hardbank.js?v=115"></script>
+<script src="placebank.js?v=115"></script>
+<script src="core.js?v=115"></script>
+<script src="ink.js?v=115"></script>
+<script src="skills.js?v=115"></script>
+<script src="engine.js?v=115"></script>
+<script src="render.js?v=115"></script>
+<script src="world.js?v=115"></script>
+<script src="home.js?v=115"></script>
+<script src="puzzles.js?v=115"></script>
+<script src="thinking.js?v=115"></script>
+<script src="house.js?v=115"></script>
+<script src="kongmine.js?v=115"></script>
+<script src="gems.js?v=115"></script>
+<script src="gemui.js?v=115"></script>
+<script src="vert.js?v=115"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1243,7 +1243,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     calPad.clear();
     if (++CAL.k >= REPS) { CAL.k = 0; CAL.d++; }
     if (CAL.d > 9) {
-      INKS.speed = I.medianSpeed(CAL.speeds); INKS.samples = CAL.speeds; INKS.done = true; saveInk();
+      INKS.speed = I.medianSpeed(CAL.speeds); INKS.samples = CAL.speeds; INKS.done = true; inkLock = false; saveInk();   // 重新校准完 = 主动覆盖，读坏时的锁解开
       E.addTime(S, today(), Math.min(600, Math.round((Date.now() - CAL.t0) / 1000))); save();   // 校准时间计入当天 10 分钟
       const then = CAL.then; CAL = null; then ? then() : goIsland();
       return;
@@ -1815,7 +1815,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       : v.input === 'line' ? '' : '<div class="badline">✗ 这题答错了</div>';
     if (v.input === 'line') {
       drawTarget(false);
-      $('qBody').innerHTML = `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
+      $('qBody').innerHTML = Q.val === null   // 没插旗就点「不会」：没有蓝旗，不说往左往右
+        ? `<div class="say2">${inst.q.target} 在绿旗这里</div><div class="muted">没关系，记住它</div>`
+        : `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
       return waitNext();
     }
     if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); return waitNext(); }
@@ -1834,7 +1836,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qPad.enabled = true; waitNext('trace');
   }
   // 「继续」放在看得见的那一栏：点选、数线是宽版，右栏（写字板和底部按钮）整个收起，按钮挪到左栏讲解标题右边
-  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
+  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; Q.vc.refit(); return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
   $('qNext').addEventListener('click', () => { if (!Q || !['wait', 'trace'].includes(Q.phase)) return; tapGuard = performance.now() + 500; $('qNext').hidden = true; nextQ(); });
   // 答对后左边显示完整的题（看数 → 数字）
   function answerLine(inst) {
@@ -1850,7 +1852,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     g.style.cssText = `position:absolute;top:0;left:${fT * 100}%;width:0`; g.innerHTML = flagSvg('ok');
     box.appendChild(g);
     const lab = document.createElement('span'); lab.className = 'lab'; lab.style.cssText = `left:${fT * 100}%;color:var(--ok)`; lab.textContent = L.target; box.appendChild(lab);
-    if (!ok) {
+    if (!ok && Q.val !== null) {   // 没插旗（点了「不会」）不画箭头
       const a = document.createElement('div'), lo = Math.min(fT, fV), hi = Math.max(fT, fV), right = fT > fV;
       a.innerHTML = `<svg class="gap-arrow" style="left:${lo * 100 + 1}%;width:${Math.max(1, (hi - lo) * 100 - 2)}%" viewBox="0 0 200 22" preserveAspectRatio="none" aria-hidden="true"><path d="${right ? 'M2 11 H190 M180 3 L192 11 L180 19' : 'M198 11 H10 M20 3 L8 11 L20 19'}" vector-effect="non-scaling-stroke"></path></svg>`;
       box.appendChild(a.firstChild);
@@ -2215,7 +2217,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     try {
       if (ioKind === 'inkin') {
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
-        INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); saveInk();
+        INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); inkLock = false; saveInk();   // 家长主动导入 = 覆盖，读坏时的锁解开
       } else {
         const keep = S.testDays, ro = S.readOnly;
         GM.syncNow();

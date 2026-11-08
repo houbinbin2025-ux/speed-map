@@ -149,9 +149,10 @@ test('笔迹存档：好的照读，没有的给空白，坏的先另存原值�
   const good = JSON.stringify({done: true, speed: 620, templates: {3: [[[{x: 1, y: 2, t: 0}]]]}});
   const a = I.loadStore(good, false);
   assert.equal(a.store.speed, 620); assert.equal(a.store.done, true); assert.equal(a.backup, null); assert.equal(a.lock, false);
+  for (const empty of ['', 'null']) assert.equal(I.loadStore(empty, false).backup, null, '空的不算坏：' + JSON.stringify(empty));
   const b = I.loadStore(null, false);
   assert.deepEqual(b.store, I.blankStore()); assert.equal(b.backup, null); assert.equal(b.lock, false);
-  for (const bad of ['{"done":tr', 'null', '42', '[1,2]', '"x"']) {
+  for (const bad of ['{"done":tr', '42', '[1,2]', '"x"']) {
     const c = I.loadStore(bad, false);
     assert.deepEqual(c.store, I.blankStore(), bad); assert.equal(c.backup, bad, '坏的原值要另存：' + bad); assert.equal(c.lock, false);
   }
@@ -161,5 +162,5 @@ test('笔迹存档：好的照读，没有的给空白，坏的先另存原值�
 
 test('笔迹存档：坏值另存的键名按内容定，同一份坏值重复读只存一份，不同坏值各存一份', () => {
   const k1 = I.brokenKey('speedmap.ink', '{"a":'), k2 = I.brokenKey('speedmap.ink', '{"a":'), k3 = I.brokenKey('speedmap.ink', '{"b":');
-  assert.equal(k1, k2); assert.notEqual(k1, k3); assert.match(k1, /^speedmap\.ink\.broken\.[0-9a-z]+$/);
+  assert.equal(k1, k2); assert.notEqual(k1, k3); assert.match(k1, /^speedmap\.ink\.[0-9a-z]+\.broken$/, '以 .broken 结尾，App 恢复时跳过');
 });

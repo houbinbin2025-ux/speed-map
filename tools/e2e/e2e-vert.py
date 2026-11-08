@@ -152,7 +152,7 @@ with sync_playwright() as p:
     start(pg, ['speed:g10:add3']); q = inst(pg)
     if pg.locator('.vdemo').is_visible(): pg.click('.vdemo .vgo'); pg.wait_for_timeout(150)
     answer(pg, q['ans'], 0); pg.click('.vdone'); pg.wait_for_timeout(400)
-    check('最右边' in pg.inner_text('.vres') and '_' not in pg.inner_text('.vres .badline'), f'个位没写在最右格：提示且不显示下划线')
+    check('最右边' in pg.inner_text('.vres') and '_' not in pg.inner_text('.vres .badline') and '□' not in pg.inner_text('.vres .badline'), f'个位没写在最右格：提示，右边空的格子不显示成空框')
     pg.click('#qNext'); pg.wait_for_timeout(300)
     start(pg, ['speed:g13:mul3', 'speed:g10:add3'])
     check(pg.evaluate("__sm.Q.v.input") == 'vert' and fit_ok(pg), 'App 里（932 宽）也是竖式，放得下')

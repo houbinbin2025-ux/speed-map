@@ -415,9 +415,10 @@
         r.innerHTML = `<div class="vresc"><div class="vresi"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div></div><div class="vfoot"></div>`;
         if (can) r.querySelector('.vstep').onclick = onStep;
         box.querySelector('.vside').style.display = 'none';   // 答完右边按钮用不上了，让出地方给讲解栏和孩子的竖式
-        r.classList.add('show'); fitNow();
+        r.classList.add('show'); if (root.I18N && root.I18N.flush) root.I18N.flush(); fitNow();   // 英文日先翻好再量
         return r.querySelector('.vfoot');
       },
+      refit() { if (root.I18N && root.I18N.flush) root.I18N.flush(); fitNow(); },
       destroy() { root.removeEventListener('resize', onR); if (ro) ro.disconnect(); clearTimeout(demoT); },
     };
   }
