@@ -122,7 +122,7 @@
     // 名字和地方
     空空数学岛: 'Kongkong Math Island', 空空: 'Kongkong', 空空的家: "Kongkong's Home", 家: 'Home',
     看数草原: 'Counting Meadow', 分合矿洞: 'Number Bond Mine', 数位村庄: 'Place Value Village', 比大小双塔: 'Compare Towers', 数线铁轨: 'Number Line Railway', 秒答高塔: 'Speed Tower', 规律花园: 'Pattern Garden', 钟楼集市: 'Clock Tower Market', 故事码头: 'Story Dock',
-    看数: 'Counting', 分合: 'Number Bonds', 数位: 'Place Value', 比大小: 'Compare', 数线: 'Number Line', 秒答地图: 'Speed Map', 秒答: 'Speed', 规律: 'Patterns', 集市: 'Market', 码头: 'Dock', 进阶口算: 'Advanced Math',
+    看数: 'Counting', 分合: 'Number Bonds', 数位: 'Place Value', 图形: 'Shapes', 比大小: 'Compare', 数线: 'Number Line', 秒答地图: 'Speed Map', 秒答: 'Speed', 规律: 'Patterns', 集市: 'Market', 码头: 'Dock', 进阶口算: 'Advanced Math',
     达标: 'On target',
     草地: 'Meadow', 森林: 'Forest', 沙漠: 'Desert', 雪山: 'Snow Mountain', 矿洞: 'Mine', 下界: 'The Nether', 末地: 'The End',
     末影龙: 'Ender Dragon', 凋灵: 'Wither', 监守者: 'Warden', 远古守卫者: 'Ancient Keeper',
