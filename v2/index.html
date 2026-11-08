@@ -249,6 +249,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .qtop{display:flex;align-items:center;gap:10px;position:relative}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
 .qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:14px;font-weight:700}
+/* 碎片的火苗、能量、小目标浮在练习页右上角（写字板右上角里面），不占顶栏和题签的位置（捣蛋鬼第 1 轮第 5 条；放题签行会把题签截掉，审查 R1） */
+#qFeel{position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:calc(var(--padR) + 8px);z-index:20;pointer-events:none}
+/* 宽版（选择题、iPad 竖式）没有写字板，顶栏铺满整行，右上角是矿石数：挪到题签那一行的右端 */
+#qplay.wide #qFeel{top:calc(env(safe-area-inset-top) + 62px);right:var(--padR)}
+@media (max-width:700px){#qplay.wide .qtag{max-width:calc(100% - 250px)}}
+/* 写字板顶上出提示（描红、你写的是几、对勾、笔迹提示）或宽版出警告条时，碎片条先藏起来，下一题再出（审查 R2：浮层盖住这些字） */
+#qplay:has(#qPadTip:not([hidden]), #qCheck:not([hidden]), #qConfirm:not([hidden]), #qGhost:not([hidden])) #qFeel, #qplay.wide:has(#qWarn:not([hidden])) #qFeel{visibility:hidden}   /* 窄屏宽版：题签右边给碎片条留位置，长题签换行，不钻到下面 */
+#qQuit{flex:none;white-space:nowrap}#qplay .qtop .tbar{min-width:70px}
 .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
 .qnote{font-size:14px;color:var(--mute)}
 .qfoot{display:flex;gap:10px;align-items:center;min-height:56px}
@@ -535,13 +543,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #restOv{position:fixed;inset:0;z-index:75;background:var(--cave);display:flex;align-items:center;justify-content:center}#restOv[hidden]{display:none}#restOv h2{margin:0;font-size:24px}#restOv b{font-size:44px;color:var(--warn)}
 #exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden]{display:none!important}
 .qfeel{display:flex;align-items:center;gap:6px;flex:none}.qfeel[hidden],.qgoal[hidden]{display:none}
-.qfire{display:flex;align-items:center;gap:3px;height:44px;min-width:44px;padding:0 6px;background:var(--cave);border:3px solid #000;font-family:var(--f-num);font-weight:900;font-size:18px;color:var(--warn)}
-.qfire i{width:16px;height:22px;display:block;background:#555b66;clip-path:polygon(50% 0,85% 40%,100% 70%,80% 100%,20% 100%,0 70%,15% 40%)}
+.qfire{display:flex;align-items:center;gap:3px;height:28px;min-width:30px;padding:0 5px;background:var(--cave);border:2px solid #000;font-family:var(--f-num);font-weight:900;font-size:15px;color:var(--warn)}
+.qfire i{width:12px;height:16px;display:block;background:#555b66;clip-path:polygon(50% 0,85% 40%,100% 70%,80% 100%,20% 100%,0 70%,15% 40%)}
 .qfire.on i{background:linear-gradient(#fff3b0,#f5c935 45%,#e0762a)}.qfire.low i{animation:fblink .5s steps(2) infinite}@keyframes fblink{50%{opacity:.25}}
-.qcombo{display:flex;align-items:center;gap:2px;height:44px;padding:0 6px;background:var(--cave);border:3px solid #000;white-space:nowrap}
-.qcombo i{width:6px;height:20px;display:block;background:#2a2d34;border:1px solid #000}.qcombo i.on{background:#1fc8b8}
-.qcombo.crit{background:var(--warn);color:#1b1d22;font-weight:900;font-size:16px}
-.qgoal{display:flex;align-items:center;height:44px;padding:0 8px;background:var(--warn);color:#1b1d22;border:3px solid #000;font-weight:900;font-size:14px;white-space:nowrap}
+.qcombo{display:flex;align-items:center;gap:2px;height:28px;padding:0 5px;background:var(--cave);border:2px solid #000;white-space:nowrap}
+.qcombo i{width:5px;height:14px;display:block;background:#2a2d34;border:1px solid #000}.qcombo i.on{background:#1fc8b8}
+.qcombo.crit{background:var(--warn);color:#1b1d22;font-weight:900;font-size:13px}
+.qgoal{display:flex;align-items:center;height:28px;padding:0 6px;background:var(--warn);color:#1b1d22;border:2px solid #000;font-weight:900;font-size:12px;white-space:nowrap}
 #qplay.crit::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:25;box-shadow:inset 0 0 0 5px var(--warn),inset 0 0 36px rgba(245,201,53,.55);animation:critglow .8s ease-in-out infinite alternate}@keyframes critglow{to{box-shadow:inset 0 0 0 3px var(--warn),inset 0 0 18px rgba(245,201,53,.3)}}
 @media (max-width:700px){.qcombo i{width:4px}.qgoal{font-size:12px;padding:0 5px}}
 .evpop{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:55;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;padding:6px 16px;font-size:18px;font-weight:900;pointer-events:none;white-space:nowrap;animation:evpop 1.5s ease forwards}.evpop.gold{background:var(--warn);color:#1b1d22;font-size:24px}@keyframes evpop{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.08)}20%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px)}}
@@ -625,10 +633,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <!-- 3 练习（今日练习 / 摸底 / 自由加练 / 复习这一组） -->
 <div class="scr" id="qplay" hidden>
   <button id="gemEv" hidden></button>
+  <span class="qfeel" id="qFeel" hidden><span class="qfire" id="qFire"><i></i><b></b></span><span class="qcombo" id="qCombo"></span><span class="qgoal" id="qGoal" hidden></span></span>
   <div id="exitOv" hidden><div class="fwcard"><b></b><span></span><div class="gembtns"><button class="btn go" id="exitGo">继续答题</button><button class="btn" id="exitEnd">结束</button></div></div></div>
   <canvas class="scnbg px" id="qBg"></canvas>
   <div class="ql">
-    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span><span class="qfeel" id="qFeel" hidden><span class="qfire" id="qFire"><i></i><b></b></span><span class="qcombo" id="qCombo"></span><span class="qgoal" id="qGoal" hidden></span></span></div>
+    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span></div>
     <div class="banner" id="qWarn" hidden></div>
     <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
     <div class="qtag" id="qTag"></div>
@@ -918,7 +927,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v114:0366f13ef9d1 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v117:cd136dd567a3 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -928,25 +937,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=114"></script>
-<script src="i18n.js?v=114"></script>
-<script src="bank.js?v=114"></script>
-<script src="hardbank.js?v=114"></script>
-<script src="placebank.js?v=114"></script>
-<script src="core.js?v=114"></script>
-<script src="ink.js?v=114"></script>
-<script src="skills.js?v=114"></script>
-<script src="engine.js?v=114"></script>
-<script src="render.js?v=114"></script>
-<script src="world.js?v=114"></script>
-<script src="home.js?v=114"></script>
-<script src="puzzles.js?v=114"></script>
-<script src="thinking.js?v=114"></script>
-<script src="house.js?v=114"></script>
-<script src="kongmine.js?v=114"></script>
-<script src="gems.js?v=114"></script>
-<script src="gemui.js?v=114"></script>
-<script src="vert.js?v=114"></script>
+<script src="touchfix.js?v=117"></script>
+<script src="i18n.js?v=117"></script>
+<script src="bank.js?v=117"></script>
+<script src="hardbank.js?v=117"></script>
+<script src="placebank.js?v=117"></script>
+<script src="core.js?v=117"></script>
+<script src="ink.js?v=117"></script>
+<script src="skills.js?v=117"></script>
+<script src="engine.js?v=117"></script>
+<script src="render.js?v=117"></script>
+<script src="world.js?v=117"></script>
+<script src="home.js?v=117"></script>
+<script src="puzzles.js?v=117"></script>
+<script src="thinking.js?v=117"></script>
+<script src="house.js?v=117"></script>
+<script src="kongmine.js?v=117"></script>
+<script src="gems.js?v=117"></script>
+<script src="gemui.js?v=117"></script>
+<script src="vert.js?v=117"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -2188,7 +2197,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     ioKind = kind; $('ioPanel').hidden = false; $('ioMsg').textContent = '';
     const out = kind === 'out' || kind === 'inkout' || kind === 'broken';
     $('ioTitle').textContent = out ? '把下面这段文字复制下来，存到备忘录里' : kind === 'all' ? '把之前导出的文字粘贴到下面（会整份替换现在的进度）' : '把之前导出的文字粘贴到下面';
-    $('ioText').value = kind === 'out' ? C.exportText(S) : kind === 'inkout' ? JSON.stringify(INKS) : kind === 'broken' ? (store.getItem(KEYS.broken) || '') : '';
+    $('ioText').value = kind === 'out' ? C.exportText(S, GM.exportState()) : kind === 'inkout' ? JSON.stringify(INKS) : kind === 'broken' ? (store.getItem(KEYS.broken) || '') : '';
     $('ioCopy').hidden = !out; $('ioApply').hidden = out;
     $('ioApply').textContent = kind === 'all' ? '确认替换（会覆盖）' : '确认导入';
   }
@@ -2205,6 +2214,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; });
   });
   $('ioApply').addEventListener('click', () => {
+    let gemsMiss = false;
     try {
       if (ioKind === 'inkin') {
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
@@ -2212,11 +2222,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       } else {
         const keep = S.testDays, ro = S.readOnly;
         GM.syncNow();
-        S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
+        const text = $('ioText').value, gems = C.gemsOf(text);   // 备份里的碎片、宝石、伙伴罐（旧备份没有，就不动碎片）
+        S = ioKind === 'all' ? C.importText(text) : C.importMerge(S, text);
         S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
         if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
+        gemsMiss = gems && !GM.importBackup(gems, ioKind === 'all' ? 'all' : 'merge');   // 碎片关着或备份里的碎片读不了：进度照样导入，提示一句
       }
-      $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
+      $('ioMsg').textContent = gemsMiss ? '进度已导入，碎片没有导入' : '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
