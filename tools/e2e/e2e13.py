@@ -39,7 +39,7 @@ def card_checks(pg, cards):
         bad = pg.evaluate(OVER, 'demoBox'); check(not bad, f'{TAG} 讲解卡 {c} 第 {p + 1} 页 {bad}'); shot(pg, f'{W}-card-{c}-{p + 1}', True)
         pg.wait_for_timeout(900); pg.click('#ack'); pg.wait_for_timeout(200)
     check(cur(pg) == 'qplay', f'{TAG} {c} 「试一试」进第一题')
-def play(pg, n, name, wrong_first=True):
+def play(pg, n, name, wrong_first=True, until=None):
     seen, wrong_done, cards, views = 0, not wrong_first, [], set()
     for i in range(n * 10):
         c = cur(pg)
@@ -61,7 +61,8 @@ def play(pg, n, name, wrong_first=True):
                 bad = pg.evaluate(OVER, 'qWide'); check(not bad, f'{TAG} 选择题图解 {bad}'); shot(pg, f'{W}-explain-choice', True); pg.wait_for_timeout(600); pg.click('#qNext'); pg.wait_for_timeout(500)
             else: pg.locator(f'.pickcard[data-n="{st["ans"]}"]').first.click(); pg.wait_for_timeout(1000)
         elif st['input'] == 'line':   # 第 8 级的旧数线题（同 e2e11）
-            pg.evaluate("__sm.Q.val=__sm.Q.x.inst.ans"); bb = pg.locator('#lineBox').bounding_box(); x = bb['x'] + bb['width'] * st['ans'] / st['q']['max']; pg.mouse.click(x, bb['y'] + 122); pg.wait_for_timeout(1400)
+            ln0 = pg.locator('#lineBox .ln').bounding_box(); check(ln0 and ln0['y'] + ln0['height'] <= H, f'{TAG} 数线在屏幕外（y={ln0 and ln0["y"]}），孩子插不了旗子')
+            pg.evaluate("__sm.Q.val=__sm.Q.x.inst.ans"); bb = pg.locator('#lineBox').bounding_box(); ln = pg.locator('#lineBox .ln').bounding_box(); x = bb['x'] + bb['width'] * st['ans'] / st['q']['max']; pg.mouse.click(x, ln['y'] + ln['height'] / 2); pg.wait_for_timeout(1400)   # 按数线实际位置点（矮屏上数线位置不同）
         else:
             pg.wait_for_timeout(400)
             for k in range(3):
@@ -74,7 +75,7 @@ def play(pg, n, name, wrong_first=True):
                 if pg.is_visible('#qNext'): pg.wait_for_timeout(600); pg.click('#qNext'); pg.wait_for_timeout(400)
             else: pg.wait_for_timeout(600); pg.click('#qOralNext'); pg.wait_for_timeout(900)
         seen += 1
-        if seen >= n: break
+        if seen >= n or (until and until in views and wrong_done): break
     return seen, cards, views
 def quit_home(pg):
     if cur(pg) in ('qplay', 'demo'):
@@ -93,7 +94,7 @@ with sync_playwright() as p:
     st = pg.evaluate('__sm.S.introStat'); check(st and all(c in st and st[c][0] >= 1 for c in cards), f'{TAG} 讲解卡后记录 {st}')
     quit_home(pg); pg.evaluate("__sm.S.daily=null; __sm.S.testDays = (__sm.S.testDays || 0) + 1")   # 今天讲解卡已满 2 张，小数要明天才出：日期往后拨一天
     choose(pg, [12, 14]); pg.click('#btnStart'); pg.wait_for_timeout(2600)
-    seen2, cards2, views2 = play(pg, 40, 'L1214')
+    seen2, cards2, views2 = play(pg, 120, 'L1214', until='choice')   # 第 12、14 级题型多，练到碰到选择题为止
     check('choice' in views2, f'{TAG} 第 12、14 级没出选择题 {views2}')
     quit_home(pg); choose(pg, [])
     b.close()
