@@ -529,7 +529,7 @@
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
-  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), importBackup: safe(importBackup, false), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + G.worth([t]) * (st.inv[t] || 0), 0) : null), null), importBackup: safe(importBackup, false), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();
