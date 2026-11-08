@@ -19,19 +19,27 @@
     var q = null; try { q = JSON.parse(localStorage.getItem('mc_quest') || 'null'); } catch (e) {}
     return ((q && q.playtimeBonus && q.playtimeBonus[d]) || 0) + (s.extra && s.extra.day === d ? s.extra.min : 0);
   }
-  function renderWorld(box) {
+  // 和 unlock.js playStatus 同一口径：达标（或家长放行）后 = 每天分钟数 + 今天加时；没达标一律试用 20 秒
+  function status() {
     var s = load(), d = day(), m = mathToday(d), pass = !!(s.pass && s.pass.day === d);
     var met = (m.sec >= MATH_SEC && m.n >= MATH_N) || pass;
     var used = s.play && s.play.day === d ? +s.play.sec || 0 : 0, extra = s.extra && s.extra.day === d ? s.extra.min : 0;
-    var limit = (met ? daily(s) * 60 : TRIAL_SEC) + bonusMin(d, s) * 60, left = Math.max(0, limit - used);
+    var allow = daily(s) + bonusMin(d, s), limit = met ? allow * 60 : TRIAL_SEC;
+    return { s: s, m: m, pass: pass, met: met, used: used, extra: extra, allow: allow, left: Math.max(0, limit - used) };
+  }
+  function renderWorld(box) {
+    var t = status(), s = t.s, m = t.m, met = t.met, used = t.used, extra = t.extra, left = t.left;
+    var now = met ? '今天可玩 ' + t.allow + ' 分钟 · 已玩 ' + Math.floor(used / 60) + ' 分钟 · 还剩 ' + Math.ceil(left / 60) + ' 分钟'
+                  : '未达标：仅可试用 20 秒，还剩 ' + Math.ceil(left) + ' 秒';
     box.innerHTML =
       '<div class="ptitle">方块世界</div>' +
-      '<div class="kv" id="wTimeNow">今天已玩 ' + Math.floor(used / 60) + ' 分钟 · 还可玩 ' + Math.ceil(left / 60) + ' 分钟</div>' +
-      '<div class="kv">数学岛今日：练习 ' + Math.floor(m.sec / 60) + ' / 10 分钟 · 作答 ' + m.n + ' / 100 题' + (met ? '' : '<br>未达标，仅可试用 20 秒') + '</div>' +
+      '<div class="kv" id="wTimeNow">' + now + '</div>' +
+      '<div class="kv">数学岛今日：练习 ' + Math.floor(m.sec / 60) + ' / 10 分钟 · 作答 ' + m.n + ' / 100 题</div>' +
       '<div class="kv">每天可玩</div>' +
-      '<div class="seg" id="wDaily"><button data-w="-5">−5</button><button class="on" id="wDailyN">' + daily(s) + ' 分钟</button><button data-w="+5">+5</button></div>' +
-      '<button class="btn" id="wExtra">今天加 10 分钟</button>' + (extra ? '<div class="kv" id="wExtraN">今天已加 ' + extra + ' 分钟</div>' : '') +
-      '<label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">今天不需达标</span><input type="checkbox" id="wPass"' + (pass ? ' checked' : '') + '></label>' +
+      '<div class="seg" id="wDaily"><button data-w="-5">−5</button><span id="wDailyN" style="align-self:center;padding:0 10px;font-weight:700">' + daily(s) + ' 分钟</span><button data-w="+5">+5</button></div>' +
+      '<div class="kv">今天加时（达标后才算）</div>' +
+      '<div class="seg" id="wExtra">' + [0, 10, 20, 30].map(function (n) { return '<button data-x="' + n + '" class="' + (extra === n ? 'on' : '') + '">' + (n ? '+' + n + ' 分钟' : '不加') + '</button>'; }).join('') + '</div>' +
+      '<label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">今天不需达标</span><input type="checkbox" id="wPass"' + (t.pass ? ' checked' : '') + '></label>' +
       '<div class="muted" style="font-size:12px;line-height:1.5">达标条件：数学岛练习满 10 分钟且作答 100 题</div>';
   }
   function addWorldPanel() {
@@ -44,7 +52,7 @@
     box.addEventListener('click', function (e) {
       var t = e.target, s = load(), d = day();
       if (t.dataset && t.dataset.w) s.limits = { daily: Math.max(5, Math.min(60, daily(s) + +t.dataset.w)) };
-      else if (t.id === 'wExtra') s.extra = { day: d, min: (s.extra && s.extra.day === d ? s.extra.min : 0) + 10 };
+      else if (t.dataset && t.dataset.x !== undefined) s.extra = +t.dataset.x ? { day: d, min: +t.dataset.x } : null;   // 选一档，不叠加，可改回「不加」
       else return;
       save(s); renderWorld(box);
     });
@@ -67,6 +75,25 @@
     b.innerHTML = '<svg viewBox="0 0 32 32" width="52" height="52" shape-rendering="crispEdges"><path fill="#79c48f" d="M16 3 29 10 16 17 3 10z"/><path fill="#b9774d" d="M3 10 16 17V30L3 23z"/><path fill="#8f5834" d="M29 10 16 17V30L29 23z"/><path fill="#5fae7a" d="M3 10 16 17 29 10V13L16 20 3 13z"/></svg>';
     b.addEventListener('click', function (e) { e.stopPropagation(); location.href = 'world/index.html'; });
     host.appendChild(b);
+    // 入口旁的状态条：告诉孩子还差多少才能玩、还能玩多久（单日英文跟岛上的 lang 走，自己翻，不进 i18n）
+    var chip = document.createElement('div');
+    chip.id = 'worldChip'; chip.setAttribute('data-i18n-skip', '');
+    chip.style.cssText = 'position:absolute;left:90px;top:84px;z-index:40;padding:6px 10px;border:2px solid #4d3a2a;background:#f3ecd8;color:#4d3a2a;font-size:15px;font-weight:700;line-height:1.3;pointer-events:none;white-space:nowrap';
+    host.appendChild(chip);
+    function paint() {
+      var t = status(), en = document.documentElement.lang === 'en', parts = [];
+      if (!t.met) {
+        var mm = Math.ceil(Math.max(0, MATH_SEC - t.m.sec) / 60), nn = Math.max(0, MATH_N - t.m.n);
+        if (mm) parts.push(en ? mm + ' more min' : '再练 ' + mm + ' 分钟');
+        if (nn) parts.push(en ? nn + ' more answers' : '再答 ' + nn + ' 题');
+        chip.textContent = parts.join(' · ');
+      } else if (t.left > 0) chip.textContent = en ? Math.ceil(t.left / 60) + ' min to play' : '可玩 ' + Math.ceil(t.left / 60) + ' 分钟';
+      else chip.textContent = en ? 'Done for today' : '今天已玩完';
+    }
+    paint();
+    setInterval(function () { if (!host.hidden) paint(); }, 3000);
+    new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    new MutationObserver(function () { if (!host.hidden) paint(); }).observe(host, { attributes: true, attributeFilter: ['hidden'] });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
 })();
