@@ -30,12 +30,21 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.wait_for_timeout(300)
     kinds = pg.evaluate("KINDS")
-    # 第一次进每种版面先出示范卡（另一组数字，一行一行出现），点「我会了」才开始写
+    # 第一次进每种版面先出示范卡（另一组数字），按计算顺序一步一步写，点「我会了」才开始写
     for k in kinds:
         pg.evaluate(f"localStorage.removeItem('ipadproto.demo.{k}'); Q.kind='{k}'; Q.i=0; render()"); pg.wait_for_timeout(200)
         check(pg.locator('#demo').is_visible(), f'{k} 第一次出示范卡')
-        ex = pg.evaluate("JSON.stringify(DEMO[Q.kind].q)"); q0 = pg.evaluate("JSON.stringify(BANK[Q.kind].qs.map(q=>q.ans))")
-        if k == kinds[0]: pg.wait_for_timeout(4000); pg.screenshot(path=str(out / 'demo.png'))
+        if k == 'vert':
+            # 先摆出整道题：答案、进位都还没写；第一步算的是个位
+            hidden = pg.evaluate("[...document.querySelectorAll('#demoBody .g .q')].every(e=>e.classList.contains('hid'))")
+            check(hidden, '示范开始时答案都还没写')
+            pg.wait_for_timeout(1800); tip = pg.inner_text('#demoTip')
+            check(tip.startswith('个位'), f'示范第一步算个位：{tip}')
+            shown = pg.evaluate("[...document.querySelectorAll('#demoBody .g .q')].map(e=>e.classList.contains('hid')?'_':e.textContent).join('')")
+            check(shown.endswith('3') and '_' in shown, f'只写出了个位：{shown}')
+            pg.screenshot(path=str(out / 'demo-step1.png'))
+            pg.wait_for_timeout(2900); check(pg.inner_text('#demoTip').startswith('十位'), '第二步算十位')
+            pg.wait_for_timeout(5800); pg.screenshot(path=str(out / 'demo.png'))
         pg.click('#demoGo'); pg.wait_for_timeout(150)
         check(not pg.locator('#demo').is_visible(), f'{k} 点「我会了」关掉示范')
         pg.evaluate(f"render()"); pg.wait_for_timeout(150)

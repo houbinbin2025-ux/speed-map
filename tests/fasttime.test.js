@@ -118,18 +118,18 @@ test('习惯记录按天记秒答次数', () => {
 test('慢答只给 1 个小碎片，不算答错；即使这格本该给中碎片', () => {
   const st = G.blank ? G.blank() : {}, inst = K.make('dock:t:join', seeded(2));
   const base = {day: DAY, inst, top: 15, lv: 0};
-  assert.equal(G.answer(st, Object.assign({ok: true, slow: true}, base)), 's');
-  assert.equal(st.inv.s, 1); assert.equal(st.inv.m, 0);
+  assert.deepEqual(G.answer(st, Object.assign({ok: true, slow: true}, base)), ['b']);
+  assert.equal(st.inv.b, 1); assert.equal(st.inv.m, 0);
   const D = st.days ? st.days[DAY] : null; if (D) { assert.equal(D.ok, 1); assert.equal(D.bad, 0); }
   assert.ok(G.answer(st, Object.assign({}, base, {ok: true, inst: K.make(K.BY.dockB.items[0].id, seeded(4))})));
 });
 
 test('答对的字：秒答写清得了什么碎片，闪电秒答写清多得的', () => {
   const inst = K.make('bond:t:whole9', seeded(1));
-  assert.deepEqual(R.okWords(inst, {pass: true}, 0, null, {got: 'm', extra: 1, bolt: false}), {big: '⚡ 秒答！', small: '+1 中碎片 · +1 小碎片'});
-  assert.deepEqual(R.okWords(inst, {pass: true, up: true}, 0, null, {got: 's', extra: 1, bolt: true}), {big: '⚡⚡ 闪电秒答！', small: '点亮了 · +1 小碎片 · +1 小碎片 · +1 中碎片'});
-  assert.equal(R.okWords(inst, {pass: true}, 0, null, {got: 'o12', extra: 1}).small, '+1 碎片（12） · +1 小碎片', '杂色碎片写面值');
-  assert.equal(R.okWords(inst, {pass: false}, 0, {used: 8200, limit: 5400}, {got: 's', extra: 0}).small, '这次 9 秒，秒答要 5 秒内 · +1 小碎片');
+  assert.deepEqual(R.okWords(inst, {pass: true}, 0, null, {got: ['m', 'g'], words: '碎片 +10 +4', bolt: false}), {big: '⚡ 秒答！', small: '碎片 +10 +4'});
+  assert.equal(R.okWords(inst, {pass: true}, 0, {used: 2340, limit: 5000}, {words: '碎片 +4'}).small, '这次 2.3 秒 · 碎片 +4', '秒答也报用时');
+  assert.deepEqual(R.okWords(inst, {pass: true, up: true}, 0, null, {got: ['g'], words: '碎片 +4 +4 +10', bolt: true}), {big: '⚡⚡ 闪电秒答！', small: '点亮了 · 碎片 +4 +4 +10'});
+  assert.equal(R.okWords(inst, {pass: false}, 0, {used: 8200, limit: 5400}, {got: ['p'], words: '碎片 +2'}).small, '这次 9 秒，秒答要 5 秒内 · 碎片 +2');
 });
 
 test('答对的字：秒答统一说秒答；慢了说清楚这次和秒答要几秒', () => {

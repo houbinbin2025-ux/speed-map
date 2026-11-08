@@ -499,9 +499,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .hardboxes label{display:flex;align-items:center;gap:8px;background:var(--stone);border:2px solid #000;padding:4px 8px;min-height:48px}.hardboxes input{width:26px;height:26px;flex:none;margin:0}.hardboxes b{display:block;font-size:14px}.hardboxes small{font-size:12px;color:var(--mute);line-height:1.25;display:block}
 /* 碎片和锻造台（gemui.js） */
 .frag{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;flex:none;line-height:1;gap:1px}
-.frag img{image-rendering:pixelated;width:28px;display:block;filter:drop-shadow(0 2px 0 #000)}.frag.l img{width:36px}.frag.s img{width:24px}
+.frag img{image-rendering:pixelated;width:28px;display:block;filter:drop-shadow(0 2px 0 #000)}.frag.t-l img{width:36px}.frag.t-s img{width:24px}
 .frag b{font-family:var(--f-num);font-weight:900;font-size:13px;color:#fff;text-shadow:1px 1px 0 #000}
-.frag.o img{width:24px}
+.frag.o img{width:24px}.frag.t-p img,.frag.t-g img{width:22px}.frag.t-h img{width:32px}
+#forgeList.many{display:grid;grid-template-columns:1fr 1fr;align-content:center;gap:6px;width:176px}#forgeList.many .fragrow{min-height:52px;padding:2px 6px}#forgeList.many .fragrow>span{display:none}#forgeList.many .fragrow em{font-size:20px}#forgeList.many .oddbox{grid-column:1 / -1}
 .frag.land{animation:fragLand .22s}
 @keyframes fragLand{0%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
 #forge{gap:12px;background:#22252c}
@@ -520,14 +521,28 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .forgeMid{display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center;flex:none}
 #forgeSlots{display:grid;grid-template-columns:repeat(4,calc(min(14vh,52px)));grid-auto-rows:calc(min(14vh,52px));gap:4px;background:#2a1d14;border:4px solid #000;box-shadow:inset 0 0 0 2px #5a3a20,0 5px 0 #000;padding:6px}
 #forgeSlots.nope{animation:forgeShake .09s linear 2}
+.fmode{display:flex;gap:4px;width:100%}.fmode button{flex:1;min-height:36px;padding:0 6px;font-size:14px;font-weight:900;background:#2a2d34;color:#ddd;border:3px solid #000;white-space:nowrap}.fmode button.on{background:var(--warn);color:#1b1d22}
+#forgeSlots.big{grid-template-columns:repeat(6,calc(min(8.4vh,34px)));grid-auto-rows:calc(min(8.4vh,34px));gap:2px;padding:4px}#forgeSlots.big .frag img{width:16px}#forgeSlots.big .frag b{font-size:10px}
+.frag.t-a img,.frag.t-b img{width:18px}
 .fslot{display:flex;align-items:center;justify-content:center;background:#46301f;border:2px solid #000;box-shadow:inset 2px 2px 0 #2a1d14;padding:0}
-#forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
+#forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}
+/* iPhone Safari 的 vh 按收起地址栏后的高度算，横屏实际只剩约 290 点：锻造台按「看得见的高度」svh 算，不支持的浏览器用上面的 vh */
+@supports (height:1svh){#forgeSlots{grid-template-columns:repeat(4,calc(min(14svh,52px)));grid-auto-rows:calc(min(14svh,52px))}#forgeSlots.big{grid-template-columns:repeat(6,calc(min(8.4svh,34px)));grid-auto-rows:calc(min(8.4svh,34px))}#forgeGo{height:calc(min(15svh,60px))}}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
 #forgeMsg{font-size:18px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
 #forgeMsg.pop{animation:fragLand .28s}
 #gemEv{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:calc(env(safe-area-inset-left) + 112px);z-index:30;min-height:44px;width:236px;padding:4px 10px;line-height:1.25;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;font-size:14px;font-weight:800;text-align:left}#gemEv[hidden]{display:none}#gemEv[disabled]{min-height:32px;font-size:14px;color:var(--warn);opacity:1}#gemEv.offer{background:var(--warn);color:#1b1d22;box-shadow:0 4px 0 #000;animation:fragLand .3s}
 #restOv{position:fixed;inset:0;z-index:75;background:var(--cave);display:flex;align-items:center;justify-content:center}#restOv[hidden]{display:none}#restOv h2{margin:0;font-size:24px}#restOv b{font-size:44px;color:var(--warn)}
 #exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden]{display:none!important}
-.qcrit{font-size:12px;font-weight:800;color:#ddd;white-space:nowrap;flex:none}.qcrit.on{color:var(--warn)}.qcrit[hidden]{display:none}
+.qfeel{display:flex;align-items:center;gap:6px;flex:none}.qfeel[hidden],.qgoal[hidden]{display:none}
+.qfire{display:flex;align-items:center;gap:3px;height:44px;min-width:44px;padding:0 6px;background:var(--cave);border:3px solid #000;font-family:var(--f-num);font-weight:900;font-size:18px;color:var(--warn)}
+.qfire i{width:16px;height:22px;display:block;background:#555b66;clip-path:polygon(50% 0,85% 40%,100% 70%,80% 100%,20% 100%,0 70%,15% 40%)}
+.qfire.on i{background:linear-gradient(#fff3b0,#f5c935 45%,#e0762a)}.qfire.low i{animation:fblink .5s steps(2) infinite}@keyframes fblink{50%{opacity:.25}}
+.qcombo{display:flex;align-items:center;gap:2px;height:44px;padding:0 6px;background:var(--cave);border:3px solid #000;white-space:nowrap}
+.qcombo i{width:6px;height:20px;display:block;background:#2a2d34;border:1px solid #000}.qcombo i.on{background:#1fc8b8}
+.qcombo.crit{background:var(--warn);color:#1b1d22;font-weight:900;font-size:16px}
+.qgoal{display:flex;align-items:center;height:44px;padding:0 8px;background:var(--warn);color:#1b1d22;border:3px solid #000;font-weight:900;font-size:14px;white-space:nowrap}
+#qplay.crit::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:25;box-shadow:inset 0 0 0 5px var(--warn),inset 0 0 36px rgba(245,201,53,.55);animation:critglow .8s ease-in-out infinite alternate}@keyframes critglow{to{box-shadow:inset 0 0 0 3px var(--warn),inset 0 0 18px rgba(245,201,53,.3)}}
+@media (max-width:700px){.qcombo i{width:4px}.qgoal{font-size:12px;padding:0 5px}}
 .evpop{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:55;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;padding:6px 16px;font-size:18px;font-weight:900;pointer-events:none;white-space:nowrap;animation:evpop 1.5s ease forwards}.evpop.gold{background:var(--warn);color:#1b1d22;font-size:24px}@keyframes evpop{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.08)}20%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px)}}
 #forgeWarn{position:absolute;inset:0;z-index:40;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#forgeWarn[hidden]{display:none}
 .fwcard{background:var(--cave);border:4px solid #000;box-shadow:0 5px 0 #000;padding:14px 18px;display:flex;flex-direction:column;gap:8px;max-width:440px;text-align:center}.fwcard b{font-size:20px;color:var(--warn)}.fwcard span{font-size:15px;line-height:1.35}.fwcard .gembtns{justify-content:center}
@@ -612,7 +627,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div id="exitOv" hidden><div class="fwcard"><b></b><span></span><div class="gembtns"><button class="btn go" id="exitGo">继续答题</button><button class="btn" id="exitEnd">结束</button></div></div></div>
   <canvas class="scnbg px" id="qBg"></canvas>
   <div class="ql">
-    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span><span class="qcrit" id="qCrit" hidden></span></div>
+    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span><span class="qfeel" id="qFeel" hidden><span class="qfire" id="qFire"><i></i><b></b></span><span class="qcombo" id="qCombo"></span><span class="qgoal" id="qGoal" hidden></span></span></div>
     <div class="banner" id="qWarn" hidden></div>
     <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
     <div class="qtag" id="qTag"></div>
@@ -660,7 +675,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <div class="scr" id="forge" hidden>
   <canvas id="forgeScene" class="px"></canvas>
   <div id="forgeList"></div>
-  <div class="forgeMid"><div id="forgeSlots"></div><button class="gobig" id="forgeGo">锻造</button><div id="forgeMsg"></div></div>
+  <div class="forgeMid"><div class="fmode"><button id="fmGem" class="on">炼宝石</button><button id="fmBig">炼大碎片</button></div><div id="forgeSlots"></div><button class="gobig" id="forgeGo">锻造</button><div id="forgeMsg"></div></div>
   <div class="forgeSide"><div id="forgeToday"></div><button class="btn" id="forgeClaim" hidden>领宝石</button><button class="btn" id="forgeBack">返回</button></div>
   <div id="forgeWarn" hidden><div class="fwcard"><b>碎片不够，炼不出宝石</b><span>开始锻造后，炉子里的碎片都会变成废料，不退回</span><div class="gembtns"><button class="btn go" id="forgeWarnBack">先不炼</button><button class="btn" id="forgeWarnGo">仍然锻造</button></div></div></div>
 </div>
@@ -902,7 +917,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v105:fcc52a8cd847 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v111:c98069dcb5f3 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -912,24 +927,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=105"></script>
-<script src="i18n.js?v=105"></script>
-<script src="bank.js?v=105"></script>
-<script src="hardbank.js?v=105"></script>
-<script src="placebank.js?v=105"></script>
-<script src="core.js?v=105"></script>
-<script src="ink.js?v=105"></script>
-<script src="skills.js?v=105"></script>
-<script src="engine.js?v=105"></script>
-<script src="render.js?v=105"></script>
-<script src="world.js?v=105"></script>
-<script src="home.js?v=105"></script>
-<script src="puzzles.js?v=105"></script>
-<script src="thinking.js?v=105"></script>
-<script src="house.js?v=105"></script>
-<script src="kongmine.js?v=105"></script>
-<script src="gems.js?v=105"></script>
-<script src="gemui.js?v=105"></script>
+<script src="touchfix.js?v=111"></script>
+<script src="i18n.js?v=111"></script>
+<script src="bank.js?v=111"></script>
+<script src="hardbank.js?v=111"></script>
+<script src="placebank.js?v=111"></script>
+<script src="core.js?v=111"></script>
+<script src="ink.js?v=111"></script>
+<script src="skills.js?v=111"></script>
+<script src="engine.js?v=111"></script>
+<script src="render.js?v=111"></script>
+<script src="world.js?v=111"></script>
+<script src="home.js?v=111"></script>
+<script src="puzzles.js?v=111"></script>
+<script src="thinking.js?v=111"></script>
+<script src="house.js?v=111"></script>
+<script src="kongmine.js?v=111"></script>
+<script src="gems.js?v=111"></script>
+<script src="gemui.js?v=111"></script>
+<script src="vert.js?v=111"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1386,7 +1402,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       return later(800);
     }
     if (P.result === 'slow') {
-      $('res').innerHTML = `<div class="say">✓ 对了</div><div class="muted" style="font-size:15px">这次 ${Math.ceil(P.ms / 1000)} 秒，秒答要 ${Math.floor(limitOf(c) / 1000)} 秒内${P.gain && P.gain.got ? ' · <span>+1 小碎片</span>' : ''}</div>`;
+      $('res').innerHTML = `<div class="say">✓ 对了</div><div class="muted" style="font-size:15px">这次 ${Math.ceil(P.ms / 1000)} 秒，秒答要 ${Math.floor(limitOf(c) / 1000)} 秒内${P.gain && P.gain.words ? ` · <span>${P.gain.words}</span>` : ''}</div>`;
       $('footNote').textContent = '马上进入下一题…';
       return later(2500);
     }
@@ -1517,7 +1533,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const timers = () => { sayStop(); if (!Q) return; ['submitT', 'nextT', 'flashT', 'lineT', 'ackT', 'pickT'].forEach(k => clearTimeout(Q[k])); cancelAnimationFrame(Q.raf); };
   function startQ(kind, opts) {
     const day = today();
-    const sess = kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : kind === 'challenge' ? opts.sess : E.placement(S, day);
+    const sess = opts && opts.sess && kind !== 'challenge' ? opts.sess : kind === 'today' ? E.session(S, day, {extra: opts && opts.extra}) : kind === 'free' ? E.free(S, day, opts.group) : kind === 'review' ? E.review(S, day, opts.group) : kind === 'challenge' ? opts.sess : E.placement(S, day);
     Q = {kind, opts: opts || {}, sess, day, ups: [], passed: 0, n: 0, fastN: 0, retries: 0, wrong: 0, secs: 0, picks: [], pickDelay: 0, mist0: Object.keys(S.mistakes).length,
       before: kind === 'place' ? Object.fromEntries(R.GROUPS.map(g => [g.id, R.groupStat(S, g.id).lit])) : null};
     try { navigator.wakeLock && navigator.wakeLock.request('screen').then(l => Q && (Q.lock = l)).catch(() => {}); } catch (e) {}
@@ -1559,11 +1575,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.__fitSvg = fitSvgText;
   addEventListener('resize', fitBody);
   function showQuestion(x) {
-    const inst = x.inst, v = R.question(inst);
+    const inst = x.inst, vp = vertOn(inst), v = vp ? Object.assign({}, R.question(inst), {input: 'vert', vp, flash: false, note: ''}) : R.question(inst);
     Object.assign(Q, {v, phase: 'q', peeked: false, oralWrong: false, wasLv: E.lv(S, inst.id), shownAt: performance.now(), t0: performance.now(), val: null});
     show('qplay');
     const wide = v.input !== 'write';
-    $('qplay').classList.toggle('wide', wide);
+    $('qplay').classList.toggle('wide', wide); $('qplay').classList.toggle('vert', !!vp);
+    $('qplay').querySelector('.qfoot').appendChild($('qNext'));   // 竖式题把「继续」挪进了讲解栏，换题前先放回原处（qWide 马上清空）
+    if (Q.vc) Q.vc.destroy();
+    Object.assign(Q, {vc: null, vfoot: null, vtip: '', vdemo: false});
     $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : Q.x.retry ? v.tag + ' · 再来一次' : v.tag;
     $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : v.note || '';
     $('qBody').innerHTML = v.html; $('qBody').hidden = false; $('qWide').after($('qNote'));   // 提示回到原位（宽版答错时挪到了「继续」下面）
@@ -1576,10 +1595,64 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (v.input === 'write') { qPad.fit(); qPad.clear(); qPad.enabled = !S.oral; }
     if (v.input === 'pick') showPick(v);
     if (v.input === 'line') showLine(v);
+    if (v.input === 'vert') showVert(v);
     if (v.flash) flashLook();
     // 画面刷新后再校准起点；已经落笔就不再挪
     requestAnimationFrame(() => requestAnimationFrame(() => { if (Q && Q.x === x && Q.phase === 'q' && !qPad.strokes().length && v.input === 'write') Q.t0 = performance.now(); }));
     qBar();
+  }
+  // ---------- iPad 竖式（docs/说明书-iPad竖式.md）：横屏、屏幕短边 ≥ 700 点（iPad；App 里网页按 932 宽缩放，所以看 screen）、非口答 ----------
+  const VMAX = {};   // 每个题型最长的答案位数：答案格数按它定，不泄露这一道的位数
+  const vMax = id => (VMAX[id] = VMAX[id] || Math.max(0, ...(K.rawPool(id) || []).map(x => String(x.ans).length)));
+  const vertOn = inst => !S.oral && innerWidth > innerHeight && Math.min(screen.width, screen.height) >= 700 && VERT.parse(inst, VERT.BOARD.includes(inst.id) ? vMax(inst.id) : 0);
+  const VDEMO = TEST ? 'speedmap.test.vertdemo' : 'speedmap.vertdemo';   // 测试模式另起键，免得把空空的示范卡标成看过
+  const vSeen = () => { try { return JSON.parse(localStorage.getItem(VDEMO) || '{}') || {}; } catch (e) { return {}; } };
+  function showVert(v) {
+    $('qBody').innerHTML = '';
+    const q0 = Q;
+    v.vp.qhtml = v.html;   // 递等式 / 填空 / 应用题：题面照原样放在版面上方（喇叭、翻译都沿用）
+    Q.vc = VERT.mount($('qWide'), v.vp, {
+      can: () => Q === q0 && Q.phase === 'q' && !Q.vdemo,
+      onDone: vertDone,
+      onDunno: () => { if (guarded() || Q !== q0 || Q.phase !== 'q' || Q.vdemo) return; resolve({ok: false, dunno: true}); },
+      onDemo: () => { if (Q === q0 && Q.phase === 'q' && !Q.vdemo && VERT.DEMO[VERT.demoKey(v.vp)]) vertDemo(v.vp, false); },
+    });
+    if (VERT.DEMO[VERT.demoKey(v.vp)] && !vSeen()[VERT.demoKey(v.vp)] && Q.kind !== 'challenge') vertDemo(v.vp, false);   // 限时挑战不放示范，免得吃掉倒计时
+  }
+  // 示范卡：第一次见这种竖式先看一遍；看示范时不计时（关掉后、还没落笔就从头算）
+  function vertDemo(vp, replay) {
+    const k = VERT.demoKey(vp), q0 = Q;
+    if (!replay) Q.vdemo = true;
+    VERT.demo($('qWide'), replay ? {p: vp, title: I18N.on ? VERT.LAB.same[1] : VERT.LAB.same[0]} : VERT.DEMO[k], () => {
+      if (replay || Q !== q0) return;
+      Q.vdemo = false; const s = vSeen(); s[k] = 1; try { localStorage.setItem(VDEMO, JSON.stringify(s)); } catch (e) {}
+      if (Q.phase === 'q' && !Q.vc.touched()) { Q.t0 = performance.now(); Q.shownAt = performance.now(); }
+    });
+  }
+  // 写好了：每格单独认；认不出的格清掉重写，不算答错
+  // 拿不准的格同写字板（ink.js resolveWith）：只有把它们换成答案要的数字后整串正好等于答案才按答案认，按答案认的格不存字模
+  function vertDone() {
+    if (guarded() || !Q || Q.phase !== 'q' || Q.vdemo || !Q.vc) return;
+    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = String(inst.ans).padStart(n, ' ');
+    const recs = strokes.map(st => {
+      if (!st.length) return {t: ''};
+      const res = I.recognize(st, INKS);
+      if (res.text === null) return {t: '?'};
+      if (res.digits.length > 1) return {t: '两' + res.text};
+      return {t: res.digits[0].cands[0].d, d: res.digits[0]};
+    });
+    const unsure = recs.map((r, k) => (r.d && !r.d.sure ? k : -1)).filter(k => k >= 0);
+    if (unsure.length) {
+      const fixed = recs.map((r, k) => (unsure.includes(k) && r.d.cands.some(c => c.d === want[k]) ? want[k] : r.t));
+      if (VERT.judge(fixed, Q.v.vp).ok) unsure.forEach(k => { recs[k].t = want[k]; recs[k].byAns = true; });
+    }
+    const j = VERT.judge(recs.map(r => r.t), Q.v.vp, I18N.on), L = k => VERT.LAB[k][I18N.on ? 1 : 0];
+    if (j.retry) { tapGuard = performance.now() + 500; Q.vc.clearCells(recs.map(r => r.t === '?')); Q.vc.note(L('unclear')); return; }
+    if (j.empty) { Q.vc.note(L('empty')); return; }
+    Q.ms = Math.max(0, performance.now() - Q.t0 - VERT.TAP_MS);
+    if (j.ok) { recs.forEach(r => { if (r.d && r.d.sure && !r.byAns) I.addTemplate(INKS, r.t, r.d.strokes); }); saveInk(); }
+    Q.vtip = j.tip; Q.vc.mark(j.ok); Q.vc.done();
+    resolve({ok: j.ok, fast: j.ok && Q.ms <= qLimit(inst), typed: j.text});
   }
   // 看数：图案闪现 flashMs 后消失，用 requestAnimationFrame 记真实显示时长；「再看一次」再闪一遍，这题不点亮
   const FLASHLOG = [];
@@ -1701,9 +1774,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const x = Q.x, inst = x.inst;
     const fb = Q.kind === 'place' ? PLACE_MS : r.ok ? (r.fast && !Q.peeked ? OK_MS : SLOW_MS) : BAD_MS;
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
-    const used = Q.v.input === 'write' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
+    const used = Q.v.input === 'write' || Q.v.input === 'vert' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
     r.bolt = !!r.fast && used <= qLimit(inst) * GEMS.BOLT;
-    const gain = GM.answerQ(Q, x, r, secs);
+    const gain = GM.answerQ(Q, x, r, secs, qLimit(inst));
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++; if (out.pass) Q.fastN++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1716,8 +1789,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     }
     const v = Q.v;
     if (r.ok) {
-      const w0 = R.okWords(inst, out, Q.wasLv, r.fast ? null : {used, limit: qLimit(inst)}, gain), w = x.retry ? {big: w0.big, small: out.again ? '一会儿再来一次' : '明天再考你一次'} : w0, q0 = Q, n0 = Q.ore++;
-      if (Q.kind !== 'challenge') WORLD.flyOre(v.input === 'pick' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
+      const w0 = R.okWords(inst, out, Q.wasLv, {used, limit: qLimit(inst)}, gain), w = x.retry ? {big: w0.big, small: [out.again ? '一会儿再来一次' : '明天再考你一次', `这次 ${(Math.max(0.1, used / 1000)).toFixed(1)} 秒`].concat(gain && gain.words ? [gain.words] : []).join(' · ')} : w0, q0 = Q, n0 = Q.ore++;
+      if (Q.kind !== 'challenge') WORLD.flyOre(v.input === 'pick' || v.input === 'vert' ? $('qWide') : v.input === 'line' ? $('qBody') : S.oral ? $('qOral') : $('qPad'), $('qMined'), n0, c => { if (Q !== q0) return; const m = $('qMined'); m.querySelector('b').textContent = q0.ore; m.querySelector('i').style.background = c; m.classList.remove('bump'); void m.offsetWidth; m.classList.add('bump'); });
       if (v.input === 'line') drawTarget(true);
       $('qBody').innerHTML = (v.input === 'line' ? '' : v.input === 'pick' && !w.small ? v.html : '') + `<div class="okbig">${w.big}</div>${w.small ? `<div class="muted" style="font-size:15px">${w.small.split(' · ').map(s => `<span>${s}</span>`).join(' · ')}</div>` : ''}` + (v.input === 'write' ? `<div class="eq num" style="font-size:36px">${answerLine(inst)}</div>` : '');
       if (v.input === 'pick') $('qWide').querySelectorAll('.pickcard').forEach(b => b.classList.add(+b.dataset.n === inst.ans ? 'right' : 'wrong'));
@@ -1738,6 +1811,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       return waitNext();
     }
     if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); return waitNext(); }
+    if (v.input === 'vert') {   // 竖式：不描红，右边滑出整道题的正确写法和讲解；可以按这道题一步一步再看
+      $('qBody').innerHTML = ''; Q.vc.done();
+      const tip = Q.vtip ? `<div class="badline" style="color:#f0b46c">${Q.vtip}</div>` : '';
+      Q.vfoot = Q.vc.result(bad + tip, R.explain(inst), () => vertDemo(v.vp, true));
+      return waitNext();
+    }
     $('qBody').innerHTML = bad + R.explain(inst);
     if (S.oral) return waitNext();
     // 手写题：照着描一遍，描完点「继续」
@@ -1747,7 +1826,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qPad.enabled = true; waitNext('trace');
   }
   // 「继续」放在看得见的那一栏：点选、数线是宽版，右栏（写字板和底部按钮）整个收起，按钮挪到左栏讲解标题右边
-  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
+  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
   $('qNext').addEventListener('click', () => { if (!Q || !['wait', 'trace'].includes(Q.phase)) return; tapGuard = performance.now() + 500; $('qNext').hidden = true; nextQ(); });
   // 答对后左边显示完整的题（看数 → 数字）
   function answerLine(inst) {
@@ -1801,7 +1880,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const chip = id => `<span class="chip2" style="background:${lvColor(id)};color:${E.lv(S, id) === 3 ? '#fff' : '#1b1d22'}">${R.GNAME[K.BY[K.ITEM[id].skill].group] === '秒答地图' ? '秒答' : R.GNAME[K.BY[K.ITEM[id].skill].group]} · ${R.label(id)}</span>`;
   function finishQ(quit) {
     if (!Q) return;
-    timers(); clearInterval(Q.tick);
+    timers(); clearInterval(Q.tick); if (Q.vc) Q.vc.destroy();
     try { Q.lock && Q.lock.release(); } catch (e) {}
     const q = Q; Q = null; save();
     if (q.kind === 'place') return showPlaceResult(q, quit);
@@ -2215,10 +2294,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     });
   }
   const inApp = !!(window.webkit && webkit.messageHandlers && webkit.messageHandlers.backup) && !TEST && !PREVIEW;
-  GM.init({finishQ, goIsland, curQ: () => Q, leaveQ: () => { timers(); clearInterval(Q.tick); try { Q.lock && Q.lock.release(); } catch (e) {} const q = Q; Q = null; save(); return q; }, enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
+  GM.init({finishQ, goIsland, qLimit: inst => qLimit(inst), curQ: () => Q, leaveQ: () => { timers(); clearInterval(Q.tick); try { Q.lock && Q.lock.release(); } catch (e) {} const q = Q; Q = null; save(); return q; }, enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
     canWrite: () => !frozen && !S.readOnly && !S.stopped});
   GM.islandBtn(); $('btnForge').addEventListener('click', () => { if (!WD.entering) GM.openForge('island'); });
-  window.__sm = {TH, today, resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad}; // 调试 / 测试用
+  window.__sm = {TH, today, resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad, startQ: (k, o) => startQ(k, o)}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();

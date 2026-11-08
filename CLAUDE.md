@@ -30,7 +30,7 @@
 - **审改循环上限 3 轮**：任何一个环节"审出问题 → 修改 → 再验收"最多 3 轮；第 3 轮还不过 = 方案本身有问题，**回到方案研究 / 风险验证换方案**，不许硬磨第 4 轮；只有方案和 Ben 的意图冲突时才停下问 Ben。审查记录写 `docs/审查/`。
 - **提报格式**：我的建议 → 为什么 → 不这样做的后果。技术选择我自己定，只问 Ben 本人才知道的事实（孩子的情况、使用场景）。
 - **完成必须有证据**：测试输出 + 真访问截图；收尾推送 GitHub（注意第三条硬约束：推 main = 上线）。
-- **改了 `v2/` 下任何一个脚本（i18n / bank / hardbank / placebank / core / ink / skills / engine / render / world / home / puzzles / thinking / house），跑 `node tools/bump-version.js`**，它把 `v2/index.html` 里全部 17 个 `?v=N` 一起加 1 并更新指纹（10-26 踩坑：手机缓存旧脚本配新页面，一写字就报错；`npm test` 的脚本指纹测试会拦住忘加的情况）。
+- **改了 `v2/` 下任何一个脚本（i18n / bank / hardbank / placebank / core / ink / skills / engine / render / world / home / puzzles / thinking / house / vert），跑 `node tools/bump-version.js`**，它把 `v2/index.html` 里全部 `?v=N` 一起加 1 并更新指纹（10-26 踩坑：手机缓存旧脚本配新页面，一写字就报错；`npm test` 的脚本指纹测试会拦住忘加的情况）。
 - **iPad 同步（Ben 11-06）**：App 的题是打包进去的。凡是改了 `v2/`（题库、页面、脚本）并推送，**同一次收尾必须跑 `bash ios/release.sh`** 装到 iPad，并在交付说明里写「iPad 已更新到 vN」；iPad 没连上就明说没同步，不许略过。只同步内容，进度两边各存各的。
 - **改题只改题库数据（`v2/bank.js`、`hardbank.js`、`placebank.js`）**：卡和题型编号只增不删、卡的题目不改（要改换新编号）、题型的题可增删；改完跑 `node tools/bump-version.js` 和 `npm test`（`tests/bank.test.js` 查答案、覆盖、左右平衡、旧进度）。规则和标准见 `docs/说明书-题库.md`。
 - **改了题面、图解或页面排版（`v2/render.js`、`v2/index.html` 样式），跑 `python3 tools/e2e/overflow.py . 30`**，6 种 iPhone 横屏尺寸下每种题都不许超出左栏、钻到写字板下（10-28 踩坑：两个十格框被写字板盖住半边）。
@@ -49,6 +49,7 @@
 
 ## 六、当前状态（2026-10-25）
 - **2026-11-07 Ben 拍板跳过原型试用、直接上线**：到四年级第二批 2a（线段图、条形图、长方形、选择题 12 个题型在第 7–15 级；9 个概念讲解卡，每天最多 2 张）；`S.lvMax` 让已开放的级别只升不降（之后新加的技能必须标 `late`，`tests/lvmax.test.js` 查冻结格子数）。说明书 `docs/说明书-到四年级第二批.md`，白话 `docs/到四年级第二批2a-改动说明.md`，回归 `tools/e2e/e2e13.py`。2b（分数、分步作答）等 iPad 竖式布局（`v2/vert.js`）定下后对齐。
+- **2026-11-07**：iPad 竖式接进 v2（Ben：「搭建并上线吧」）。iPad 宽屏（`screen` 短边 ≥ 700，App 里网页按 932 宽缩放所以不看窗口）上 7 个纯计算题型改成竖式版面：逐格识别、点「写好了」才判、示范卡、答错出正确写法。代码 `v2/vert.js`（纯函数可测），说明书 `docs/说明书-iPad竖式.md`，白话 `docs/iPad竖式-改动说明.md`；测试 `tests/vert.test.js`、走查 `tools/e2e/e2e-vert.py`。11-08 又把其余 38 个三四年级手写题（递等式 / 填空 / 应用题，`BOARD`）接进同一套 iPad 版面。2b 新题型合进来时，要在 `vert.js` 里登记才会用 iPad 版面。示范配语音暂不做。
 - **2026-11-06 Ben 拍板，朗读暂不换**：手机网页用系统语音，静音模式下不响、声音机械（`navigator.audioSession` 压不过静音，Ben 真机确认）。预录人声可解决，但约 6600 条、估算 100–160MB，Ben 嫌太大太重，以后再处理。喇叭回归 `tools/e2e/e2e-say.py`。
 - **2026-11-06**：题库到四年级第一批（第 10–15 级约 5700 道，只用现有题面；`docs/说明书-到四年级第一批.md`，白话 `docs/到四年级第一批-改动说明.md`）。新题用 `q.qk` 短编号，改题规则同题库；生成在 `tools/grade34-pools.js`。
 - **2026-11-06 Ben 拍板**：下界、末地、末影龙、凋灵、监守者保留我的世界原名，中英文一致（The Nether、The End、Ender Dragon、Wither、Warden）。其他角色、造型、贴图仍是原创。

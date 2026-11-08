@@ -245,7 +245,8 @@
     if (s.nb) return Object.assign({input: s.input, tag, html: s.input === 'pick' && q.view === 'clock' ? `<div class="nbrow">${nbSay(q)}${nbFig(q)}</div>` : nbSay(q) + nbFig(q), note: ''}, nbOpts(q));
     if (s.hard && s.input === 'pick' && q.view === 'choice') return {input: 'pick', tag, html: nbSay(q), pick: q.opts.map((o, i) => i), pickText: q.opts, note: '点一个'};   // 选择题：按选项编号判（第二批 §6）
     if (s.hard && s.input === 'pick') return {input: 'pick', tag, html: '<div class="say2">哪个大？点它</div>', pick: [q.a, q.b], pickText: q.la ? [q.la, q.lb] : null};
-    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (FIGS[q.view] || q.text !== '□' ? hardFig(q) : '') : hardFig(q), note: /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
+    // 故事题的 hardFig 画的也是题干，题干已有就不再画（单位换算曾经重复两行）
+    if (s.hard && s.input === 'write' && q.qk) return {input: 'write', tag, html: q.say ? nbSay(q) + (FIGS[q.view] ? hardFig(q) : q.text === '□' || q.view === 'story' ? '' : hardFig(q)) : hardFig(q), note: /^speed:g1[0-5]:(add3|sub3|mul|mul2|mul3|div|divrem|div2|order|law)$|^dock:g1[1-5]:/.test(inst.id) ? '可以用纸笔算，算好写在右边' : q.text !== '□' && q.text.includes('□') ? '写方框里的数' : '在右边写出答案'};
     if (s.hard && s.input === 'write') return {input: 'write', tag, html: hardFig(q), note: q.view === 'hto' ? '方块是 100，一根是 10，一块是 1' : q.view === 'grid' ? '一排一排数，写在右边' : q.view === 'h100' ? '一行是 10，一共涂了几格？' : '在右边写出答案'};
     if (s.speed) return {input: 'write', tag, html: `<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} =</div>`, note: '在右边写出答案，写完停一下就好'};
     if (s.group === 'look') return {input: 'write', tag, html: `<div class="look">${pattern(q)}</div>`, flash: true, note: '有几个？写在右边'};
@@ -366,12 +367,10 @@
 
   // ---------- 答对时的字（说明书 3.4「孩子看到的字」） ----------
   // t = {used, limit}（毫秒）：这次用时和秒答时间
-  // g = {got, bolt}：这次得的碎片
-  const SHARD = {s: '+1 小碎片', m: '+1 中碎片', l: '+1 大碎片'};
-  const shardWord = t => SHARD[t] || `+1 碎片（${t.slice(1)}）`;   // 杂色碎片 o12 → 面值
-  const shards = g => (g && g.got ? [shardWord(g.got)].concat(Array(g.extra || 0).fill('+1 小碎片'), g.bolt ? ['+1 中碎片'] : []) : []);
+  // g = {got 碎片列表, words, bolt}：这次得的碎片
+  const shards = g => (g && g.words ? [g.words] : []);   // 第 10 版：g.words = 「碎片 +10 +4」，面值随火苗和暴击变
   function okWords(inst, out, wasLv, t, g) {
-    if (out.pass) return {big: g && g.bolt ? '⚡⚡ 闪电秒答！' : '⚡ 秒答！', small: (out.up ? ['点亮了'] : []).concat(shards(g)).join(' · ')};
+    if (out.pass) return {big: g && g.bolt ? '⚡⚡ 闪电秒答！' : '⚡ 秒答！', small: (out.up ? ['点亮了'] : []).concat(t ? [`这次 ${(Math.max(0.1, t.used / 1000)).toFixed(1)} 秒`] : [], shards(g)).join(' · ')};   // 秒答也报用时，看得见自己多快
     return {big: skillOf(inst.id).input === 'line' ? '✓ 很接近' : '✓ 对了', small: (out.peeked ? [] : [t ? `这次 ${Math.ceil(t.used / 1000)} 秒，秒答要 ${Math.floor(t.limit / 1000)} 秒内` : '再快一点才算学会']).concat(shards(g)).join(' · ')};
   }
 
