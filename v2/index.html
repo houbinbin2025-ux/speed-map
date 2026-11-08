@@ -253,7 +253,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #qFeel{position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:calc(var(--padR) + 8px);z-index:20;pointer-events:none}
 /* 宽版（选择题、iPad 竖式）没有写字板，顶栏铺满整行，右上角是矿石数：挪到题签那一行的右端 */
 #qplay.wide #qFeel{top:calc(env(safe-area-inset-top) + 62px);right:var(--padR)}
-@media (max-width:700px){#qplay.wide .qtag{max-width:calc(100% - 250px)}}   /* 窄屏宽版：题签右边给碎片条留位置，长题签换行，不钻到下面 */
+@media (max-width:700px){#qplay.wide .qtag{max-width:calc(100% - 250px)}}
+/* 写字板顶上出提示（描红、你写的是几、对勾、笔迹提示）或宽版出警告条时，碎片条先藏起来，下一题再出（审查 R2：浮层盖住这些字） */
+#qplay:has(#qPadTip:not([hidden]), #qCheck:not([hidden]), #qConfirm:not([hidden]), #qGhost:not([hidden])) #qFeel, #qplay.wide:has(#qWarn:not([hidden])) #qFeel{visibility:hidden}   /* 窄屏宽版：题签右边给碎片条留位置，长题签换行，不钻到下面 */
 #qQuit{flex:none;white-space:nowrap}#qplay .qtop .tbar{min-width:70px}
 .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
 .qnote{font-size:14px;color:var(--mute)}

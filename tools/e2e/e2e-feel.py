@@ -1,5 +1,6 @@
 # 碎片条（火苗、能量、小目标）浮在练习页右上角（捣蛋鬼第 1 轮第 5 条；审查 R1：放题签行会截掉题签）
-# 每种尺寸 × 中英文 × 普通/宽版/竖式 × 三种最挤的状态，查它压没压住长按结束、铁轨、矿石数、题签（全部题型，含「再来一次」）、挑战条，题签有没有被截
+# 每种尺寸 × 中英文 × 普通/宽版/竖式 × 三种最挤的状态，查它压没压住长按结束、铁轨、矿石数、题签（全部题型，含「再来一次」）、挑战条，题签有没有被截；
+# 写字板顶上出提示（描红、你写的是几、对勾、笔迹提示）或宽版出警告条时，碎片条要藏起来（审查 R2）
 # 用法：python3 tools/e2e/e2e-feel.py <项目根> <截图目录>
 import sys, json, pathlib
 from playwright.sync_api import sync_playwright
@@ -23,7 +24,14 @@ M = """([feel, mode]) => { const {K, R} = window.__sm, $ = id => document.getEle
   for (const id of Object.keys(K.ITEM)) { let inst; try { inst = K.make(id); } catch (e) { continue; } const v = R.question(inst);
     for (const suf of ['', ' · 再来一次']) { tag.textContent = v.tag + suf; I18N.flush(); res.n++;
       if (tag.scrollWidth > tag.clientWidth + 1) res.trunc++; if (ov(F, r(tag)) && !res.hits.includes('qTag')) { res.hits.push('qTag'); res.tagHit = tag.textContent; } } }
-  ev.hidden = true; return res; }"""
+  ev.hidden = true;
+  // 写字板顶上的提示、确认、对勾、笔迹提示，宽版的警告条：出现时碎片条要藏起来（审查 R2）
+  res.hideFail = [];
+  const pairs = mode === 'normal' ? ['qPadTip', 'qCheck', 'qConfirm', 'qGhost'] : ['qWarn'];
+  for (const id of pairs) { const e = $(id), was = e.hidden; e.hidden = false; if (id === 'qWarn') e.textContent = '这次练习存不下来，请家长看一下';
+    if (getComputedStyle(box).visibility !== 'hidden') res.hideFail.push(id); e.hidden = was; }
+  if (getComputedStyle(box).visibility === 'hidden') res.hideFail.push('提示收起后碎片条没回来');
+  return res; }"""
 bad = 0
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -37,13 +45,12 @@ with sync_playwright() as p:
             pg.click('#btnStart', force=True); pg.wait_for_timeout(1800)
             for _ in range(5):
                 if pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]") == 'demo': pg.wait_for_timeout(3200); pg.click('#ack'); pg.wait_for_timeout(400)
-            pg.evaluate("window.__stopFeel = true")
             for mode in ('normal', 'wide', 'vert'):
                 for feel in (1, 2, 3):
                     rr = pg.evaluate(M, [feel, mode])
-                    ok = not rr['hits'] and not rr['off'] and rr['trunc'] == 0
+                    ok = not rr['hits'] and not rr['off'] and rr['trunc'] == 0 and not rr['hideFail']
                     bad += not ok
-                    print(('ok  ' if ok else 'BAD '), name, 'en' if en else 'zh', mode, 'feel%d' % feel, rr['F'], 'hits', rr['hits'], rr.get('tagHit', ''), 'trunc', rr['trunc'], '/', rr['n'], 'off', rr['off'])
+                    print(('ok  ' if ok else 'BAD '), name, 'en' if en else 'zh', mode, 'feel%d' % feel, rr['F'], 'hits', rr['hits'], rr.get('tagHit', ''), 'trunc', rr['trunc'], '/', rr['n'], 'off', rr['off'], 'hideFail', rr['hideFail'])
                     if feel == 3: pg.screenshot(path=str(out / f'{name}-{"en" if en else "zh"}-{mode}.png'))
             ctx.close()
     b.close()
