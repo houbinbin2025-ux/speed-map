@@ -4,7 +4,7 @@ import sys, json, pathlib
 from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 url = (root / 'v2' / 'index.html').as_uri() + '#test'
-SIZES = [(932, 430), (844, 390), (667, 375), (874, 297), (1180, 820)]
+SIZES = [(932, 430), (844, 390), (667, 375), (874, 297), (1180, 820), (932, 651)]   # 932×651 = iPad App（页面按 932 宽缩放）
 known = {k: True for k in ['look1', 'look2', 'look3', 'look4', 'bond1', 'cmp1']}
 seed = {'v': 2, 'savedAt': 0, 'cards': {'keep': {'lv': 2}}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'placedAt': 1, 'known': known, 'oral': True, 'settings': {'bilingual': False}}
 ALL = {'balance': [3, 3, 3, 3], 'target': [3, 3, 3], 'clue': [3, 3, 3, 3], 'block': [3, 3, 3, 3]}
@@ -88,7 +88,7 @@ with sync_playwright() as p:
         mh = pg.evaluate("document.querySelector('.w-mini').getBoundingClientRect().height"); check(mh < 112, f'{W}x{H} 快捷栏不超过两行 {mh}')
         for mod, n in [('balance', 4), ('target', 3), ('clue', 4), ('block', 4)]:
             enter(pg, mod)
-            if W == 874: pg.screenshot(path=str(out / f'{W}x{H}-{mod}-enter.png'))
+            if W == 874 or H == 651: pg.screenshot(path=str(out / f'{W}x{H}-{mod}-enter.png'))
             lv = pg.evaluate(f"[...document.querySelectorAll('#think .tabs .tlv')].map(e => [e.textContent, e.scrollWidth <= e.clientWidth + 1 && e.getBoundingClientRect().right <= e.closest('button').getBoundingClientRect().right + 1])")
             want = pg.evaluate(f"SKILLS.THINK_LEVEL['{mod}'].map(n => '建议第 ' + n + ' 级起')")
             check([x[0] for x in lv] == want and all(x[1] for x in lv), f'{W}x{H} {mod} 每档标建议级别、放得下：{lv}')
