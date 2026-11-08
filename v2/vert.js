@@ -281,7 +281,9 @@
     if (f < 0) return {empty: true};
     let l = read.length - 1; while (read[l] === '') l--;
     const body = read.slice(f, l + 1), text = body.map(x => (x === '' ? '_' : x.charAt(0) === '两' ? x.slice(1) || '?' : x)).join('');
-    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : l < read.length - 1 ? L('place', en) : '';
+    // 竖式的答案格对着数位，个位必须在最右；递等式 / 填空 / 应用题的蓝框只是一排格子，靠左写也算（捣蛋鬼第 1 轮 P1）
+    const columns = p.kind === 'vert' || p.kind === 'mul' || p.kind === 'div';
+    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L('place', en) : '';
     return {ok: !tip && body.every(x => /^\d$/.test(x)) && text === String(p.ans), text, tip};
   }
 
