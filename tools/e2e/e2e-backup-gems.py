@@ -25,7 +25,7 @@ def parent(pg):
     hold(pg, '#gear', 2200)
 def do_import(pg, text, kind='btnImport'):
     if pg.is_visible('#ioPanel'): pg.click('#ioClose'); pg.wait_for_timeout(150)   # 上一次的面板先关掉，和家长真用一样
-    if kind == 'btnImportAll': pg.locator('#parent details summary').click(); pg.wait_for_timeout(150)   # 整份替换收在「更多」里
+    if kind == 'btnImportAll': pg.locator('#bkMoreBtn').click(); pg.wait_for_timeout(150)   # 整份替换收在「更多」里
     pg.locator('#' + kind).scroll_into_view_if_needed(); pg.click('#' + kind); pg.fill('#ioText', text); pg.locator('#ioApply').scroll_into_view_if_needed(); pg.click('#ioApply'); pg.wait_for_timeout(400)
     return pg.inner_text('#ioMsg')
 inv = lambda pg: pg.evaluate("GEMUI.state().inv")

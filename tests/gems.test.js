@@ -452,8 +452,8 @@ test('近 14 天炼出的文字有英文', () => {
   });
   test('题数：按空空的速度和正确率定，有上下限；慢的孩子题少，快的题多', () => {
     const mk = (sec, acc) => { const st = G.blank(); st.ev = {sec, acc, h: {}, log: []}; return st; };
-    assert.deepEqual(G.evTarget(mk(8, 0.9), 'dbl'), {T: 45, n: 4});
-    assert.deepEqual(G.evTarget(mk(4, 0.95), 'dbl'), {T: 45, n: 9});
+    assert.deepEqual(G.evTarget(mk(8, 0.9), 'dbl'), {T: 180, n: 17}, '双倍挑战 3 分钟（Ben 11-08，原 45 秒）');
+    assert.deepEqual(G.evTarget(mk(4, 0.95), 'dbl'), {T: 180, n: 36});
     assert.equal(G.evTarget(mk(30, 0.5), 'dbl').n, G.TUNE.dblMinN);
     assert.deepEqual(G.evTarget(mk(8, 0.9), 'qc'), {T: 180, n: 17});
     assert.equal(G.evTarget(mk(2, 1), 'qc').n, G.TUNE.qcMaxN);
@@ -475,13 +475,13 @@ test('近 14 天炼出的文字有英文', () => {
   });
   test('挑战结果：限时挑战完成得 1 颗，到上限不多给；双倍挑战完成碎片再给一份；失败不扣；记录最多 60 条', () => {
     const st = fresh(600); st.inv.s = 3;
-    assert.deepEqual(G.evEnd(st, DAY, {kind: 'qc', n: 5, done: 5, earned: {}}), {won: true, gem: 1, bonus: 0});
+    assert.deepEqual(G.evEnd(st, DAY, {kind: 'qc', n: 5, done: 5, earned: {}}), {won: true, gem: 1, bonus: 0, chain: false});
     assert.equal(st.days[DAY].forged, 1); assert.equal(G.items(st, DAY).split('.')[1], '1', '领宝石能报这一颗');
-    assert.deepEqual(G.evEnd(st, DAY, {kind: 'qc', n: 5, done: 4, earned: {}}), {won: false, gem: 0, bonus: 0});
+    assert.deepEqual(G.evEnd(st, DAY, {kind: 'qc', n: 5, done: 4, earned: {}}), {won: false, gem: 0, bonus: 0, chain: false});
     assert.equal(st.days[DAY].forged, 1);
-    assert.deepEqual(G.evEnd(st, DAY, {kind: 'dbl', n: 3, done: 3, earned: {s: 2, o7: 1}}), {won: true, gem: 0, bonus: 3});
+    assert.deepEqual(G.evEnd(st, DAY, {kind: 'dbl', n: 3, done: 3, earned: {s: 2, o7: 1}}), {won: true, gem: 0, bonus: 3, chain: false});
     assert.equal(st.inv.s, 5); assert.equal(st.inv.o7, 1);
-    assert.deepEqual(G.evEnd(st, DAY, {kind: 'dbl', n: 3, done: 1, earned: {s: 1}}), {won: false, gem: 0, bonus: 0});
+    assert.deepEqual(G.evEnd(st, DAY, {kind: 'dbl', n: 3, done: 1, earned: {s: 1}}), {won: false, gem: 0, bonus: 0, chain: false});
     assert.equal(st.inv.s, 5, '失败不翻倍，也不扣');
     const full = fresh(0); full.days[DAY].forged = G.DAY_MAX; assert.equal(G.evEnd(full, DAY, {kind: 'qc', n: 1, done: 1}).gem, 0);
     for (let i = 0; i < 80; i++) G.evEnd(st, DAY, {kind: 'qc', n: 5, done: 0, earned: {}});
@@ -539,7 +539,7 @@ test('近 14 天炼出的文字有英文', () => {
   });
   test('新文字都有英文', () => {
     const I18N = require('../v2/i18n.js');
-    for (const s of ['连对 10', '暴击 2 次', '限时挑战宝石 +1', '45 秒答对 4 题，碎片翻倍', '3 分钟答对 15 题', '双倍挑战 3 / 4 · 0:21', '碎片翻倍 +4', '20 秒后休息 5 分钟', '休息时间', '连续练了 30 分钟，休息 5 分钟后再来', '再挑战一次', '继续练习', '双倍挑战完成', '双倍挑战结束', '锻造台', '限时挑战 · 3 分钟答对 15 题，额外 1 颗宝石 · 18', '限时挑战 5 / 15 · 2:10', '限时挑战结束', '继续答题', '结束',
+    for (const s of ['连对 10', '3 分钟答对 17 题，碎片翻倍', '再来一次双倍', '答得非常好', '合计 56，还差 44，炼不出宝石', '合计 45，还差 5，炼不出大碎片', '合计 60，多了 10，炼不出大碎片', '暴击 2 次', '限时挑战宝石 +1', '45 秒答对 4 题，碎片翻倍', '3 分钟答对 15 题', '双倍挑战 3 / 4 · 0:21', '碎片翻倍 +4', '20 秒后休息 5 分钟', '休息时间', '连续练了 30 分钟，休息 5 分钟后再来', '再挑战一次', '继续练习', '双倍挑战完成', '双倍挑战结束', '锻造台', '限时挑战 · 3 分钟答对 15 题，额外 1 颗宝石 · 18', '限时挑战 5 / 15 · 2:10', '限时挑战结束', '继续答题', '结束',
       '碎片 +10 +4', '碎片 +2', '碎片 12', '暴击时刻 20 秒', '暴击时刻 13', '热身完成 · 暴击只要 10 格', '目标 2/3', '目标 暴击时刻', '双倍挑战 · 5 题 · 点这里进入 · 18', '火苗快灭了，答题保持火苗', '再得 12 碎片，可以炼 1 颗宝石', '再连对 3 题，开启暴击时刻', '再答 4 题，打开宝箱', '再答 3 题', '炼出的宝石可以到空空矿场换时间', '暴击时刻里，每题的碎片更多', '宝箱里有 1 个碎片', '目标完成', '宝箱打开了', '离 1 颗宝石还差 6 碎片', '背包里的碎片够炼 1 颗宝石了', '暴击时刻开始了', '没有新碎片', '这次专注 86%', '金色小碎片', '金色中碎片', '金色大碎片'])
       assert.ok(!I18N.ZH.test(I18N.text(s)), '没有英文：' + s);
   });
