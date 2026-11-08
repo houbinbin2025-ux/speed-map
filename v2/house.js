@@ -388,9 +388,10 @@
   const learned = () => E0.medals.filter(m => m.kind === 'bronze').map(m => m.skill.id);
   const isGold = sid => E0.medals.some(m => m.kind === 'gold' && m.skill.id === sid);
   function syncPets() {
-    const h = S.home, L = learned(); if (!h.pets) h.pets = L.slice(-3);
-    h.pets = h.pets.filter(i => L.includes(i));
-    pets = h.pets.map((i, k) => (pets.find(p => p.i === i) || {i, x: 442 + k * 70, dir: k % 2 ? -1 : 1, hop: 0}));
+    const h = S.home, L = learned();
+    if ((!h.pets || !h.pets.length) && L.length) h.pets = L.slice(-3);   // 没选过，或旧漏洞留下的空数组（新设备还没学会技能时被写成 []）：学会了就自动带 3 个回家（C 模块，中控 11-08 批准）
+    if (h.pets) h.pets = h.pets.filter(i => L.includes(i));
+    pets = (h.pets || []).map((i, k) => (pets.find(p => p.i === i) || {i, x: 442 + k * 70, dir: k % 2 ? -1 : 1, hop: 0}));
   }
   function drawHero(f) {
     heroF = f || heroF; cvHero.width = RW; cvHero.height = RH; const g = cvHero.getContext('2d');
@@ -507,9 +508,10 @@
     v.querySelector('.bkg').onclick = e => {
       const b = e.target.closest('.bkc'); if (!b) return; const i = b.dataset.i, s = K.BY[i], has = L.includes(i); blip(SND.tap);
       if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · 学会「${s.name}」后解锁</span><button class="btn go" id="h_bkGo">去练这一块</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
-      const at = S.home.pets.includes(i);
+      const at = (S.home.pets || []).includes(i);
       el('h_bkD').innerHTML = `<span><b>${crOf(i).n}${isGold(i) ? ' · 附魔' : ''}</b>${crOf(i).d ? ' · ' + crOf(i).d : ''}<br><small class="muted">学会了「${s.name}」${isGold(i) ? '，全部隔 3 天还做对' : ''}</small></span><button class="btn go" id="h_bkPet">${at ? '留在图鉴' : '带回家'}</button>`;
-      el('h_bkPet').onclick = () => { const p = S.home.pets; if (at) p.splice(p.indexOf(i), 1); else { if (p.length >= 4) p.shift(); p.push(i); blip(SND.get); } o.save(); v.querySelectorAll('.bkc').forEach(x => x.classList.toggle('home', p.includes(x.dataset.i))); b.click(); };
+      el('h_bkPet').onclick = () => { const p = S.home.pets = S.home.pets || []; if (at && p.length <= 1) { toast('至少带一个伙伴回家'); blip(SND.tap); return; }   // 不能全部取消：空列表只代表旧漏洞（C 模块，中控 11-08）
+        if (at) p.splice(p.indexOf(i), 1); else { if (p.length >= 4) p.shift(); p.push(i); blip(SND.get); } o.save(); v.querySelectorAll('.bkc').forEach(x => x.classList.toggle('home', p.includes(x.dataset.i))); b.click(); };
     };
   }
   function closeBook() { el('h_book').hidden = true; blip(SND.tap); syncPets(); drawHero(); }
