@@ -14,7 +14,7 @@
   // 思维地点答对（10.2，中控 11-08）：按一道题给碎片、算有效时间。key 区分题目，同一题当天再做只给普通小碎片
   function answerThink(o) {
     if (!on || !c.canWrite() || S().oral) return null;
-    const secs = Math.max(0, +o.secs || 0), got = G.thinkAnswer(st, {day: c.today(), key: o.key, secs});
+    const secs = Math.max(0, +o.secs || 0), got = G.thinkAnswer(st, {day: c.today(), key: o.key, wrong: o.wrong, secs});
     G.noteRest(st, G.effSecs(secs, 10000), clock()); save();
     (got || []).forEach((t, i) => floatShard(t, i));
     return got;
@@ -528,7 +528,8 @@
   }
   // 答题时碎片从屏幕中间飞向顶部
   function floatShard(t, i) { setTimeout(() => floatNow(t), (i || 0) * 160); }
-  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), to = q && q.width ? q : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
+  // 碎片飞到练习页的计数；思维地点飞到矿石计数（审查 11-08）
+  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), th = document.querySelector('#think:not([hidden]) #oreN'), to = q && q.width ? q : th ? th.getBoundingClientRect() : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };

@@ -57,8 +57,8 @@
     addSec(st, o.day, effSecs(o.secs || 0, 10000));
     if (seen.keys[k]) return filler(st, o.day);
     seen.keys[k] = 1;
-    const D = dayOf(st, o.day); D.n++; D.ok++;
-    return give(st, 'S', o.mult);
+    if (o.wrong > 0) return filler(st, o.day);   // 试错后才对：和练习页「答错后改对」一样，1 个普通小碎片（审查 11-08）
+    return give(st, 'S', o.mult);   // 不计入当天正确率（D.n / D.ok）：思维地点答错不记，计入会把正确率越做越高（审查 11-08）
   }
   // 锻造前提醒用（10.2，中控 11-08：碎片不够要说差多少）：炼宝石凑到 100，炼大碎片要正好 50
   function forgeGap(r, mode) {

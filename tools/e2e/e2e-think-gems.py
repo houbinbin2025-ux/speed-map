@@ -31,7 +31,7 @@ with sync_playwright() as p:
     i1, d1 = inv(pg), day(pg)
     check(pg.evaluate('__sm.TH.G.done') and i1['b'] == i0['b'] + 1, f'做对：+1 个金色小碎片 {i0["b"]}→{i1["b"]}')
     check((d1.get('sec') or 0) - (d0.get('sec') or 0) >= 2, f'有效时间算进去：{d0.get("sec")}→{d1.get("sec")}')
-    check((d1.get('ok') or 0) == (d0.get('ok') or 0) + 1, '答对数 +1')
+    check((d1.get('ok') or 0) == (d0.get('ok') or 0) and (d1.get('n') or 0) == (d0.get('n') or 0), '不计入当天正确率（答对数、作答数不变）')
     pg.screenshot(path=str(out / 'think-ok.png'))
     # 同一题当天再做：普通小碎片（直接把同一题再交一次）
     pg.evaluate("(()=>{const G=__sm.TH.G; clearTimeout(G.autoT); G.autoT=null; G.got=false; G.done=false; G.tap=0; G.st={};})()"); solve(pg); pg.wait_for_timeout(300)   # 停掉自动下一题、绕开防连点，把同一题再交一次
@@ -43,6 +43,11 @@ with sync_playwright() as p:
     # 口答模式：不给
     pg.evaluate("__sm.S.oral = true"); pg.click(T + '#cont'); pg.wait_for_timeout(400); i4 = inv(pg); solve(pg); pg.wait_for_timeout(300)
     check(inv(pg) == i4, '口答模式：不给碎片')
+    # 试错后才对：普通小碎片（同练习页「答错后改对」）
+    pg.evaluate("__sm.S.oral = false"); pg.wait_for_timeout(1900)   # 做对后 1.5 秒自动进下一题
+    pg.evaluate("(()=>{const c=document.querySelector('#think #cont'); if (c) c.click();})()"); pg.wait_for_timeout(400); i5 = inv(pg)
+    pg.evaluate("(()=>{const G=__sm.TH.G; G.wrong = 2; G.tap = 0;})()"); solve(pg); pg.wait_for_timeout(300); i6 = inv(pg)
+    check(i6['a'] == i5['a'] + 1 and i6['b'] == i5['b'], f'试错后才对：普通小碎片 {i5}→{i6}')
     b.close()
 print('页面报错:', errs[:3])
 if fails or errs: print('FAIL', len(fails), '项'); sys.exit(1)

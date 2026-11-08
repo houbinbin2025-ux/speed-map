@@ -7,8 +7,8 @@ const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require(
 if (process.env.TUNE) Object.assign(G.TUNE, JSON.parse(process.env.TUNE));
 // 秒答假设（拿不到空空的真实秒答比例）：答对里秒答的比例 FAST，秒答里闪电秒答的比例 BOLTP
 // 专注假设：每个孩子 lit = 答题时火苗亮着的比例（默认 0.9，存档里没有每题用时，第 1 周用家长区的专注记录复核）
-const QCM = +(process.env.QCM || 2);
-const THINK = +(process.env.THINK || 0), THINKS = +(process.env.THINKS || 40);   // 思维地点：每天答对几道、平均想几秒（10.2，拿不到真实数据，按假设）   // 限时挑战里碎片倍数（试参数用）
+const QCM = +(process.env.QCM || 2);   // 限时挑战里碎片倍数（试参数用）
+const THINK = +(process.env.THINK || 0), THINKS = +(process.env.THINKS || 40);   // 思维地点：每天答对几道、平均想几秒（10.2，拿不到真实数据，按假设）
 const FAST = +(process.env.FAST || 0.6), BOLTP = +(process.env.BOLTP || 0.4);
 const speed = ok => { const fast = ok && rnd() < FAST; return {fast, bolt: fast && rnd() < BOLTP}; };
 const S0 = JSON.parse(JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['speedmap.v2']);
