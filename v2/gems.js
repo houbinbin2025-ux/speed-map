@@ -1,5 +1,5 @@
 // 空空数学岛 · 宝石碎片和锻造（纯逻辑，无 DOM）。规则：~/01_业务/个人项目/空空矿场/docs/说明书-宝石规则.md
-// 数据存独立的键 speedmap.gems，清空和导入进度都不碰它（进度副本会一起备份）
+// 数据存独立的键 speedmap.gems，清空进度不碰它；导出进度会带上整份，导入时按 mergeBackup 合并（11-08 起，进度副本也一起备份）
 // 浏览器里挂到 window.GEMS（依赖 window.SKILLS、window.ENGINE），node 里 require 后直接测
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./skills.js'), require('./engine.js'));

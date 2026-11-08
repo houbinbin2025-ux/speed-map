@@ -63,6 +63,10 @@ with sync_playwright() as p:
     do_import(pg, text, 'btnImportAll')
     check(inv(pg) == gems['inv'] or {k: v for k, v in inv(pg).items() if v} == {k: v for k, v in gems['inv'].items() if v}, '整份替换：碎片换成备份里的 ' + str(inv(pg)))
     pg.screenshot(path=str(out / 'backup-import.png'))
+    # 5 备份里的碎片读不了：进度照样导入，提示碎片没导进来（审查 R1）
+    bad = json.dumps(dict(json.loads(old), gems={'inv': 'x'}))
+    msg = do_import(pg, bad)
+    check(msg == '进度已导入，碎片没有导入' and inv(pg)['s'] == 10, '碎片读不了时提示：' + msg)
     b.close()
 print('页面报错:', errs[:3])
 if fails or errs: print('FAIL', len(fails), '项'); sys.exit(1)
