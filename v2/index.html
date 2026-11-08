@@ -574,9 +574,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
 /* 结算页右栏（捣蛋鬼 1-12）：要做的事（战利品箱、珠子）→ 今天点亮的 → 错题 → 碎片；手机横屏碎片明细收成一行 */
 .qsList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
-.qsChips .chip2.more{background:var(--stone);color:var(--mute)}
+.qsChips .chip2.more{background:none;border-color:transparent;color:var(--mute);padding-left:2px;padding-right:2px}
 .qsList.tight{gap:6px}.qsList.tight .chip2{font-size:14px;padding:3px 8px;margin:0 5px 5px 0}.qsList.tight .gemsum.fold{padding:6px 8px;gap:6px}
-.gemsum.fold>b,.gemsum.fold:not(.open)>.gemline{display:none}
+.gemsum.fold>b,.gemsum.fold:not(.open)>.gemline,.gemsum.fold:not(.open)>.gembtns{display:none}
 .gemfold{min-height:44px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;font-size:16px;font-weight:800;background:var(--stone-hi);text-align:left}
 .gemfold::after{content:'▸';color:var(--mute)}.gemsum.open .gemfold::after{content:'▾'}
 </style>
@@ -934,7 +934,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v118:2fa292f217cd -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v119:24992910b718 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -944,25 +944,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=118"></script>
-<script src="i18n.js?v=118"></script>
-<script src="bank.js?v=118"></script>
-<script src="hardbank.js?v=118"></script>
-<script src="placebank.js?v=118"></script>
-<script src="core.js?v=118"></script>
-<script src="ink.js?v=118"></script>
-<script src="skills.js?v=118"></script>
-<script src="engine.js?v=118"></script>
-<script src="render.js?v=118"></script>
-<script src="world.js?v=118"></script>
-<script src="home.js?v=118"></script>
-<script src="puzzles.js?v=118"></script>
-<script src="thinking.js?v=118"></script>
-<script src="house.js?v=118"></script>
-<script src="kongmine.js?v=118"></script>
-<script src="gems.js?v=118"></script>
-<script src="gemui.js?v=118"></script>
-<script src="vert.js?v=118"></script>
+<script src="touchfix.js?v=119"></script>
+<script src="i18n.js?v=119"></script>
+<script src="bank.js?v=119"></script>
+<script src="hardbank.js?v=119"></script>
+<script src="placebank.js?v=119"></script>
+<script src="core.js?v=119"></script>
+<script src="ink.js?v=119"></script>
+<script src="skills.js?v=119"></script>
+<script src="engine.js?v=119"></script>
+<script src="render.js?v=119"></script>
+<script src="world.js?v=119"></script>
+<script src="home.js?v=119"></script>
+<script src="puzzles.js?v=119"></script>
+<script src="thinking.js?v=119"></script>
+<script src="house.js?v=119"></script>
+<script src="kongmine.js?v=119"></script>
+<script src="gems.js?v=119"></script>
+<script src="gemui.js?v=119"></script>
+<script src="vert.js?v=119"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1895,19 +1895,21 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // ---------- 6 结算 / 2b 摸底结果 ----------
   const lvColor = id => ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][E.lv(S, id) || 0];
   const chip = id => `<span class="chip2" style="background:${lvColor(id)};color:${E.lv(S, id) === 3 ? '#fff' : '#1b1d22'}">${R.GNAME[K.BY[K.ITEM[id].skill].group] === '秒答地图' ? '秒答' : R.gName(K.BY[K.ITEM[id].skill])} · ${R.label(id)}</span>`;
-  // 结算页碎片区：手机横屏只留一行「这次的碎片 +N」和碎片按钮，点这一行再看明细（捣蛋鬼 1-12）。碎片区的内容由 gemui.js 出，这里只加开关
+  // 结算页碎片区：手机横屏收成一行「这次的碎片 +N」，明细和碎片按钮点开再看（锻造台在岛上也进得去）（捣蛋鬼 1-12）。碎片区的内容由 gemui.js 出，这里只加开关
   function foldGems(q, tight) {
     const gs = $('qsum').querySelector('.gemsum'); if (!gs || !tight) return;
-    const n = Object.values(q.gem || {}).reduce((a, b) => a + (+b || 0), 0);
+    const n = Object.values(q.gem || {}).reduce((a, b) => a + (+b || 0), 0), line = gs.querySelector('.gemline');
+    const ticket = !!line && [...line.querySelectorAll('span')].some(e => e.textContent.trim() === '挑战券 +1');
     const t = document.createElement('button'); t.type = 'button'; t.id = 'qsGemFold'; t.className = 'gemfold'; t.setAttribute('aria-expanded', 'false');
-    t.textContent = n ? `这次的碎片 +${n}` : '这次的碎片';
-    t.addEventListener('click', () => { const open = gs.classList.toggle('open'); t.setAttribute('aria-expanded', String(open)); if (open) gs.scrollIntoView({block: 'nearest'}); });
+    t.textContent = ['这次的碎片' + (n ? ` +${n}` : ''), ticket ? '挑战券 +1' : ''].filter(Boolean).join(' · ');
+    t.addEventListener('click', () => { const open = gs.classList.toggle('open'), list = gs.closest('.qsList'); t.setAttribute('aria-expanded', String(open)); if (open && list) list.scrollTop = list.scrollHeight; });
     gs.classList.add('fold'); gs.prepend(t);
   }
-  // 点亮的格子只留前 rows 行，其余并成「+N」（翻成英文后再量，所以在 show 之后调）
+  // 右栏放不下时，点亮的格子只留前 rows 行，其余并成「+N」（翻成英文后再量，所以在 show 之后调）
   function trimChips(total, rows) {
-    const box = $('qsum').querySelector('.qsChips'); if (!box) return;
+    const box = $('qsum').querySelector('.qsChips'), list = box && box.closest('.qsList'); if (!box || !list) return;
     I18N.flush();
+    if (list.scrollHeight <= list.clientHeight + 1) return;   // 放得下就全摆
     let more = box.querySelector('.more'); if (!more) { more = document.createElement('span'); more.className = 'chip2 more'; box.appendChild(more); }
     const all = [...box.querySelectorAll('.chip2:not(.more)')], tops = [...new Set(all.map(c => c.offsetTop))].sort((a, b) => a - b), limit = tops[Math.min(rows, tops.length) - 1];
     if (!all.length) return;

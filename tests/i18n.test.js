@@ -172,4 +172,6 @@ test('页面接入：先于所有脚本加载；保存、判题、题库都不�
 test('结算页碎片收起行（捣蛋鬼 1-12）有英文', () => {
   assert.equal(txt('这次的碎片 +16'), 'Shards this round +16');
   assert.equal(txt('这次的碎片'), 'Shards this round');
+  assert.equal(txt('这次的碎片 +3 · 挑战券 +1'), 'Shards this round +3 · Challenge ticket +1');
+  assert.equal(txt('这次的碎片 · 挑战券 +1'), 'Shards this round · Challenge ticket +1');
 });

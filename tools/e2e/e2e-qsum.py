@@ -59,17 +59,23 @@ with sync_playwright() as p:
             for sel, name in keys:
                 r = pg.evaluate(VIS, sel); check(r == 'ok', f'{W}x{H} {mode} {name} 不用滚动就看得见：{r}')
             if tight:
-                check(pg.locator('#qsum .gemsum .gemline').first.is_hidden(), f'{W}x{H} {mode} 碎片明细默认收起')
-                if mode != 'plain': check(pg.locator('#qsGemFold').inner_text() == ('Shards this round +16' if mode == 'en' else '这次的碎片 +16'), '收起行写碎片个数：' + pg.locator('#qsGemFold').inner_text())
+                check(pg.locator('#qsum .gemsum .gemline').first.is_hidden() and pg.locator('[data-gem=forge]').is_hidden(), f'{W}x{H} {mode} 碎片明细和碎片按钮默认收起（不露半截）')
+                lab = pg.locator('#qsGemFold').inner_text(); tk = pg.locator('#qsum .gemsum .gemline').first.inner_text()
+                check(('挑战券 +1' in tk or 'ticket' in tk.lower()) == ('挑战券 +1' in lab or 'ticket' in lab.lower()), f'{W}x{H} {mode} 得了挑战券，收起行也写：{lab}')
+                if mode != 'plain': check(lab.startswith('Shards this round +16' if mode == 'en' else '这次的碎片 +16'), '收起行写碎片个数：' + pg.locator('#qsGemFold').inner_text())
                 check(pg.locator('#qsGemFold').bounding_box()['height'] >= 44, f'{W}x{H} 碎片一行手指够得着（≥44）')
                 pg.locator('#qsGemFold').click(); pg.wait_for_timeout(200)
                 check(pg.locator('#qsum .gemsum .gemline').first.is_visible(), f'{W}x{H} {mode} 点开后看到碎片明细')
                 check(pg.locator('#qsGemFold').get_attribute('aria-expanded') == 'true', f'{W}x{H} 展开状态记在 aria-expanded')
+                for g in pg.evaluate("[...document.querySelectorAll('#qsum [data-gem]')].map(b=>b.dataset.gem)"):
+                    r = pg.evaluate(VIS, f'#qsum [data-gem={g}]'); check(r == 'ok', f'{W}x{H} {mode} 点开后碎片按钮 {g} 整个看得见：{r}')
                 pg.screenshot(path=str(out / f'qsum-{W}x{H}-{mode}-open.png'))
                 pg.locator('#qsGemFold').click(); pg.wait_for_timeout(150)
                 check(pg.locator('#qsum .gemsum .gemline').first.is_hidden(), f'{W}x{H} {mode} 再点一次收起')
             else:
                 check(pg.locator('#qsGemFold').count() == 0 and pg.locator('#qsum .gemsum .gemline').first.is_visible(), f'{W}x{H} {mode} 大屏碎片明细直接摊开')
+            if mode == 'plain' and pg.locator('#qsum .qsChips').count():
+                check(pg.locator('#qsum .qsChips .chip2:not(.more)[hidden]').count() == 0, f'{W}x{H} plain 放得下时点亮的格子全摆，不收')
             if mode != 'plain' and pg.locator('#qsChips, #qsum .qsChips').count():
                 rows = pg.evaluate("new Set([...document.querySelectorAll('#qsum .qsChips .chip2')].filter(c=>!c.hidden).map(c=>c.offsetTop)).size")
                 shown = pg.evaluate("[...document.querySelectorAll('#qsum .qsChips .chip2:not(.more)')].filter(c=>!c.hidden).length")
