@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "triangles": 144116,
+  "triangle_budget_remaining": 5884,
+  "protected_world_matrix_max_errors": {
+    "小狼": 0.0,
+    "头": 0.0,
+    "耳朵左": 0.0,
+    "耳朵右": 0.0,
+    "尾巴": 0.0,
+    "狗粮": 0.0,
+    "水": 0.0
+  },
+  "new_part_parenting": "PASS",
+  "no_preview_cameras_lights_ground": "PASS",
+  "constant_principled_materials": "PASS",
+  "y_up_coordinate_conversion": "PASS",
+  "glb_bytes": 3937976,
+  "materials": 67,
+  "mesh_instances": 981
+}
