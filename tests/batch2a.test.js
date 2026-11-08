@@ -1,7 +1,8 @@
 // 到四年级第二批 2a（docs/说明书-到四年级第二批.md）：线段图、条形图、长方形、选择题。答案从图的数据独立重算
 const test = require('node:test'), assert = require('node:assert');
 const K = require('../v2/skills.js'), HB = require('../v2/hardbank.js');
-const LATE = K.HARD.filter(s => s.late), IDS = LATE.flatMap(s => s.items.map(it => it.id));
+const FRAC = ['frac', 'fracadd', 'fraccmp', 'fraccmp2', 'equiv'];   // 2b-1 分数另在 batch2b.test.js 查
+const LATE = K.HARD.filter(s => s.late && !FRAC.includes(s.concept)), IDS = LATE.flatMap(s => s.items.map(it => it.id));
 const sum = l => l.reduce((a, b) => a + b, 0);
 const nums = s => (String(s).match(/\d+(\.\d+)?/g) || []).map(Number);
 

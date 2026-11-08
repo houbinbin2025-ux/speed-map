@@ -471,7 +471,53 @@
     '12 和 18 能被哪些数整除': 'Which numbers divide 12 and 18 evenly?', '两行都有的叫公因数，最大的是 6': 'Numbers in both rows are common factors. The greatest is 6',
     '一条分成 10 份，涂了 3 份': 'A bar cut into 10 parts, with 3 parts colored', '3 份就是 0.3，读作零点三': '3 parts is 0.3, read as "zero point three"', '1 整条加 3 份是 1.3': '1 whole bar and 3 parts is 1.3',
   });
-  P.unshift(...P2A, ...P34);
+  // ---------- 第二批 2b-1 分数：题面里分数是上下结构（文字被切成几段，每段单独翻），朗读和读屏用「八分之三」 ----------
+  const CNN = {一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 十一: 11, 十二: 12};
+  const ONE = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+  const ORD = ['', '', ['half', 'halves'], ['third', 'thirds'], ['quarter', 'quarters'], ['fifth', 'fifths'], ['sixth', 'sixths'], ['seventh', 'sevenths'], ['eighth', 'eighths'], ['ninth', 'ninths'], ['tenth', 'tenths'], ['eleventh', 'elevenths'], ['twelfth', 'twelfths']];
+  const FCN = '(十[一二]|[一二三四五六七八九十]|几)分之(十[一二]|[一二三四五六七八九十]|几)';
+  const frEn = (d, n) => d === '几' ? `${ONE[CNN[n]]} out of how many` : n === '几' ? `how many ${ORD[CNN[d]][1]}` : `${ONE[CNN[n]]} ${ORD[CNN[d]][CNN[n] === 1 ? 0 : 1]}`;
+  const frAll = t => t.replace(new RegExp(FCN, 'g'), (m, d, n) => frEn(d, n));
+  const FRS = new RegExp(`^${FCN}$`), FRT = new RegExp(`^(.+)：(${FCN}(?: = ${FCN})?)$`);
+  const P2B = [
+    [FRS, (m, d, n) => frEn(d, n)],
+    [new RegExp(`^哪个分数最(大|小)？(${FCN}(?:、${FCN})+)$`), (m, w, l) => `Which fraction is the ${w === '大' ? 'greatest' : 'smallest'}? ${frAll(l).split('、').join(', ')}`],
+    [/^(.+)：(\d+\/\d+(?: = \d+\/\d+)?)$/, (m, a, e) => { let r = one(a); if (r === null) r = one(a + '：'); return r === null ? null : `${r.replace(/:$/, '')}: ${e}`; }],   // 纯文字的「…：3/8」
+    [FRT, (m, a, e) => { let r = one(a); if (r === null) r = one(a + '：'); return r === null ? null : `${r.replace(/:$/, '')}: ${frAll(e)}`; }],   // 讲解卡朗读：「前半句：八分之三」
+    [/^平均分成 (\d+) 份，涂了 (\d+) 份(：?)$/, (m, n, k, c) => `${n} equal parts, ${k} colored${c ? ':' : ''}`],
+    [/^分母不变，分子相(加|减)：(.+)$/, (m, w, e) => `${w === '加' ? 'Add' : 'Subtract'} the numerators: ${e}`],
+    [/^分母(乘|除以) (\d+)，分子也(?:乘|除以) (\d+)：?(.*)$/, (m, w, k, k2, e) => `${w === '乘' ? 'Multiply' : 'Divide'} both by ${k}${e ? ': ' + e : ':'}`],
+    [/^涂色部分是(十[一二]|[一二三四五六七八九十])分之几？$/, (m, d) => `The colored part is how many ${ORD[CNN[d]][1]}?`],
+    [/^涂色部分是几分之(十[一二]|[一二三四五六七八九十])？$/, (m, n) => `${cap(ONE[CNN[n]])} ${CNN[n] === 1 ? 'part is' : 'parts are'} colored. Out of how many equal parts?`],
+    [new RegExp(`^${FCN}(加|减)${FCN}，等于(十[一二]|[一二三四五六七八九十])分之几？$`), (m, d1, n1, w, d2, n2, d3) => `${cap(frEn(d1, n1))} ${w === '加' ? 'plus' : 'minus'} ${frEn(d2, n2)} equals how many ${ORD[CNN[d3]][1]}?`],
+    [new RegExp(`^${FCN}等于(十[一二]|[一二三四五六七八九十])分之几？$`), (m, d1, n1, d3) => `${cap(frEn(d1, n1))} equals how many ${ORD[CNN[d3]][1]}?`],
+    [/^涂了 (\d+) 份，是 (\d+) 份里的 (\d+) 份：?$/, (m, k, n) => `${k} of the ${n} parts ${+k === 1 ? 'is' : 'are'} colored:`],
+    [/^涂了 (\d+) 份：?$/, (m, k) => `${k} ${+k === 1 ? 'part' : 'parts'} colored:`], [/^再涂 (\d+) 份：?$/, (m, k) => `Color ${k} more:`],
+    [/^(\d+) 份加 (\d+) 份是 (\d+) 份，一共还是 (\d+) 份：?$/, (m, a, b, c, n) => `${a} parts + ${b} parts = ${c} parts, out of ${n}:`],
+    [/^(\d+) 份比 (\d+) 份多，大的是：?$/, (m, a, b) => `${a} parts are more than ${b} parts:`],
+    [/^分成 (\d+) 份，每份更小$/, (m, n) => `Cut into ${n} parts, each part is smaller`], [/^分子一样，都涂了 (\d+) 份$/, (m, k) => `Same numerator: ${k} part colored in each`],
+    [/^一条平均分成 (\d+) 份，每份一样大$/, (m, n) => `A bar cut into ${n} equal parts`],
+    [/^反过来，上下都除以 (\d+)：?$/, (m, k) => `Or divide the top and bottom by ${k}:`],
+  ];
+  Object.assign(D, {
+    分数: 'Fractions', 分数读图: 'Reading fractions', 同分母加减: 'Same-denominator sums', 分数比大小: 'Comparing fractions', 同分子比大小: 'Same numerator', 等值分数: 'Equivalent fractions', 分数加减: 'Adding fractions',
+    '涂色部分是几分之几？': 'What fraction is colored?', '哪个分数最大？': 'Which fraction is the greatest?', '哪个分数最小？': 'Which fraction is the smallest?',
+    '分母一样，分子大的大': 'Same denominator: the bigger numerator wins', '分母一样，分子小的小': 'Same denominator: the smaller numerator is smaller',
+    '分子一样，分母越大，每份越小；所以分母小的大': 'Same numerator: smaller denominator, bigger parts',
+    '分子一样，分母越大，每份越小；所以分母大的小': 'Same numerator: bigger denominator, smaller parts',
+    '下面是分母，写一共几份；上面是分子，写涂了几份': 'The bottom number (denominator) is how many parts in all; the top number (numerator) is how many are colored',
+    '分母（下面的数）不变，分子（上面的数）相加减': 'Keep the denominator (bottom number); add or subtract the numerators (top numbers)', '分母一样，每份一样大': 'Same denominator: every part is the same size',
+    '分母一样，比分子：分子大的大': 'Same denominator: compare the numerators', '分母越大，每份越小，大的是：': 'Bigger denominator, smaller parts. Bigger one:',
+    '两条一样长，涂的一样多': 'Same length, same amount colored', 分数条: 'Fraction bar',
+  });
+  // 级别说明（skills.js LEVEL_TOPICS）：内容词用顿号连起来，逐词翻，用逗号连
+  Object.assign(D, {接规律: 'Patterns', 加减应用题: 'Word problems', '10 以内秒答': 'Speed facts to 10', 十格框: 'Ten frames', 过十加减: 'Bridging 10', 应用题: 'Word problems', 进退位加减: 'Regrouping',
+    算式比大小: 'Comparing sums', 百格图: 'Hundred chart', 百十个: 'Hundreds, tens, ones', 三位数比大小: 'Comparing 3-digit numbers', 乘法入门: 'Times 2, 5, 10', 全部口诀: 'All times tables',
+    千克和千米: 'Kilograms and kilometers', 多位数乘除一位数: 'Multiply and divide by 1 digit', 速度: 'Speed', 买东西: 'Shopping', 单价: 'Unit price', 年月日: 'Years, months, days',
+    三位数乘两位数: '3-digit × 2-digit', 简便算: 'Shortcuts'});
+  const LIST = [[/^[^、]+(、[^、]+)+$/, s => { const l = s.split('、').map(one); return l.some(x => x === null) ? null : l.join(', '); }]];
+  P.unshift(...P2A, ...P2B, ...P34);
+  P.push(...LIST);
   const AFTER = [
     [/^ 个百$/, o => (o ? ' hundred' : ' hundreds')], [/^ 个十$/, o => (o ? ' ten' : ' tens')], [/^ 个一$/, o => (o ? ' one' : ' ones')],
     [/^ 个十和 (\d+) 个一$/, (o, n) => ` ${o ? 'ten' : 'tens'} and ${pl(n, 'one')}`],
