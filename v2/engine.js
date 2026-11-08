@@ -27,6 +27,12 @@
   }
   // 示范卡看过没有：17 个秒答技能共用一张「秒答：看到算式，马上写答案」，看过任一个就都算看过；旧进度不用迁移（捣蛋鬼第 1 轮第 6 条）
   const demoDone = (S, sid) => !!S.demoSeen[sid] || (!!K.BY[sid].speed && K.speed.some(s => S.demoSeen[s.id]));
+  // 挑新技能时预算讲解卡名额（plan = 今天已出的 + 这次挑中的）：不用讲解或已在预算里 → 能开始；名额满了 → 明天再开始。不改 Dy.cards
+  function planCard(S, plan, sid) {
+    const c = K.BY[sid].concept; if (!c || demoDone(S, sid) || S.demoSeen['c:' + c] || plan.has(c)) return true;   // 和 next() 出卡的判断同一口径：技能示范看过的也不出讲解卡
+    if (plan.size >= CARD_PER_DAY) return false;
+    plan.add(c); return true;
+  }
   // 这个技能今天还不能开始：一开始就要出讲解卡，但今天已经 2 张了（不改记录，只看）
   const cardWait = (S, Dy, sid) => { const c = K.BY[sid].concept, l = Dy.cards || []; return !!c && !demoDone(S, sid) && !(S.known && S.known[sid]) && !S.demoSeen['c:' + c] && !l.includes(c) && l.length >= CARD_PER_DAY; };
   // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级
@@ -387,10 +393,10 @@
         byStale(K.speed.filter(ok));
       const front = u.slice(0, 1).concat(sp.slice(0, 1));
       for (const s of u.slice(1).concat(sp.slice(1))) { if (front.length >= FRONT) break; front.push(s); }
-      const chosen = [];
+      const chosen = [], plan = new Set(Dy.cards || []);   // 讲解卡名额：挑技能时只在这里预算，不写进 Dy.cards，真出了卡（next 里 cardFor）才占（A 转，中控 11-08）
       for (const s of front.slice(0, FRONT)) {
         // 摸底判为"会"的技能不占"一天最多开始 3 个新技能"的名额（照常从灰开始学，通常一次就过）
-        if (!started(s.id) && !S.known[s.id] && !Dy.fresh.includes(s.id)) { if (Dy.fresh.length >= NEW_PER_DAY || cardFor(S, Dy, s.id) === false) continue; Dy.fresh.push(s.id); }   // 今天讲解卡满 2 张：要讲解的新技能明天再开始
+        if (!started(s.id) && !S.known[s.id] && !Dy.fresh.includes(s.id)) { if (Dy.fresh.length >= NEW_PER_DAY || !planCard(S, plan, s.id)) continue; Dy.fresh.push(s.id); }   // 今天讲解卡满 2 张：要讲解的新技能明天再开始
         chosen.push(s);
       }
       return chosen;
