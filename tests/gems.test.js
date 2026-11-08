@@ -15,16 +15,16 @@ const ans = (st, o) => G.answer(st, Object.assign({day: DAY, inst, ok: true, top
 
 test('答对普通题：小碎片；已学稳、低于当前级别。不传倍数按金色（×2）', () => {
   const st = G.blank();
-  assert.deepEqual(ans(st, {top: 99}), ['g']);
-  assert.deepEqual(st.inv, {p: 0, g: 1, s: 0, m: 0, h: 0, l: 0});
+  assert.deepEqual(ans(st, {top: 99}), ['b']);
+  assert.deepEqual(st.inv, {a: 0, b: 1, g: 0, s: 0, m: 0, h: 0, l: 0});
 });
 
 test('没学过的格子：今天第一道答对给中碎片，同格后面的给小碎片；学过的格子不给', () => {
   const st = G.blank();
   assert.deepEqual(G.answer(st, {day: DAY, inst: q(0), ok: true, top: 99, lv: 0}), ['m']);
-  assert.deepEqual(G.answer(st, {day: DAY, inst: q(1), ok: true, top: 99, lv: 0}), ['g']);
-  assert.deepEqual(G.answer(G.blank(), {day: DAY, inst: q(0), ok: true, top: 99, lv: 1}), ['g'], '学过一点的格子：比例校准后不再给（Ben 11-07 要 2～3:1）');
-  assert.deepEqual(st.inv, {p: 0, g: 1, s: 0, m: 1, h: 0, l: 0});
+  assert.deepEqual(G.answer(st, {day: DAY, inst: q(1), ok: true, top: 99, lv: 0}), ['b']);
+  assert.deepEqual(G.answer(G.blank(), {day: DAY, inst: q(0), ok: true, top: 99, lv: 1}), ['b'], '学过一点的格子：比例校准后不再给（Ben 11-07 要 2～3:1）');
+  assert.deepEqual(st.inv, {a: 0, b: 1, g: 0, s: 0, m: 1, h: 0, l: 0});
 });
 
 test('当前级别的题：今天第一道答对给中碎片', () => {
@@ -41,36 +41,49 @@ test('错题隔天答对：中碎片，不受同格限制', () => {
 test('每道题每天只有第一次作答算数；错了当天再做不给，隔天照常', () => {
   const st = G.blank();
   assert.equal(ans(st, {ok: false}), null);
-  assert.deepEqual([...ans(st, {ok: true})], ['p'], '当天再做对：只给 1 个普通小碎片');
+  assert.deepEqual([...ans(st, {ok: true})], ['a'], '当天再做对：只给 1 个普通小碎片');
   assert.equal(st.days[DAY].ok, 0);
   assert.equal(st.days[DAY].bad, 1);
-  assert.deepEqual(ans(st, {day: '2026-11-07', top: 99}), ['g']);
+  assert.deepEqual(ans(st, {day: '2026-11-07', top: 99}), ['b']);
 });
 
-test('秒答多 1 份小碎片；闪电再多 1 份中碎片，一天最多 20 次，超过仍有小碎片；倍数跟这一题一样', () => {
+test('秒答不再多给小碎片（第 10.1 版）；闪电多 1 份中碎片，一天最多 20 次；倍数跟这一题一样', () => {
   const st = G.blank();
-  assert.deepEqual(G.speedBonus(st, DAY, false), {extra: ['g'], bolt: false});
-  for (let i = 0; i < G.BOLT_DAY; i++) assert.deepEqual(G.speedBonus(st, DAY, true), {extra: ['g', 'm'], bolt: true});
-  assert.deepEqual(G.speedBonus(st, DAY, true), {extra: ['g'], bolt: false});
-  assert.equal(st.inv.g, G.BOLT_DAY + 2); assert.equal(st.inv.m, G.BOLT_DAY);
-  assert.deepEqual(G.speedBonus(G.blank(), '2026-11-09', true, 1).extra, ['p', 's'], '火苗灭：普通碎片');
-  assert.deepEqual(G.speedBonus(G.blank(), '2026-11-09', true, 3).extra, ['g', 'p', 'm', 's'], '火苗亮 + 暴击时刻：金色加普通');
+  assert.deepEqual(G.speedBonus(st, DAY, false), {extra: [], bolt: false});
+  for (let i = 0; i < G.BOLT_DAY; i++) assert.deepEqual(G.speedBonus(st, DAY, true), {extra: ['m'], bolt: true});
+  assert.deepEqual(G.speedBonus(st, DAY, true), {extra: [], bolt: false});
+  assert.equal(st.inv.b, 0); assert.equal(st.inv.m, G.BOLT_DAY);
+  assert.deepEqual(G.speedBonus(G.blank(), '2026-11-09', true, 1).extra, ['s'], '火苗灭：普通碎片');
+  assert.deepEqual(G.speedBonus(G.blank(), '2026-11-09', true, 3).extra, ['m', 's'], '火苗亮 + 暴击时刻：金色加普通');
   assert.equal(G.speedBonus(st, '2026-11-07', true).bolt, true, '隔天重新算');
 });
 
 test('挑战题慢答：不算错，给 1 个金色小碎片，不算过', () => {
   const st = G.blank(), inst = {id: 'x', q: {a: 1}, ans: 1};
-  assert.equal(G.challengeAnswer(st, {day: DAY, inst, ok: true, slow: true}), 'g');
-  assert.equal(st.days[DAY].bad, 0); assert.equal(st.inv.g, 1); assert.equal(st.inv.m, 0);
+  assert.equal(G.challengeAnswer(st, {day: DAY, inst, ok: true, slow: true}), 'b');
+  assert.equal(st.days[DAY].bad, 0); assert.equal(st.inv.b, 1); assert.equal(st.inv.m, 0);
 });
 
-test('当场改对：给 1 个普通小碎片（不翻倍、标 fill），不计正确率；看过答案、点不会不给；每天最多 40 个', () => {
+test('当场改对：给 1 个普通小碎片（不翻倍、标 rep），不计正确率；看过答案、点不会不给；每天有上限', () => {
   const st = G.blank(), r = ans(st, {retry: true});
-  assert.deepEqual([...r], ['p']); assert.equal(r.rep, true);
+  assert.deepEqual([...r], ['a']); assert.equal(r.rep, true);
   assert.equal(st.days[DAY].ok, 0); assert.equal(st.days[DAY].n, 0);
   assert.equal(ans(st, {retry: true, peeked: true}), null); assert.equal(ans(st, {retry: true, dunno: true}), null); assert.equal(ans(st, {retry: true, ok: false}), null);
   for (let i = 0; i < 50; i++) ans(st, {retry: true});
-  assert.equal(st.inv.p, G.TUNE.fillMax);
+  assert.equal(st.inv.a, G.TUNE.fillMax);
+});
+test('炼大碎片：合计正好 50 得 1 个大碎片；多了少了全部变废料；大碎片不能放；最多 30 个；空炉不开', () => {
+  const st = G.blank(); Object.assign(st.inv, {b: 30, s: 10, l: 2, o3: 2, o7: 1});
+  assert.deepEqual(G.forgeBig(st, {b: 20, s: 2}, DAY), {ok: true, big: 1, waste: 0});
+  assert.equal(st.inv.l, 3); assert.equal(st.inv.b, 10); assert.equal(st.days[DAY].big, 1);
+  assert.deepEqual(G.forgeBig(st, {s: 8, o3: 2, o7: 1}, DAY), {ok: true, big: 0, waste: 53}, '多了也全变废料');
+  assert.deepEqual(G.forgeBig(st, {b: 5}, DAY), {ok: true, big: 0, waste: 10}, '少了全变废料');
+  assert.equal(st.inv.l, 3); assert.equal(st.days[DAY].forged, 0, '不占炼宝石的上限');
+  assert.equal(G.forgeBig(st, {l: 1}, DAY).why, 'lack'); assert.equal(G.forgeBig(st, {}, DAY).why, 'empty');
+  const big = G.blank(); big.inv.a = 40; assert.equal(G.forgeBig(big, {a: 31}, DAY).why, 'full'); assert.equal(big.inv.a, 40);
+  assert.equal(G.exactBig({b: 25}), true); assert.equal(G.exactBig({b: 24}), false);
+  assert.equal(G.forgeBig(G.blank(), {constructor: 1}, DAY).why, 'lack', '原型属性名不能当碎片'); assert.equal(G.forge(G.blank(), {toString: 1}, DAY).why, 'lack');
+  for (let i = 0; i < 20; i++) { const t = G.openBox(G.blank(), () => i / 40); assert.ok(['o3', 'o8', 'o12', 'o13'].includes(t), '宝箱的杂色和平时发的一样：' + t); }
 });
 test('首次答对不带改对标记（rep），秒答奖励、连对能量照常', () => {
   const r = ans(G.blank(), {top: 99}); assert.equal(r.rep, undefined); assert.ok(!r.rep);
@@ -85,7 +98,7 @@ test('点不会：不给也不算错，但当天已作答', () => {
   assert.equal(ans(st, {ok: false, dunno: true}), null);
   assert.equal(st.days[DAY].bad, 0);
   assert.equal(st.days[DAY].n, 1);
-  assert.deepEqual([...ans(st, {ok: true})], ['p'], '再答对只给 1 个普通小碎片');
+  assert.deepEqual([...ans(st, {ok: true})], ['a'], '再答对只给 1 个普通小碎片');
 });
 
 test('再看一次后答对：不给碎片，不计正确率', () => {
@@ -99,7 +112,7 @@ test('口答模式完全不算', () => {
   const st = G.blank();
   assert.equal(ans(st, {oral: true}), null);
   assert.equal(st.days[DAY], undefined);
-  assert.deepEqual(ans(st, {top: 99}), ['g'], '口答没有占掉当天的第一次作答');
+  assert.deepEqual(ans(st, {top: 99}), ['b'], '口答没有占掉当天的第一次作答');
 });
 
 test('老秒答流程和新流程同一题 key 相同（asInst 没有 op）', () => {
@@ -207,7 +220,7 @@ test('挑战：答对给中碎片，5 题全对加大碎片；重复的题不算
   const r = [0, 1, 2, 3, 4].map(i => G.challengeAnswer(st, {day, inst: mk(i), ok: true}));
   assert.deepEqual(r, ['m', 'm', 'm', 'm', 'm']);
   assert.deepEqual(G.finishChallenge(st, {won: r.filter(Boolean).length, n: 5}), {big: true});
-  assert.deepEqual(st.inv, {p: 0, g: 0, s: 0, m: 5, h: 0, l: 1});
+  assert.deepEqual(st.inv, {a: 0, b: 0, g: 0, s: 0, m: 5, h: 0, l: 1});
   assert.equal(st.days[day].m, 0, '挑战的中碎片不进认真奖励基数');
   assert.equal(st.days[day].ok, 5, '但正确率算挑战题');
   assert.equal(G.challengeAnswer(st, {day, inst: mk(0), ok: true}), null, '当天重复不给');
@@ -264,7 +277,8 @@ test('存取：损坏或缺字段时不崩，旧日子裁掉但当天保留', ()
   assert.deepEqual(G.parse(null), G.blank());
   assert.equal(G.parse('{坏的'), null, '损坏返回 null，由调用方用副本恢复');
   const st = G.parse(JSON.stringify({inv: {s: 3}}));
-  assert.deepEqual(st.inv, {p: 0, g: 0, s: 3, m: 0, h: 0, l: 0});
+  assert.deepEqual(st.inv, {a: 0, b: 0, g: 0, s: 3, m: 0, h: 0, l: 0});
+  assert.deepEqual(G.parse(JSON.stringify({inv: {p: 4, b: 1, g: 2}})).inv.b, 5, '11-07 的小碎片 2 并进金色小碎片 2');
   assert.equal(st.tickets, 0);
   const big = G.blank();
   for (let d = 1; d <= 28; d++) big.days[`2026-10-${String(d).padStart(2, '0')}`] = {ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0};
@@ -322,16 +336,16 @@ test('近 14 天炼出的文字有英文', () => {
 (function () {
   const inst = n => ({id: 'odd-test-' + n});
   const seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
-  test('杂色碎片：价值 3、4、6、7、8、12、13（4 是旧版留下的）；金色小碎片换 3、6、7，金色中碎片换 8、12、13；普通碎片不换', () => {
+  test('杂色碎片：价值 3、4、6、7、8、12、13（4 是旧版留下的）；金色小碎片换 3，金色中碎片换 8、12、13；普通碎片不换', () => {
     assert.deepEqual(G.ODD.map(t => G.VALUE[t]).sort((a, b) => a - b), [3, 4, 6, 7, 8, 12, 13]);
     assert.equal(G.ODD_RATE, 0.1);
-    assert.deepEqual(G.oddFor('g', seq(0.05, 0)), 'o3');
-    assert.deepEqual(G.oddFor('g', seq(0.05, 0.99)), 'o7');
+    assert.deepEqual(G.oddFor('b', seq(0.05, 0)), 'o3');
+    assert.deepEqual(G.oddFor('b', seq(0.05, 0.99)), 'o3');
     assert.deepEqual(G.oddFor('m', seq(0.05, 0)), 'o8');
     assert.deepEqual(G.oddFor('m', seq(0.05, 0.99)), 'o13');
-    assert.equal(G.oddFor('g', seq(0.1)), 'g', '10% 之外还是原来的');
+    assert.equal(G.oddFor('b', seq(0.1)), 'b', '10% 之外还是原来的');
     assert.equal(G.oddFor('m', seq(0.5)), 'm');
-    assert.equal(G.oddFor('g'), 'g', '不给随机数就不出杂色');
+    assert.equal(G.oddFor('b'), 'b', '不给随机数就不出杂色');
     assert.equal(G.oddFor('l', seq(0)), 'l', '大碎片不换');
     assert.equal(G.oddFor('s', seq(0)), 's', '普通碎片不换');
     assert.deepEqual(G.answer(G.blank(), {day: DAY, inst: inst(9), ok: true, top: 0, lv: 0, rand: seq(0), mult: 1}), ['s'], '火苗灭时不出杂色');
@@ -340,8 +354,8 @@ test('近 14 天炼出的文字有英文', () => {
     const st = G.blank(), base = {day: DAY, ok: true, top: 0, lv: 0};
     assert.deepEqual(G.answer(st, Object.assign({}, base, {inst: inst(1), rand: seq(0, 0.99)})), ['o13']);
     assert.equal(st.inv.o13, 1); assert.equal(st.inv.m, 0); assert.equal(st.days[DAY].m, 1);
-    assert.deepEqual(G.answer(st, Object.assign({}, base, {inst: inst(2), top: 99, lv: 3, rand: seq(0.99)})), ['g']);
-    assert.equal(st.inv.g, 1);
+    assert.deepEqual(G.answer(st, Object.assign({}, base, {inst: inst(2), top: 99, lv: 3, rand: seq(0.99)})), ['b']);
+    assert.equal(st.inv.b, 1);
   });
   test('杂色碎片：能和普通碎片一起炼，凑准 100 没有废料；数量不够不能放', () => {
     const st = G.blank(); Object.assign(st.inv, {o13: 2, o7: 1, o12: 1, o8: 1, l: 1});
@@ -369,13 +383,13 @@ test('近 14 天炼出的文字有英文', () => {
   const inst = n => ({id: 'ev-test-' + n}), seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
   const fresh = (sec, ok = 90, bad = 10) => { const st = G.blank(); st.days[DAY] = {ok, bad, n: ok + bad, m: 0, paid: 0, forged: 0, waste: 0, sec}; return st; };
   test('倍数：×1 普通、×2 金色、×3 金色加普通；面值正好翻倍', () => {
-    assert.deepEqual([1, 2, 3].map(m => G.pieces('S', m)), [['p'], ['g'], ['g', 'p']]);
+    assert.deepEqual([1, 2, 3].map(m => G.pieces('S', m)), [['a'], ['b'], ['b', 'a']]);
     assert.deepEqual([1, 2, 3].map(m => G.pieces('M', m)), [['s'], ['m'], ['m', 's']]);
     assert.deepEqual([1, 2, 3].map(m => G.pieces('L', m)), [['h'], ['l'], ['l', 'h']]);
-    assert.deepEqual(['p', 's', 'h'].map(t => G.VALUE[t] * 2), ['g', 'm', 'l'].map(t => G.VALUE[t]));
+    assert.deepEqual(['a', 's', 'h'].map(t => G.VALUE[t] * 2), ['b', 'm', 'l'].map(t => G.VALUE[t]));
     assert.equal(G.worth(G.pieces('M', 3)), 15);
-    const st = G.blank(); assert.deepEqual(G.answer(st, {day: DAY, inst: inst(1), ok: true, top: 99, lv: 3, mult: 1}), ['p']);
-    assert.deepEqual(G.answer(st, {day: DAY, inst: inst(2), ok: true, top: 99, lv: 3, slow: true, mult: 3}), ['g', 'p'], '慢答也跟倍数');
+    const st = G.blank(); assert.deepEqual(G.answer(st, {day: DAY, inst: inst(1), ok: true, top: 99, lv: 3, mult: 1}), ['a']);
+    assert.deepEqual(G.answer(st, {day: DAY, inst: inst(2), ok: true, top: 99, lv: 3, slow: true, mult: 3}), ['b', 'a'], '慢答也跟倍数');
   });
   test('专注火苗：一进来就亮；发呆约 40 秒熄灭（先闪 5 秒）；认真答题又点亮；切后台的时间不算', () => {
     const F = G.focusNew(0), cap = 16;

@@ -3,8 +3,8 @@
 (function () {
   'use strict';
   const G = window.GEMS, KM = window.KM;
-  const NAME = {p: '小碎片', g: '金色小碎片', s: '中碎片', m: '金色中碎片', h: '大碎片', l: '金色大碎片'};
-  let c = null, st = null, on = false, slots = [], back = 'island', msg = '';
+  const NAME = {a: '小碎片', b: '金色小碎片', p: '小碎片', g: '小碎片（4）', s: '中碎片', m: '金色中碎片', h: '大碎片', l: '金色大碎片'};
+  let c = null, st = null, on = false, slots = [], back = 'island', msg = '', mode = 'gem';   // mode：gem 炼宝石（凑 100），big 炼大碎片（凑准 50）
 
   function save() { if (!on || !c.canWrite()) return; try { c.store.setItem(c.key, JSON.stringify(st)); } catch (e) {} }
   const S = () => c.S();
@@ -22,6 +22,7 @@
     c.$('forgeList').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (b) add(b.dataset.add); });
     c.$('forgeSlots').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b && !busy) { slots.splice(+b.dataset.i, 1); msg = ''; blip([[260, 0, 0.05]]); draw(); } });
     c.$('forgeGo').addEventListener('click', () => doForge());
+    c.$('fmGem').addEventListener('click', () => setMode('gem')); c.$('fmBig').addEventListener('click', () => setMode('big'));
     c.$('gemEv').addEventListener('click', takeOffer);
     setInterval(() => { try { evTick(); } catch (e) { /* 弹出的东西出错不挡练习 */ } }, 500);
     c.$('forgeWarnBack').addEventListener('click', () => { c.$('forgeWarn').hidden = true; });
@@ -313,6 +314,8 @@
   const SHARD = {
     p: {rows: SMALL, pal: {a: '#f4f6fa', b: '#c3cbd6', c: '#7d8592'}},
     g: {rows: SMALL, pal: GOLDPAL},
+    a: {rows: SMALL, pal: {a: '#f4f6fa', b: '#c3cbd6', c: '#7d8592'}},
+    b: {rows: SMALL, pal: GOLDPAL},
     s: {rows: ['....ab...', '...abbc..', '..abbbcc.', '.aabbbcc.', '.abbbbcc.', '..abbcc..', '...bcc...', '....c....'], pal: {a: '#d8f4ff', b: '#6fc3e8', c: '#2b7fb0'}},
     h: {rows: ['.....ab.....', '....abbc....', '...aabbbc...', '..aabbbbcc..', '.aabbbbbbcc.', 'aabbdbbbbccc', '.abbbbdbbcc.', '..abbbbbcc..', '...abbbcc...', '....abcc....', '.....bc.....'], pal: {a: '#f3e4ff', b: '#c79cf0', c: '#7d48bd', d: '#ffffff'}},
   };
@@ -323,7 +326,7 @@
   const URLS = {};
   const shardURL = t => { const a = artOf(t); return URLS[a] || (URLS[a] = px(SHARD[a].rows, SHARD[a].pal, 4).toDataURL()); };
   const gemURL = () => URLS.gem || (URLS.gem = px(GEMPIX.rows, GEMPIX.pal, 6).toDataURL());
-  const chip = t => `<i class="frag ${t}${isOdd(t) ? ' o' : ''}${['g', 'm', 'l'].includes(t) ? ' gold' : ''}"><img src="${shardURL(t)}" alt=""><b>${G.VALUE[t]}</b></i>`;
+  const chip = t => `<i class="frag t-${t}${isOdd(t) ? ' o' : ''}${['b', 'g', 'm', 'l'].includes(t) ? ' gold' : ''}"><img src="${shardURL(t)}" alt=""><b>${G.VALUE[t]}</b></i>`;
 
   // ---------- 声音：和家里一样用系统合成，不带音频文件 ----------
   let AC = null;
@@ -402,11 +405,14 @@
 
   // ---------- 锻造台：炉子里不显示合计，要自己算 ----------
   let busy = false, hold = 0;
-  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene(); }
+  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; mode = 'gem'; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene(); }
+  function setMode(m) { if (busy || m === mode) return; mode = m; slots = []; msg = ''; blip([[440, 0, 0.05]]); draw(); }
+  const slotN = () => (mode === 'big' ? G.BIG_SLOTS : G.SLOTS);
   const placed = t => slots.filter(x => x === t).length;
   function add(t) {
     if (busy) return;
-    if (slots.length >= G.SLOTS) { msg = `炉子最多放 ${G.SLOTS} 个`; blip([[140, 0, 0.12]]); c.$('forgeSlots').classList.remove('nope'); void c.$('forgeSlots').offsetWidth; c.$('forgeSlots').classList.add('nope'); return draw(); }
+    if (mode === 'big' && t === 'l') return;
+    if (slots.length >= slotN()) { msg = `炉子最多放 ${slotN()} 个`; blip([[140, 0, 0.12]]); c.$('forgeSlots').classList.remove('nope'); void c.$('forgeSlots').offsetWidth; c.$('forgeSlots').classList.add('nope'); return draw(); }
     if (placed(t) >= (st.inv[t] || 0)) return;
     const from = c.$('forgeList').querySelector(`[data-add="${t}"] img`), i = slots.length;
     slots.push(t); msg = ''; draw();
@@ -419,11 +425,16 @@
     if (busy) return;
     if (!slots.length) { msg = '先放碎片'; return draw(); }
     const r = {}; slots.forEach(t => { r[t] = (r[t] || 0) + 1; });
-    if (!sure && !G.enough(r) && !G.dayFull(st, c.today())) { blip([[200, 0, 0.14]], 'triangle'); msg = ''; draw(); c.$('forgeWarn').hidden = false; return; }   // 不够：开炉前提醒。不说差多少，算数留给孩子
-    const res = G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
+    const big = mode === 'big', warn = big ? !G.exactBig(r) : !G.enough(r) && !G.dayFull(st, c.today());
+    if (!sure && warn) {   // 开炉前提醒。不说差多少、多多少，算数留给孩子
+      const w = c.$('forgeWarn'); w.querySelector('b').textContent = big ? '合计不是 50，炼不出大碎片' : '碎片不够，炼不出宝石';
+      blip([[200, 0, 0.14]], 'triangle'); msg = ''; draw(); w.hidden = false; return;
+    }
+    const res = big ? G.forgeBig(st, r, c.today()) : G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
     if (!res.ok) { if (res.why === 'daily') msg = `今天已炼 ${G.DAY_MAX} 颗，碎片留到明天`; return draw(); }
-    save(); hold = res.gems;
-    const done = res.gems ? `得到宝石 1，废料 ${res.waste}` : `没有炼出宝石，废料 ${res.waste}`;
+    save(); hold = big ? 0 : res.gems;
+    const won = big ? res.big : res.gems;
+    const done = big ? (won ? '得到金色大碎片 1' : `没有炼出大碎片，废料 ${res.waste}`) : res.gems ? `得到宝石 1，废料 ${res.waste}` : `没有炼出宝石，废料 ${res.waste}`;
     busy = true; msg = ''; c.$('forgeMsg').textContent = ''; const cells = [...c.$('forgeSlots').children], list = slots.slice(), root = c.$('forge');
     root.classList.add('working');
     try {
@@ -432,7 +443,7 @@
     slots = []; draw();
     // 炉火烧一会儿
     blip([[90, 0, 0.5]], 'sawtooth'); smoke(6); fire.heat = 1; await wait(T.heat);
-    if (!res.gems) {
+    if (!won) {
       // 不够：闷响、冒黑烟，炉里的东西全成废料进桶
       fire.work = true; await wait(T.strike); fire.hit = 12; blip([[110, 0, 0.18], [80, 0.15, 0.22]], 'sawtooth'); smoke(30); fire.work = false; fire.heat = 0.1;
       root.classList.add('shake'); await wait(300); root.classList.remove('shake');
@@ -447,7 +458,7 @@
       }
       fire.work = false; fire.flash = 1; fire.heat = 1; spark(50, fire.fx + 17, fire.fy + 20, ['#c8fff4', '#1fc8b8', '#fff3b0'], 2.6);
       blip([[660, 0, 0.1], [880, 0.09, 0.1], [1320, 0.18, 0.22]]);
-      await gemPop();
+      await gemPop(big);
       if (res.waste) { blip([[160, 0, 0.1]], 'triangle'); await Promise.all([0, 1, 2].map(i => wait(i * T.slagGap).then(() => flyImg(SLAG(), mouth(), bucketPt(), 16, T.slagFly, 14)))); spark(8, fire.W - 12, fire.floor - 16, ['#6c6f76', '#9a9da4'], 0.8); }
     }
     } catch (e) { /* 动画出错不影响结果：碎片和宝石开始前已存好 */ }
@@ -455,16 +466,16 @@
     c.$('forgeMsg').classList.remove('pop'); void c.$('forgeMsg').offsetWidth; c.$('forgeMsg').classList.add('pop');
   }
   const SLAG = () => URLS.slag || (URLS.slag = px(['.aab.', 'aaabb', 'abbbb', '.bbb.'], {a: '#8a8d94', b: '#55585f'}, 4).toDataURL());
-  async function gemPop() {
-    const e = document.createElement('div'); e.className = 'gempop'; e.innerHTML = `<span class="rays"></span><img src="${gemURL()}" alt="">`;
+  async function gemPop(big) {   // big：蹦出来的是大碎片，飞回左边的碎片列表
+    const e = document.createElement('div'); e.className = 'gempop'; e.innerHTML = `<span class="rays"></span><img src="${big ? shardURL('l') : gemURL()}" alt="">`;
     document.body.appendChild(e);
-    const [mx, my] = mouth(), to = centre(c.$('forgeToday')), cy = Math.max(70, my - 110);
+    const [mx, my] = mouth(), to = centre(c.$(big ? 'forgeList' : 'forgeToday')), cy = Math.max(70, my - 110);
     const place = (x, y, s) => ({transform: `translate(${x - 60}px,${y - 60}px) scale(${s})`});
     await settled(e.animate([place(mx, my, 0.2), place(mx, cy, 1.25), place(mx, cy, 1)], {duration: T.rise, easing: 'cubic-bezier(.2,1.5,.4,1)', fill: 'forwards'}), T.rise);
     await wait(T.stay);
     await settled(e.animate([place(mx, cy, 1), place(to[0], to[1], 0.25)], {duration: T.toCount, easing: 'ease-in', fill: 'forwards'}), T.toCount);
     e.remove();
-    hold = 0; draw(); const t = c.$('forgeToday'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
+    hold = 0; draw(); const t = c.$(big ? 'forgeList' : 'forgeToday'); t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
   }
   function claim() {
     if (busy) return;
@@ -486,14 +497,16 @@
   }
   function draw() {
     const $ = c.$;
-    const shown = G.MAIN.filter(t => (st.inv[t] || 0) > 0);
+    const shown = G.MAIN.filter(t => (st.inv[t] || 0) > 0 || (mode === 'big' && t === 'l'));   // 炼大碎片时大碎片也列出来（只看数量、不能放），炼出来看得见多了 1 个
+    $('fmGem').classList.toggle('on', mode === 'gem'); $('fmBig').classList.toggle('on', mode === 'big'); $('forgeGo').textContent = mode === 'big' ? '炼大碎片' : '锻造';
     $('forgeList').innerHTML = (shown.length ? shown : ['m']).map(t => {
       const left = st.inv[t] - placed(t);
-      return `<button class="fragrow" data-add="${t}"${left > 0 ? '' : ' disabled'}>${chip(t)}<span>${NAME[t]}</span><em class="num">${left || 0}</em></button>`;
+      return `<button class="fragrow" data-add="${t}"${left > 0 && !(mode === 'big' && t === 'l') ? '' : ' disabled'}>${chip(t)}<span>${NAME[t]}</span><em class="num">${left || 0}</em></button>`;
     }).join('') + oddList();
     $('forgeList').classList.toggle('hasOdd', hasOdd());
     $('forgeList').classList.toggle('many', shown.length > 3);
-    $('forgeSlots').innerHTML = Array.from({length: G.SLOTS}, (_, i) => (slots[i] ? `<button class="fslot" data-i="${i}">${chip(slots[i])}</button>` : '<span class="fslot"></span>')).join('');
+    $('forgeSlots').classList.toggle('big', mode === 'big');
+    $('forgeSlots').innerHTML = Array.from({length: slotN()}, (_, i) => (slots[i] ? `<button class="fslot" data-i="${i}">${chip(slots[i])}</button>` : '<span class="fslot"></span>')).join('');
     $('forgeMsg').textContent = msg;
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span><span class="ft14">近 ${G.RECENT_DAYS} 天 ${G.recentForged(st, today) - hold}</span>`;

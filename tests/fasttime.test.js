@@ -118,8 +118,8 @@ test('习惯记录按天记秒答次数', () => {
 test('慢答只给 1 个小碎片，不算答错；即使这格本该给中碎片', () => {
   const st = G.blank ? G.blank() : {}, inst = K.make('dock:t:join', seeded(2));
   const base = {day: DAY, inst, top: 15, lv: 0};
-  assert.deepEqual(G.answer(st, Object.assign({ok: true, slow: true}, base)), ['g']);
-  assert.equal(st.inv.g, 1); assert.equal(st.inv.m, 0);
+  assert.deepEqual(G.answer(st, Object.assign({ok: true, slow: true}, base)), ['b']);
+  assert.equal(st.inv.b, 1); assert.equal(st.inv.m, 0);
   const D = st.days ? st.days[DAY] : null; if (D) { assert.equal(D.ok, 1); assert.equal(D.bad, 0); }
   assert.ok(G.answer(st, Object.assign({}, base, {ok: true, inst: K.make(K.BY.dockB.items[0].id, seeded(4))})));
 });

@@ -12,7 +12,7 @@ fails, errs = [], []
 def check(ok, msg):
     print(('ok  ' if ok else 'FAIL'), msg)
     if not ok: fails.append(msg)
-G_ALL = ['p', 'g', 's', 'm', 'h', 'l', 'o3', 'o4', 'o6', 'o7', 'o8', 'o12', 'o13']
+G_ALL = ['a', 'b', 'g', 's', 'm', 'h', 'l', 'o3', 'o4', 'o6', 'o7', 'o8', 'o12', 'o13']
 cur = lambda pg: pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]")
 def play(pg, n, ok=True):
     # 真实走 resolve：和点选、写字判定后是同一个入口
@@ -196,15 +196,15 @@ with sync_playwright() as p:
     pp = forced(NOEV); play(pp, 1); toq(pp); pp.wait_for_timeout(600)
     check(pp.locator('#qFire.on').is_visible() and pp.locator('#qFire b').inner_text() == '×2', '一进来火苗就亮，显示 ×2')
     fit = pp.evaluate("(()=>{const r=e=>document.getElementById(e).getBoundingClientRect(),f=r('qFeel'),q=r('qQuit');return f.right<=innerWidth+0.5&&f.top>=0&&q.right<=f.left&&r('qCombo').height>=40})()"); check(fit, '火苗和能量格不超屏、不挡结束按钮'); pp.screenshot(path=str(out / f'fire-on-{W}.png'))
-    check(inv(pp, 'g') + inv(pp, 'm') >= 1 and inv(pp, 'p') + inv(pp, 's') == 0, '火苗亮：得金色碎片')
+    check(inv(pp, 'b') + inv(pp, 'm') >= 1 and inv(pp, 'a') + inv(pp, 's') == 0, '火苗亮：得金色碎片')
     pp.evaluate("__sm.Q.focus.w=[[120,0]]; __sm.Q.focus.at=Date.now()/1000; __sm.Q.focus.last=0"); pp.wait_for_timeout(700)
     check(pp.locator('#qFire.on.low').count() == 1 and '火苗' in pp.locator('#gemEv').inner_text(), '专注掉到 70% 以下：火苗先闪，提示答题保持：' + pp.locator('#gemEv').inner_text())
     pp.evaluate("__sm.Q.focus.low=1"); pp.wait_for_timeout(700); check(pp.locator('#qFire.on').count() == 0, '超过 5 秒熄灭'); pp.screenshot(path=str(out / f'fire-off-{W}.png'))
-    p0, s0 = inv(pp, 'p'), inv(pp, 's'); pp.evaluate("__sm.Q.focus.w=[[120,0]]; __sm.Q.focus.last=0"); play(pp, 1); toq(pp); check(inv(pp, 'p') + inv(pp, 's') > p0 + s0, '火苗灭：得普通碎片')
+    p0, s0 = inv(pp, 'a'), inv(pp, 's'); pp.evaluate("__sm.Q.focus.w=[[120,0]]; __sm.Q.focus.last=0"); play(pp, 1); toq(pp); check(inv(pp, 'a') + inv(pp, 's') > p0 + s0, '火苗灭：得普通碎片')
     # 连对能量 → 暴击时刻：碎片 ×3（金色 + 普通）
     pp = forced(NOEV + "GEMS.TUNE.comboN=[2,2,2]"); play(pp, 1); toq(pp); pp.wait_for_timeout(700)
     check(pp.locator('#qplay.crit').count() == 1 and '暴击时刻' in pp.locator('#qCombo').inner_text(), '攒满进入暴击时刻：' + pp.locator('#qCombo').inner_text()); pp.screenshot(path=str(out / f'crit-{W}.png'))
-    g0, p0 = inv(pp, 'g') + inv(pp, 'm'), inv(pp, 'p') + inv(pp, 's'); play(pp, 1); toq(pp); check(inv(pp, 'g') + inv(pp, 'm') > g0 and inv(pp, 'p') + inv(pp, 's') > p0, '暴击时刻里每题金色加普通')
+    g0, p0 = inv(pp, 'b') + inv(pp, 'm'), inv(pp, 'a') + inv(pp, 's'); play(pp, 1); toq(pp); check(inv(pp, 'b') + inv(pp, 'm') > g0 and inv(pp, 'a') + inv(pp, 's') > p0, '暴击时刻里每题金色加普通')
     check(pp.evaluate("__sm.Q.crit") == 1, '这次练习记 1 次暴击')
     # 退出挽留：差一点炼宝石 → 接受 → 小目标 → 完成 → 可以结束
     pp = forced(NOEV + "GEMS.TUNE.exitRate=1; Object.assign(GEMUI.state().inv,{m:9})"); play(pp, 2); toq(pp)
@@ -232,6 +232,18 @@ with sync_playwright() as p:
     pp = forced("GEMS.TUNE.qcShare=0; GEMS.TUNE.dblSec=60; GEMS.TUNE.dblMinN=20; GEMS.TUNE.restGrace=1"); play(pp, 2); pp.wait_for_timeout(700); pp.click('#gemEv'); pp.wait_for_timeout(300); pp.evaluate("GEMUI.state().rest={sec:1900,at:Date.now()/1000,until:0}"); pp.wait_for_timeout(2500)
     check(cur(pp) == 'qplay' and evc(pp) and not pp.locator('#restOv').is_visible(), '挑战中不打断')
     pp.evaluate("__sm.Q.opts.evc.until=0"); pp.wait_for_timeout(1000); check(pp.locator('#restOv').is_visible() and pp.locator('#evRetry').count() == 0, '挑战结束后休息，不给再挑战')
+    # 炼大碎片：凑准 50 得大碎片；不是 50 先提醒，坚持就全变废料；30 格不超屏
+    pp = fresh(); pp.evaluate("Object.assign(GEMUI.state().inv,{b:40,s:4,l:1,m:3}); GEMUI.openForge('island')"); pp.wait_for_timeout(300)
+    pp.click('#fmBig'); pp.wait_for_timeout(200); check(pp.locator('#forgeSlots .fslot').count() == 30 and pp.locator('[data-add=l]').is_disabled(), '炼大碎片：30 格，大碎片只显示、不能放')
+    chipok = pp.evaluate("(()=>{const e=document.querySelector('#forgeList .frag.t-b');const c=getComputedStyle(e);return c.borderTopWidth==='0px'&&c.backgroundColor==='rgba(0, 0, 0, 0)'})()"); check(chipok, '金色小碎片图标没有多余的框')
+    fit = pp.evaluate("(()=>{const r=e=>document.getElementById(e).getBoundingClientRect(),a=r('forgeSlots'),g=r('forgeGo');return a.top>=0&&g.bottom<=innerHeight&&a.right<=innerWidth})()"); check(fit, '30 格和按钮不超屏')
+    for _ in range(25): pp.locator('[data-add=b]').click(); pp.wait_for_timeout(15)
+    pp.wait_for_timeout(300); pp.screenshot(path=str(out / f'big-{W}.png')); pp.click('#forgeGo'); pp.wait_for_timeout(200); check(not pp.locator('#forgeWarn').is_visible(), '正好 50 不提醒')
+    pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); check(pp.locator('#forgeMsg').inner_text() == '得到金色大碎片 1' and pp.evaluate("GEMUI.state().inv.l") == 2 and pp.locator('[data-add=l] em').inner_text() == '2', '25 个 2 得到大碎片，列表里看得到：' + pp.locator('#forgeMsg').inner_text()); pp.screenshot(path=str(out / f'big-done-{W}.png'))
+    for _ in range(11): pp.locator('[data-add=b]').click(); pp.wait_for_timeout(15)
+    pp.locator('[data-add=s]').click(); pp.click('#forgeGo'); pp.wait_for_timeout(200); t = pp.locator('#forgeWarn').inner_text(); check(pp.locator('#forgeWarn').is_visible() and '不是 50' in t, '27 不是 50 先提醒：' + t.replace(chr(10), ' '))
+    pp.click('#forgeWarnGo'); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); check(pp.locator('#forgeMsg').inner_text() == '没有炼出大碎片，废料 27' and pp.evaluate("GEMUI.state().inv.b") == 4, '坚持就全变废料：' + pp.locator('#forgeMsg').inner_text())
+    pp.click('#fmGem'); pp.wait_for_timeout(200); check(pp.locator('#forgeSlots .fslot').count() == 12 and pp.locator('[data-add=l]').count() == 1, '切回炼宝石：12 格')
     # 岛首页锻造入口
     pp = fresh(); check(pp.locator('#btnForge').is_visible(), '岛首页有锻造台入口'); pp.screenshot(path=str(out / f'island-forge-{W}.png'))
     oob = pp.evaluate("(()=>{const b=document.getElementById('btnForge').getBoundingClientRect(),m=document.getElementById('btnMist').getBoundingClientRect();return b.left<0||b.right>m.left+1||b.right>innerWidth})()"); check(not oob, '入口不和错题宝箱重叠、不超屏')

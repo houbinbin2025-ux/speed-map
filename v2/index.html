@@ -484,9 +484,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .hardboxes label{display:flex;align-items:center;gap:8px;background:var(--stone);border:2px solid #000;padding:4px 8px;min-height:48px}.hardboxes input{width:26px;height:26px;flex:none;margin:0}.hardboxes b{display:block;font-size:14px}.hardboxes small{font-size:12px;color:var(--mute);line-height:1.25;display:block}
 /* 碎片和锻造台（gemui.js） */
 .frag{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;flex:none;line-height:1;gap:1px}
-.frag img{image-rendering:pixelated;width:28px;display:block;filter:drop-shadow(0 2px 0 #000)}.frag.l img{width:36px}.frag.s img{width:24px}
+.frag img{image-rendering:pixelated;width:28px;display:block;filter:drop-shadow(0 2px 0 #000)}.frag.t-l img{width:36px}.frag.t-s img{width:24px}
 .frag b{font-family:var(--f-num);font-weight:900;font-size:13px;color:#fff;text-shadow:1px 1px 0 #000}
-.frag.o img{width:24px}.frag.p img,.frag.g img{width:22px}.frag.h img{width:32px}
+.frag.o img{width:24px}.frag.t-p img,.frag.t-g img{width:22px}.frag.t-h img{width:32px}
 #forgeList.many{display:grid;grid-template-columns:1fr 1fr;align-content:center;gap:6px;width:176px}#forgeList.many .fragrow{min-height:52px;padding:2px 6px}#forgeList.many .fragrow>span{display:none}#forgeList.many .fragrow em{font-size:20px}#forgeList.many .oddbox{grid-column:1 / -1}
 .frag.land{animation:fragLand .22s}
 @keyframes fragLand{0%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
@@ -506,6 +506,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .forgeMid{display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center;flex:none}
 #forgeSlots{display:grid;grid-template-columns:repeat(4,calc(min(14vh,52px)));grid-auto-rows:calc(min(14vh,52px));gap:4px;background:#2a1d14;border:4px solid #000;box-shadow:inset 0 0 0 2px #5a3a20,0 5px 0 #000;padding:6px}
 #forgeSlots.nope{animation:forgeShake .09s linear 2}
+.fmode{display:flex;gap:4px;width:100%}.fmode button{flex:1;min-height:36px;padding:0 6px;font-size:14px;font-weight:900;background:#2a2d34;color:#ddd;border:3px solid #000;white-space:nowrap}.fmode button.on{background:var(--warn);color:#1b1d22}
+#forgeSlots.big{grid-template-columns:repeat(6,calc(min(8.4vh,34px)));grid-auto-rows:calc(min(8.4vh,34px));gap:2px;padding:4px}#forgeSlots.big .frag img{width:16px}#forgeSlots.big .frag b{font-size:10px}
+.frag.t-a img,.frag.t-b img{width:18px}
 .fslot{display:flex;align-items:center;justify-content:center;background:#46301f;border:2px solid #000;box-shadow:inset 2px 2px 0 #2a1d14;padding:0}
 #forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
 #forgeMsg{font-size:18px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
@@ -654,7 +657,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <div class="scr" id="forge" hidden>
   <canvas id="forgeScene" class="px"></canvas>
   <div id="forgeList"></div>
-  <div class="forgeMid"><div id="forgeSlots"></div><button class="gobig" id="forgeGo">锻造</button><div id="forgeMsg"></div></div>
+  <div class="forgeMid"><div class="fmode"><button id="fmGem" class="on">炼宝石</button><button id="fmBig">炼大碎片</button></div><div id="forgeSlots"></div><button class="gobig" id="forgeGo">锻造</button><div id="forgeMsg"></div></div>
   <div class="forgeSide"><div id="forgeToday"></div><button class="btn" id="forgeClaim" hidden>领宝石</button><button class="btn" id="forgeBack">返回</button></div>
   <div id="forgeWarn" hidden><div class="fwcard"><b>碎片不够，炼不出宝石</b><span>开始锻造后，炉子里的碎片都会变成废料，不退回</span><div class="gembtns"><button class="btn go" id="forgeWarnBack">先不炼</button><button class="btn" id="forgeWarnGo">仍然锻造</button></div></div></div>
 </div>
@@ -896,7 +899,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v107:07d38c2d0bc0 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v109:7b110af138f1 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -906,25 +909,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=107"></script>
-<script src="i18n.js?v=107"></script>
-<script src="bank.js?v=107"></script>
-<script src="hardbank.js?v=107"></script>
-<script src="placebank.js?v=107"></script>
-<script src="core.js?v=107"></script>
-<script src="ink.js?v=107"></script>
-<script src="skills.js?v=107"></script>
-<script src="engine.js?v=107"></script>
-<script src="render.js?v=107"></script>
-<script src="world.js?v=107"></script>
-<script src="home.js?v=107"></script>
-<script src="puzzles.js?v=107"></script>
-<script src="thinking.js?v=107"></script>
-<script src="house.js?v=107"></script>
-<script src="kongmine.js?v=107"></script>
-<script src="gems.js?v=107"></script>
-<script src="gemui.js?v=107"></script>
-<script src="vert.js?v=107"></script>
+<script src="touchfix.js?v=109"></script>
+<script src="i18n.js?v=109"></script>
+<script src="bank.js?v=109"></script>
+<script src="hardbank.js?v=109"></script>
+<script src="placebank.js?v=109"></script>
+<script src="core.js?v=109"></script>
+<script src="ink.js?v=109"></script>
+<script src="skills.js?v=109"></script>
+<script src="engine.js?v=109"></script>
+<script src="render.js?v=109"></script>
+<script src="world.js?v=109"></script>
+<script src="home.js?v=109"></script>
+<script src="puzzles.js?v=109"></script>
+<script src="thinking.js?v=109"></script>
+<script src="house.js?v=109"></script>
+<script src="kongmine.js?v=109"></script>
+<script src="gems.js?v=109"></script>
+<script src="gemui.js?v=109"></script>
+<script src="vert.js?v=109"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);

@@ -37,6 +37,11 @@ const KIDS = {
   '刷_选择题乱猜': {p: guess, s: t(2, 3), plan: (S, d, r) => free(S, d, r, ['cmp'], 15), take: 1},
   '只答会的': {dunno: () => rnd() < 0.5, p: flat(0.98), s: t(4, 7), plan: today, ch: 0.5, take: 0.8},
 };
+// 凑准 50：面值 < 10 的碎片，先用小的，最多 BIG_SLOTS 个；凑不出返回 null
+function fifty(inv) { const ts = Object.keys(G.VALUE).filter(t => G.VALUE[t] < 10 && inv[t] > 0).sort((a, b) => G.VALUE[a] - G.VALUE[b]);
+  const go = (i, left, n, r) => { if (left === 0) return r; if (n === G.BIG_SLOTS || i >= ts.length) return null; const t = ts[i], v = G.VALUE[t];
+    for (let c = Math.min(inv[t], Math.floor(left / v), G.BIG_SLOTS - n); c >= 0; c--) { const x = go(i + 1, left - c * v, n + c, c ? Object.assign({}, r, {[t]: c}) : r); if (x) return x; } return null; };
+  return go(0, 50, 0, {}); }
 // 锻造：优先凑准 100、尽量多用小的；凑不准就用最少的多余。不够就留着
 function bestForge(inv) {
   const types = Object.keys(G.VALUE).filter(k => (inv[k] || 0) > 0).sort((x, y) => G.VALUE[x] - G.VALUE[y]);
@@ -101,8 +106,11 @@ for (const name of Object.keys(KIDS)) {
         G.finishChallenge(st, {won: w, n: qs.length === G.CH_N ? G.CH_N : 0});
       }
       G.settle(st, day);
+      // 炼大碎片：面值 < 10 的碎片凑准 50（最多 30 个），先用小的
+      for (let i = 0, r; i < 200 && (r = fifty(st.inv)); i++) if (!G.forgeBig(st, r, day).big) break;
       for (let i = 0, r; i < 200 && (r = bestForge(st.inv)); i++) if (!G.forge(st, r, day).ok) break;
       crit += st.days[day].crit || 0; gems += st.days[day].forged;
+      if (process.env.INV && d === DAYS - 1 && sd === 1 && name === '正确率90') console.error('正确率90 第' + DAYS + '天背包', JSON.stringify(Object.fromEntries(Object.entries(st.inv).filter(e => e[1]))));
     }
   }
   const D = DAYS * SEEDS;
