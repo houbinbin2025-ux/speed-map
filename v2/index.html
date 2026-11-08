@@ -338,9 +338,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 /* 第二批 2a：题面里的图（线段图、条形图、长方形）和讲解卡（说明书-到四年级第二批） */
 .eq.tw{white-space:normal;overflow-wrap:break-word}
 .bcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.bcp{background:var(--stone);border:2px solid #000;padding:6px;font-size:13px;display:flex;flex-direction:column;gap:4px}.bcp svg.fig2{width:100%;height:120px}.bcp .nrows span{min-width:30px;font-size:15px}.bcp .eq{font-size:22px}   /* 题面带文字（如「四舍五入到百位」）：英文日翻译变长时换行，不出左栏 */
-.fig2w{flex:1;min-height:0;min-width:0;width:100%;max-width:100%;display:flex;align-items:center;justify-content:center}.fig2w>svg.fig2{width:100%;height:100%;max-width:100%;max-height:100%}
+.fig2w{flex:1;min-height:0;min-width:0;width:100%;max-width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.fig2w>svg.fig2{display:block;width:100%;height:100%;max-width:100%;max-height:100%}   /* 图里的字已保证不出图（svgclip.py），外框再防一手 2 像素的取整误差 */
 .explain:has(.fig2w){flex:1;min-height:0}.explain .fig2w{flex:1 1 0;min-height:90px;max-height:260px}   /* 答错图解：图随剩余空间缩放，不把左栏撑破（e2e13） */
-.dstep .eq.tw{font-size:clamp(15px,2.4vw,22px);white-space:normal;max-width:30vw}   /* 示范卡里带文字的题面（英文长）：缩字换行，不出框（demofit） */
+#demo .dstep .eq.tw{display:block;font-size:clamp(16px,2.4vw,22px);line-height:1.15;white-space:normal;max-width:34vw;text-align:center}#demo .dstep .eq.tw .box{width:1.4em;height:1.2em;vertical-align:middle}   /* 示范卡里带文字的题面（英文长）：缩字换行，不出框（demofit） */
 /* 讲解卡（第二批）：「下一步」浮在右下角、提示浮起来，矮屏也把高度留给图（e2e13 874×297） */
 #demo.card{gap:6px}#demo.card .ackrow{position:absolute;right:var(--padR);bottom:max(10px,env(safe-area-inset-bottom))}#demo.card .dcard .cline{padding-right:200px;min-height:52px;display:flex;align-items:center}#demo.card .dcard{gap:6px}
 #dQuitHint{position:absolute;left:calc(var(--padL) + 104px);top:max(16px,env(safe-area-inset-top));z-index:2;background:var(--cave);padding:4px 8px}   /* 提示贴着「长按结束」按钮，不压讲解卡的字 */
