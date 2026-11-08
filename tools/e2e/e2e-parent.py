@@ -117,8 +117,18 @@ def run_broken(pg, tag, url):
     parent(pg)
     check(pg.is_visible('#parNote') and '读不了' in pg.inner_text('#parNote'), f'{tag} 家长区提示存档读不了')
     tap(pg, '#btnBrokenOut', f'{tag} 导出读不了的存档'); check(pg.input_value('#ioText') == '{坏的', f'{tag} 导出的是原文')
+    check(not pg.is_visible('#btnBrokenDel'), f'{tag} 还没复制时不出「删掉它」')
+    tap(pg, '#ioCopy', f'{tag} 复制读不了的存档'); check(pg.is_visible('#btnBrokenDel'), f'{tag} 复制后出「删掉它」')
     tap(pg, '#btnBrokenDel', f'{tag} 删掉读不了的存档'); pg.wait_for_timeout(900)
     check(pg.evaluate(f"localStorage.getItem('{PK}.broken')") is None, f'{tag} 读不了的存档删掉了')
+    check(pg.evaluate(f"(() => {{ try {{ return !!JSON.parse(localStorage.getItem('{PK}')).v; }} catch (e) {{ return false; }} }})()"), f'{tag} 主存档写回了能读的进度')
+    parent(pg); check(not pg.is_visible('#parNote'), f'{tag} 刷新后家长区不再提示读不了')
+
+def run_nogems(pg, tag, url):
+    # 碎片关着（测试模式默认）：挑战数据整块隐藏，开发参数格只在测试模式留着；正式版碎片关着时整格隐藏（index.html renderParent `!h && !TEST`），网页走查进不了正式版碎片关的状态，这里锁住前半句
+    fresh(pg, url); parent(pg)
+    g = pg.evaluate("() => ({stats: getComputedStyle(document.getElementById('gemStats')).display, dev: getComputedStyle(document.getElementById('pDev')).display})")
+    check(g['stats'] == 'none' and g['dev'] != 'none', f'{tag} 碎片关时挑战数据隐藏、测试模式下开发参数格还在 {g}')
 
 def run_gems(pg, tag, url):
     # 碎片开着时，挑战数据进开发参数面板，不再挤在标题上面
@@ -130,9 +140,9 @@ def run_gems(pg, tag, url):
 with sync_playwright() as p:
     b = p.chromium.launch()
     for tag, vw in [('iphone', {'width': 844, 'height': 390}), ('ipad', {'width': 1194, 'height': 834})]:
-        pg = b.new_page(viewport=vw, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
-        run(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')
-        pg.close()
+        ctx = b.new_context(viewport=vw, has_touch=True, permissions=['clipboard-read', 'clipboard-write']); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
+        run(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_nogems(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')
+        ctx.close()
     b.close()
 check(not errs, f'页面无报错 {errs[:3]}')
 print(f'\n{len(fails)} 项失败' if fails else '\n全部通过')

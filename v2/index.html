@@ -2212,12 +2212,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('btnImportAll').addEventListener('click', () => openIO('all'));
   $('btnInkOut').addEventListener('click', () => openIO('inkout'));
   $('btnInkIn').addEventListener('click', () => openIO('inkin'));
-  $('btnBrokenOut').addEventListener('click', () => { openIO('broken'); $('btnBrokenDel').hidden = false; });
+  $('btnBrokenOut').addEventListener('click', () => openIO('broken'));   // 「删掉它」等点过「复制」才出现：删了原文就只剩剪贴板里那份（F 审查 R1）
   $('btnBrokenDel').addEventListener('click', () => { C.dropBroken(store, CTX); save(); location.reload(); });   // 先腾空间再把现在的进度写回主存档：主存档还是坏的话，刷新后又会另存一份读不了的（F 11-08 走查发现）
   $('ioClose').addEventListener('click', () => { $('ioPanel').hidden = true; });
   $('ioCopy').addEventListener('click', () => {
     const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } if (ioKind === 'broken') $('btnBrokenDel').hidden = false; };
-    navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; });
+    navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; if (ioKind === 'broken') $('btnBrokenDel').hidden = false; });
   });
   $('ioApply').addEventListener('click', () => {
     let gemsMiss = false;
