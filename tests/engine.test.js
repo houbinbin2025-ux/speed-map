@@ -687,3 +687,13 @@ test('再来一次最多连着 2 道：自由加练连错 5 道后不会连出 4
     assert.ok(!/RRR/.test(seq.slice(0, main)), `seed ${seed} 正式题之间连出 3 道：${seq}`);
   }
 });
+
+// 捣蛋鬼第 1 轮第 6 条：17 个秒答技能共用一张「秒答：看到算式，马上写答案」示范卡，看过一次就都算看过（旧进度里看过任一个也算）
+test('秒答示范卡只出一次：看过任一个秒答技能的示范，其他秒答技能不再出', () => {
+  const demosOf = S => { const f = E.free(S, D(0), 'speed', {rnd: seeded(3)}), d = []; for (let x = f.next(), g = 0; x && g < 80; x = f.next(), g++) { if (x.kind === 'demo') d.push(x.skill); else if (x.kind === 'q') f.answer(ok); } return d; };
+  const A = C.blank(); A.placedAt = 1; A.demoSeen = {'speed:L1:1': true};
+  assert.deepEqual(demosOf(A), [], '旧进度看过 speed:L1:1');
+  const B = C.blank(); B.placedAt = 1;
+  const d = demosOf(B); assert.ok(d.length <= 1, '新进度最多看一张：' + d);
+  assert.ok(E.demoDone(A, 'speed:L4:1') && !E.demoDone(A, 'bond3'), '只管秒答技能，别的技能照旧按自己记');
+});

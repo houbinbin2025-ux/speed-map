@@ -131,3 +131,8 @@ test('放错级修正：过十的 20 以内分合第 4 级；凑一百第 7 级�
 test('量词对：应用题不出现「个箭」「个小鱼」「个钻石」「用掉」', () => {
   Object.entries(HB.pools).filter(([k]) => k.startsWith('dock:')).forEach(([, l]) => l.forEach(x => assert.ok(!/个(箭|小鱼|钻石|石块|金币)|用掉/.test(x.q.say), x.q.say)));
 });
+
+test('20 以内分合要先会凑十（捣蛋鬼第 1 轮第 6 条）', () => {
+  const K = require('../v2/skills.js');
+  assert.deepEqual(K.BY.bondH3.pre, ['bond3']); assert.ok(K.topoOk());
+});

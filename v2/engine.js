@@ -25,8 +25,10 @@
     if (Dy.cards.length >= CARD_PER_DAY) return false;
     Dy.cards.push(c); return c;
   }
+  // 示范卡看过没有：17 个秒答技能共用一张「秒答：看到算式，马上写答案」，看过任一个就都算看过；旧进度不用迁移（捣蛋鬼第 1 轮第 6 条）
+  const demoDone = (S, sid) => !!S.demoSeen[sid] || (!!K.BY[sid].speed && K.speed.some(s => S.demoSeen[s.id]));
   // 这个技能今天还不能开始：一开始就要出讲解卡，但今天已经 2 张了（不改记录，只看）
-  const cardWait = (S, Dy, sid) => { const c = K.BY[sid].concept, l = Dy.cards || []; return !!c && !S.demoSeen[sid] && !(S.known && S.known[sid]) && !S.demoSeen['c:' + c] && !l.includes(c) && l.length >= CARD_PER_DAY; };
+  const cardWait = (S, Dy, sid) => { const c = K.BY[sid].concept, l = Dy.cards || []; return !!c && !demoDone(S, sid) && !(S.known && S.known[sid]) && !S.demoSeen['c:' + c] && !l.includes(c) && l.length >= CARD_PER_DAY; };
   // 15 级难度（说明书-难度分级）：S.settings.levels = 家长手选的级别；没选 = 自动，一级点亮 ≥ 70% 开下一级
   const AUTO_PASS = 0.7, ALL_ITEMS = K.SKILLS.concat(K.HARD).flatMap(s => s.items);
   const CELLS = K.LEVELS.map(l => ALL_ITEMS.filter(it => K.itemLevels(it.id)[0] === l.n));
@@ -442,7 +444,7 @@
           const x = pick(queue);
           if (!x) { queue = []; continue; }
           const sid = K.ITEM[x.inst.id].skill;
-          if (x.seg === 'new' && !S.demoSeen[sid] && !S.known[sid]) {
+          if (x.seg === 'new' && !demoDone(S, sid) && !S.known[sid]) {
             const c0 = cardFor(S, Dy, sid);
             if (c0 === false) { queue = queue.filter(y => K.ITEM[y.inst.id].skill !== sid); if (++skips < 50) guard--; continue; }   // 今天讲解卡满 2 张：这个新技能的题今天不出，换下一道（不算进 guard）
             Dy.sec += DEMO_SEC; stat(S, day).sec += DEMO_SEC;
@@ -518,7 +520,7 @@
         }
         if (!x) { cur = RT.due(true); return cur; }        // 题出完了：收尾再来一次（见 retrier）
         const sid = K.ITEM[x.inst.id].skill;
-        if (lv(S, x.inst.id) === 0 && !S.demoSeen[sid] && !S.known[sid]) {
+        if (lv(S, x.inst.id) === 0 && !demoDone(S, sid) && !S.known[sid]) {
           const c0 = cardFor(S, daily(S, day), sid);
           if (c0 === false) { [queue, mist].forEach(l => { for (let i = l.length - 1; i >= 0; i--) if (K.ITEM[l[i].inst.id].skill === sid) l.splice(i, 1); }); return api.next(); }   // 今天讲解卡满 2 张：这个新技能今天不出
           stat(S, day).sec += DEMO_SEC;
@@ -600,7 +602,7 @@
     };
   }
 
-  return {qkey, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
+  return {qkey, demoDone, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
     prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,

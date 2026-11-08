@@ -106,7 +106,7 @@
   hard({id: 'speedH2', group: 'speedH', name: '两位数加减两位数', pre: ['speedH1'], ids: ['speed:h:two']});
   hard({id: 'speedH3', group: 'speedH', name: '乘法 2、5、10', pre: ['speedH2'], ids: ['speed:h:mul']});
   // 11-06 分 15 级补的题（说明书-难度分级）；旧的挑战题也并进分级，家长选难度才出或自动开放
-  hard({id: 'bondH3', group: 'bond', name: '20 以内分合', ids: ['bond:h:20']});
+  hard({id: 'bondH3', group: 'bond', name: '20 以内分合', pre: ['bond3'], ids: ['bond:h:20']});   // 先会凑十再练 20 以内分合（捣蛋鬼第 1 轮第 6 条）
   hard({id: 'dockH1', group: 'dock', name: '20 以内应用题', ids: ['dock:h:20']});
   hard({id: 'dockH2', group: 'dock', name: '50 以内应用题', pre: ['dockH1'], ids: ['dock:h:50']});
   hard({id: 'dockH3', group: 'dock', name: '100 以内应用题', pre: ['dockH2'], ids: ['dock:h:100']});
