@@ -63,7 +63,7 @@ with sync_playwright() as p:
     pg.screenshot(path=str(out / f'forge-full-{W}.png'))
     # 不够：先提醒，选先不炼什么都不丢；仍然锻造就全变废料
     pg.click('#forgeGo'); pg.wait_for_timeout(150); check(pg.locator('#forgeWarn').is_visible(), '不够 100 先提醒'); pg.screenshot(path=str(out / f'forge-warn-{W}.png'))
-    check('40' not in pg.locator('#forgeWarn').inner_text(), '提醒不说还差多少')
+    check('合计 60，还差 40' in pg.locator('#forgeWarn').inner_text(), '提醒写清差多少（10.2）：' + pg.locator('#forgeWarn').inner_text().replace(chr(10), ' '))
     check(pg.evaluate("(()=>{const b=document.getElementById('forgeWarnGo').getBoundingClientRect();return b.bottom<=innerHeight&&b.right<=innerWidth})()"), '提醒按钮不超屏')
     pg.click('#forgeWarnBack'); pg.wait_for_timeout(100); check(not pg.locator('#forgeWarn').is_visible(), '先不炼关掉提醒')
     check(pg.locator('#forgeSlots button').count() == 12 and pg.evaluate("GEMUI.state().inv.s") == 20, '先不炼：碎片还在炉子里，一个没少')
@@ -174,10 +174,17 @@ with sync_playwright() as p:
         pp.evaluate("__sm.Q&&__sm.Q.phase==='q'&&__sm.resolve({ok:true,fast:true})"); pp.wait_for_timeout(1000)
     pp.wait_for_timeout(600); check(cur(pp) == 'qsum' and pp.locator('#evBack').count() == 1, '答够题数出结果：' + pp.locator('#qsum').inner_text()[:40].replace(chr(10), ' ')); pp.screenshot(path=str(out / f'ev-won-{W}.png'))
     check(pp.locator('#evRetry').count() == 0, '完成了不用再挑战'); check(pp.evaluate("GEMUI.state().ev.log.length") == 1 and pp.evaluate("GEMUI.state().ev.log[0].won") == 1, '记录了这次完成')
+    # 10.2：全对 = 答得非常好，可以再来一次双倍；不占每天次数
+    check(pp.locator('#evChain').count() == 1 and '答得非常好' in pp.inner_text('#qsum'), '全对：出现「再来一次双倍」')
+    pp.click('#evChain'); pp.wait_for_timeout(500); check(evc(pp) and pp.evaluate(DAYK + ".dblChain") == 1 and pp.evaluate(DAYK + ".dbl") == 1, '再来一次：又是一关双倍，不占每天次数')
+    for _ in range(4):
+        if cur(pp) != 'qplay': break
+        pp.evaluate("__sm.Q&&__sm.Q.phase==='q'&&__sm.resolve({ok:true,fast:true})"); pp.wait_for_timeout(1000)
+    pp.wait_for_timeout(600); check(cur(pp) == 'qsum' and pp.evaluate("GEMUI.state().ev.log.length") == 2, '再来的那关也出结果')
     pp.click('#evBack'); pp.wait_for_timeout(600); check(cur(pp) == 'qplay' and not evc(pp) and pp.evaluate("__sm.Q.n") >= n0, f'回到原来的练习，计数接着算（{n0}）')
     g = pp.evaluate("(()=>{const q=__sm.Q.gem||{};return Object.values(q).reduce((a,b)=>a+b,0)})()"); inv1 = pp.evaluate("JSON.stringify(GEMUI.state().inv)"); check(g >= 2, f'挑战得的碎片算进原练习的这次碎片（{g}）')
     pp = forced("GEMS.TUNE.qcShare=0; GEMS.TUNE.dblSec=2; GEMS.TUNE.dblMinN=20"); play(pp, 2); pp.wait_for_timeout(700); pp.click('#gemEv'); pp.wait_for_timeout(3200)
-    check(cur(pp) == 'qsum' and pp.locator('#evRetry').count() == 1, '超时：可以再挑战一次'); pp.screenshot(path=str(out / f'ev-fail-{W}.png')); h1 = pp.evaluate("GEMUI.state().ev.h.dbl"); check(h1 < 0.85, f'失败后题目略易（{h1}）')
+    check(cur(pp) == 'qsum' and pp.locator('#evRetry').count() == 1 and pp.locator('#evChain').count() == 0, '超时：可以再挑战一次，没有「再来一次双倍」'); pp.screenshot(path=str(out / f'ev-fail-{W}.png')); h1 = pp.evaluate("GEMUI.state().ev.h.dbl"); check(h1 < 0.85, f'失败后题目略易（{h1}）')
     pp.click('#evRetry'); pp.wait_for_timeout(3200); check(cur(pp) == 'qsum' and pp.locator('#evRetry').count() == 0 and pp.locator('#evBack').count() == 1, '再挑战一次也没完成：只能继续练习'); check(pp.evaluate(DAYK + ".dbl") == 1, '再挑战不占次数')
     pp = forced("GEMS.TUNE.qcShare=1; GEMS.TUNE.qcMinN=2; GEMS.TUNE.qcMaxN=2; GEMS.TUNE.dblMax=0"); play(pp, 2); pp.wait_for_timeout(700); check(pp.locator('#gemEv.offer').count() == 1, '弹出限时挑战：' + pp.locator('#gemEv').inner_text()); pp.screenshot(path=str(out / f'ev-qc-{W}.png'))
     pp.click('#gemEv'); pp.wait_for_timeout(300); f0 = pp.evaluate(DAYK + ".forged")
@@ -243,7 +250,7 @@ with sync_playwright() as p:
     pp.wait_for_timeout(300); pp.screenshot(path=str(out / f'big-{W}.png')); pp.click('#forgeGo'); pp.wait_for_timeout(200); check(not pp.locator('#forgeWarn').is_visible(), '正好 50 不提醒')
     pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); check(pp.locator('#forgeMsg').inner_text() == '得到金色大碎片 1' and pp.evaluate("GEMUI.state().inv.l") == 2 and pp.locator('[data-add=l] em').inner_text() == '2', '25 个 2 得到大碎片，列表里看得到：' + pp.locator('#forgeMsg').inner_text()); pp.screenshot(path=str(out / f'big-done-{W}.png'))
     for _ in range(11): pp.locator('[data-add=b]').click(); pp.wait_for_timeout(15)
-    pp.locator('[data-add=s]').click(); pp.click('#forgeGo'); pp.wait_for_timeout(200); t = pp.locator('#forgeWarn').inner_text(); check(pp.locator('#forgeWarn').is_visible() and '不是 50' in t, '27 不是 50 先提醒：' + t.replace(chr(10), ' '))
+    pp.locator('[data-add=s]').click(); pp.click('#forgeGo'); pp.wait_for_timeout(200); t = pp.locator('#forgeWarn').inner_text(); check(pp.locator('#forgeWarn').is_visible() and '合计 27，还差 23' in t, '27 不是 50 先提醒，写清差多少：' + t.replace(chr(10), ' '))
     pp.click('#forgeWarnGo'); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); check(pp.locator('#forgeMsg').inner_text() == '没有炼出大碎片，废料 27' and pp.evaluate("GEMUI.state().inv.b") == 4, '坚持就全变废料：' + pp.locator('#forgeMsg').inner_text())
     pp.click('#fmGem'); pp.wait_for_timeout(200); check(pp.locator('#forgeSlots .fslot').count() == 12 and pp.locator('[data-add=l]').count() == 1, '切回炼宝石：12 格')
     # 岛首页锻造入口

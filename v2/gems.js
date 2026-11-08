@@ -23,7 +23,8 @@
     comboN: [12, 10, 8], comboAt: [600, 1200], critSec: 20, critAcc: 0.7,   // 连对能量：当天有效学习 0～10、10～20、20 分钟以后攒满要几格；暴击时刻秒数；正确率门槛
     exitRate: 0.2, exitMaxSec: 1500, exitMaxN: 5, exitGem: 20, exitCombo: 3, boxN: 4,   // 退出挽留：概率；当天练满 25 分钟不留；最多再答几题；差多少碎片算「差一点」；能量差几格；宝箱要答几题
     gapMin: 150, gapMax: 240,                    // 两次弹出之间的有效学习秒数
-    offerSec: 20, dblSec: 45, dblMax: 4, dblMinN: 3,   // 双倍挑战：20 秒内点才算；限时秒数；每天次数；题数下限
+    offerSec: 20, dblSec: 180, dblMax: 4, dblMinN: 3,   // 双倍挑战：20 秒内点才算；限时秒数（10.2 起 3 分钟，原 45 秒）；每天次数；题数下限
+    dblChainAcc: 0.9, dblChainMax: 4, dblMaxN: 40,   // dblMaxN：3 分钟双倍挑战的题数上限（快的孩子 5 秒一题能做 36 道，用限时挑战的 24 会封顶，难度调不上去）             // 10.2：双倍挑战完成且正确率 ≥ 90% 可以再来一次双倍（不占每天次数），每天最多几次
     qcSec: 180, qcMax: 2, qcShare: 0.4, qcMinN: 6, qcMaxN: 24,   // 限时挑战：3 分钟；每天次数；题数范围
     h0: 0.85, hUp: 0.03, hDown: 0.07, hMin: 0.5, hMax: 1.1, stretch: 0.25,   // 难度：赢了略难、输了略易，稳定在约 70% 完成（0.03 ÷ 0.1 = 30% 完不成）；稍难题比例
     restAt: 1800, restSec: 300, restGrace: 30,   // 连续有效学习 30 分钟：30 秒内结束，休息 5 分钟
@@ -47,6 +48,22 @@
     if (!Object.values(o.days || {}).every(isObj) || (o.tickets !== undefined && !Number.isInteger(o.tickets))) return null;
     if (inv.p) { inv.b = (inv.b || 0) + inv.p; } delete inv.p;   // 11-07 的小碎片 2 和金色小碎片 2 一样，并成一种
     return Object.assign(b, o, {inv, seen});
+  }
+  // 思维地点（10.2，中控 11-08）：按一道题给，和练习页一样答对至少 1 个小碎片；思维题想得久是正常的，不按秒答多给。
+  // 有效时间按练习页的口径（effSecs）：按实际用时，最多 30 秒（这里没有标准时间，传 10 秒，上限 = 10 × 3 = 30）。同一题当天再做：普通小碎片（filler）
+  function thinkAnswer(st, o) {
+    let h = 5381; for (const ch of String(o.key)) h = (h * 33 + ch.codePointAt(0)) >>> 0;   // 题目内容可能很长，记短编号
+    const seen = seenToday(st, o.day), k = 'think:' + h.toString(36);
+    addSec(st, o.day, effSecs(o.secs || 0, 10000));
+    if (seen.keys[k]) return filler(st, o.day);
+    seen.keys[k] = 1;
+    if (o.wrong > 0) return filler(st, o.day);   // 试错后才对：和练习页「答错后改对」一样，1 个普通小碎片（审查 11-08）
+    return give(st, 'S', o.mult);   // 不计入当天正确率（D.n / D.ok）：思维地点答错不记，计入会把正确率越做越高（审查 11-08）
+  }
+  // 锻造前提醒用（10.2，中控 11-08：碎片不够要说差多少）：炼宝石凑到 100，炼大碎片要正好 50
+  function forgeGap(r, mode) {
+    const sum = Object.keys(r || {}).reduce((n, t) => n + (VALUE[t] || 0) * (r[t] || 0), 0), need = mode === 'big' ? BIG : GEM;
+    return {sum, need, short: Math.max(0, need - sum), over: mode === 'big' ? Math.max(0, sum - need) : 0};
   }
   // 导入备份里的碎片（「导入进度」只增不减；捣蛋鬼第 1 轮第 11 条，中控 11-08 确认）：返回合并后的新对象，备份读不了返回 null，不改传入的两份
   // 背包按种类取大（不相加：同一份导两次不翻倍）；每天记录、已领按天按字段取大；伙伴罐余额取大（旧备份会让花掉的宝石回来，已接受）；
@@ -206,7 +223,7 @@
   // 题数 = 限时内按空空最近的速度能答对的题数 × 难度系数
   function evTarget(st, kind) {
     const e = evState(st), T = kind === 'dbl' ? TUNE.dblSec : TUNE.qcSec, lo = kind === 'dbl' ? TUNE.dblMinN : TUNE.qcMinN;
-    return {T, n: Math.max(lo, Math.min(TUNE.qcMaxN, Math.round(T / e.sec * e.acc * evHard(st, kind))))};
+    return {T, n: Math.max(lo, Math.min(kind === 'dbl' ? TUNE.dblMaxN : TUNE.qcMaxN, Math.round(T / e.sec * e.acc * evHard(st, kind))))};
   }
   // 出题：开头 2 道会的先稳住信心，之后约 1/4 稍难。会的 = 学过且不超过当前级别；稍难 = 高 1 级或没学过的格子
   function pickEv(S, st, want, top, r) {
@@ -226,7 +243,8 @@
     }
     return out;
   }
-  function evStart(st, day, kind, retry) { const D = dayOf(st, day); if (!retry) { if (kind === 'dbl') D.dbl = (D.dbl || 0) + 1; else D.qc = (D.qc || 0) + 1; } }
+  // retry：失败后再挑战一次；'chain'：答得非常好、奖励的再来一次。都不占每天的次数
+  function evStart(st, day, kind, retry) { const D = dayOf(st, day); if (retry === 'chain') D.dblChain = (D.dblChain || 0) + 1; else if (!retry) { if (kind === 'dbl') D.dbl = (D.dbl || 0) + 1; else D.qc = (D.qc || 0) + 1; } }
   // 结束：赢了略难、输了略易；发奖；记录。限时挑战发 1 颗宝石，双倍挑战把这一关得的碎片再给一份
   function evEnd(st, day, o) {
     const e = evState(st), D = dayOf(st, day), won = o.done >= o.n;
@@ -235,7 +253,8 @@
     let gem = 0, bonus = 0;
     if (won && o.kind === 'qc' && D.forged < DAY_MAX) { D.forged++; D.qcWon = (D.qcWon || 0) + 1; gem = 1; }
     if (won && o.kind === 'dbl') Object.keys(o.earned || {}).forEach(t => { if (VALUE[t]) { st.inv[t] = (st.inv[t] || 0) + o.earned[t]; bonus += o.earned[t]; } });
-    return {won, gem, bonus};
+    const chain = won && o.kind === 'dbl' && o.ans > 0 && o.done / o.ans >= TUNE.dblChainAcc && (D.dblChain || 0) < TUNE.dblChainMax;   // 答得非常好：再来一次双倍
+    return {won, gem, bonus, chain};
   }
   function evStats(st) {
     const e = evState(st), l = e.log, won = l.filter(x => x.won).length;
@@ -421,6 +440,6 @@
     return got;
   }
 
-  return {mergeBackup, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });

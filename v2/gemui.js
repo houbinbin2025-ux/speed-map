@@ -11,6 +11,14 @@
   const auto = () => c.E.autoLevel(S());
   function syncNow() { if (on) { G.sync(st, S(), auto()); save(); } }
 
+  // 思维地点答对（10.2，中控 11-08）：按一道题给碎片、算有效时间。key 区分题目，同一题当天再做只给普通小碎片
+  function answerThink(o) {
+    if (!on || !c.canWrite() || S().oral) return null;
+    const secs = Math.max(0, +o.secs || 0), got = G.thinkAnswer(st, {day: c.today(), key: o.key, wrong: o.wrong, secs});
+    G.noteRest(st, G.effSecs(secs, 10000), clock()); save();
+    (got || []).forEach((t, i) => floatShard(t, i));
+    return got;
+  }
   // 备份（捣蛋鬼第 1 轮第 11 条）：导出带上整份碎片；导入时 merge = 只增不减，all = 整份替换。内存里的 st 一起换掉再存，不然下次保存会盖回去
   function exportState() { return on && st ? JSON.parse(JSON.stringify(st)) : null; }
   function importBackup(obj, mode) {
@@ -64,6 +72,7 @@
       got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, rand: oddRand});
       credit(q, got); if (got && !got.rep) got.forEach(t => { evc.earned[t] = (evc.earned[t] || 0) + 1; });   // 改对、重复题的小碎片不翻倍
       if (r.ok && !r.dunno && !q.peeked) evc.done++;
+      evc.ans = (evc.ans || 0) + 1;   // 答了几题（算正确率，答得非常好才能再来一次双倍）
       evLater();
     } else if (q.kind === 'challenge') {
       got = G.challengeAnswer(st, {day: q.day, inst: x.inst, ok: r.ok && !q.peeked, slow: r.ok && !r.fast, dunno: r.dunno || q.peeked, oral: S().oral});
@@ -182,7 +191,7 @@
     const prev = c.curQ() === q ? c.leaveQ() : q;
     G.evStart(st, day, kind, retry); save();
     let i = 0;
-    evPop(kind === 'dbl' ? `${tg.T} 秒答对 ${tg.n} 题，碎片翻倍` : `3 分钟答对 ${tg.n} 题`, 'gold'); blip([[660, 0, 0.08], [990, 0.08, 0.12]]);
+    evPop(kind === 'dbl' ? (tg.T % 60 ? `${tg.T} 秒答对 ${tg.n} 题，碎片翻倍` : `${tg.T / 60} 分钟答对 ${tg.n} 题，碎片翻倍`) : `3 分钟答对 ${tg.n} 题`, 'gold'); blip([[660, 0, 0.08], [990, 0.08, 0.12]]);
     c.startQ('challenge', {sess: {next: () => (i < qs.length ? {kind: 'q', inst: qs[i++], seg: 'challenge'} : null), answer: () => null},
       evc: {kind, n: tg.n, T: tg.T, until: clock() + tg.T, done: 0, earned: {}, retry, prev}});
     evRun = c.curQ(); evTick();
@@ -197,24 +206,26 @@
     evRun = q; evTick();
   }
   function evResult(q) {
-    const v = q.opts.evc, res = G.evEnd(st, q.day, {kind: v.kind, n: v.n, done: v.done, earned: v.earned, retry: v.retry}); save();
+    const v = q.opts.evc, res = G.evEnd(st, q.day, {kind: v.kind, n: v.n, done: v.done, ans: v.ans || 0, earned: v.earned, retry: v.retry}); save();
     if (res.won && v.prev) { if (res.gem) v.prev.qcWon = (v.prev.qcWon || 0) + 1; }
     if (v.prev) {   // 挑战里得的碎片（和翻倍的那份）算进原练习的「这次的碎片」
       const pg = v.prev.gem = v.prev.gem || {}, add = o => Object.keys(o || {}).forEach(t => { pg[t] = (pg[t] || 0) + o[t]; });
       add(q.gem); if (res.bonus) add(v.earned);
     }
-    const canRetry = !res.won && v.kind === 'dbl' && !v.retry && !G.restDue(st);
+    const canRetry = !res.won && v.kind === 'dbl' && !v.retry && !G.restDue(st), chain = res.chain && !G.restDue(st);   // 答得非常好：再来一次双倍（10.2）
     const name = v.kind === 'dbl' ? '双倍挑战' : '限时挑战';
     c.$('qsum').innerHTML = `<div class="col" style="flex:1;justify-content:center;align-items:center;gap:12px">
       <div style="font-size:28px;font-weight:900">${res.won ? `${name}完成` : `${name}结束`}</div>
       <div style="font-size:18px">答对 ${v.done} / ${v.n} 题</div>
       ${res.gem ? `<div class="gemline"><img src="${gemURL()}" alt="" style="width:36px;image-rendering:pixelated"><span>宝石 +1</span></div>` : ''}
       ${res.bonus ? `<div class="gemline" style="font-size:18px;font-weight:900;color:var(--warn)">碎片翻倍 +${res.bonus}</div>` : ''}
-      <div class="gembtns">${canRetry ? '<button class="btn go" id="evRetry">再挑战一次</button>' : ''}<button class="btn${canRetry ? '' : ' go'}" id="evBack">继续练习</button></div></div>`;
+      ${chain ? '<div style="font-size:18px;font-weight:900">答得非常好</div>' : ''}
+      <div class="gembtns">${canRetry ? '<button class="btn go" id="evRetry">再挑战一次</button>' : ''}${chain ? '<button class="btn go" id="evChain">再来一次双倍</button>' : ''}<button class="btn${canRetry || chain ? '' : ' go'}" id="evBack">继续练习</button></div></div>`;
     c.show('qsum');
     if (res.won) blip([[660, 0, 0.1], [880, 0.09, 0.1], [1320, 0.18, 0.22]]); else blip([[300, 0, 0.1], [240, 0.1, 0.14]], 'triangle');
     c.$('evBack').addEventListener('click', () => { if (v.prev) resume(v.prev); else c.goIsland(); });
     if (canRetry) c.$('evRetry').addEventListener('click', () => { startEv(v.prev, 'dbl', true); });
+    if (chain) c.$('evChain').addEventListener('click', () => { startEv(v.prev, 'dbl', 'chain'); });
   }
   // 长按结束：最多 20% 弹出挽留，只用「差一点就到手」的理由（规则见 G.exitHook）。接受后顶部出现小目标；一次练习最多一次，选结束直接走
   function gateQuit(q, done) {
@@ -435,8 +446,9 @@
     if (!slots.length) { msg = '先放碎片'; return draw(); }
     const r = {}; slots.forEach(t => { r[t] = (r[t] || 0) + 1; });
     const big = mode === 'big', warn = big ? !G.exactBig(r) : !G.enough(r) && !G.dayFull(st, c.today());
-    if (!sure && warn) {   // 开炉前提醒。不说差多少、多多少，算数留给孩子
-      const w = c.$('forgeWarn'); w.querySelector('b').textContent = big ? '合计不是 50，炼不出大碎片' : '碎片不够，炼不出宝石';
+    if (!sure && warn) {   // 开炉前提醒，写清差多少、多多少（10.2，中控 11-08：原来不说，空空两天坚持锻造出 795 点废料）
+      const gp = G.forgeGap(r, big ? 'big' : 'gem'), w = c.$('forgeWarn');
+      w.querySelector('b').textContent = big ? (gp.over ? `合计 ${gp.sum}，多了 ${gp.over}，炼不出大碎片` : `合计 ${gp.sum}，还差 ${gp.short}，炼不出大碎片`) : `合计 ${gp.sum}，还差 ${gp.short}，炼不出宝石`;
       blip([[200, 0, 0.14]], 'triangle'); msg = ''; draw(); w.hidden = false; return;
     }
     const res = big ? G.forgeBig(st, r, c.today()) : G.forge(st, r, c.today());   // 先算先存：动画中途退出也不丢
@@ -525,11 +537,13 @@
   }
   // 答题时碎片从屏幕中间飞向顶部
   function floatShard(t, i) { setTimeout(() => floatNow(t), (i || 0) * 160); }
-  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), to = q && q.width ? q : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
+  // 碎片飞到练习页的计数；思维地点飞到矿石数字正中（审查 11-08：原偏移按练习页宽计数定，在矿石数字上会落到右边、窄屏出界）
+  function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), th = document.querySelector('#think:not([hidden]) #oreN'), to = q && q.width ? q : th ? th.getBoundingClientRect() : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], th && !(q && q.width) ? [to.left + to.width / 2, to.top + to.height / 2] : [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
-  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), importBackup: safe(importBackup, false), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  // api.total：碎片个数（家长一键同步的结果用；按个数和孩子看到的对得上）
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();

@@ -8,6 +8,7 @@ if (process.env.TUNE) Object.assign(G.TUNE, JSON.parse(process.env.TUNE));
 // 秒答假设（拿不到空空的真实秒答比例）：答对里秒答的比例 FAST，秒答里闪电秒答的比例 BOLTP
 // 专注假设：每个孩子 lit = 答题时火苗亮着的比例（默认 0.9，存档里没有每题用时，第 1 周用家长区的专注记录复核）
 const QCM = +(process.env.QCM || 2);   // 限时挑战里碎片倍数（试参数用）
+const THINK = +(process.env.THINK || 0), THINKS = +(process.env.THINKS || 40);   // 思维地点：每天答对几道、平均想几秒（10.2，拿不到真实数据，按假设）
 const FAST = +(process.env.FAST || 0.6), BOLTP = +(process.env.BOLTP || 0.4);
 const speed = ok => { const fast = ok && rnd() < FAST; return {fast, bolt: fast && rnd() < BOLTP}; };
 const S0 = JSON.parse(JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['speedmap.v2']);
@@ -60,23 +61,23 @@ function round(st, S, day, kind, retry, kid, top) {
   const tg = G.evTarget(st, kind), qs = G.pickEv(S, st, tg.n * 2 + 6, top, rnd);
   if (qs.length < tg.n) return {t: 0, won: false};
   G.evStart(st, day, kind, retry);
-  let t = 0, done = 0; const earned = {};
+  let t = 0, done = 0, ans = 0; const earned = {};
   for (const inst of qs) {
     let s1 = kid.s(); const hard = K.levelOf(inst) > top || E.lv(S, inst.id) === 0, p = kid.p({inst}) * (hard ? 0.8 : 1), ok = rnd() < p; if (!ok) s1 += 4;
     if (t + s1 > tg.T) { t = tg.T; break; }
     t += s1; G.addSec(st, day, Math.min(30, s1)); G.notePace(st, s1, ok);
     const sp = speed(ok), got = G.answer(st, {day, inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, inst.id), rand: rnd, mult: kind === "qc" ? QCM : undefined}); if (got && !got.rep) got.forEach(t => { earned[t] = (earned[t] || 0) + 1; });
-    if (ok) done++;
+    ans++; if (ok) done++;
     if (done >= tg.n) break;
   }
-  const r = G.evEnd(st, day, {kind, n: tg.n, done, earned, retry});
-  return {t, won: r.won};
+  const r = G.evEnd(st, day, {kind, n: tg.n, done, ans, earned, retry});
+  return {t, won: r.won, chain: r.chain};
 }
-let qcT = 0, qcW = 0, dbT = 0, dbW = 0;
+let qcT = 0, qcW = 0, dbT = 0, dbW = 0, chT = 0;   // chT：答得非常好、再来一次的双倍挑战（10.2）
 const fmt = x => Math.round(x * 10) / 10;
 const out = {};
 for (const name of Object.keys(KIDS)) {
-  const kid = KIDS[name]; let eff = 0, gems = 0, qn = 0, crit = 0, ticketsN = 0, lastN = 0; qcT = qcW = dbT = dbW = 0;
+  const kid = KIDS[name]; let eff = 0, gems = 0, qn = 0, crit = 0, ticketsN = 0, lastN = 0; qcT = qcW = dbT = dbW = chT = 0;
   for (let sd = 1; sd <= SEEDS; sd++) {
     seed = sd * 7919;
     const S = JSON.parse(JSON.stringify(S0)), st = G.blank(); G.sync(st, S, E.autoLevel(S));
@@ -91,7 +92,7 @@ for (const name of Object.keys(KIDS)) {
           const secs = G.effSecs(s1, K.fastMs(x.inst, {speed: 800})); clock += s1; const effNow = G.addSec(st, day, secs); eff += secs; qn++; if (!x.retry) G.notePace(st, secs, ok);
           const lit = rnd() < (kid.lit === undefined ? 0.9 : kid.lit), crit = G.critOn(CB, clock), mult = 1 + (lit ? 1 : 0) + (crit ? 1 : 0);
           const e = G.eventStep(st, day, R, effNow, clock, rnd, lit && !crit);
-          if (e.offer && rnd() < (kid.take || 0)) { const k = G.acceptOffer(R, clock); if (k) { let r2 = false; for (;;) { const w = round(st, S, day, k, r2, kid, top); eff += w.t; clock += w.t; if (k === 'qc') { qcT++; if (w.won) qcW++; } else { dbT++; if (w.won) dbW++; } if (w.won || k !== 'dbl' || r2 || rnd() > 0.8) break; r2 = true; } } }
+          if (e.offer && rnd() < (kid.take || 0)) { const k = G.acceptOffer(R, clock); if (k) { let r2 = false; for (;;) { const w = round(st, S, day, k, r2, kid, top); eff += w.t; clock += w.t; if (k === 'qc') { qcT++; if (w.won) qcW++; } else { dbT++; if (w.won) dbW++; if (r2 === 'chain') chT++; } if (w.chain && rnd() < (kid.take || 0)) { r2 = 'chain'; continue; } if (w.won || k !== 'dbl' || r2 || rnd() > 0.8) break; r2 = true; } } }
           const sp = speed(ok), got = G.answer(st, {day, inst: x.inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, x.inst.id), dunno: du, retry: x.retry, mistake: !!x.mkey, rand: rnd, mult});
           if (got && !got.rep && sp.fast) G.speedBonus(st, day, sp.bolt, mult);
           if (!x.retry && !(got && got.rep)) G.comboStep(st, day, CB, clock, {ok, fast: sp.fast, dunno: du});
@@ -100,6 +101,7 @@ for (const name of Object.keys(KIDS)) {
         if (o.ticket && sess.done && cnt >= 10 && G.earnTicket(st, {done: true, n: cnt})) tickets++;
       };
       kid.plan(S, day, run);
+      for (let i = 0; i < THINK; i++) { const raw = THINKS * (0.5 + rnd()); eff += G.effSecs(raw, 10000); G.thinkAnswer(st, {day, key: 'sim:' + i, secs: raw}); }   // 思维地点答对（10.2）
       if (kid.ch) while (st.tickets > 0 && G.startChallenge(st)) {
         ticketsN++; const qs = G.pickChallenge(S, G.top(st, E.autoLevel(S)), rnd, st); let w = 0;
         for (const inst of qs) { const secs = Math.min(30, kid.s() * 1.5); G.addSec(st, day, secs); eff += secs; { const ok = rnd() < kid.ch, sp = speed(ok); if (G.challengeAnswer(st, {day, inst, ok, slow: ok && !sp.fast}) === 'm') w++; } }
@@ -114,7 +116,7 @@ for (const name of Object.keys(KIDS)) {
     }
   }
   const D = DAYS * SEEDS;
-  out[name] = {min: fmt(eff / D / 60), q: Math.round(qn / D), gem: fmt(gems / D), ratio: gems ? fmt(eff / 60 / gems) : null, crit: fmt(crit / D), dbl: `${fmt(dbT / D)}次/${dbT ? Math.round(dbW / dbT * 100) : '-'}%`, qc: `${fmt(qcT / D)}次/${qcT ? Math.round(qcW / qcT * 100) : '-'}%`};
+  out[name] = {min: fmt(eff / D / 60), q: Math.round(qn / D), gem: fmt(gems / D), ratio: gems ? fmt(eff / 60 / gems) : null, crit: fmt(crit / D), dbl: `${fmt(dbT / D)}次/${dbT ? Math.round(dbW / dbT * 100) : '-'}%/再来${fmt(chT / D)}`, qc: `${fmt(qcT / D)}次/${qcT ? Math.round(qcW / qcT * 100) : '-'}%`};
 }
 console.log('练法\t有效分钟\t题\t宝石\t比例\t暴击\t双倍挑战(完成率)\t限时挑战(完成率)');
 for (const n in out) { const r = out[n]; console.log([n, r.min, r.q, r.gem, r.ratio + ':1', r.crit, r.dbl, r.qc].join('\t')); }
