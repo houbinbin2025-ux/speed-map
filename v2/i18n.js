@@ -510,7 +510,14 @@
     '分母一样，比分子：分子大的大': 'Same denominator: compare the numerators', '分母越大，每份越小，大的是：': 'Bigger denominator, smaller parts. Bigger one:',
     '两条一样长，涂的一样多': 'Same length, same amount colored', 分数条: 'Fraction bar',
   });
+  // 级别说明（skills.js LEVEL_TOPICS）：内容词用顿号连起来，逐词翻，用逗号连
+  Object.assign(D, {接规律: 'Patterns', 加减应用题: 'Word problems', '10 以内秒答': 'Speed facts to 10', 十格框: 'Ten frames', 过十加减: 'Bridging 10', 应用题: 'Word problems', 进退位加减: 'Regrouping',
+    算式比大小: 'Comparing sums', 百格图: 'Hundred chart', 百十个: 'Hundreds, tens, ones', 三位数比大小: 'Comparing 3-digit numbers', 乘法入门: 'Times 2, 5, 10', 全部口诀: 'All times tables',
+    千克和千米: 'Kilograms and kilometers', 多位数乘除一位数: 'Multiply and divide by 1 digit', 速度: 'Speed', 买东西: 'Shopping', 单价: 'Unit price', 年月日: 'Years, months, days',
+    三位数乘两位数: '3-digit × 2-digit', 简便算: 'Shortcuts'});
+  const LIST = [[/^[^、]+(、[^、]+)+$/, s => { const l = s.split('、').map(one); return l.some(x => x === null) ? null : l.join(', '); }]];
   P.unshift(...P2A, ...P2B, ...P34);
+  P.push(...LIST);
   const AFTER = [
     [/^ 个百$/, o => (o ? ' hundred' : ' hundreds')], [/^ 个十$/, o => (o ? ' ten' : ' tens')], [/^ 个一$/, o => (o ? ' one' : ' ones')],
     [/^ 个十和 (\d+) 个一$/, (o, n) => ` ${o ? 'ten' : 'tens'} and ${pl(n, 'one')}`],
