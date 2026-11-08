@@ -86,9 +86,12 @@ test('同一道错题两边状态不同：取最近一次复习的那条，互�
   B.S.mistakes['cmp1:a'] = Object.assign({}, review, {passes: 0, due: '2026-11-08', last: '2026-11-07'});
   receive(A, send(B));
   assert.equal(A.S.mistakes['cmp1:a'].due, '2026-11-08');
-  // 同一天：已过关的优先，再看过了几关
-  assert.equal(C.newerMistake({last: 'd', due: null, passes: 5}, {last: 'd', due: 'x', passes: 2}).due, null);
-  assert.equal(C.newerMistake({last: 'd', due: 'x', passes: 1}, {last: 'd', due: 'y', passes: 3}).passes, 3);
+  // 同一天两边结果不同：没过关的、过的关少的优先（同一天有一次答错就按答错算，审查 R2）
+  assert.equal(C.newerMistake({last: '2026-11-08', due: null, passes: 5}, {last: '2026-11-08', due: 'x', passes: 0}, '2026-11-08').due, 'x');
+  assert.equal(C.newerMistake({last: '2026-11-08', due: 'x', passes: 3}, {last: '2026-11-08', due: 'y', passes: 0}, '2026-11-08').passes, 0);
+  const same = {last: '2026-11-08', due: 'x', passes: 1}; assert.equal(C.newerMistake(same, Object.assign({}, same), '2026-11-08'), same, '完全一样留本机');
+  // 晚于今天的 last 当今天：时钟错的设备不能一直赢（审查 R2）
+  assert.equal(C.newerMistake({last: '2026-11-08', due: 'x', passes: 0}, {last: '9999-01-01', due: null, passes: 5}, '2026-11-08').due, 'x');
 });
 
 test('文件名带日期；「上次同步」几天前', () => {

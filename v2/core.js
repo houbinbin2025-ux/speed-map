@@ -407,13 +407,15 @@
   }
   const syncName = day => `空空数学岛-进度-${day}.json`;
   const syncAgo = (at, now) => (Number.isFinite(at) && at > 0 && at <= now + 6e4 ? dayDiff(dayOf(at), dayOf(now)) : null);   // 按日历天；坏值、未来时间当没同步过（审查 R1）
-  // 同一道错题两边都有：取最近一次复习的那条（last 晚的，每次复习都会更新 last）；同一天取进度靠后的：已过关优先，再看过了几关；完全一样留本机
-  function newerMistake(a, b) {
+  // 同一道错题两边都有：取最近一次复习的那条（last 晚的，每次复习都会更新 last；晚于今天的当今天，防时钟错的设备一直赢）；
+  // 同一天两边都复习过、结果不同：取没过关、过的关少的那条（同一天有一次答错就按答错算，学习效果优先，审查 R2）；完全一样留本机
+  function newerMistake(a, b, today) {
     if (!a) return b; if (!b) return a;
-    const la = a.last || '', lb = b.last || '';
+    const t = today || dayOf(Date.now()), cap = d => (d && d > t ? t : d || '');
+    const la = cap(a.last), lb = cap(b.last);
     if (la !== lb) return lb > la ? b : a;
-    if ((a.due === null) !== (b.due === null)) return b.due === null ? b : a;
-    return (b.passes || 0) > (a.passes || 0) ? b : a;
+    if ((a.due === null) !== (b.due === null)) return b.due === null ? a : b;
+    return (b.passes || 0) < (a.passes || 0) ? b : a;
   }
   function mergeMistakes(local, other) {
     const M = Object.assign({}, other, local);
