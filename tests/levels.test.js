@@ -136,3 +136,25 @@ test('20 以内分合要先会凑十（捣蛋鬼第 1 轮第 6 条）', () => {
   const K = require('../v2/skills.js');
   assert.deepEqual(K.BY.bondH3.pre, ['bond3']); assert.ok(K.topoOk());
 });
+
+// 级别说明和实际出题一致（中控 11-08，Ben：「新内容加入时定级没有增补和调整」）。新增技能或题型：在 skills.js 的 TOPIC 写内容词，
+// 并把这个词写进它出题的每一级的 LEVEL_TOPICS；确实不该写进说明的，加进下面的 WHITELIST 并写理由
+const A = require('../tools/level-audit.js');
+const WHITELIST = {};   // {技能编号: '理由'}，目前没有
+test('级别说明 = 这一级实际出的内容：每个技能有内容词，出题的每一级说明里都有它；说明里的每个词这一级都真的出', () => {
+  A.ALL.forEach(s => { if (!s.speed && !WHITELIST[s.id]) assert.ok(K.TOPIC[s.id], `${s.id}（${s.name}）没写内容词：在 skills.js 的 TOPIC 里加，并写进它所在级别的说明`); });
+  A.audit().forEach(l => {
+    const L = K.LEVELS[l.n - 1], got = new Set(l.skills.filter(s => !WHITELIST[s.id]).map(s => K.topicOf(K.BY[s.id], l.n)));
+    assert.equal(new Set(L.topics).size, L.topics.length, `第 ${l.n} 级说明有重复的词`);
+    got.forEach(t => assert.ok(t && L.topics.includes(t), `第 ${l.n} 级实际出「${t}」，说明里没写（${l.skills.filter(s => K.topicOf(K.BY[s.id], l.n) === t).map(s => s.id).join('、')}）`));
+    L.topics.forEach(t => assert.ok(got.has(t), `第 ${l.n} 级说明写了「${t}」，这一级其实不出`));
+    assert.equal(L.what, L.topics.join('、'));
+  });
+});
+
+test('思维地点每一档都有建议级别（1–15），和 puzzles.js 的地点、分档一一对应', () => {
+  const P = require('../v2/puzzles.js');
+  assert.deepEqual(Object.keys(K.THINK_LEVEL).sort(), P.MODULES.map(m => m.id).sort(), '新加思维地点要在 skills.js 的 THINK_LEVEL 定建议级别');
+  P.MODULES.forEach(m => { const l = K.THINK_LEVEL[m.id]; assert.equal(l.length, m.tiers.length, `${m.name} 分档数变了，建议级别要跟着改`);
+    l.forEach((n, i) => { assert.ok(Number.isInteger(n) && n >= 1 && n <= 15, m.id); if (i) assert.ok(n >= l[i - 1], `${m.name} 后面的档不该比前面的低`); }); });
+});
