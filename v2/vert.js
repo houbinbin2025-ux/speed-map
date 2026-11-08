@@ -14,7 +14,11 @@
   const BOARD = ['speed:g10:rem', 'speed:g10:quo', 'place:g10:thou', 'market:g10:conv', 'market:g10:span', 'dock:g10:remain', 'dock:g10:two', 'speed:g11:divrem',
     'dock:g11:perim', 'dock:g11:times', 'dock:g11:two', 'dock:g11:speed', 'dock:g11:part', 'speed:g12:dec', 'dock:g12:area', 'dock:g12:price', 'market:g12:24', 'market:g12:year',
     'speed:g13:order', 'place:g13:round', 'dock:g13:unit', 'dock:g13:speed', 'dock:g13:share', 'speed:g14:law', 'speed:g14:lawfill', 'speed:g14:dec2', 'speed:g14:move',
-    'dock:g14:avg', 'dock:g14:meet', 'dock:g14:tri', 'market:g14:unit', 'place:g15:lcm', 'place:g15:gcd', 'dock:g15:three', 'dock:g15:sumdiff', 'dock:g15:timessum', 'dock:g15:legs', 'dock:g15:age'];
+    'dock:g14:avg', 'dock:g14:meet', 'dock:g14:tri', 'market:g14:unit', 'place:g15:lcm', 'place:g15:gcd', 'dock:g15:three', 'dock:g15:sumdiff', 'dock:g15:timessum', 'dock:g15:legs', 'dock:g15:age',
+    // 中控 11-08：2a 看图题（线段图、条形图、长方形）和 2b-1 分数手写题也用蓝框，统一点「写好了」交卷；题面的图 / 上下结构分数放在版面上方
+    'dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum',
+    'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv'];
+  const FIG = ['bar', 'chart', 'rect'];   // 看图题：正确写法不重复题面（讲解里有算式）
   const OPS = {'+': '+', '−': '-', '-': '-', '×': '×', '÷': '÷'};
   // 答案格数：方框夹在数字中间（2.□、11.□8）就一格；否则比答案多一格（不泄露位数到个位）
   // maxLen：这个题型里最长的答案有几位（页面从题库算好传进来），格数按它定，不随这道题变，免得格子数泄露位数
@@ -23,7 +27,7 @@
     if (!Number.isInteger(ans) || ans < 0) return null;
     // 小数加减写完整得数（q.dp = 小数位数，ans 是去掉小数点的整数）：答案格里印一个固定小数点，孩子不写点
     const dp = q.dp > 0 ? q.dp : 0, inNum = !dp && /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
-    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
+    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : FIG.includes(q.view) ? 'fig' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
   }
   const TAP_MS = 1500;   // 点「写好了」的时间，不算进用时
   function parse(inst, maxLen) {
@@ -230,6 +234,8 @@
     }
     const box = v => `<b class="vfillv">${v}</b>`;
     const full = p.dp ? (p.ans / 10 ** p.dp).toFixed(p.dp) : p.ans;
+    if (p.kind === 'fill' && p.ahtml) return {html: `<div class="vls"><div>${p.ahtml}</div></div>`, steps: []};   // 页面传进来的整式（分数上下结构，render.js fr）
+    if (p.kind === 'fig') return {html: '', steps: []};
     if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : full)) : p.text.replace(/=\s*$/, '= ' + box(full))}</div></div>`, steps: []};
     if (p.kind === 'word') return {html: '', steps: []};
     const B = build(p); return {html: renderB(B, all), steps: B.steps};
@@ -247,7 +253,7 @@
   const minis = n => Array.from({length: n}, () => '<div class="vmini"><canvas></canvas></div>').join('');
   const digs = (s, n) => Array(n - String(s).length).fill('').concat(String(s).split('')).map(d => `<div>${d}</div>`).join('');
   function layout(p, en) {
-    if (p.kind === 'step' || p.kind === 'fill' || p.kind === 'word') {
+    if (p.kind === 'step' || p.kind === 'fill' || p.kind === 'word' || p.kind === 'fig') {
       const rows = p.kind === 'step' ? [0, 1].map(() => `<div class="veq"><b>=</b><div class="vstrip vplain"><canvas></canvas></div></div>`).join('') : '';
       return `<div class="vboard vb-${p.kind}"><div class="vbq">${p.qhtml || ''}</div><div class="vcard">${rows}
         <div class="vrow" style="grid-template-columns:80px 1fr"><div class="vlab">${L('draft', en)}</div><div class="vgrid vstrip"><canvas></canvas></div></div>
@@ -327,6 +333,7 @@
 .vq .vres{position:absolute;right:0;top:0;bottom:0;width:55%;background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
 .vq .vres.show{transform:none}
 .vq .vres .explain{color:#e6e3da}
+#qplay #qWide .vq .vres .explain{display:flex;flex-direction:column;gap:8px;align-items:stretch}   /* 宽版讲解的两栏规则（index.html #qplay.wide #qWide .explain）不用在讲解栏里：看图题的图会被挤进 0 宽的一栏 */
 .vq .vres .vresc{flex:1;min-height:0;overflow-y:auto}.vq .vres .vresi{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .vq .vres .vresh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .vq .vres .vfoot{flex:none;display:flex;align-items:center;gap:12px}
