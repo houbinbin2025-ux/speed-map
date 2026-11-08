@@ -6,19 +6,19 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
   const CSS = `#think{--bg:var(--cave);--panel:#23262d;--go-dk:#3f7a22}   /* 颜色用全局 :root（视觉规范 1.2，E-3）；这里只定思维页自己才有的面板色和深绿按钮 */
-#think button{font:inherit;color:var(--ink);background:var(--stone);border:3px solid #000;min-height:60px;cursor:pointer;font-size:20px;font-weight:700;padding:0 12px}
+#think button{font:inherit;color:var(--ink);background:var(--stone);border:3px solid #000;min-height:62px;cursor:pointer;font-size:20px;font-weight:700;padding:0 12px}
 #think button:active{transform:translateY(2px)}
 #think button[disabled]{opacity:.35}
 #think button.go{background:var(--go-dk);box-shadow:inset 0 -5px 0 #2c5a18,inset -5px 0 0 #2c5a18}
-#think .bar{display:flex;align-items:center;gap:8px;height:52px}
-#think .bar button{min-height:50px;font-size:16px;padding:0 10px}
+#think .bar{display:flex;align-items:center;gap:8px;height:56px}
+#think .bar button{min-height:54px;font-size:16px;padding:0 10px}
 #think .tabs{display:flex;gap:4px;flex:1;min-width:0}
 #think .tabs button{flex:1;min-width:0;padding:0 2px;font-size:15px;font-weight:500;color:var(--mute);white-space:nowrap}
 #think .tabs button.on{border-color:var(--warn);color:var(--ink);font-weight:700}
 #think .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.25}#think .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}#think .tabs .tlv{font-size:12px;font-weight:500;color:var(--dim)}
 #think .ore{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;padding:0 10px;height:46px;background:#000}
 #think .ore i{width:18px;height:18px;background:var(--warn);border:2px solid #7a5a12;display:block}
-#think .main{display:flex;gap:14px;height:304px;margin-top:4px}
+#think .main{display:flex;gap:14px;height:300px;margin-top:4px}
 #think .col{min-width:0;display:flex;flex-direction:column;position:relative}
 #think .say{font-size:22px;font-weight:700;line-height:1.3;min-height:30px}
 #think .sub{font-size:16px;color:var(--mute);line-height:1.35}
@@ -31,7 +31,7 @@
 #think .eq b.empty{color:transparent}
 #think .eq b.cur{border-color:var(--warn)}
 #think .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
-#think .keys button{font-size:24px;min-height:60px;padding:0}
+#think .keys button{font-size:24px;min-height:62px;padding:0}
 #think .acts{display:flex;gap:8px;margin-top:auto}
 #think .acts button{flex:1}
 #think .grow{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
@@ -52,7 +52,7 @@
 #think .found{width:100%}
 #think .found span{color:var(--ok);font-weight:700;margin-right:10px;white-space:nowrap;display:inline-block}
 #think .signs{display:flex;gap:8px}
-#think .signs button{flex:1;font-size:30px;min-height:56px;padding:0}
+#think .signs button{flex:1;font-size:30px;min-height:61px;padding:0}
 #think .signs button.on{border-color:var(--warn)}
 #think .grid{display:grid;gap:3px;background:#000;padding:3px;width:max-content}
 #think .grid button{padding:0;min-height:0;border:0;background:var(--paper);color:#222;font-size:30px;font-weight:800;display:block}
