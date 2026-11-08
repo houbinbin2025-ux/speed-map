@@ -37,6 +37,13 @@ with sync_playwright() as p:
     pg.close(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e))); pg.goto(url)   # 先关掉旧页（关页时会存一次进度），再种新数据
     seed_with(pg, None, []); enter(pg)
     check(pg.evaluate("__sm.S.home.pets") is None, '没学会技能：不写空列表：' + str(pg.evaluate("__sm.S.home.pets")))
+    tap_art(pg, pg.evaluate('__sm.HS.BOOK.x') + 6, 50); pg.wait_for_timeout(300)   # 审查 11-08：这时打开图鉴曾报错崩溃
+    check(pg.is_visible('#h_book') and not errs, '没学会技能：图鉴能打开、不报错：' + str(errs[:1]))
+    # 4 合并进来的伙伴本机全都没学会：进屋直接补成本机学会的，不出现 0 只
+    pg.close(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e))); pg.goto(url)
+    OTHER = pg.evaluate("__sm.K.SKILLS.filter(s => s.items.length && !s.speed).slice(4, 8).map(s => s.id)")
+    seed_with(pg, OTHER, SKILLS[:2]); enter(pg)
+    got = pg.evaluate("__sm.S.home.pets"); check(isinstance(got, list) and len(got) == 2 and set(got) <= set(SKILLS[:2]), f'伙伴都没学会：进屋补成本机的：{got}')
     b.close()
 print('页面报错:', errs[:3])
 if fails or errs: print('FAIL', len(fails), '项'); sys.exit(1)

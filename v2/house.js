@@ -389,8 +389,8 @@
   const isGold = sid => E0.medals.some(m => m.kind === 'gold' && m.skill.id === sid);
   function syncPets() {
     const h = S.home, L = learned();
-    if ((!h.pets || !h.pets.length) && L.length) h.pets = L.slice(-3);   // 没选过，或旧漏洞留下的空数组（新设备还没学会技能时被写成 []）：学会了就自动带 3 个回家（C 模块，中控 11-08 批准）
-    if (h.pets) h.pets = h.pets.filter(i => L.includes(i));
+    if (h.pets) h.pets = h.pets.filter(i => L.includes(i));   // 先去掉没学会的（导入合并进来的可能本机没学会）
+    if ((!h.pets || !h.pets.length) && L.length) h.pets = L.slice(-3);   // 没选过、旧漏洞留下的空数组、或过滤后空了：学会了就自动带 3 个回家（C 模块，中控 11-08 批准）
     pets = (h.pets || []).map((i, k) => (pets.find(p => p.i === i) || {i, x: 442 + k * 70, dir: k % 2 ? -1 : 1, hop: 0}));
   }
   function drawHero(f) {
@@ -502,7 +502,7 @@
   // ---------- 伙伴图鉴 ----------
   function showBook() {
     closeSheet(); const v = el('h_book'), L = learned(), SK = K.SKILLS;
-    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2><span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${S.home.pets.includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="18" height="16"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
+    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2><span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${(S.home.pets || []).includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="18" height="16"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
     v.hidden = false; v.querySelectorAll('canvas[data-c]').forEach(c => { const i = c.dataset.c; A.creature(c.getContext('2d'), crOf(i), 0, 16, 0, L.includes(i) ? {} : {shadow: '#0c0d10'}); });
     el('h_bkClose').onclick = closeBook;
     v.querySelector('.bkg').onclick = e => {
