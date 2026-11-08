@@ -202,7 +202,7 @@ with sync_playwright() as p:
     # 专注火苗：一进来就亮，碎片是金色；熄灭后是普通碎片
     pp = forced(NOEV); play(pp, 1); toq(pp); pp.wait_for_timeout(600)
     check(pp.locator('#qFire.on').is_visible() and pp.locator('#qFire b').inner_text() == '×2', '一进来火苗就亮，显示 ×2')
-    fit = pp.evaluate("(()=>{const r=e=>document.getElementById(e).getBoundingClientRect(),f=r('qFeel'),q=r('qQuit');return f.right<=innerWidth+0.5&&f.top>=0&&q.right<=f.left&&r('qCombo').height>=40})()"); check(fit, '火苗和能量格不超屏、不挡结束按钮'); pp.screenshot(path=str(out / f'fire-on-{W}.png'))
+    fit = pp.evaluate("(()=>{const r=e=>document.getElementById(e).getBoundingClientRect(),f=r('qFeel'),ov=b=>!(f.right<=b.left||b.right<=f.left||f.bottom<=b.top||b.bottom<=f.top),q=r('qQuit');return f.right<=innerWidth+0.5&&f.top>=0&&!['qQuit','qBar','qMined','qTag'].some(id=>ov(r(id)))&&q.height<=52&&r('qBar').width>=70&&r('qCombo').height>=24})()"); check(fit, '火苗和能量格浮在右上角，不压顶栏和题签；长按结束一行、铁轨不被挤（捣蛋鬼第 1 轮第 5 条，各状态全面检查见 e2e-feel.py）'); pp.screenshot(path=str(out / f'fire-on-{W}.png'))
     check(inv(pp, 'b') + inv(pp, 'm') >= 1 and inv(pp, 'a') + inv(pp, 's') == 0, '火苗亮：得金色碎片')
     pp.evaluate("__sm.Q.focus.w=[[120,0]]; __sm.Q.focus.at=Date.now()/1000; __sm.Q.focus.last=0"); pp.wait_for_timeout(700)
     check(pp.locator('#qFire.on.low').count() == 1 and '火苗' in pp.locator('#gemEv').inner_text(), '专注掉到 70% 以下：火苗先闪，提示答题保持：' + pp.locator('#gemEv').inner_text())
