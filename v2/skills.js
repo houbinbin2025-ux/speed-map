@@ -215,9 +215,9 @@
     dockA: 3, dockB: 3, dockC: 4, dockD: 4, dockH1: 4, dockH2: 5, dockH3: 6, dockH4: 4, dockH5: 4, dockH6: 5,
     'speed:g10:rem': 5, 'speed:g10:quo': 5, 'speed:g10:add3': 12, 'speed:g10:sub3': 12, 'place:g10:thou': 4, 'market:g10:conv': 6, 'market:g10:span': 6, 'dock:g10:remain': 6, 'dock:g10:two': 20,
     'speed:g11:mul': 15, 'speed:g11:div': 20, 'speed:g11:divrem': 8, 'dock:g11:perim': 10, 'dock:g11:times': 15, 'dock:g11:two': 15, 'dock:g11:speed': 10, 'dock:g11:part': 15,
-    'speed:g12:mul2': 30, 'speed:g12:dec': 6, 'dock:g12:area': 25, 'dock:g12:price': 30, 'market:g12:24': 4, 'market:g12:year': 15,
+    'speed:g12:mul2': 30, 'speed:g12:dec': 8,   /* 小数加减写完整得数（11-08）：整数部分也要算，一位 8 秒、两位 12 秒 */ 'dock:g12:area': 25, 'dock:g12:price': 30, 'market:g12:24': 4, 'market:g12:year': 15,
     'speed:g13:mul3': 45, 'speed:g13:div2': 25, 'speed:g13:order': 20, 'place:g13:round': 5, 'dock:g13:unit': 25, 'dock:g13:speed': 25, 'dock:g13:share': 25,
-    'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 8, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
+    'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 12, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
     'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };

@@ -91,3 +91,9 @@ test('iPad 竖式和秒答时间对齐：点「写好了」的 1.5 秒从用时�
   assert.match(html, /const used = Q\.v\.input === 'write' \|\| Q\.v\.input === 'vert' \? Q\.ms/, '闪电也用扣过的用时');
   Object.keys(VERT.IDS).forEach(id => assert.equal(K.fastClass(id), 'column', id + ' 是竖式，要归多位笔算'));
 });
+
+test('小数加减写完整得数：一位小数想 8 秒、两位小数 12 秒，写字按完整得数的位数（不含小数点）', () => {
+  assert.equal(K.fastThink('speed:g12:dec'), 8); assert.equal(K.fastThink('speed:g14:dec2'), 12);
+  const x = K.rawPool('speed:g14:dec2')[0], inst = {id: 'speed:g14:dec2', q: x.q, ans: x.ans};
+  assert.equal(K.fastMs(inst, {speed: 500}) - K.fastMs(inst, {oral: true, speed: 500}), 500 * C.digits(x.ans));
+});

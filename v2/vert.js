@@ -21,8 +21,9 @@
   function board(inst, maxLen) {
     const q = inst.q || {}, text = String(q.text || ''), ans = inst.ans;
     if (!Number.isInteger(ans) || ans < 0) return null;
-    const inNum = /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
-    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, n: inNum ? 1 : len + 1};
+    // 小数加减写完整得数（q.dp = 小数位数，ans 是去掉小数点的整数）：答案格里印一个固定小数点，孩子不写点
+    const dp = q.dp > 0 ? q.dp : 0, inNum = !dp && /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
+    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
   }
   const TAP_MS = 1500;   // 点「写好了」的时间，不算进用时
   function parse(inst, maxLen) {
@@ -228,7 +229,8 @@
         steps: S.lines.map((l, i) => ({show: [ids[i]], hi: [], say: `先算 ${S.why[i]}`, en: `First ${S.why[i].replace(/，/g, ', ')}`}))};
     }
     const box = v => `<b class="vfillv">${v}</b>`;
-    if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : p.ans)) : p.text.replace(/=\s*$/, '= ' + box(p.ans))}</div></div>`, steps: []};
+    const full = p.dp ? (p.ans / 10 ** p.dp).toFixed(p.dp) : p.ans;
+    if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : full)) : p.text.replace(/=\s*$/, '= ' + box(full))}</div></div>`, steps: []};
     if (p.kind === 'word') return {html: '', steps: []};
     const B = build(p); return {html: renderB(B, all), steps: B.steps};
   }
@@ -239,7 +241,7 @@
     done: ['写好了', 'Done'], clear: ['擦一笔', 'Undo'], dunno: ['不会', "I don't know"], demo: ['看示范', 'Show me'], step: ['一步一步看', 'Step by step'],
     demoH: ['先看一遍怎么写', 'Watch how to write it'], go: ['我会了，开始写', 'Got it, let me write'], again: ['再看一遍', 'Watch again'], ex: ['例题', 'Example'], first: ['先看题', 'Look at the problem'],
     empty: ['在蓝框里写答案', 'Write the answer in the blue boxes'], unclear: ['这一格没看清，再写一次', "Couldn't read that box. Write it again"],
-    two: ['一格只写一个数', 'One digit in each box'], place: ['个位写在最右边的格子里', 'Write the ones digit in the rightmost box'], zero: ['最高位不写 0', "Don't write 0 in front"], same: ['这道题的写法', 'How to write this one']};
+    two: ['一格只写一个数', 'One digit in each box'], dpPlace: ['小数部分写在小数点后面的格子里', 'Write the decimal part in the boxes after the point'], place: ['个位写在最右边的格子里', 'Write the ones digit in the rightmost box'], zero: ['最高位不写 0', "Don't write 0 in front"], same: ['这道题的写法', 'How to write this one']};
   const L = (k, en) => LAB[k][en ? 1 : 0];
   const cells = n => Array.from({length: n}, () => '<div class="vcell"><canvas></canvas></div>').join('');
   const minis = n => Array.from({length: n}, () => '<div class="vmini"><canvas></canvas></div>').join('');
@@ -249,7 +251,9 @@
       const rows = p.kind === 'step' ? [0, 1].map(() => `<div class="veq"><b>=</b><div class="vstrip vplain"><canvas></canvas></div></div>`).join('') : '';
       return `<div class="vboard vb-${p.kind}"><div class="vbq">${p.qhtml || ''}</div><div class="vcard">${rows}
         <div class="vrow" style="grid-template-columns:80px 1fr"><div class="vlab">${L('draft', en)}</div><div class="vgrid vstrip"><canvas></canvas></div></div>
-        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div><div style="display:grid;grid-template-columns:repeat(${p.n}, 96px);gap:8px">${cells(p.n)}</div></div></div></div>`;
+        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div>${p.dp
+          ? `<div style="display:grid;grid-template-columns:repeat(${p.n - p.dp}, 96px) 22px repeat(${p.dp}, 96px);gap:8px">${cells(p.n - p.dp)}<div class="vdotc"></div>${cells(p.dp)}</div>`
+          : `<div style="display:grid;grid-template-columns:repeat(${p.n}, 96px);gap:8px">${cells(p.n)}</div>`}</div></div></div>`;
     }
     if (p.kind === 'vert') {
       const n = Math.max(String(p.a).length, String(p.b).length) + (p.op === '+' ? 1 : 0), col = `80px repeat(${n}, 104px)`;
@@ -282,8 +286,9 @@
     let l = read.length - 1; while (read[l] === '') l--;
     const body = read.slice(f, l + 1), text = body.map(x => (x === '' ? '□' : x.charAt(0) === '两' ? x.slice(1) || '?' : x)).join('');
     // 竖式的答案格对着数位，个位必须在最右；递等式 / 填空 / 应用题的蓝框只是一排格子，靠左写也算（捣蛋鬼第 1 轮 P1）
-    const columns = p.kind === 'vert' || p.kind === 'mul' || p.kind === 'div';
-    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.includes('') ? L('gap', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L('place', en) : '';
+    // 带固定小数点的蓝框（小数题）也按格对齐：小数部分要写到最右格，整数部分靠着小数点
+    const columns = p.kind === 'vert' || p.kind === 'mul' || p.kind === 'div' || p.dp > 0;
+    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.includes('') ? L('gap', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L(p.dp > 0 ? 'dpPlace' : 'place', en) : '';
     return {ok: !tip && body.every(x => /^\d$/.test(x)) && text === String(p.ans), text, tip};
   }
 
@@ -315,7 +320,7 @@
 .vboard{width:1000px;display:flex;flex-direction:column;gap:14px}
 .vboard .vbq{font-size:30px;line-height:1.4;color:#f3f1ea;zoom:1.25}
 .vboard.vb-word .vbq{zoom:1.75}.vboard.vb-word .vgrid{height:220px}
-.vboard .vcard{padding:14px 24px}.vboard .vlab{font-size:22px}
+.vboard .vcard{padding:14px 24px}.vdotc{align-self:end;justify-self:center;width:16px;height:16px;border-radius:50%;background:#2b2920;margin-bottom:14px}.vboard .vlab{font-size:22px}
 .vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
 .vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}
 .vls{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:48px}.vls .vfillv{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;padding:0 6px;font-weight:400}

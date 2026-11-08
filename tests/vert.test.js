@@ -121,3 +121,30 @@ test('加法竖式的进位格只写「进位」，减法只写「退位」（�
   assert.ok(sub.includes('>退位<') && !sub.includes('进位'), '减法');
   assert.ok(V.layout({kind: 'vert', a: 360, op: '+', b: 268, ans: 628}, true).includes('>Carry<'));
 });
+
+// 小数加减写完整得数（A 9afb562，捣蛋鬼 1-4）：ans 存去掉小数点的整数 + q.dp；iPad 蓝框答案格印一个固定小数点，孩子不写点
+test('小数蓝框：小数点印在倒数第 dp 格前，格数 = 最长答案 + 1，正确写法带小数点', () => {
+  const K = require('../v2/skills.js');
+  [['speed:g12:dec', 1], ['speed:g14:dec2', 2]].forEach(([id, dp]) => {
+    const pool = K.rawPool(id), max = Math.max(...pool.map(x => String(x.ans).length));
+    pool.slice(0, 40).forEach(x => {
+      const p = V.parse({id, q: x.q, ans: x.ans}, max);
+      assert.ok(p && p.kind === 'fill' && p.dp === dp && p.n === max + 1 && !p.inNum, id + ' ' + x.q.text);
+      const html = V.layout(Object.assign({qhtml: ''}, p), false);
+      const before = html.split('vdotc')[0].split('class="vcell"').length - 1, after = html.split('vdotc')[1].split('class="vcell"').length - 1;
+      assert.equal(after, dp, '小数点后面 dp 格'); assert.equal(before, p.n - dp, '小数点前面其余的格');
+      assert.ok(V.worked(p, false).includes((x.ans / 10 ** dp).toFixed(dp)), '正确写法带小数点：' + x.q.text);
+    });
+  });
+});
+test('小数蓝框判题：整数部分靠着小数点写、小数部分写满才对；小数部分没写到最右提示写在小数点后面', () => {
+  const p = {kind: 'fill', ans: 143, dp: 1, n: 4};
+  assert.deepEqual(V.judge(['', '1', '4', '3'], p), {ok: true, text: '143', tip: ''});
+  assert.deepEqual(V.judge(['', '', '2', '7'], {kind: 'fill', ans: 27, dp: 1, n: 4}), {ok: true, text: '27', tip: ''});
+  const left = V.judge(['1', '4', '3', ''], p);
+  assert.equal(left.ok, false); assert.equal(left.tip, '小数部分写在小数点后面的格子里');
+  assert.equal(V.judge(['1', '4', '3', ''], p, true).tip, 'Write the decimal part in the boxes after the point');
+  assert.equal(V.judge(['2', '', '', '7'], {kind: 'fill', ans: 27, dp: 1, n: 4}).ok, false, '整数部分要靠着小数点');
+  // 没有小数的蓝框照旧靠左写也对（v112 热修）
+  assert.equal(V.judge(['5', '1', '', ''], {kind: 'fill', ans: 51, n: 4}).ok, true);
+});
