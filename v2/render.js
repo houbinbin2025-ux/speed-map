@@ -28,7 +28,9 @@
     return {counts, lit: counts[1] + counts[2] + counts[3], total: counts.reduce((a, b) => a + b, 0)};
   }
   const skillOf = id => K.BY[K.ITEM[id].skill];
-  const tagOf = id => { const s = skillOf(id); if (s.group === 'speedH' && /^g34:/.test(s.id)) return '计算 · ' + s.name; return s.hard ? `${GNAME[s.group]} · ${s.name}` : s.speed ? s.name : GNAME[s.group] + ' · ' + s.name; };
+  // 周长、面积挂在「数位」组里只为排在地图上；显示的组名写「图形」（捣蛋鬼 1-17），不改分组、不动进度
+  const gName = s => s.group === 'place' && (s.concept === 'perim' || s.concept === 'area') ? '图形' : GNAME[s.group];
+  const tagOf = id => { const s = skillOf(id); if (s.group === 'speedH' && /^g34:/.test(s.id)) return '计算 · ' + s.name; return s.hard ? `${gName(s)} · ${s.name}` : s.speed ? s.name : gName(s) + ' · ' + s.name; };
 
   // ---------- 小零件 ----------
   const dot = cls => `<i class="dot${cls ? ' ' + cls : ''}"></i>`;
@@ -97,10 +99,12 @@
   function chartSvg(d, a, o) {
     o = o || {};
     // 顶上为答案留的空只有答错图解要（a 有值）；题面时收回来，矮屏（874×297）上条形图能大一点（中控 11-08）
-    const n = d.max / d.step, top = a === undefined ? 14 : 36, bot = top + 184, H = bot + 50, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
+    const n = d.max / d.step, top = a === undefined ? 24 : 36, bot = top + 184, H = bot + 50, L = 62, bw = 62, gap = 34, W = L + d.bars.length * (bw + gap) + 10, y = v => bot - (bot - top) * v / d.max;
     const hi = a === undefined ? [] : d.ask.kind === 'read' ? [d.ask.i] : [d.ask.i, d.ask.j];
     let out = '';
-    for (let k = 0; k <= n; k++) { const v = k * d.step; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${k ? '#3a3e47' : TXT}" stroke-width="${k ? 1.5 : 3}"/>` + svgT(L - 10, y(v) + 7, v, {anchor: 'end', size: 20}); }   // 刻度间隔 18.4，字 20 不互相挤
+    // 刻度多于 6 格时隔一格标数字、字 28（捣蛋鬼 1-3：11 个数字挤在手机上 90 像素高里，叠成一列）；标数字的线深、不标的浅，读条顶靠数格子
+    const ev = n > 6 ? 2 : 1, fs = ev > 1 ? 28 : 24;
+    for (let k = 0; k <= n; k++) { const v = k * d.step, lab = k % ev === 0; out += `<line x1="${L}" x2="${W - 6}" y1="${y(v)}" y2="${y(v)}" stroke="${!k ? TXT : lab ? '#6a707c' : '#3a3e47'}" stroke-width="${!k ? 3 : lab ? 2 : 1.5}"/>` + (lab ? svgT(L - 10, y(v) + fs * .35, v, {anchor: 'end', size: fs}) : ''); }
     d.bars.forEach(([name, v], i) => {
       const x = L + gap / 2 + i * (bw + gap), on = hi.includes(i);
       if (o.blocks) { for (let k = 0; k < v / d.step; k++) out += `<rect x="${x + 4}" y="${y((k + 1) * d.step) + 2}" width="${bw - 8}" height="${y(0) - y(d.step) - 4}" fill="${FC.blue}" stroke="#000" stroke-width="2"/>`; }
@@ -387,11 +391,11 @@
     const s = K.BY[skillId], ex = K.example(s.items[0].id), q = ex.q;
     let title, body, foot;
     if (s.nb) {
-      title = GNAME[s.group] + '：' + s.name;
+      title = gName(s) + '：' + s.name;
       body = step(1, nbFig(q) || `<div class="prow">${q.l.map(n => `<span class="pst">${n}</span>`).join('')}</div>`, '看题') + arrow + step(2, `<div class="nbthink">${q.why}</div>`, '想一想') + arrow + step(3, `<div class="say2">${nbAns(q, ex.ans)}</div>`, s.input === 'pick' ? '点它' : '写答案');
       foot = s.input === 'pick' ? '点错了会告诉你答案' : '不会就点「不会」，会告诉你答案';
     } else if (s.hard && s.input !== 'line') {
-      title = (s.group === 'speedH' && /^g34:/.test(s.id) ? '计算' : GNAME[s.group]) + '：' + s.name;
+      title = (s.group === 'speedH' && /^g34:/.test(s.id) ? '计算' : gName(s)) + '：' + s.name;
       body = s.input === 'pick' && q.view === 'choice' ? step(1, `<div class="cards2">${q.opts.map(t => `<b class="sm">${t}</b>`).join('')}</div>`, q.say) + arrow + step(2, `<div class="cards2"><b class="sm win">${q.opts[ex.ans]}</b></div>`, '点它')
         : s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
@@ -406,7 +410,7 @@
       body = step(1, `<div class="look">${pattern(q)}</div>`, '图会闪一下') + arrow + step(2, `<div class="look">${q.layout === 'dice' || q.layout === 'scat' ? pattern(q) : pattern(q)}</div>`, q.layout === 'tf' || q.layout === 'tf2' ? '上面一行是 5 个' : '一眼看出来') + arrow + step(3, `<div class="eq num">${ans(q.n)}</div>`, '写出有几个');
       foot = '没看清可以点「再看一次」';
     } else if (s.group === 'bond') {
-      title = '分合：一个数可以拆成两个数';
+      title = !(s.pre || []).some(p => K.BY[p] && K.BY[p].group === 'bond') ? '分合：一个数可以拆成两个数' : '分合：' + s.name;   // 入门标题只给第一个分合技能（现在是 6–9 分合，5 以内已剔除）；后面的（6–9 分合、凑十…）写自己的名字，不像入门卡又出一遍（捣蛋鬼 1-6）
       const n = q.n || 5, a = q.a || 2;
       body = step(1, `<div class="row">${'<i class="dot"></i>'.repeat(n)}</div>`, `${n} 个圆点`) + arrow + step(2, `<div class="row">${'<i class="dot"></i>'.repeat(a)}<b class="gap"></b>${'<i class="dot on2"></i>'.repeat(n - a)}</div>`, `分成 ${a} 个和 ${n - a} 个`) + arrow + step(3, bondFig(n, a, n - a), '分合图');
       foot = '上面是整个数，下面是拆出来的两个数';
@@ -478,5 +482,5 @@
     return `数线 · ${q.target}`;
   }
 
-  return {ansText, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
+  return {ansText, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });

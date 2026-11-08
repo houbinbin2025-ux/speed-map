@@ -68,3 +68,25 @@ test('没有「所有数字都不超过 5」的题（小数比大小豁免：规
 test('答案不超过 4 位，选择题以外都是正整数', () => {
   IDS.forEach(id => HB.pools[id].forEach(x => { if (x.q.view !== 'choice') assert.ok(Number.isInteger(x.ans) && x.ans > 0 && x.ans < 10000, `${id} ${x.ans}`); }));
 });
+
+test('周长、面积题的标签写「图形」，不写「数位」（捣蛋鬼 1-17）；分组不变', () => {
+  const R = require('../v2/render.js');
+  for (const id of ['place:g8:side', 'place:g12:area2']) {
+    const s = K.BY[K.ITEM[id].skill]; assert.equal(s.group, 'place', id);
+    assert.match(R.tagOf(id), /^图形 · /, id); assert.ok(!/数位/.test(R.tagOf(id)), id);
+  }
+  assert.match(R.tagOf('place:g10:thou'), /^数位/);   // 真正的数位题不受影响
+});
+
+test('分合示范卡：入门标题只给第一个分合技能，凑十等写自己的名字（捣蛋鬼 1-6）', () => {
+  const R = require('../v2/render.js');
+  assert.match(R.demo('bond2'), /分合：一个数可以拆成两个数/);
+  assert.match(R.demo('bond3'), /分合：凑十/); assert.ok(!/一个数可以拆成两个数/.test(R.demo('bond3')));
+});
+
+test('条形图刻度：多于 6 格时隔一格标数字，字号 28（捣蛋鬼 1-3）', () => {
+  const R = require('../v2/render.js');
+  const svg = R.chartSvg({bars: [['甲', 3], ['乙', 7]], max: 10, step: 1, ask: {kind: 'read', i: 0}});
+  const nums = [...svg.matchAll(/font-size="28"[^>]*>(\d+)</g)].map(m => +m[1]);
+  assert.deepEqual(nums.sort((a, b) => a - b), [0, 2, 4, 6, 8, 10]);
+});
