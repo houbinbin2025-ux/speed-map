@@ -886,7 +886,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v103:21d40d97a672 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v106:ba5f406768e7 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -896,25 +896,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=103"></script>
-<script src="i18n.js?v=103"></script>
-<script src="bank.js?v=103"></script>
-<script src="hardbank.js?v=103"></script>
-<script src="placebank.js?v=103"></script>
-<script src="core.js?v=103"></script>
-<script src="ink.js?v=103"></script>
-<script src="skills.js?v=103"></script>
-<script src="engine.js?v=103"></script>
-<script src="render.js?v=103"></script>
-<script src="world.js?v=103"></script>
-<script src="home.js?v=103"></script>
-<script src="puzzles.js?v=103"></script>
-<script src="thinking.js?v=103"></script>
-<script src="house.js?v=103"></script>
-<script src="kongmine.js?v=103"></script>
-<script src="gems.js?v=103"></script>
-<script src="gemui.js?v=103"></script>
-<script src="vert.js?v=103"></script>
+<script src="touchfix.js?v=106"></script>
+<script src="i18n.js?v=106"></script>
+<script src="bank.js?v=106"></script>
+<script src="hardbank.js?v=106"></script>
+<script src="placebank.js?v=106"></script>
+<script src="core.js?v=106"></script>
+<script src="ink.js?v=106"></script>
+<script src="skills.js?v=106"></script>
+<script src="engine.js?v=106"></script>
+<script src="render.js?v=106"></script>
+<script src="world.js?v=106"></script>
+<script src="home.js?v=106"></script>
+<script src="puzzles.js?v=106"></script>
+<script src="thinking.js?v=106"></script>
+<script src="house.js?v=106"></script>
+<script src="kongmine.js?v=106"></script>
+<script src="gems.js?v=106"></script>
+<script src="gemui.js?v=106"></script>
+<script src="vert.js?v=106"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1567,19 +1567,22 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     qBar();
   }
   // ---------- iPad 竖式（docs/说明书-iPad竖式.md）：横屏、屏幕短边 ≥ 700 点（iPad；App 里网页按 932 宽缩放，所以看 screen）、非口答 ----------
-  const vertOn = inst => !S.oral && innerWidth > innerHeight && Math.min(screen.width, screen.height) >= 700 && VERT.parse(inst);
+  const VMAX = {};   // 每个题型最长的答案位数：答案格数按它定，不泄露这一道的位数
+  const vMax = id => (VMAX[id] = VMAX[id] || Math.max(0, ...(K.rawPool(id) || []).map(x => String(x.ans).length)));
+  const vertOn = inst => !S.oral && innerWidth > innerHeight && Math.min(screen.width, screen.height) >= 700 && VERT.parse(inst, VERT.BOARD.includes(inst.id) ? vMax(inst.id) : 0);
   const VDEMO = TEST ? 'speedmap.test.vertdemo' : 'speedmap.vertdemo';   // 测试模式另起键，免得把空空的示范卡标成看过
   const vSeen = () => { try { return JSON.parse(localStorage.getItem(VDEMO) || '{}') || {}; } catch (e) { return {}; } };
   function showVert(v) {
     $('qBody').innerHTML = '';
     const q0 = Q;
+    v.vp.qhtml = v.html;   // 递等式 / 填空 / 应用题：题面照原样放在版面上方（喇叭、翻译都沿用）
     Q.vc = VERT.mount($('qWide'), v.vp, {
       can: () => Q === q0 && Q.phase === 'q' && !Q.vdemo,
       onDone: vertDone,
       onDunno: () => { if (guarded() || Q !== q0 || Q.phase !== 'q' || Q.vdemo) return; resolve({ok: false, dunno: true}); },
-      onDemo: () => { if (Q === q0 && Q.phase === 'q' && !Q.vdemo) vertDemo(v.vp, false); },
+      onDemo: () => { if (Q === q0 && Q.phase === 'q' && !Q.vdemo && VERT.DEMO[VERT.demoKey(v.vp)]) vertDemo(v.vp, false); },
     });
-    if (!vSeen()[VERT.demoKey(v.vp)] && Q.kind !== 'challenge') vertDemo(v.vp, false);   // 限时挑战不放示范，免得吃掉倒计时
+    if (VERT.DEMO[VERT.demoKey(v.vp)] && !vSeen()[VERT.demoKey(v.vp)] && Q.kind !== 'challenge') vertDemo(v.vp, false);   // 限时挑战不放示范，免得吃掉倒计时
   }
   // 示范卡：第一次见这种竖式先看一遍；看示范时不计时（关掉后、还没落笔就从头算）
   function vertDemo(vp, replay) {

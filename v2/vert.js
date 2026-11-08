@@ -9,9 +9,24 @@
   'use strict';
   // 只给这 7 个纯计算题型（都是「a 运算 b =」、得数是整数）
   const IDS = {'speed:g10:add3': 'vert', 'speed:g10:sub3': 'vert', 'speed:g11:mul': 'mul', 'speed:g12:mul2': 'mul', 'speed:g13:mul3': 'mul', 'speed:g11:div': 'div', 'speed:g13:div2': 'div'};
+  // 其他三四年级手写题（Ben 11-08「做完上线」，原型的递等式 / 填空 / 应用题三种）：题在上，草稿在中间，答案写在下面蓝框
+  const STEP = ['speed:g13:order', 'speed:g14:law'];
+  const BOARD = ['speed:g10:rem', 'speed:g10:quo', 'place:g10:thou', 'market:g10:conv', 'market:g10:span', 'dock:g10:remain', 'dock:g10:two', 'speed:g11:divrem',
+    'dock:g11:perim', 'dock:g11:times', 'dock:g11:two', 'dock:g11:speed', 'dock:g11:part', 'speed:g12:dec', 'dock:g12:area', 'dock:g12:price', 'market:g12:24', 'market:g12:year',
+    'speed:g13:order', 'place:g13:round', 'dock:g13:unit', 'dock:g13:speed', 'dock:g13:share', 'speed:g14:law', 'speed:g14:lawfill', 'speed:g14:dec2', 'speed:g14:move',
+    'dock:g14:avg', 'dock:g14:meet', 'dock:g14:tri', 'market:g14:unit', 'place:g15:lcm', 'place:g15:gcd', 'dock:g15:three', 'dock:g15:sumdiff', 'dock:g15:timessum', 'dock:g15:legs', 'dock:g15:age'];
   const OPS = {'+': '+', '−': '-', '-': '-', '×': '×', '÷': '÷'};
+  // 答案格数：方框夹在数字中间（2.□、11.□8）就一格；否则比答案多一格（不泄露位数到个位）
+  // maxLen：这个题型里最长的答案有几位（页面从题库算好传进来），格数按它定，不随这道题变，免得格子数泄露位数
+  function board(inst, maxLen) {
+    const q = inst.q || {}, text = String(q.text || ''), ans = inst.ans;
+    if (!Number.isInteger(ans) || ans < 0) return null;
+    const inNum = /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
+    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, n: inNum ? 1 : len + 1};
+  }
   const TAP_MS = 1500;   // 点「写好了」的时间，不算进用时
-  function parse(inst) {
+  function parse(inst, maxLen) {
+    if (inst && BOARD.includes(inst.id)) return board(inst, maxLen);
     const kind = IDS[inst && inst.id]; if (!kind) return null;
     const m = String((inst.q && inst.q.text) || '').match(/^(\d+) ([+−×÷-]) (\d+) =$/); if (!m) return null;
     const a = +m[1], op = OPS[m[2]], b = +m[3];
@@ -21,12 +36,13 @@
     return {kind, a, op, b, ans};
   }
   // 示范用另一组数（不剧透练习题）；加、减各一张
-  const demoKey = p => (p.op === '+' ? 'add' : p.op === '-' ? 'sub' : p.kind);
+  const demoKey = p => (p.law ? 'law' : p.op === '+' ? 'add' : p.op === '-' ? 'sub' : p.kind);   // fill / word 没有示范（只是把得数写进蓝框）
   const DEMO = {
     add: {p: {kind: 'vert', a: 325, op: '+', b: 148, ans: 473}, tip: ['从个位算起，满十向前一位进 1', 'Start from the ones. When you make 10, carry 1 to the next place']},
     sub: {p: {kind: 'vert', a: 352, op: '-', b: 174, ans: 178}, tip: ['从个位算起，不够减就向前一位借 1，借走的那一位点一个点', 'Start from the ones. If it is too small, borrow 1 from the next place and put a dot on it']},
     mul: {p: {kind: 'mul', a: 23, op: '×', b: 14, ans: 322}, tip: ['先用个位乘，再用十位乘，最后两行相加', 'Multiply by the ones, then by the tens, then add the two rows']},
     div: {p: {kind: 'div', a: 96, op: '÷', b: 4, ans: 24}, tip: ['从最高位除起：商、乘、减、落下', 'Start from the highest place: divide, multiply, subtract, bring down']},
+    step: {p: {kind: 'step', text: '56 + 4 × 6 =', ans: 80}, tip: ['先算乘除，再算加减，有括号先算括号；一步写一行', 'Times and divide first, then plus and minus; brackets first. One step per line']},
   };
 
   // ---------- 竖式：格子 {v 文字, c 样式（u 下划线 · s 小字进位/退位点 · q 蓝框答案 · br 厂字 · t 上横线）, id, h 示范时先藏} ----------
@@ -162,12 +178,61 @@
     }
     return {n, rows, steps};
   }
+  // 递等式：最里面的括号先算；同一层先把每一段乘除算完，再算加减。一行一步，返回每一行（不含第一行的原式）
+  const fmt = v => String(Math.round(v * 1e6) / 1e6);
+  const toks = s => s.replace(/=\s*$/, '').match(/\d+(?:\.\d+)?|[+−×÷()-]/g).map(x => (x === '-' ? '−' : /\d/.test(x) ? +x : x));
+  const show = a => a.map(x => (typeof x === 'number' ? fmt(x) : x)).join(' ').replace(/\( /g, '(').replace(/ \)/g, ')');
+  let OPLOG = [];   // 这一行算了哪几步，示范时说出来
+  function flatOnce(a) {   // a：没有括号的一段；有乘除先把每一段乘除算完，否则从左到右算完
+    if (a.length === 1) return a;
+    const f0 = (x, op, y) => (op === '+' ? x + y : op === '−' ? x - y : op === '×' ? x * y : x / y);
+    const f = (x, op, y) => { const r = f0(x, op, y); OPLOG.push(`${fmt(x)} ${op} ${fmt(y)} = ${fmt(r)}`); return r; };
+    if (a.some(x => x === '×' || x === '÷')) {
+      const o = [];
+      for (let i = 0; i < a.length; i++) {
+        if ((a[i] === '×' || a[i] === '÷') && typeof o[o.length - 1] === 'number') { o[o.length - 1] = f(o[o.length - 1], a[i], a[++i]); continue; }
+        o.push(a[i]);
+      }
+      return o;
+    }
+    let v = a[0]; for (let i = 1; i < a.length; i += 2) v = f(v, a[i], a[i + 1]);
+    return [v];
+  }
+  function stepLines(text) {
+    let a = toks(text); const lines = [], why = [];
+    for (let g = 0; g < 12 && a.length > 1; g++) {
+      OPLOG = [];
+      const deep = a.lastIndexOf('(') >= 0;
+      if (deep) {   // 所有最里层括号各算一步；只剩一个数就去掉括号
+        const o = [];
+        for (let i = 0; i < a.length; i++) {
+          if (a[i] === '(') { const j = a.indexOf(')', i); const inner = a.slice(i + 1, j); if (!inner.includes('(')) { const r = flatOnce(inner); o.push(...(r.length === 1 ? r : ['('].concat(r, [')']))); i = j; continue; } }
+          o.push(a[i]);
+        }
+        a = o;
+      } else a = flatOnce(a);
+      lines.push('= ' + show(a)); why.push(OPLOG.join('，'));
+    }
+    return {first: show(toks(text)), lines, why};
+  }
   const build = p => (p.op === '×' ? bMul(p.a, p.b) : p.op === '÷' ? bDiv(p.a, p.b) : bAddSub(p.a, p.op, p.b));
   // 竖式的样子：答案在蓝框里，进位小字，示范时先藏（all = 全部显示）
   const CLS = {u: 'vu', s: 'vs', q: 'vqa', br: 'vbr', t: 'vt'};
   const renderB = (B, all) => `<div class="vg" style="grid-template-columns:30px repeat(${B.n}, 40px)">${B.rows.map(r => r.map(x => `<div id="${x.id}" class="${(x.c || '').split(' ').filter(Boolean).map(k => CLS[k]).join(' ')}${x.h && !all ? ' vhid' : ''}">${x.v}</div>`).join('')).join('')}</div>`;
-  const plan = p => { const B = build(p); return {html: renderB(B, false), steps: B.steps}; };
-  const worked = (p, en) => `<div class="vwk"><h4>${en ? 'The right way' : '正确写法'}</h4>${renderB(build(p), true)}</div>`;
+  // 示范和正确写法：竖式是格子；递等式是一行一行；填空是把方框填上的整个算式；应用题没有（讲解里有算式）
+  function plan(p, all) {
+    if (p.law) return {html: '', steps: []};
+    if (p.kind === 'step') {
+      const S = stepLines(p.text), ids = S.lines.map(() => mk());
+      return {html: `<div class="vls"><div>${S.first}</div>${S.lines.map((l, i) => `<div id="${ids[i]}"${all ? '' : ' class="vhid"'}>${l}</div>`).join('')}</div>`,
+        steps: S.lines.map((l, i) => ({show: [ids[i]], hi: [], say: `先算 ${S.why[i]}`, en: `First ${S.why[i].replace(/，/g, ', ')}`}))};
+    }
+    const box = v => `<b class="vfillv">${v}</b>`;
+    if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : p.ans)) : p.text.replace(/=\s*$/, '= ' + box(p.ans))}</div></div>`, steps: []};
+    if (p.kind === 'word') return {html: '', steps: []};
+    const B = build(p); return {html: renderB(B, all), steps: B.steps};
+  }
+  const worked = (p, en) => { const h = plan(p, true).html; return h ? `<div class="vwk"><h4>${en ? 'The right way' : '正确写法'}</h4>${h}</div>` : ''; };
 
   // ---------- 输入版面（手指尺寸，同原型） ----------
   const LAB = {carry: ['进位<br>退位', 'Carry<br>Borrow'], carry1: ['进位', 'Carry'], ans: ['答案', 'Answer'], quo: ['商', 'Quotient'], draft: ['草稿', 'Work'],
@@ -180,6 +245,12 @@
   const minis = n => Array.from({length: n}, () => '<div class="vmini"><canvas></canvas></div>').join('');
   const digs = (s, n) => Array(n - String(s).length).fill('').concat(String(s).split('')).map(d => `<div>${d}</div>`).join('');
   function layout(p, en) {
+    if (p.kind === 'step' || p.kind === 'fill' || p.kind === 'word') {
+      const rows = p.kind === 'step' ? [0, 1].map(() => `<div class="veq"><b>=</b><div class="vstrip vplain"><canvas></canvas></div></div>`).join('') : '';
+      return `<div class="vboard vb-${p.kind}"><div class="vbq">${p.qhtml || ''}</div><div class="vcard">${rows}
+        <div class="vrow" style="grid-template-columns:80px 1fr"><div class="vlab">${L('draft', en)}</div><div class="vgrid vstrip"><canvas></canvas></div></div>
+        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div><div style="display:grid;grid-template-columns:repeat(${p.n}, 96px);gap:8px">${cells(p.n)}</div></div></div></div>`;
+    }
     if (p.kind === 'vert') {
       const n = Math.max(String(p.a).length, String(p.b).length) + (p.op === '+' ? 1 : 0), col = `80px repeat(${n}, 104px)`;
       return `<div class="vcard"><div class="vrow" style="grid-template-columns:${col}"><div class="vlab">${L('carry', en)}</div>${minis(n)}</div>
@@ -214,7 +285,7 @@
     return {ok: !tip && body.every(x => /^\d$/.test(x)) && text === String(p.ans), text, tip};
   }
 
-  const api = {IDS, TAP_MS, parse, demoKey, DEMO, build, plan, worked, layout, judge, LAB};
+  const api = {IDS, BOARD, TAP_MS, parse, demoKey, DEMO, build, plan, worked, layout, judge, LAB, stepLines};
   if (!root) return api;
 
   // ================= 浏览器部分 =================
@@ -239,6 +310,13 @@
 .vmini{height:60px;border:2px dashed #c9c1ac;border-radius:8px}
 .vstrip{height:84px;border:2px dashed #c9c1ac;border-radius:8px;background-image:repeating-linear-gradient(90deg,transparent 0 105px,#e3dccb 105px 106px);background-position:-5px 0}
 .vstrip.sm{height:56px}
+.vboard{width:1000px;display:flex;flex-direction:column;gap:14px}
+.vboard .vbq{font-size:30px;line-height:1.4;color:#f3f1ea;zoom:1.25}
+.vboard.vb-word .vbq{zoom:1.75}.vboard.vb-word .vgrid{height:220px}
+.vboard .vcard{padding:14px 24px}.vboard .vlab{font-size:22px}
+.vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
+.vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}
+.vls{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:48px}.vls .vfillv{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;padding:0 6px;font-weight:400}
 .vq .vres{position:absolute;right:0;top:0;bottom:0;width:min(560px,100%);background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
 .vq .vres.show{transform:none}
 .vq .vres .explain{color:#e6e3da}
@@ -288,7 +366,7 @@
     style();
     const E = en();
     host.innerHTML = `<div class="vq"><div class="varea"><div class="vfit">${layout(p, E)}</div><div class="vres"></div></div>
-      <div class="vside"><button class="btn vdemoB">${L('demo', E)}</button><div style="flex:1"></div><div class="vnote"></div>
+      <div class="vside"><button class="btn vdemoB"${DEMO[demoKey(p)] ? '' : ' style="visibility:hidden"'}>${L('demo', E)}</button><div style="flex:1"></div><div class="vnote"></div>
       <button class="big go vdone">${L('done', E)}</button><button class="big vclear">${L('clear', E)}</button><button class="big vdunno">${L('dunno', E)}</button></div></div>`;
     const box = host.querySelector('.vq'), area = box.querySelector('.varea'), fitEl = box.querySelector('.vfit'), note = box.querySelector('.vnote');
     const fitNow = () => {
@@ -296,6 +374,7 @@
       const k = Math.min(1.15, (area.clientWidth - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
       fitEl.style.transform = `translate(${Math.max(0, (area.clientWidth - fitEl.offsetWidth * k) / 2)}px,${Math.max(0, (area.clientHeight - fitEl.offsetHeight * k) / 2)}px) scale(${k})`;
     };
+    if (root.I18N && root.I18N.flush) root.I18N.flush();   // 英文日先翻好再量尺寸（英文题面更长）
     fitNow();
     const cellEls = [...box.querySelectorAll('.vcell')];
     const say = t => { note.textContent = t || ''; };
@@ -309,7 +388,7 @@
     const onR = () => { fitNow(); pads.concat(scratch).forEach(x => x.fit()); };
     root.addEventListener('resize', onR);
     // 答对后上面多出「秒答」一行、框变矮：跟着重新缩放，不让卡片钻出屏幕
-    const ro = root.ResizeObserver ? new root.ResizeObserver(() => fitNow()) : null; if (ro) ro.observe(area);
+    const ro = root.ResizeObserver ? new root.ResizeObserver(() => fitNow()) : null; if (ro) { ro.observe(area); ro.observe(fitEl); }
     return {
       box, note: say,
       cells: () => pads.map(x => x.strokes().filter(s => { const xs = s.map(q => q.x), ys = s.map(q => q.y); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) >= 12; })),
@@ -320,8 +399,9 @@
       // 答错 / 不会：右边滑出正确写法和讲解；foot 放「继续」
       result(top, explainHtml, onStep) {
         const r = box.querySelector('.vres'), E2 = en();
-        r.innerHTML = `<div class="vresc"><div class="vresh">${top}<button class="btn vstep">${L('step', E2)}</button></div>${worked(p, E2)}${explainHtml || ''}</div><div class="vfoot"></div>`;
-        r.querySelector('.vstep').onclick = onStep;
+        const can = plan(p).steps.length > 0;
+        r.innerHTML = `<div class="vresc"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div><div class="vfoot"></div>`;
+        if (can) r.querySelector('.vstep').onclick = onStep;
         r.classList.add('show');
         return r.querySelector('.vfoot');
       },
@@ -340,11 +420,11 @@
     (host.querySelector('.vq') || host).appendChild(wrap);
     const tip = wrap.querySelector('.vtip'), again = wrap.querySelector('.vagain');
     let lastB = null;
-    const start = () => { lastB = build(d.p); runB(); };
+    const start = () => { lastB = plan(d.p); runB(); };
     function runB() {
       clearTimeout(demoT);
       const db = wrap.querySelector('.vdb');
-      db.innerHTML = `<div class="vwk">${d.title ? '' : `<h4>${L('ex', E)}</h4>`}${renderB(lastB, false)}</div>`;
+      db.innerHTML = `<div class="vwk">${d.title ? '' : `<h4>${L('ex', E)}</h4>`}${lastB.html}</div>`;
       const wk = db.firstChild, z = Math.min(1.6, db.clientWidth / wk.offsetWidth, db.clientHeight / wk.offsetHeight);
       wk.style.transform = `translate(${Math.max(0, (db.clientWidth - wk.offsetWidth * z) / 2)}px,${Math.max(0, (db.clientHeight - wk.offsetHeight * z) / 2)}px) scale(${z})`;
       tip.textContent = L('first', E); again.hidden = true;
@@ -360,7 +440,7 @@
       };
       demoT = setTimeout(step, 1500);
     }
-    again.onclick = () => { lastB = build(d.p); runB(); };
+    again.onclick = () => { lastB = plan(d.p); runB(); };
     wrap.querySelector('.vgo').onclick = () => { clearTimeout(demoT); wrap.remove(); onClose && onClose(); };
     start();
     return {close() { clearTimeout(demoT); wrap.remove(); }};
