@@ -46,10 +46,11 @@ with sync_playwright() as p:
             pg.click('#btnStart', force=True); pg.wait_for_timeout(1800)
             play(pg, 10)
             if mode in ('rich', 'en'):
-                # 信息最多：点亮 16 格、碎片样样都有、有战利品箱、有新错题、练满 10 分钟
+                # 信息最多：点亮 16 格、碎片样样都有、有战利品箱、有新错题
                 pg.evaluate("""(()=>{ const Q=__sm.Q, S=__sm.S, ids=Object.keys(__sm.K.ITEM).slice(0,16); Q.ups=ids; Q.gem={s:6,m:3,a:2,b:1,h:1,l:1,o3:2}; Q.crit=2; Q.effSec=420;
-                  S.home=S.home||{}; S.home.loot=(S.home.loot||[]).concat([{t:'cert',id:'x'}]); S.daily=Object.assign(S.daily||{}, {done:true, sec:700, pearl:false});
+                  S.home=S.home||{}; S.home.loot=(S.home.loot||[]).concat([{t:'cert',id:'x'}]); S.daily=Object.assign(S.daily||{}, {done:true, sec:700});
                   S.mistakes=Object.assign(S.mistakes, {'zz1':{due:1},'zz2':{due:1}}); Q.mist0=0; })()""")
+            if mode == 'plain': pg.evaluate("GEMUI.state().tickets = 1")   # 手里有券、这次没新得：收起行要提示可以挑战
             bb = pg.locator('#qQuit').bounding_box(); pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up(); pg.wait_for_timeout(600)
             check(cur(pg) == 'qsum', f'{W}x{H} {mode} 到结算页')
             pg.screenshot(path=str(out / f'qsum-{W}x{H}-{mode}.png'))
@@ -62,6 +63,9 @@ with sync_playwright() as p:
                 check(pg.locator('#qsum .gemsum .gemline').first.is_hidden() and pg.locator('[data-gem=forge]').is_hidden(), f'{W}x{H} {mode} 碎片明细和碎片按钮默认收起（不露半截）')
                 lab = pg.locator('#qsGemFold').inner_text(); tk = pg.locator('#qsum .gemsum .gemline').first.inner_text()
                 check(('挑战券 +1' in tk or 'ticket' in tk.lower()) == ('挑战券 +1' in lab or 'ticket' in lab.lower()), f'{W}x{H} {mode} 得了挑战券，收起行也写：{lab}')
+                ch = pg.locator('#qsum [data-gem=challenge]').count() > 0
+                if mode == 'plain': check(ch and '可以挑战' in lab, f'{W}x{H} plain 手里有券：收起行写「可以挑战」：{lab}')
+                check(not ch or any(w in lab for w in ('挑战券 +1', '可以挑战', 'ticket', 'Challenge ready')), f'{W}x{H} {mode} 能挑战时收起行有提示：{lab}')
                 if mode != 'plain': check(lab.startswith('Shards this round +16' if mode == 'en' else '这次的碎片 +16'), '收起行写碎片个数：' + pg.locator('#qsGemFold').inner_text())
                 check(pg.locator('#qsGemFold').bounding_box()['height'] >= 44, f'{W}x{H} 碎片一行手指够得着（≥44）')
                 pg.locator('#qsGemFold').click(); pg.wait_for_timeout(200)
@@ -81,7 +85,8 @@ with sync_playwright() as p:
                 shown = pg.evaluate("[...document.querySelectorAll('#qsum .qsChips .chip2:not(.more)')].filter(c=>!c.hidden).length")
                 more = pg.evaluate("(()=>{const m=document.querySelector('#qsum .qsChips .more');return m&&!m.hidden?+m.textContent.slice(1):0})()")
                 check(shown + more == 16, f'{W}x{H} 点亮格子 {shown} 个 + 「+{more}」= 16')
-                check(rows <= 2 if tight else shown == 16, f'{W}x{H} {mode} 点亮格子：' + (f'手机最多两行（{rows} 行）' if tight else f'大屏全摆（{shown} 个）'))
+                fits = pg.evaluate("(()=>{const l=document.querySelector('#qsum .qsList');return l.scrollHeight<=l.clientHeight+1})()")
+                check((rows <= 2 or (shown == 16 and fits)) if tight else shown == 16, f'{W}x{H} {mode} 点亮格子：' + (f'手机放不下时最多两行（{rows} 行，摆了 {shown} 个，放得下={fits}）' if tight else f'大屏全摆（{shown} 个）'))
             if mode == 'en':
                 zh = pg.evaluate("[...document.querySelectorAll('#qsum *')].filter(e=>e.offsetParent&&[...e.childNodes].some(n=>n.nodeType===3&&/[\\u4e00-\\u9fff]/.test(n.textContent))).map(e=>e.textContent.trim()).slice(0,5)")
                 check(pg.evaluate("document.documentElement.lang") == 'en' and not zh, f'{W}x{H} 英文日结算页没有中文：{zh}')

@@ -141,7 +141,7 @@
     '看一眼，写出有几个': 'Take one look and write how many', 秒答才算学会: 'Only fast answers count as learned', 宝石留给伙伴罐了: 'Gem kept for the Pal Jar', '⚡⚡ 闪电秒答！': '⚡⚡ Lightning fast!', '+1 小碎片': '+1 small shard', '+1 中碎片': '+1 medium shard', '+1 大碎片': '+1 large shard', 秒答就点亮: 'Answer fast to light it up', '达标 = 秒答，一天 5 次升一级': 'Target = fast answers. 5 in a day levels up', 再快一点才算学会: 'A bit faster and you have got it', '✓ 很接近': '✓ Close', 道秒答: 'fast answers', '一根是 10，一块是 1': 'A rod is 10, a cube is 1', '看清楚，再点大的': 'Look carefully, then tap the bigger one', 把旗子插到这个数的位置: 'Put the flag where this number goes', '找到规律，接下去': 'Find the pattern and keep it going', '看钟、买东西': 'Tell time and go shopping', '看图想一想，写答案': 'Look, think, and write the answer',
     // 首页
     预览版: 'Preview', 错题宝箱: 'Mistake Chest', '家长区（长按 2 秒）': 'Parent area (hold for 2 seconds)', '◀ 拖一拖': '◀ Drag', '，看看整座岛': ' to see the whole island',
-    '空空，今天练 10 分钟': 'Kongkong, 10 minutes of practice today', 开始今天的探险: "Start today's adventure", '再练一会（5 分钟）': 'Practice a little more (5 min)', '练满 10 分钟去贴 1 颗珠子': 'Practice 10 minutes to add 1 bead', 关上: 'Close', 练这一块: 'Practice here', 看全部格子: 'See all squares', 这里的错题: 'Mistakes here', 返回: 'Back', 关闭: 'Close',
+    '空空，今天练 10 分钟': 'Kongkong, 10 minutes of practice today', 开始今天的探险: "Start today's adventure", '再练一会（5 分钟）': 'Practice a little more (5 min)', 关上: 'Close', 练这一块: 'Practice here', 看全部格子: 'See all squares', 这里的错题: 'Mistakes here', 返回: 'Back', 关闭: 'Close',
     '空空，欢迎来到数学岛': 'Kongkong, welcome to Math Island', '先看看你已经会什么，大约 5 分钟': "Let's see what you already know. About 5 minutes", 开始: 'Start', 会的格子马上点亮: 'Squares you know light up right away', 接着看看你会什么: "Let's keep checking what you know", '上次还没测完，从刚才那里接着来': "You didn't finish last time. Pick up where you left off", 接着来: 'Keep going', 全部通关: 'All clear', 每道题都秒答过了: 'You answered every question fast', 家长区可以换难度: 'A parent can change the level', '今天练完啦！': 'All done for today!', 明天再来: 'See you tomorrow', '学一点新的，再练练快的': 'Learn something new, then build speed', 接着探险: 'Continue adventure', 还没备份过: 'Not backed up yet',
     '这次练习存不下来，请家长看一下': "This practice can't be saved. Please ask a parent", '这个浏览器暂时存不了进度，练习照常': "This browser can't save progress right now. You can still practice", '家长：关掉页面前先在家长区导出备份': 'Parents: export a backup before closing this page',
     去秒答地图: 'Go to Speed Map', 这个难度没有题: 'No questions at this level', 还没开放: 'Not open yet', 战利品箱: 'Loot Chest', 今天先来这里: 'Start here today', '汪汪！': 'Woof!', 全部通关了: 'All clear!', '今天练完啦，明天再来': 'All done today. See you tomorrow', '一起看看你会什么吧！': "Let's see what you know!",
@@ -163,8 +163,8 @@
     // 讲解
     一共是: 'In all:', 应该是: 'It should be', '先加大的，再加小的': 'Add the big ones first, then the small ones', '付的钱减去东西的价钱': 'What you paid minus the price', '一只对一根，没对上的就是还差的': 'Match one bone to each wolf. The ones without a match still need a bone', '一个对一个，多出来的就是多几个': 'Match them one to one. The extras show how many more', 拼成: 'Make', '更大': 'is bigger', '先比百位，百位大的就大': 'Compare hundreds first. More hundreds means bigger', '百位一样，再比十位、个位': 'Same hundreds? Compare the tens, then the ones', 合起来用加法: 'Putting together means adding', 送出去了用减法: 'Giving away means subtracting', 要的减去有的: 'What you need minus what you have', 多的减去少的: 'The bigger amount minus the smaller', 每份一样多叫平均分: 'Equal groups means sharing evenly', 用除法: 'so divide',
     // 结算
-    '练满 10 分钟了，去贴 1 颗珠子': 'You practiced 10 minutes. Go add 1 bead', 本次总结: 'Summary', 错题复习: 'Mistake review', 先练到这里: "That's all for now", 练完啦: 'All done', 这次升级的方块: 'Squares leveled up', '这次升级的方块（去墙上的地图涂上这个颜色）': 'Squares leveled up (color them on your wall map)', 这次没有方块升级: 'No squares leveled up this time', 去看看: 'Take a look', '这几个写对了，还不够快': 'These were right, but not fast enough yet', 回家打开: 'Open at home', 回到地图: 'Back to map', 'Boss 被打败了！': 'Boss defeated!',
-    这一组练完啦: 'Set complete', 复习完啦: 'Review complete', '这次没挖到矿石，明天再来': 'No ore this time. Try again tomorrow', 分钟: 'Min', 格点亮了: 'Squares lit', 道错题过关: 'Mistakes fixed', 道题: 'Questions', 今天点亮的: 'Lit up today', '这次没有新点亮的格子，明天接着来': 'No new squares this time. Keep going tomorrow', '练满 10 分钟了，去墙上贴 1 颗珠子': 'You practiced 10 minutes. Add 1 bead to the wall', '家门口有 1 个战利品箱': 'A Loot Chest is at your door', 再来一组: 'Another set', '贴好珠子，回到岛上': 'Add the bead, then go back to the island',
+    本次总结: 'Summary', 错题复习: 'Mistake review', 先练到这里: "That's all for now", 练完啦: 'All done', 这次升级的方块: 'Squares leveled up', '这次升级的方块（去墙上的地图涂上这个颜色）': 'Squares leveled up (color them on your wall map)', 这次没有方块升级: 'No squares leveled up this time', 去看看: 'Take a look', '这几个写对了，还不够快': 'These were right, but not fast enough yet', 回家打开: 'Open at home', 回到地图: 'Back to map', 'Boss 被打败了！': 'Boss defeated!',
+    这一组练完啦: 'Set complete', 复习完啦: 'Review complete', '这次没挖到矿石，明天再来': 'No ore this time. Try again tomorrow', 分钟: 'Min', 格点亮了: 'Squares lit', 道错题过关: 'Mistakes fixed', 道题: 'Questions', 今天点亮的: 'Lit up today', '这次没有新点亮的格子，明天接着来': 'No new squares this time. Keep going tomorrow', '家门口有 1 个战利品箱': 'A Loot Chest is at your door', 再来一组: 'Another set',
     明天: 'tomorrow', 后天: 'in 2 days', 今天没有要复习的: 'Nothing to review today', 复习这一组: 'Review this set', 还没有错题: 'No mistakes yet',
     今天要复习: 'To review today:', '写错的题会隔 1、2、4、7、15 天回来，每次都做对就过 1 次复习；过完 5 次就算真的会了。每天的练习会自动带上它们。': 'Missed questions come back after 1, 2, 4, 7, and 15 days. Get one right to pass a review. Pass 5 reviews and you really know it. Daily practice brings them back automatically.',
     // 异常、竖屏
@@ -411,7 +411,7 @@
     [/^你写的是 (\d+)$/, (m, a) => `You wrote ${a}`], [/^答案是 (.+)$/, (m, a) => `The answer is ${a}`], [/^蓝旗是你插的，绿旗是 (\d+) 的位置$/, (m, a) => `The blue flag is yours. The green flag marks ${a}`], [/^再往(右|左)(一点)?$/, (m, d, n) => `${n ? 'A little more' : 'Move'} to the ${d === '右' ? 'right' : 'left'}`], [/^(\d+) 在绿旗这里$/, (m, a) => `${a} is at the green flag`],
     // 结算
     [/^(秒答|达标) (\d+) 题就能打败 Boss，想打随时再来$/, (m, w, a) => `${w === '秒答' ? 'Answer' : 'Hit the target on'} ${a} ${w === '秒答' ? 'fast ' : ''}to beat the Boss. Try again anytime`], [/^(秒答|达标) (\d+) 题$/, (m, w, a) => `${w === '秒答' ? 'Fast' : 'On target'}: ${a}`], [/^慢了 (\d+) 题$/, (m, a) => `Slow: ${a}`], [/^写错 (\d+) 题$/, (m, a) => `Wrong: ${a}`], [/^用时约 (\d+) 分钟$/, (m, a) => `About ${pl(a, 'minute')}`], [/^写对的平均 ([\d.–]+) 秒$/, (m, a) => (a === '–' ? 'Average when right: –' : `Average when right: ${a} seconds`)],
-    [/^挖到 (\d+) 块矿石$/, (m, a) => `Mined ${pl(a, 'ore')}`], [/^这次的碎片( \+\d+)?( · 挑战券 \+1)?$/, (m, a, b) => `Shards this round${a || ''}${b ? ' · Challenge ticket +1' : ''}`], [/^新进错题本 (\d+) 道，明天再来$/, (m, a) => `${pl(a, 'new mistake')} added. Back tomorrow`],
+    [/^挖到 (\d+) 块矿石$/, (m, a) => `Mined ${pl(a, 'ore')}`], [/^建议第 (\d+) 级起$/, (m, a) => `Level ${a}+`], [/^这次的碎片( \+\d+)?( · 挑战券 \+1| · 可以挑战)?$/, (m, a, b) => `Shards this round${a || ''}${b ? (b.includes('挑战券') ? ' · Challenge ticket +1' : ' · Challenge ready') : ''}`], [/^新进错题本 (\d+) 道，明天再来$/, (m, a) => `${pl(a, 'new mistake')} added. Back tomorrow`],
     // 摸底结果
     [/^亮了 (\d+) 格$/, (m, a) => `${pl(a, 'square')} lit`], [/^(.+) 会了$/, (m, l) => { const a = l.split(/(?<!\d)、|、(?!\d)/).map(one); return a.includes(null) ? null : `Got it: ${a.join(', ')}`; }], [/^还有 (\d+) 分钟，接着练今天的$/, (m, a) => `${pl(a, 'minute')} left. Keep going with today's practice`],
     // 技能地图、错题
@@ -510,7 +510,14 @@
     '分母一样，比分子：分子大的大': 'Same denominator: compare the numerators', '分母越大，每份越小，大的是：': 'Bigger denominator, smaller parts. Bigger one:',
     '两条一样长，涂的一样多': 'Same length, same amount colored', 分数条: 'Fraction bar',
   });
+  // 级别说明（skills.js LEVEL_TOPICS）：内容词用顿号连起来，逐词翻，用逗号连
+  Object.assign(D, {接规律: 'Patterns', 加减应用题: 'Word problems', '10 以内秒答': 'Speed facts to 10', 十格框: 'Ten frames', 过十加减: 'Bridging 10', 应用题: 'Word problems', 进退位加减: 'Regrouping',
+    算式比大小: 'Comparing sums', 百格图: 'Hundred chart', 百十个: 'Hundreds, tens, ones', 三位数比大小: 'Comparing 3-digit numbers', 乘法入门: 'Times 2, 5, 10', 全部口诀: 'All times tables',
+    千克和千米: 'Kilograms and kilometers', 多位数乘除一位数: 'Multiply and divide by 1 digit', 速度: 'Speed', 买东西: 'Shopping', 单价: 'Unit price', 年月日: 'Years, months, days',
+    三位数乘两位数: '3-digit × 2-digit', 简便算: 'Shortcuts'});
+  const LIST = [[/^[^、]+(、[^、]+)+$/, s => { const l = s.split('、').map(one); return l.some(x => x === null) ? null : l.join(', '); }]];
   P.unshift(...P2A, ...P2B, ...P34);
+  P.push(...LIST);
   const AFTER = [
     [/^ 个百$/, o => (o ? ' hundred' : ' hundreds')], [/^ 个十$/, o => (o ? ' ten' : ' tens')], [/^ 个一$/, o => (o ? ' one' : ' ones')],
     [/^ 个十和 (\d+) 个一$/, (o, n) => ` ${o ? 'ten' : 'tens'} and ${pl(n, 'one')}`],

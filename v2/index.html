@@ -541,7 +541,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #forgeMsg.pop{animation:fragLand .28s}
 #gemEv{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:calc(env(safe-area-inset-left) + 112px);z-index:30;min-height:44px;width:236px;padding:4px 10px;line-height:1.25;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;font-size:14px;font-weight:800;text-align:left}#gemEv[hidden]{display:none}#gemEv[disabled]{min-height:32px;font-size:14px;color:var(--warn);opacity:1}#gemEv.offer{background:var(--warn);color:#1b1d22;box-shadow:0 4px 0 #000;animation:fragLand .3s}
 #restOv{position:fixed;inset:0;z-index:75;background:var(--cave);display:flex;align-items:center;justify-content:center}#restOv[hidden]{display:none}#restOv h2{margin:0;font-size:24px}#restOv b{font-size:44px;color:var(--warn)}
-#exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden]{display:none!important}
+#exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden],#pDev[hidden]{display:none!important}
 .qfeel{display:flex;align-items:center;gap:6px;flex:none}.qfeel[hidden],.qgoal[hidden]{display:none}
 .qfire{display:flex;align-items:center;gap:3px;height:28px;min-width:30px;padding:0 5px;background:var(--cave);border:2px solid #000;font-family:var(--f-num);font-weight:900;font-size:15px;color:var(--warn)}
 .qfire i{width:12px;height:16px;display:block;background:#555b66;clip-path:polygon(50% 0,85% 40%,100% 70%,80% 100%,20% 100%,0 70%,15% 40%)}
@@ -572,7 +572,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gemline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:700}
 .gemsum .gemline .frag{animation:fragLand .35s}
 .gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
-/* 结算页右栏（捣蛋鬼 1-12）：要做的事（战利品箱、珠子）→ 今天点亮的 → 错题 → 碎片；手机横屏碎片明细收成一行 */
+/* 结算页右栏（捣蛋鬼 1-12）：要做的事（战利品箱）→ 今天点亮的 → 错题 → 碎片；手机横屏碎片明细收成一行 */
 .qsList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
 .qsChips .chip2.more{background:none;border-color:transparent;color:var(--mute);padding-left:2px;padding-right:2px}
 .qsList.tight{gap:6px}.qsList.tight .chip2{font-size:14px;padding:3px 8px;margin:0 5px 5px 0}.qsList.tight .gemsum.fold{padding:6px 8px;gap:6px}
@@ -610,7 +610,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     <div class="muted" id="leadSub"></div>
     <button class="gobig startbtn" id="btnStart">开始今天的探险</button>
     <button class="btn" id="btnMore" hidden style="min-height:48px">再练一会（5 分钟）</button>
-    <div class="muted" id="leadFoot">练满 10 分钟去贴 1 颗珠子</div>
+    <div class="muted" id="leadFoot"></div>
   </div>
   <div class="w-sheet" id="zSheet">
     <button class="x" id="zX" aria-label="关上">✕</button>
@@ -815,14 +815,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 <!-- 10 家长区 -->
 <div class="scr" id="parent" hidden style="flex-direction:column;gap:10px">
-  <div id="gemStats" style="background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:none;font-size:14px;line-height:1.5"></div>
   <div class="top"><button class="btn" id="parBack">返回</button><h1>家长区</h1><span class="muted">首页右上角齿轮长按 2 秒进入</span></div>
   <div class="warnbox" id="parNote" hidden></div>
-  <div class="pgrid" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start">
-    <div class="panel">
-      <div class="ptitle">题库</div>
-      <div class="kv" id="bankInfo"></div>
-      <div class="seg" id="bankGo" style="flex-wrap:wrap"></div>
+  <div class="pgrid" style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start;align-items:start">
+    <div class="panel" id="pSet">
+      <div class="ptitle">练习设置</div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">单日英文、双日中文（今天：<span id="biToday"></span>）</span><input type="checkbox" id="biBox" style="width:44px;height:44px;margin:0"></label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">口答模式：家长陪着时用，孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
+      <div class="kv">看数图案闪现</div><div class="seg" id="segFlash"></div>
+      <div class="kv">数线合格范围</div><div class="seg" id="segTol"></div>
+      <div class="kv" id="lineErr"></div>
+    </div>
+    <div class="panel" id="pLevel">
+      <div class="ptitle">难度</div>
+      <div class="kv">选了就只出这几级的题，可以多选；默认自动</div><div id="lvBoxes" class="lvboxes"></div>
     </div>
     <div class="panel">
       <div class="ptitle">这周练得怎么样</div>
@@ -839,19 +845,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="warnbox" id="bkInfo"></div>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
       <button class="btn" id="btnImport">导入进度（只会变多，不会变少）</button>
-      <details><summary class="muted" style="min-height:44px;display:flex;align-items:center">更多</summary>
+      <details id="bkMore"><summary class="muted" id="bkMoreBtn" style="min-height:44px;display:flex;align-items:center">更多</summary>
         <button class="btn danger" id="btnImportAll" style="width:100%">整份替换（会覆盖）</button>
       </details>
       <div class="muted" style="font-size:12px;line-height:1.5">进度只存在这部手机的 Safari 里。请一直用 Safari 打开，不要改成「添加到主屏幕」，也不要在无痕模式下用，否则会看不到进度。</div>
     </div>
     <div class="panel">
-      <div class="ptitle">练习设置</div>
-      <div class="kv">看数图案闪现</div><div class="seg" id="segFlash"></div>
-      <div class="kv">数线合格范围</div><div class="seg" id="segTol"></div>
-      <div class="kv" id="lineErr"></div>
-      <div class="kv">难度（选了就只出这几级的题，可以多选；默认自动）</div><div id="lvBoxes" class="lvboxes"></div>
-      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">单日英文、双日中文（今天：<span id="biToday"></span>）</span><input type="checkbox" id="biBox" style="width:44px;height:44px;margin:0"></label>
-      <label style="display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.5"><span style="flex:1">口答模式：家长陪着时用，孩子说答案，家长点「答错了」</span><input type="checkbox" id="oralBox" style="width:44px;height:44px;margin:0"></label>
+      <div class="ptitle">题库</div>
+      <div class="kv" id="bankInfo"></div>
+      <div class="seg" id="bankGo" style="flex-wrap:wrap"></div>
     </div>
     <div class="panel">
       <div class="ptitle">手写</div>
@@ -871,9 +873,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <button class="btn danger" id="btnReset">清空进度</button>
       <button class="btn danger" id="btnResetYes" hidden>确认清空（不能恢复）</button>
       <span class="msg" id="resetMsg"></span>
-      <div class="muted" style="font-size:12px">测试快进日期：网址后加 #test，数据与正式进度分开</div>
-      <div class="kv" id="flashLog" hidden></div>
     </div>
+    <details class="panel" id="pDev" style="grid-column:1/-1">
+      <summary class="ptitle" id="pDevBtn" style="min-height:44px;display:flex;align-items:center;cursor:pointer">开发参数</summary>
+      <div id="gemStats" style="display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.5"></div>
+      <div class="kv" id="flashLog" hidden></div>
+      <div class="muted" style="font-size:12px">测试快进日期：网址后加 #test，数据与正式进度分开</div>
+    </details>
   </div>
   <div class="panel" id="ioPanel" hidden style="flex:none">
     <div id="ioTitle" style="font-weight:900"></div>
@@ -934,7 +940,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v119:24992910b718 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v121:fd3624e0fdbc -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -944,25 +950,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=119"></script>
-<script src="i18n.js?v=119"></script>
-<script src="bank.js?v=119"></script>
-<script src="hardbank.js?v=119"></script>
-<script src="placebank.js?v=119"></script>
-<script src="core.js?v=119"></script>
-<script src="ink.js?v=119"></script>
-<script src="skills.js?v=119"></script>
-<script src="engine.js?v=119"></script>
-<script src="render.js?v=119"></script>
-<script src="world.js?v=119"></script>
-<script src="home.js?v=119"></script>
-<script src="puzzles.js?v=119"></script>
-<script src="thinking.js?v=119"></script>
-<script src="house.js?v=119"></script>
-<script src="kongmine.js?v=119"></script>
-<script src="gems.js?v=119"></script>
-<script src="gemui.js?v=119"></script>
-<script src="vert.js?v=119"></script>
+<script src="touchfix.js?v=121"></script>
+<script src="i18n.js?v=121"></script>
+<script src="bank.js?v=121"></script>
+<script src="hardbank.js?v=121"></script>
+<script src="placebank.js?v=121"></script>
+<script src="core.js?v=121"></script>
+<script src="ink.js?v=121"></script>
+<script src="skills.js?v=121"></script>
+<script src="engine.js?v=121"></script>
+<script src="render.js?v=121"></script>
+<script src="world.js?v=121"></script>
+<script src="home.js?v=121"></script>
+<script src="puzzles.js?v=121"></script>
+<script src="thinking.js?v=121"></script>
+<script src="house.js?v=121"></script>
+<script src="kongmine.js?v=121"></script>
+<script src="gems.js?v=121"></script>
+<script src="gemui.js?v=121"></script>
+<script src="vert.js?v=121"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1069,7 +1075,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       const left = S.daily && S.daily.day === t ? Math.max(1, Math.ceil((S.daily.budget - S.daily.sec) / 60)) : 10;
       $('leadTitle').textContent = left < 10 ? `空空，今天还剩 ${left} 分钟` : '空空，今天练 10 分钟';
       $('leadSub').textContent = (d ? `复习 ${Math.min(d, Math.max(1, E.MIST_DAY - (S.daily && S.daily.day === t ? S.daily.mistN || 0 : 0)))} 道错题，` : '') + '学一点新的，再练练快的';
-      $('btnStart').textContent = left < 10 ? '接着探险' : '开始今天的探险'; $('leadFoot').textContent = (todayZone() ? '先去' + zoneName(todayZone()) + ' · ' : '') + '练满 10 分钟去贴 1 颗珠子';
+      $('btnStart').textContent = left < 10 ? '接着探险' : '开始今天的探险'; $('leadFoot').textContent = todayZone() ? '先去' + zoneName(todayZone()) : '';   // 墙上贴珠子已停用（Ben 11-08）
     }
     closeZone(); WD.start(todayZone() || 'look');
     banners();
@@ -1517,14 +1523,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       else bossLine = `<div class="muted">${P.word} ${need} 题就能打败 Boss，想打随时再来</div>`;
     }
     const blk = id => blockHtml(C.BYID[id]);
-    const gem = P.kind === 'daily' && Date.now() - P.startAt >= GOAL_MS ? '<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>' : '';
     const titles = {daily: P.title + ' · 本次总结', review: '错题复习 · 本次总结'};
     $('summary').innerHTML = `
       <div class="col" style="width:330px;flex:none;justify-content:center">
         <div style="font-size:24px;font-weight:900">${titles[P.kind] || (quit ? '先练到这里' : '练完啦')}</div>
         <div class="num sumbig">⚡ ${fast}<span style="font-size:30px;color:var(--mute)"> / ${done.length}</span></div>
         <div class="muted" style="font-size:15px;line-height:1.6">${P.word} ${fast} 题 · 慢了 ${slow} 题 · 写错 ${wrong} 题<br>用时约 ${mins} 分钟 · 写对的平均 ${avg} 秒</div>
-        ${bossLine}${gem}
+        ${bossLine}
       </div>
       <div class="col" style="flex:1;justify-content:center;gap:12px;overflow-y:auto">
         ${GM.summary(P, P.gemDay || today())}
@@ -1901,7 +1906,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const n = Object.values(q.gem || {}).reduce((a, b) => a + (+b || 0), 0), line = gs.querySelector('.gemline');
     const ticket = !!line && [...line.querySelectorAll('span')].some(e => e.textContent.trim() === '挑战券 +1');
     const t = document.createElement('button'); t.type = 'button'; t.id = 'qsGemFold'; t.className = 'gemfold'; t.setAttribute('aria-expanded', 'false');
-    t.textContent = ['这次的碎片' + (n ? ` +${n}` : ''), ticket ? '挑战券 +1' : ''].filter(Boolean).join(' · ');
+    const canCh = !!gs.querySelector('[data-gem=challenge]');   // 挑战只在结算页有入口：手里有券就提示（审查 R2）
+    t.textContent = ['这次的碎片' + (n ? ` +${n}` : ''), ticket ? '挑战券 +1' : canCh ? '可以挑战' : ''].filter(Boolean).join(' · ');
     t.addEventListener('click', () => { const open = gs.classList.toggle('open'), list = gs.closest('.qsList'); t.setAttribute('aria-expanded', String(open)); if (open && list) list.scrollTop = list.scrollHeight; });
     gs.classList.add('fold'); gs.prepend(t);
   }
@@ -1925,8 +1931,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (q.kind === 'place') return showPlaceResult(q, quit);
     if (q.kind === 'challenge') { HOME.addOre(S, q.n - q.wrong); HOME.sync(S, today()); save(); return GM.finishChallenge(q); }
     if (!q.n) return goIsland();
-    const full = q.kind === 'today' && S.daily && S.daily.done && S.daily.sec >= 600 && !S.daily.pearl;   // 一天只贴 1 颗珠子（「再练一会」不再提示）
-    if (full) { S.daily.pearl = true; save(); }
+    // 墙上贴珠子已停用（Ben 11-08：珠子被 App 取代）。存档里的 S.daily.pearl 不再读写，旧数据留着
     const mins = Math.max(1, Math.round((q.kind === 'today' ? S.daily.sec : q.secs) / 60));
     const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
     const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
@@ -1948,7 +1953,6 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="col" style="flex:1;gap:10px;min-height:0">
         <div class="qsList${tight ? ' tight' : ''}">
         ${box ? '<div id="qsBox" style="font-size:16px;color:var(--warn);font-weight:800">家门口有 1 个战利品箱</div>' : ''}
-        ${full ? '<div style="font-size:15px;color:var(--warn);font-weight:700">练满 10 分钟了，去墙上贴 1 颗珠子</div>' : ''}
         <div id="qsUps" style="font-size:16px;font-weight:700">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
         ${q.ups.length ? `<div class="qsChips">${q.ups.slice(0, upMax).map(chip).join('')}${q.ups.length > upMax ? `<span class="chip2 more">+${q.ups.length - upMax}</span>` : ''}</div>` : ''}
         ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
@@ -1956,7 +1960,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         </div>
         <div style="display:flex;gap:12px;flex:none">
           ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
-          ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">${full && !box ? '贴好珠子，回到岛上' : '回到岛上'}</button>
+          ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">回到岛上</button>
         </div>
       </div>`;
     show('qsum'); GM.bind($('qsum'), 'qsum'); foldGems(q, tight); if (tight) trimChips(q.ups.length, 2);
@@ -2036,7 +2040,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const fmtDay = ms => { const d = new Date(ms); return `${d.getMonth() + 1} 月 ${d.getDate()} 日`; };
   const kb = k => { const v = store.getItem(k); return v === null ? '—' : (v.length / 1024).toFixed(1) + ' KB'; };
   function renderParent() {
-    { const h = GM.parentStats(); $('gemStats').innerHTML = h; $('gemStats').hidden = !h; }
+    { const h = GM.parentStats(); $('gemStats').innerHTML = h; $('gemStats').hidden = !h; $('pDev').hidden = !h && !TEST; }
     const t = today(), st = S.stats || {};
     // 周报：最近 7 天
     const last7 = Array.from({length: 7}, (_, i) => st[C.addDays(t, -i)]).filter(Boolean).filter(x => x.sec > 0);
@@ -2236,12 +2240,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('btnImportAll').addEventListener('click', () => openIO('all'));
   $('btnInkOut').addEventListener('click', () => openIO('inkout'));
   $('btnInkIn').addEventListener('click', () => openIO('inkin'));
-  $('btnBrokenOut').addEventListener('click', () => { openIO('broken'); $('btnBrokenDel').hidden = false; });
-  $('btnBrokenDel').addEventListener('click', () => { C.dropBroken(store, CTX); location.reload(); });
+  $('btnBrokenOut').addEventListener('click', () => openIO('broken'));   // 「删掉它」等点过「复制」才出现：删了原文就只剩剪贴板里那份（F 审查 R1）
+  $('btnBrokenDel').addEventListener('click', () => { C.dropBroken(store, CTX); save(); location.reload(); });   // 先腾空间再把现在的进度写回主存档：主存档还是坏的话，刷新后又会另存一份读不了的（F 11-08 走查发现）
   $('ioClose').addEventListener('click', () => { $('ioPanel').hidden = true; });
   $('ioCopy').addEventListener('click', () => {
     const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } if (ioKind === 'broken') $('btnBrokenDel').hidden = false; };
-    navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; });
+    navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; if (ioKind === 'broken') $('btnBrokenDel').hidden = false; });
   });
   $('ioApply').addEventListener('click', () => {
     let gemsMiss = false;

@@ -89,6 +89,9 @@ with sync_playwright() as p:
         for mod, n in [('balance', 4), ('target', 3), ('clue', 4), ('block', 4)]:
             enter(pg, mod)
             if W == 874: pg.screenshot(path=str(out / f'{W}x{H}-{mod}-enter.png'))
+            lv = pg.evaluate(f"[...document.querySelectorAll('#think .tabs .tlv')].map(e => [e.textContent, e.scrollWidth <= e.clientWidth + 1 && e.getBoundingClientRect().right <= e.closest('button').getBoundingClientRect().right + 1])")
+            want = pg.evaluate(f"SKILLS.THINK_LEVEL['{mod}'].map(n => '建议第 ' + n + ' 级起')")
+            check([x[0] for x in lv] == want and all(x[1] for x in lv), f'{W}x{H} {mod} 每档标建议级别、放得下：{lv}')
             for t in range(n):
                 if pg.evaluate('__sm.TH.G.tier') != t: tap(pg, f'[data-t="{t}"]'); pg.wait_for_timeout(650)
                 tag = f'{W}x{H} {mod}{t}'; layout(pg, tag + ' 题面')
