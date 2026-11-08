@@ -29,6 +29,10 @@ with sync_playwright() as p:
                 check(pg.evaluate("__sm.Q.v.input") == 'vert' and pg.locator('.vboard').count() == 1, f'{tag} 是蓝框版面')
                 qf = pg.evaluate(QFIT); check(qf['n'] > 0 and qf['inside'] and fit_ok(pg), f'{tag} 题面（图 / 分数）在上方、整块放得下：{qf}')
                 if id in FRAC: check(pg.locator('.vbq .frac').count() >= 1, f'{tag} 题面分数是上下结构')
+                if id in ('speed:g12:fracadd', 'dock:g7:bar') and not en:   # 落笔后点喇叭不重新计时（审查 R1）
+                    t0 = pg.evaluate('__sm.Q.t0'); pg.click('.vbq .spk'); pg.wait_for_timeout(100); check(pg.evaluate('__sm.Q.t0') > t0, f'{tag} 没落笔点喇叭：听题不算用时')
+                    c0 = pg.locator('.vcell'); write(pg, c0.nth(c0.count() - 1), 1); t1 = pg.evaluate('__sm.Q.t0'); pg.click('.vbq .spk'); pg.wait_for_timeout(100)
+                    check(pg.evaluate('__sm.Q.t0') == t1, f'{tag} 落笔后点喇叭不重新计时'); pg.click('.vclear')
                 if not en and id in (FRAC + FIG[:2]): pg.screenshot(path=str(out / f'{name}-{id.replace(":", "_")}.png'))
                 answer(pg, it['ans']); pg.click('.vdone'); pg.wait_for_timeout(500)
                 t = pg.inner_text('#qBody'); check(any(w in t for w in ('对了', '秒答', 'fast', 'Fast', 'Right', 'right')) and pg.locator('.vcell.ok').count() > 0, f'{tag} 真写 {it["ans"]} 判对：{t[:40]!r}')

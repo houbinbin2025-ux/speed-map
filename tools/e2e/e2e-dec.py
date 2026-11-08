@@ -73,6 +73,8 @@ with sync_playwright() as p:
             check(fit_ok(pg), f'{name} {id} 版面放得下')
             pg.screenshot(path=str(out / f'ipad-{name}-{id.replace(":", "_")}.png'))
             answer(pg, digits); pg.click('.vdone'); pg.wait_for_timeout(500)
+            try: pg.wait_for_selector('.vcell.ok', timeout=3000)   # 机器忙时格子变绿会慢一拍
+            except Exception: pass
             t = body(pg); check(('对了' in t or '秒答' in t) and pg.locator('.vcell.ok').count() > 0 and pg.locator('.vdotc').is_visible(), f'{name} 蓝框写 {digits}（不写点）判对，格子变绿、小数点还在：{t[:60]!r}')
             pg.wait_for_timeout(2600)
             c = pg.locator('.vcell'); write(pg, c.nth(c.count() - 1), (it['ans'] + 1) % 10); pg.click('.vdone'); pg.wait_for_timeout(600)

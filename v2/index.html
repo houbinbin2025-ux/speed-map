@@ -2199,7 +2199,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       speechSynthesis.speak(u);
     } catch (err) { sayEnd(); }
   }
-  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') { E.noteSay(S, today()); if (Q && Q.phase === 'q' && Q.x && (Q.v.input !== 'write' || !qPad.strokes().length)) Q.t0 = performance.now(); } sayIt(b); });   // 听题不算想题的时间
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') { E.noteSay(S, today()); if (Q && Q.phase === 'q' && Q.x && (Q.v.input === 'write' ? !qPad.strokes().length : Q.v.input === 'vert' ? !(Q.vc && Q.vc.touched()) : true)) Q.t0 = performance.now(); } sayIt(b); });   // 听题不算想题的时间；已经落笔（写字板、蓝框）再点喇叭不重新计时，免得写完点一下就算秒答
   R.setSprite(ART.spriteURL);
   function renderBi() { $('biBox').checked = S.settings.bilingual !== false; $('biToday').textContent = I18N.isEn(S.settings, today()) ? '英文' : '中文'; }
   $('biBox').addEventListener('change', e => { S.settings.bilingual = e.target.checked; save(); applyLang(); renderBi(); });
