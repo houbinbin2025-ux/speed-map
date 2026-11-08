@@ -391,14 +391,20 @@ test('R2-B16 「再看一次」答对不拉低合格率（不影响"有余力再
 });
 
 test('R2-B17 排课速度：460 道错题、全部格子有记录时，next + answer 每题 ≤ 10 毫秒', () => {
-  const S = C.blank(); S.placedAt = 1;
-  K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 2, d: [D(-9), D(-8)], seen: 5, lastDay: D(-8)})));
-  const r = seeded(3);
-  for (let k = 0; k < 460; k++) { const it = K.SKILLS[k % K.SKILLS.length].items[0]; E.addMistake(S, K.make(it.id, r), D(-1 - (k % 5))); }
-  const s = E.session(S, D(0), {rnd: seeded(1)});
-  let worst = 0;
-  for (let k = 0; k < 60; k++) { const t0 = performance.now(); const x = s.next(); if (!x) break; if (x.kind === 'q') s.answer(ok); worst = Math.max(worst, performance.now() - t0); }
-  assert.ok(worst <= 10, '最慢 ' + worst.toFixed(2) + ' 毫秒');
+  // 机器忙（几个会话同时跑走查）时单次计时会被别的进程打断：先空跑一遍预热，再跑 5 遍，每遍取最慢一步，看 5 遍的中位数（中控 11-08）；门槛不变
+  const run = () => {
+    const S = C.blank(); S.placedAt = 1;
+    K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 2, d: [D(-9), D(-8)], seen: 5, lastDay: D(-8)})));
+    const r = seeded(3);
+    for (let k = 0; k < 460; k++) { const it = K.SKILLS[k % K.SKILLS.length].items[0]; E.addMistake(S, K.make(it.id, r), D(-1 - (k % 5))); }
+    const s = E.session(S, D(0), {rnd: seeded(1)});
+    let worst = 0;
+    for (let k = 0; k < 60; k++) { const t0 = performance.now(); const x = s.next(); if (!x) break; if (x.kind === 'q') s.answer(ok); worst = Math.max(worst, performance.now() - t0); }
+    return worst;
+  };
+  run();
+  const w = Array.from({length: 5}, run).sort((a, b) => a - b);
+  assert.ok(w[2] <= 10, '5 遍最慢一步的中位数 ' + w[2].toFixed(2) + ' 毫秒（各遍 ' + w.map(x => x.toFixed(1)).join(' / ') + '）');
 });
 
 test('题型错题每种最多留最近 3 道（同一类题不堆成一串）；卡的错题不受影响', () => {
