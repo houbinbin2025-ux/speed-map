@@ -249,6 +249,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .qtop{display:flex;align-items:center;gap:10px;position:relative}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
 .qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:14px;font-weight:700}
+/* 碎片的火苗、能量、小目标放在题签这一行右边，不和「长按结束」、铁轨挤在顶栏（捣蛋鬼第 1 轮第 5 条）。题签太长就省略，至少留 90 */
+.qtagrow{display:flex;align-items:center;gap:8px;min-width:0}.qtagrow .qtag{align-self:auto;min-width:90px;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.qtagrow .qfeel{margin-left:auto}
+#qQuit{flex:none;white-space:nowrap}#qplay .qtop .tbar{min-width:70px}
 .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
 .qnote{font-size:14px;color:var(--mute)}
 .qfoot{display:flex;gap:10px;align-items:center;min-height:56px}
@@ -534,13 +537,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #restOv{position:fixed;inset:0;z-index:75;background:var(--cave);display:flex;align-items:center;justify-content:center}#restOv[hidden]{display:none}#restOv h2{margin:0;font-size:24px}#restOv b{font-size:44px;color:var(--warn)}
 #exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden]{display:none!important}
 .qfeel{display:flex;align-items:center;gap:6px;flex:none}.qfeel[hidden],.qgoal[hidden]{display:none}
-.qfire{display:flex;align-items:center;gap:3px;height:44px;min-width:44px;padding:0 6px;background:var(--cave);border:3px solid #000;font-family:var(--f-num);font-weight:900;font-size:18px;color:var(--warn)}
-.qfire i{width:16px;height:22px;display:block;background:#555b66;clip-path:polygon(50% 0,85% 40%,100% 70%,80% 100%,20% 100%,0 70%,15% 40%)}
+.qfire{display:flex;align-items:center;gap:3px;height:28px;min-width:30px;padding:0 5px;background:var(--cave);border:2px solid #000;font-family:var(--f-num);font-weight:900;font-size:15px;color:var(--warn)}
+.qfire i{width:12px;height:16px;display:block;background:#555b66;clip-path:polygon(50% 0,85% 40%,100% 70%,80% 100%,20% 100%,0 70%,15% 40%)}
 .qfire.on i{background:linear-gradient(#fff3b0,#f5c935 45%,#e0762a)}.qfire.low i{animation:fblink .5s steps(2) infinite}@keyframes fblink{50%{opacity:.25}}
-.qcombo{display:flex;align-items:center;gap:2px;height:44px;padding:0 6px;background:var(--cave);border:3px solid #000;white-space:nowrap}
-.qcombo i{width:6px;height:20px;display:block;background:#2a2d34;border:1px solid #000}.qcombo i.on{background:#1fc8b8}
-.qcombo.crit{background:var(--warn);color:#1b1d22;font-weight:900;font-size:16px}
-.qgoal{display:flex;align-items:center;height:44px;padding:0 8px;background:var(--warn);color:#1b1d22;border:3px solid #000;font-weight:900;font-size:14px;white-space:nowrap}
+.qcombo{display:flex;align-items:center;gap:2px;height:28px;padding:0 5px;background:var(--cave);border:2px solid #000;white-space:nowrap}
+.qcombo i{width:5px;height:14px;display:block;background:#2a2d34;border:1px solid #000}.qcombo i.on{background:#1fc8b8}
+.qcombo.crit{background:var(--warn);color:#1b1d22;font-weight:900;font-size:13px}
+.qgoal{display:flex;align-items:center;height:28px;padding:0 6px;background:var(--warn);color:#1b1d22;border:2px solid #000;font-weight:900;font-size:12px;white-space:nowrap}
 #qplay.crit::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:25;box-shadow:inset 0 0 0 5px var(--warn),inset 0 0 36px rgba(245,201,53,.55);animation:critglow .8s ease-in-out infinite alternate}@keyframes critglow{to{box-shadow:inset 0 0 0 3px var(--warn),inset 0 0 18px rgba(245,201,53,.3)}}
 @media (max-width:700px){.qcombo i{width:4px}.qgoal{font-size:12px;padding:0 5px}}
 .evpop{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:55;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;padding:6px 16px;font-size:18px;font-weight:900;pointer-events:none;white-space:nowrap;animation:evpop 1.5s ease forwards}.evpop.gold{background:var(--warn);color:#1b1d22;font-size:24px}@keyframes evpop{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.08)}20%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-12px)}}
@@ -627,10 +630,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div id="exitOv" hidden><div class="fwcard"><b></b><span></span><div class="gembtns"><button class="btn go" id="exitGo">继续答题</button><button class="btn" id="exitEnd">结束</button></div></div></div>
   <canvas class="scnbg px" id="qBg"></canvas>
   <div class="ql">
-    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span><span class="qfeel" id="qFeel" hidden><span class="qfire" id="qFire"><i></i><b></b></span><span class="qcombo" id="qCombo"></span><span class="qgoal" id="qGoal" hidden></span></span></div>
+    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span></div>
     <div class="banner" id="qWarn" hidden></div>
     <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
-    <div class="qtag" id="qTag"></div>
+    <div class="qtagrow"><div class="qtag" id="qTag"></div><span class="qfeel" id="qFeel" hidden><span class="qfire" id="qFire"><i></i><b></b></span><span class="qcombo" id="qCombo"></span><span class="qgoal" id="qGoal" hidden></span></span></div>
     <div class="qbrow"><div class="qbody" id="qBody"></div><div class="qnextcol" id="qNextCol"></div></div>
     <div id="qWide" hidden style="flex:1;display:flex;flex-direction:column;gap:10px;min-height:0"></div>
     <div class="qnote" id="qNote"></div>
