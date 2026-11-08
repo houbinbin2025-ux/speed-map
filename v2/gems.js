@@ -7,13 +7,21 @@
 })(typeof self !== 'undefined' ? self : this, function (K, E) {
   'use strict';
   const KEY = 'speedmap.gems';
-  // 杂色碎片（Ben 11-07）：印 4、6、7、8、12、13，给孩子自己凑 100 做算数。数量要少，核心还是普通碎片
-  const VALUE = {s: 5, m: 10, l: 50, o4: 4, o6: 6, o7: 7, o8: 8, o12: 12, o13: 13}, ODD = ['o4', 'o6', 'o7', 'o8', 'o12', 'o13'], ODD_RATE = 0.1, ODD_OF = {s: ['o4', 'o6', 'o7', 'o8'], m: ['o8', 'o12', 'o13']};
+  // 第 10 版（Ben 11-07）：碎片分普通和金色。专注火苗亮时得金色，面值翻倍：小 2→4、中 5→10、大 25→50
+  // 背包按面值存：p 2、g 4、s 5、m 10、h 25、l 50。旧版的 s 5、m 10、l 50 正好对上，背包里的旧碎片不改面值
+  // 杂色碎片（Ben 11-07）：给孩子自己凑 100 做算数，数量要少，只在金色小、中碎片里换。o4 是旧版留下的，还能用
+  // 第 10.1 版（Ben 11-08）：小碎片改成 1 / 2（a / b），可以在锻造台凑准 50 炼大碎片。11-07 发出的 p 2 读入时并进 b，g 4 照旧能用
+  const VALUE = {a: 1, b: 2, p: 2, g: 4, s: 5, m: 10, h: 25, l: 50, o3: 3, o4: 4, o6: 6, o7: 7, o8: 8, o12: 12, o13: 13}, ODD = ['o3', 'o4', 'o6', 'o7', 'o8', 'o12', 'o13'], ODD_RATE = 0.1, ODD_OF = {b: ['o3'], m: ['o8', 'o12', 'o13']};
+  const MAIN = ['a', 'b', 'g', 's', 'm', 'h', 'l'], BASE = {S: 'a', M: 's', L: 'h'}, GOLD = {S: 'b', M: 'm', L: 'l'};
+  const BIG = 50, BIG_SLOTS = 30, BOX_ODD = ['o3', 'o8', 'o12', 'o13'];   // 宝箱里的杂色碎片和平时发的一样
+  const known = t => Object.prototype.hasOwnProperty.call(VALUE, t);   // 不能用 VALUE[t]：constructor 之类会当成碎片   // 炼大碎片：碎片合计正好 50 得 1 个大碎片，不是 50 全部变废料；最多放 30 个
   const GEM = 100, SLOTS = 12, DAY_MAX = 30, CH_N = 5, CLAIM_DAYS = 7, KEEP_DAYS = 14, RECENT_DAYS = 14;
   // 奖励数值都在这里，由 tools/sim-gems.js 校准到 2～3 分钟换 1 颗（Ben 11-07）
   const TUNE = {
-    midLv: 1, bonus: 0.1,                       // 中碎片：还没学稳的格子（格子档位 < midLv）；认真奖励比例
-    critAt: 600, critAt2: 1200, crit1: 0.02, crit2: 0.03, critAcc: 0.7,   // 暴击：有效学习满 10 分钟 / 20 分钟后的概率；正确率门槛
+    midLv: 1, bonus: 0.25,                      // 中碎片：还没学稳的格子（格子档位 < midLv）；认真奖励比例
+    focusWin: 120, focusOn: 0.7, focusGrace: 5, capMin: 10, capMax: 30, capMul: 3, ansGrace: 3, fillMax: 20,   // 专注火苗：最近 2 分钟专注度 ≥ 70% 点亮；低于后 5 秒熄灭。每题有效时间 = 用时，最多算这道题标准时间的 3 倍（10～30 秒）；判题 3 秒；改对和重复题每天最多 20 个小碎片
+    comboN: [12, 10, 8], comboAt: [600, 1200], critSec: 20, critAcc: 0.7,   // 连对能量：当天有效学习 0～10、10～20、20 分钟以后攒满要几格；暴击时刻秒数；正确率门槛
+    exitRate: 0.2, exitMaxSec: 1500, exitMaxN: 5, exitGem: 20, exitCombo: 3, boxN: 4,   // 退出挽留：概率；当天练满 25 分钟不留；最多再答几题；差多少碎片算「差一点」；能量差几格；宝箱要答几题
     gapMin: 150, gapMax: 240,                    // 两次弹出之间的有效学习秒数
     offerSec: 20, dblSec: 45, dblMax: 4, dblMinN: 3,   // 双倍挑战：20 秒内点才算；限时秒数；每天次数；题数下限
     qcSec: 180, qcMax: 2, qcShare: 0.4, qcMinN: 6, qcMaxN: 24,   // 限时挑战：3 分钟；每天次数；题数范围
@@ -21,7 +29,7 @@
     restAt: 1800, restSec: 300, restGrace: 30,   // 连续有效学习 30 分钟：30 秒内结束，休息 5 分钟
   };
   const BOLT = 0.6, BOLT_DAY = 20;   // 闪电秒答：用时不到秒答时间的 60%，多得 1 个中碎片，一天最多 20 个（小碎片单独炼不出宝石，给小的等于没奖励）
-  const blank = () => ({v: 1, inv: {s: 0, m: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
+  const blank = () => ({v: 1, inv: {a: 0, b: 0, g: 0, s: 0, m: 0, h: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
 
@@ -37,6 +45,7 @@
     const b = blank(), inv = Object.assign(b.inv, o.inv), seen = Object.assign(b.seen, o.seen);
     if (!Object.keys(inv).filter(t => VALUE[t]).every(t => Number.isInteger(inv[t]) && inv[t] >= 0) || !isObj(seen.keys) || !isObj(seen.cells)) return null;
     if (!Object.values(o.days || {}).every(isObj) || (o.tickets !== undefined && !Number.isInteger(o.tickets))) return null;
+    if (inv.p) { inv.b = (inv.b || 0) + inv.p; } delete inv.p;   // 11-07 的小碎片 2 和金色小碎片 2 一样，并成一种
     return Object.assign(b, o, {inv, seen});
   }
   function prune(st, today) {
@@ -65,9 +74,11 @@
   // 记一次作答，返回得到的碎片 's' | 'm' | null。判定一出来就调，在显示答案之前
   // o = {day, inst, ok, slow, top, lv, dunno, peeked, oral, retry, mistake, guard}；slow = 答对但没秒答：只给 1 个小碎片
   function answer(st, o) {
-    if (o.oral || o.retry) return null;
+    if (o.oral) return null;
+    const clean = o.ok && !o.peeked && !o.dunno;
+    if (o.retry) return clean ? filler(st, o.day) : null;   // 答错后当场改对：不算正确率，给 1 个普通小碎片（Ben 11-07：答对就要有碎片）
     const seen = seenToday(st, o.day), k = key(o.inst);
-    if (seen.keys[k]) return null;
+    if (seen.keys[k]) return clean ? filler(st, o.day) : null;   // 今天答过的同一题：同上
     seen.keys[k] = 1;
     const D = dayOf(st, o.day);
     D.n++;
@@ -75,31 +86,83 @@
     if (!o.ok) { D.bad++; return null; }
     D.ok++;
     if (o.guard) return null;
-    if (o.slow) { st.inv.s++; return 's'; }
+    if (o.slow) return give(st, 'S', o.mult);
     const cell = cellOf(o), first = !seen.cells[cell];
     seen.cells[cell] = 1;
     const mid = o.mistake || (first && (o.lv < TUNE.midLv || K_levelOf(o.inst) >= o.top));
-    const cc = critChance(D), crit = cc > 0 && !!o.rand && o.rand() < cc;
-    const got = crit ? 'l' : oddFor(mid ? 'm' : 's', o.rand);
-    st.inv[got] = (st.inv[got] || 0) + 1;
     if (mid) D.m++;
-    if (crit) D.crit = (D.crit || 0) + 1;
-    return got;
+    return give(st, mid ? 'M' : 'S', o.mult, o.rand);
   }
-  // 暴击：当天有效学习满 10 分钟开启，满 20 分钟更多；正确率不够不暴击
-  function critChance(D) {
-    const sec = D.sec || 0, n = D.ok + D.bad;
-    if (sec < TUNE.critAt || !n || D.ok / n < TUNE.critAcc) return 0;
-    return sec < TUNE.critAt2 ? TUNE.crit1 : TUNE.crit2;
+  // 改对的、今天答过的题：1 个普通小碎片（1），不翻倍、不算秒答奖励，一天最多 fillMax 个。标 rep（不能叫 fill：数组自带 fill 方法，永远为真），调用方据此不发秒答奖励
+  function filler(st, day) {
+    const D = dayOf(st, day); if ((D.fill || 0) >= TUNE.fillMax) return null;
+    D.fill = (D.fill || 0) + 1; st.inv.a = (st.inv.a || 0) + 1;
+    const out = ['a']; out.rep = true; return out;
+  }
+  // 每题算多少有效时间：用时和这道题标准时间（秒答时限）的 3 倍取小，再封顶 30 秒。limitMs 不知道时按 10 秒
+  const effSecs = (secs, limitMs) => Math.max(0, Math.min(secs || 0, TUNE.capMax, Math.max(TUNE.capMin, (limitMs ? limitMs / 1000 : TUNE.capMin) * TUNE.capMul)));
+  // 倍数只加不乘：基础 1，火苗亮 +1，暴击时刻 +1。×1 给普通碎片，×2 给金色，×3 给金色 + 普通。不传倍数按 ×2（老流程、挑战本身就是专注状态）
+  function pieces(tier, mult) { const m = mult === undefined ? 2 : mult; return m >= 3 ? [GOLD[tier], BASE[tier]] : m === 2 ? [GOLD[tier]] : [BASE[tier]]; }
+  function give(st, tier, mult, rand) {
+    const out = pieces(tier, mult).map((t, i) => (i === 0 && t === GOLD[tier] ? oddFor(t, rand) : t));
+    out.forEach(t => { st.inv[t] = (st.inv[t] || 0) + 1; });
+    return out;
+  }
+  const worth = list => (list || []).reduce((n, t) => n + (VALUE[t] || 0), 0);
+  // ---------- 专注火苗：最近 2 分钟里有多少时间在认真答题。页面每 0.5 秒调一次 focusTick，答一题调 focusAnswer ----------
+  // F 只存在这次练习里，不存盘。刚开始窗口里缺的时间按专注算，所以一进来火苗就亮
+  function focusNew(now) { return {at: now, last: now, w: [], lit: true, low: 0, all: 0, act: 0, on: 0}; }
+  const capOf = limitMs => Math.max(TUNE.capMin, Math.min(TUNE.capMax, (limitMs ? limitMs / 1000 : TUNE.capMin) * TUNE.capMul));   // 这道题最多算几秒专注
+  function focusPct(F) {
+    const tot = F.w.reduce((n, x) => n + x[0], 0), act = F.w.reduce((n, x) => n + (x[1] ? x[0] : 0), 0);
+    return Math.min(1, (act + Math.max(0, TUNE.focusWin - tot)) / TUNE.focusWin);
+  }
+  // cap = 这一题算专注的上限秒数；dt 最多 2 秒：切到后台、进挑战回来，中间的时间不算
+  function focusTick(F, now, cap) {
+    const dt = Math.max(0, Math.min(2, now - F.at)); F.at = now;
+    if (!dt) return F.lit;
+    const act = now - F.last <= cap + TUNE.ansGrace;
+    F.w.push([dt, act ? 1 : 0]);
+    let tot = F.w.reduce((n, x) => n + x[0], 0);
+    while (F.w.length && tot - F.w[0][0] >= TUNE.focusWin) tot -= F.w.shift()[0];
+    F.all += dt; if (act) F.act += dt; if (F.lit) F.on += dt;
+    const p = focusPct(F);
+    if (p >= TUNE.focusOn) { F.lit = true; F.low = 0; }
+    else if (F.lit) { F.low = F.low || now; if (now - F.low >= TUNE.focusGrace) F.lit = false; }
+    return F.lit;
+  }
+  function focusAnswer(F, now) { F.last = now; if (F.low) F.low = now; }   // 火苗快灭时答一题，再保 5 秒
+  // 每次练习的专注度记下来，家长区看分布，第 1 周按真实数据再定门槛
+  function noteFocus(st, day, F) {
+    if (!F || F.all < 30) return;
+    if (!Array.isArray(st.flog)) st.flog = [];
+    st.flog.push({day, sec: Math.round(F.all), act: Math.round(F.act / F.all * 100), on: Math.round(F.on / F.all * 100)});
+    if (st.flog.length > 30) st.flog.splice(0, st.flog.length - 30);
+  }
+  // ---------- 连对能量：答对 +1、秒答 +2，答错掉一半，点「不会」不变。攒满进入 20 秒暴击时刻，期间碎片倍数 +1 ----------
+  function comboNew() { return {e: 0, until: 0}; }
+  const comboNeed = D => { const s = (D && D.sec) || 0; return s < TUNE.comboAt[0] ? TUNE.comboN[0] : s < TUNE.comboAt[1] ? TUNE.comboN[1] : TUNE.comboN[2]; };
+  const critOn = (C, now) => !!C && now < C.until;
+  // 返回 true = 这一题攒满，暴击时刻开始（这一题本身不算在暴击里）
+  function comboStep(st, day, C, now, r) {
+    if (critOn(C, now) || r.dunno) return false;
+    const D = dayOf(st, day), n = D.ok + D.bad;
+    if (!r.ok) { C.e = Math.floor(C.e / 2); return false; }
+    if (n && D.ok / n < TUNE.critAcc) return false;
+    C.e += r.fast ? 2 : 1;
+    if (C.e < comboNeed(D)) return false;
+    C.e = 0; C.until = now + TUNE.critSec; D.crit = (D.crit || 0) + 1;
+    return true;
   }
   function addSec(st, day, secs) { const D = dayOf(st, day); D.sec = (D.sec || 0) + Math.max(0, secs || 0); return D.sec; }
   // ---------- 练习中弹出：只决定什么时候弹，挑战本身是独立的小关 ----------
   // eff = 当天有效学习秒数（发呆不增长，所以发呆不弹）；t = 时钟秒数（20 秒倒计时用）
-  function eventStep(st, day, run, eff, t, rand) {
+  // can = 火苗亮且不在暴击时刻：不满足就先不弹，等满足了再弹
+  function eventStep(st, day, run, eff, t, rand, can) {
     const D = dayOf(st, day), ev = run.ev = run.ev || {next: eff + TUNE.gapMin * 0.8 + rand() * (TUNE.gapMax - TUNE.gapMin), offer: null};
     const out = {};
     if (ev.offer && t >= ev.offer.until) { ev.offer = null; out.missed = true; }
-    if (!ev.offer && eff >= ev.next && !restDue(st)) {
+    if (!ev.offer && eff >= ev.next && can !== false && !restDue(st)) {
       ev.next = eff + TUNE.gapMin + rand() * (TUNE.gapMax - TUNE.gapMin);
       const qcOk = (D.qc || 0) < TUNE.qcMax, dblOk = (D.dbl || 0) < TUNE.dblMax;
       const kind = qcOk && (!dblOk || rand() < TUNE.qcShare) ? 'qc' : dblOk ? 'dbl' : null;
@@ -161,26 +224,45 @@
   const restDue = st => restState(st).sec >= TUNE.restAt;
   function startRest(st, now) { const r = restState(st); r.sec = 0; r.at = now; r.until = now + TUNE.restSec; }
   const restLeft = (st, now) => { const l = restState(st).until - now; return l > 0 && l <= TUNE.restSec ? l : 0; };   // 时钟回拨导致超过 5 分钟：按已结束算，不能卡死
-  // 退出时的提示：差 5 分钟内 → 提示开启暴击时间；已开启且还有次数 → 给 1 次双倍挑战；其他不弹
-  function exitOffer(st, day) {
-    if (restDue(st)) return null;
-    const D = dayOf(st, day), left = TUNE.critAt - (D.sec || 0);
-    if (left > 300) return null;
-    if (left > 0) return {kind: 'crit', mins: Math.max(1, Math.ceil(left / 60))};
-    return (D.dbl || 0) < TUNE.dblMax && !D.exitDbl ? {kind: 'dbl'} : null;
+  // ---------- 退出挽留：长按结束时最多 20% 弹出，只用「差一点就到手」的理由，要求很小 ----------
+  // o = {asked 这次弹过没有, last 最近 3 题对错, perQ 这次每题平均得多少碎片, combo, now, rand}
+  function exitHook(st, day, o) {
+    const D = dayOf(st, day), last = o.last || [];
+    if (o.asked || restDue(st) || (D.sec || 0) >= TUNE.exitMaxSec) return null;
+    if (last.length >= 3 && last.slice(-3).every(x => !x)) return null;   // 被难住了，让他走
+    if (o.rand() >= TUNE.exitRate) return null;
+    const gap = gapToGem(st.inv), n = gap > 0 && gap <= TUNE.exitGem ? Math.ceil(gap / Math.max(1, o.perQ || 4)) : 0;
+    if (n && n <= TUNE.exitMaxN) return {kind: 'gem', gap, n};
+    const nn = D.ok + D.bad, accOk = !nn || D.ok / nn >= TUNE.critAcc;   // 正确率不够时能量不涨，不能许诺「再连对 N 题」
+    const C = o.combo, left = C && accOk && !critOn(C, o.now) ? comboNeed(D) - C.e : 99;
+    if (left <= TUNE.exitCombo) return {kind: 'combo', n: left};
+    return {kind: 'box', n: TUNE.boxN};
   }
-  // 小碎片、中碎片有 10% 换成价值相近的杂色碎片；大碎片不换。不给随机数就不换
+  // 背包里的碎片按最好的配方（最多 12 个）离 100 还差多少；已经够炼就是 0
+  function gapToGem(inv) {
+    const reach = Array.from({length: SLOTS + 1}, () => new Set()); reach[0].add(0);
+    Object.keys(VALUE).forEach(t => { const v = VALUE[t], k = Math.min(SLOTS, inv[t] || 0); for (let j = 0; j < k; j++) for (let c = SLOTS - 1; c >= 0; c--) reach[c].forEach(x => { if (x < GEM) reach[c + 1].add(Math.min(GEM, x + v)); }); });
+    let best = 0; reach.forEach(s => s.forEach(x => { if (x > best) best = x; }));
+    return GEM - best;
+  }
+  // 宝箱：1 个随机碎片。杂色碎片占一半，大碎片 10%，其余金色中碎片
+  function openBox(st, rand) {
+    const r = rand(), t = r < 0.5 ? BOX_ODD[Math.min(BOX_ODD.length - 1, Math.floor(r / 0.5 * BOX_ODD.length))] : r < 0.9 ? 'm' : 'l';
+    st.inv[t] = (st.inv[t] || 0) + 1; return t;
+  }
+  // 金色小、中碎片有 10% 换成价值相近的杂色碎片；大碎片和普通碎片不换。不给随机数就不换
   function oddFor(t, rand) {
     const list = ODD_OF[t];
     if (!list || !rand || rand() >= ODD_RATE) return t;
     return list[Math.min(list.length - 1, Math.floor(rand() * list.length))];
   }
-  // 秒答且这题得了碎片才调：多发 1 个小碎片，闪电秒答再发 1 个中碎片（一天最多 BOLT_DAY 个）；返回 {extra, bolt}
-  function speedBonus(st, day, fast) {
+  // 秒答且这题得了碎片才调：闪电秒答多发 1 份中碎片（一天最多 BOLT_DAY 次），倍数和这一题一样；返回 {extra 碎片列表, bolt}
+  // 第 10.1 版去掉秒答多给的小碎片：小碎片能炼大碎片后要少发，比例才守得住（Ben 11-08）
+  function speedBonus(st, day, fast, mult) {
     const D = dayOf(st, day), bolt = !!fast && (D.bolt || 0) < BOLT_DAY;
-    st.inv.s++;
-    if (bolt) { D.bolt = (D.bolt || 0) + 1; st.inv.m++; }
-    return {extra: 1, bolt};
+    const extra = [];
+    if (bolt) { D.bolt = (D.bolt || 0) + 1; extra.push(...give(st, 'M', mult)); }
+    return {extra, bolt};
   }
   const K_levelOf = inst => { try { return K.ITEM[inst.id] ? K.levelOf(inst) : 0; } catch (e) { return 0; } };
 
@@ -199,7 +281,7 @@
   const enough = r => sum(r) >= GEM;
   const dayFull = (st, day) => !!st.days[day] && st.days[day].forged >= DAY_MAX;
   function forge(st, r, day) {
-    const bad = Object.keys(r).some(t => !VALUE[t] || !Number.isInteger(r[t]) || r[t] < 0 || r[t] > (st.inv[t] || 0));
+    const bad = Object.keys(r).some(t => !known(t) || !Number.isInteger(r[t]) || r[t] < 0 || r[t] > (st.inv[t] || 0));
     if (bad) return {ok: false, why: 'lack'};
     if (count(r) > SLOTS) return {ok: false, why: 'full'};
     const v = sum(r);
@@ -211,6 +293,21 @@
     D.forged += gems; D.waste += waste;
     return {ok: true, gems, waste};
   }
+  // 炼大碎片：除大碎片外的碎片最多 30 个，合计正好 50 得 1 个大碎片；多了少了都全部变废料（开炉前由界面提醒）。不占每天炼宝石的上限
+  function forgeBig(st, r, day) {
+    const bad = Object.keys(r).some(t => !known(t) || t === 'l' || !Number.isInteger(r[t]) || r[t] < 0 || r[t] > (st.inv[t] || 0));
+    if (bad) return {ok: false, why: 'lack'};
+    if (count(r) > BIG_SLOTS) return {ok: false, why: 'full'};
+    const v = sum(r);
+    if (v === 0) return {ok: false, why: 'empty'};
+    const D = dayOf(st, day);
+    Object.keys(r).forEach(t => { st.inv[t] = (st.inv[t] || 0) - r[t]; });
+    const big = v === BIG ? 1 : 0, waste = big ? 0 : v;
+    if (big) { st.inv.l = (st.inv.l || 0) + 1; D.big = (D.big || 0) + 1; }
+    D.waste += waste;
+    return {ok: true, big, waste};
+  }
+  const exactBig = r => sum(r) === BIG;
   // 一炉正好 100、尽量多用小碎片的配方；没有就返回 null
   function bestRecipe(inv) {
     let best = null;
@@ -238,7 +335,7 @@
     if (o.dunno) return null;
     if (!o.ok) { D.bad++; return null; }
     D.ok++;
-    if (o.slow) { st.inv.s++; return 's'; }   // 挑战题慢答：答对也有，但不算过
+    if (o.slow) { st.inv.b = (st.inv.b || 0) + 1; return 'b'; }   // 挑战题慢答：答对也有（金色小碎片），但不算过
     st.inv.m++;
     return 'm';
   }
@@ -299,6 +396,6 @@
     return got;
   }
 
-  return {TUNE, critChance, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, exitOffer, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });
