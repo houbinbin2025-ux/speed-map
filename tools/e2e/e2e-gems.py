@@ -34,6 +34,8 @@ def play(pg, n, ok=True):
 def quit_(pg):
     if cur(pg) in ('qplay', 'demo'):
         bb = pg.locator('#qQuit' if cur(pg) == 'qplay' else '#dQuit').bounding_box(); pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up(); pg.wait_for_timeout(400)
+def unfold(pg):   # 手机横屏结算页的碎片明细收成一行（E 模块，捣蛋鬼 1-12）：先点开
+    pg.evaluate("(()=>{const b=document.getElementById('qsGemFold');if(b&&b.getAttribute('aria-expanded')!=='true')b.click()})()")
 def start_today(pg):
     pg.click('#btnStart', force=True); pg.wait_for_timeout(1800)
 with sync_playwright() as p:
@@ -50,7 +52,7 @@ with sync_playwright() as p:
     check(cur(pg) == 'qsum', '退出后到结算页'); st = pg.evaluate("GEMUI.state()")
     tot = st['inv']['s'] + st['inv']['m']
     check(tot > 0, f'答对 {n1} 题得到碎片：{st["inv"]}')
-    check(pg.locator('.gemsum').count() == 1, '结算页有碎片区块')
+    check(pg.locator('.gemsum').count() == 1, '结算页有碎片区块'); unfold(pg)
     check(pg.locator('.gemsum').inner_text().find('%') < 0, '结算页不出现百分比'); pg.screenshot(path=str(out / f'sum-{W}.png'))
     check(pg.evaluate("(()=>{const e=document.querySelector('.gemsum').getBoundingClientRect();return e.right<=innerWidth+1})()"), '碎片区块不超屏')
     # 2 锻造：放 12 个小碎片（不够）→ 提醒、废料；1 大 8 中 → 废料 30
@@ -92,7 +94,7 @@ with sync_playwright() as p:
     pg.evaluate("GEMUI.state().tickets=1"); pg.goto(url); pg.reload(); pg.wait_for_timeout(600)
     pg.evaluate("GEMUI.state().tickets=1; GEMUI.state().inv.m=0")
     start_today(pg); play(pg, 2); quit_(pg)
-    check(pg.locator('[data-gem=challenge]').count() == 1, '有券显示挑战')
+    check(pg.locator('[data-gem=challenge]').count() == 1, '有券显示挑战'); unfold(pg)
     pg.locator('[data-gem=challenge]').click(); pg.wait_for_timeout(600)
     check(pg.evaluate("GEMUI.state().tickets") == 0, '进入挑战就扣券')
     pg.screenshot(path=str(out / f'challenge-{W}.png'))
@@ -229,7 +231,7 @@ with sync_playwright() as p:
     pp.click('#exitGo'); play(pp, 2); toq(pp); pp.wait_for_timeout(800); check('宝箱打开了' in pp.locator('#exitOv').inner_text(), '答够题数打开宝箱'); pp.screenshot(path=str(out / f'box-{W}.png'))
     pp.click('#exitEnd'); pp.wait_for_timeout(500); check(cur(pp) != 'qplay', '选结束直接走')
     pp = forced(NOEV + "GEMS.TUNE.exitRate=0"); play(pp, 2); toq(pp); hold(pp); check(not pp.locator('#exitOv').is_visible() and cur(pp) != 'qplay', '没抽中（80%）直接退出')
-    t4s = pp.locator('.gemsum').inner_text(); check('有效答题' in t4s, '结算页显示这次专注：' + t4s.replace(chr(10), ' ')[:120])
+    unfold(pp); t4s = pp.locator('.gemsum').inner_text(); check('有效答题' in t4s, '结算页显示这次专注：' + t4s.replace(chr(10), ' ')[:120])
     # 30 分钟：提示倒计时 → 结束 → 休息盖住界面 → 刷新跳不过
     pp = forced("GEMS.TUNE.gapMin=1e9; GEMS.TUNE.gapMax=1e9; GEMS.TUNE.restGrace=2"); play(pp, 1); pp.evaluate("GEMUI.state().rest={sec:1799,at:Date.now()/1000,until:0}"); play(pp, 1); pp.wait_for_timeout(700)
     check('休息' in pp.locator('#gemEv').inner_text() or 'Rest' in pp.locator('#gemEv').inner_text(), '满 30 分钟提示：' + pp.locator('#gemEv').inner_text()); pp.screenshot(path=str(out / f'rest-soon-{W}.png'))
@@ -263,7 +265,7 @@ with sync_playwright() as p:
     pp.click('#forgeGo'); pp.wait_for_timeout(150); t2 = pp.locator('#forgeWarn').inner_text(); pp.screenshot(path=str(out / f'forge-warn-en-{W}.png')); pp.click('#forgeWarnGo'); pp.wait_for_timeout(300); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); t2 += pp.locator('#forge').inner_text()
     pp.locator('[data-add=m]').click(); [pp.locator('[data-add=m]').click() for _ in range(9)]; pp.click('#forgeGo'); pp.wait_for_timeout(600); pp.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000); t3 = pp.locator('#forge').inner_text(); pp.wait_for_timeout(400); pp.screenshot(path=str(out / f'forge-en-done-{W}.png'))
     box = pp.evaluate("(()=>{const b=document.getElementById('forgeToday').getBoundingClientRect();return [b.left,b.top,b.right,b.bottom,innerWidth,b.height]})()"); check(box[1] >= 0 and box[2] <= box[4] and box[5] <= 72, f'英文日「近 14 天」不换行不超屏 {box}')
-    pp.click('#forgeBack'); pp.wait_for_timeout(300); pp.click('#btnStart', force=True); pp.wait_for_timeout(1800); play(pp, 2); quit_(pp); t4 = pp.locator('.gemsum').inner_text(); pp.screenshot(path=str(out / f'sum-en-{W}.png'))
+    pp.click('#forgeBack'); pp.wait_for_timeout(300); pp.click('#btnStart', force=True); pp.wait_for_timeout(1800); play(pp, 2); quit_(pp); unfold(pp); t4 = pp.locator('.gemsum').inner_text(); pp.screenshot(path=str(out / f'sum-en-{W}.png'))
     han = re.compile(r'[\u3400-\u9fff]')
     for name, t in [('放碎片', t1), ('不够', t2), ('炼成', t3), ('结算', t4)]: check(not han.search(t), f'英文日{name}没有中文：' + t.replace(chr(10), ' ')[:110])
     b.close()

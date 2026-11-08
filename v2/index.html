@@ -572,6 +572,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gemline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:700}
 .gemsum .gemline .frag{animation:fragLand .35s}
 .gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
+.syncOld{color:var(--warn);font-size:13px}
+/* 结算页右栏（捣蛋鬼 1-12）：要做的事（战利品箱）→ 今天点亮的 → 错题 → 碎片；手机横屏碎片明细收成一行 */
+.qsList{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.qsChips .chip2.more{background:none;border-color:transparent;color:var(--mute);padding-left:2px;padding-right:2px}
+.qsList.tight{gap:6px}.qsList.tight .chip2{font-size:14px;padding:3px 8px;margin:0 5px 5px 0}.qsList.tight .gemsum.fold{padding:6px 8px;gap:6px}
+.gemsum.fold>b,.gemsum.fold:not(.open)>.gemline,.gemsum.fold:not(.open)>.gembtns{display:none}
+.gemfold{min-height:44px;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;font-size:16px;font-weight:800;background:var(--stone-hi);text-align:left}
+.gemfold::after{content:'▸';color:var(--mute)}.gemsum.open .gemfold::after{content:'▾'}
 </style>
 </head>
 <body class="write">
@@ -603,7 +611,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     <div class="muted" id="leadSub"></div>
     <button class="gobig startbtn" id="btnStart">开始今天的探险</button>
     <button class="btn" id="btnMore" hidden style="min-height:48px">再练一会（5 分钟）</button>
-    <div class="muted" id="leadFoot">练满 10 分钟去贴 1 颗珠子</div>
+    <div class="muted" id="leadFoot"></div>
   </div>
   <div class="w-sheet" id="zSheet">
     <button class="x" id="zX" aria-label="关上">✕</button>
@@ -836,6 +844,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     <div class="panel">
       <div class="ptitle">进度备份</div>
       <div class="warnbox" id="bkInfo"></div>
+      <div class="kv" id="syncInfo"></div>
+      <button class="btn" id="btnSyncOut">发送进度</button>
+      <button class="btn" id="btnSyncIn">接收进度</button>
+      <input type="file" id="syncFile" accept=".json,application/json,text/plain" hidden>
+      <div class="muted" style="font-size:12px;line-height:1.5">手机和 iPad 各发一次给对方（隔空投送），两边进度合在一起；接收只会变多，不会变少。</div>
+      <span class="msg" id="syncMsg"></span>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
       <button class="btn" id="btnImport">导入进度（只会变多，不会变少）</button>
       <details id="bkMore"><summary class="muted" id="bkMoreBtn" style="min-height:44px;display:flex;align-items:center">更多</summary>
@@ -933,7 +947,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v122:6c7cca9eaf00 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v127:0a16f9761681 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -943,25 +957,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=122"></script>
-<script src="i18n.js?v=122"></script>
-<script src="bank.js?v=122"></script>
-<script src="hardbank.js?v=122"></script>
-<script src="placebank.js?v=122"></script>
-<script src="core.js?v=122"></script>
-<script src="ink.js?v=122"></script>
-<script src="skills.js?v=122"></script>
-<script src="engine.js?v=122"></script>
-<script src="render.js?v=122"></script>
-<script src="world.js?v=122"></script>
-<script src="home.js?v=122"></script>
-<script src="puzzles.js?v=122"></script>
-<script src="thinking.js?v=122"></script>
-<script src="house.js?v=122"></script>
-<script src="kongmine.js?v=122"></script>
-<script src="gems.js?v=122"></script>
-<script src="gemui.js?v=122"></script>
-<script src="vert.js?v=122"></script>
+<script src="touchfix.js?v=127"></script>
+<script src="i18n.js?v=127"></script>
+<script src="bank.js?v=127"></script>
+<script src="hardbank.js?v=127"></script>
+<script src="placebank.js?v=127"></script>
+<script src="core.js?v=127"></script>
+<script src="ink.js?v=127"></script>
+<script src="skills.js?v=127"></script>
+<script src="engine.js?v=127"></script>
+<script src="render.js?v=127"></script>
+<script src="world.js?v=127"></script>
+<script src="home.js?v=127"></script>
+<script src="puzzles.js?v=127"></script>
+<script src="thinking.js?v=127"></script>
+<script src="house.js?v=127"></script>
+<script src="kongmine.js?v=127"></script>
+<script src="gems.js?v=127"></script>
+<script src="gemui.js?v=127"></script>
+<script src="vert.js?v=127"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -971,6 +985,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const CTX = {test: TEST, preview: PREVIEW && !TEST, known: id => !!K.ITEM[id]};
   window.addEventListener('hashchange', () => location.reload());
   const KEYS = C.keysFor(CTX);
+  const SYNC_KEY = KEYS.prog + '.sync';   // 家长一键同步：上次接收的时间，只存本机，不进进度
   // 写入报错交给 core 判断（存不了 / 只读）；读不到当没有
   const store = {
     getItem: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -1068,7 +1083,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       const left = S.daily && S.daily.day === t ? Math.max(1, Math.ceil((S.daily.budget - S.daily.sec) / 60)) : 10;
       $('leadTitle').textContent = left < 10 ? `空空，今天还剩 ${left} 分钟` : '空空，今天练 10 分钟';
       $('leadSub').textContent = (d ? `复习 ${Math.min(d, Math.max(1, E.MIST_DAY - (S.daily && S.daily.day === t ? S.daily.mistN || 0 : 0)))} 道错题，` : '') + '学一点新的，再练练快的';
-      $('btnStart').textContent = left < 10 ? '接着探险' : '开始今天的探险'; $('leadFoot').textContent = (todayZone() ? '先去' + zoneName(todayZone()) + ' · ' : '') + '练满 10 分钟去贴 1 颗珠子';
+      $('btnStart').textContent = left < 10 ? '接着探险' : '开始今天的探险'; $('leadFoot').textContent = todayZone() ? '先去' + zoneName(todayZone()) : '';   // 墙上贴珠子已停用（Ben 11-08）
     }
     closeZone(); WD.start(todayZone() || 'look');
     banners();
@@ -1516,14 +1531,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       else bossLine = `<div class="muted">${P.word} ${need} 题就能打败 Boss，想打随时再来</div>`;
     }
     const blk = id => blockHtml(C.BYID[id]);
-    const gem = P.kind === 'daily' && Date.now() - P.startAt >= GOAL_MS ? '<div class="gem">练满 10 分钟了，去贴 1 颗珠子</div>' : '';
     const titles = {daily: P.title + ' · 本次总结', review: '错题复习 · 本次总结'};
     $('summary').innerHTML = `
       <div class="col" style="width:330px;flex:none;justify-content:center">
         <div style="font-size:24px;font-weight:900">${titles[P.kind] || (quit ? '先练到这里' : '练完啦')}</div>
         <div class="num sumbig">⚡ ${fast}<span style="font-size:30px;color:var(--mute)"> / ${done.length}</span></div>
         <div class="muted" style="font-size:15px;line-height:1.6">${P.word} ${fast} 题 · 慢了 ${slow} 题 · 写错 ${wrong} 题<br>用时约 ${mins} 分钟 · 写对的平均 ${avg} 秒</div>
-        ${bossLine}${gem}
+        ${bossLine}
       </div>
       <div class="col" style="flex:1;justify-content:center;gap:12px;overflow-y:auto">
         ${GM.summary(P, P.gemDay || today())}
@@ -1894,6 +1908,29 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // ---------- 6 结算 / 2b 摸底结果 ----------
   const lvColor = id => ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][E.lv(S, id) || 0];
   const chip = id => `<span class="chip2" style="background:${lvColor(id)};color:${E.lv(S, id) === 3 ? '#fff' : '#1b1d22'}">${R.GNAME[K.BY[K.ITEM[id].skill].group] === '秒答地图' ? '秒答' : R.gName(K.BY[K.ITEM[id].skill])} · ${R.label(id)}</span>`;
+  // 结算页碎片区：手机横屏收成一行「这次的碎片 +N」，明细和碎片按钮点开再看（锻造台在岛上也进得去）（捣蛋鬼 1-12）。碎片区的内容由 gemui.js 出，这里只加开关
+  function foldGems(q, tight) {
+    const gs = $('qsum').querySelector('.gemsum'); if (!gs || !tight) return;
+    const n = Object.values(q.gem || {}).reduce((a, b) => a + (+b || 0), 0), line = gs.querySelector('.gemline');
+    const ticket = !!line && [...line.querySelectorAll('span')].some(e => e.textContent.trim() === '挑战券 +1');
+    const t = document.createElement('button'); t.type = 'button'; t.id = 'qsGemFold'; t.className = 'gemfold'; t.setAttribute('aria-expanded', 'false');
+    const canCh = !!gs.querySelector('[data-gem=challenge]');   // 挑战只在结算页有入口：手里有券就提示（审查 R2）
+    t.textContent = ['这次的碎片' + (n ? ` +${n}` : ''), ticket ? '挑战券 +1' : canCh ? '可以挑战' : ''].filter(Boolean).join(' · ');
+    t.addEventListener('click', () => { const open = gs.classList.toggle('open'), list = gs.closest('.qsList'); t.setAttribute('aria-expanded', String(open)); if (open && list) list.scrollTop = list.scrollHeight; });
+    gs.classList.add('fold'); gs.prepend(t);
+  }
+  // 右栏放不下时，点亮的格子只留前 rows 行，其余并成「+N」（翻成英文后再量，所以在 show 之后调）
+  function trimChips(total, rows) {
+    const box = $('qsum').querySelector('.qsChips'), list = box && box.closest('.qsList'); if (!box || !list) return;
+    I18N.flush();
+    if (list.scrollHeight <= list.clientHeight + 1) return;   // 放得下就全摆
+    let more = box.querySelector('.more'); if (!more) { more = document.createElement('span'); more.className = 'chip2 more'; box.appendChild(more); }
+    const all = [...box.querySelectorAll('.chip2:not(.more)')], tops = [...new Set(all.map(c => c.offsetTop))].sort((a, b) => a - b), limit = tops[Math.min(rows, tops.length) - 1];
+    if (!all.length) return;
+    let keep = all.filter(c => c.offsetTop <= limit).length;
+    const fit = () => { all.forEach((c, i) => { c.hidden = i >= keep; }); more.textContent = `+${total - keep}`; more.hidden = total - keep <= 0; return more.hidden || more.offsetTop <= limit; };
+    while (!fit() && keep > 1) keep--;
+  }
   function finishQ(quit) {
     if (!Q) return;
     timers(); clearInterval(Q.tick); if (Q.vc) Q.vc.destroy();
@@ -1902,13 +1939,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (q.kind === 'place') return showPlaceResult(q, quit);
     if (q.kind === 'challenge') { HOME.addOre(S, q.n - q.wrong); HOME.sync(S, today()); save(); return GM.finishChallenge(q); }
     if (!q.n) return goIsland();
-    const full = q.kind === 'today' && S.daily && S.daily.done && S.daily.sec >= 600 && !S.daily.pearl;   // 一天只贴 1 颗珠子（「再练一会」不再提示）
-    if (full) { S.daily.pearl = true; save(); }
+    // 墙上贴珠子已停用（Ben 11-08：珠子被 App 取代）。存档里的 S.daily.pearl 不再读写，旧数据留着
     const mins = Math.max(1, Math.round((q.kind === 'today' ? S.daily.sec : q.secs) / 60));
     const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
     const title = q.kind === 'today' ? (S.daily.done ? '今天练完啦！' : '先练到这里') : q.kind === 'free' ? '这一组练完啦' : '复习完啦';
     const ore = q.n - q.wrong;
     HOME.addOre(S, ore); HOME.sync(S, today()); save(); const box = S.home.loot.length;
+    const tight = innerHeight < 560, upMax = 16;   // 手机横屏：点亮的格子最多摆两行、碎片明细收起（捣蛋鬼 1-12）
     $('qsum').innerHTML = `<canvas class="scnbg px" id="qsBg"></canvas>
       <div class="col" style="width:330px;flex:none;justify-content:center;gap:10px">
         <div style="display:flex;align-items:flex-end;gap:12px"><div class="sumHero${ore ? '' : ' still'}"><canvas class="px" id="qsHero"></canvas><canvas class="px" id="qsDog"></canvas></div><div style="font-size:28px;font-weight:900;line-height:1.1">${title}</div></div>
@@ -1922,20 +1959,19 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         </div>
       </div>
       <div class="col" style="flex:1;gap:10px;min-height:0">
-        <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px">
-        ${GM.summary(q, q.day, {todayRun: q.kind === 'today'})}
-        <div style="font-size:16px;font-weight:700;margin-top:auto">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
-        <div>${q.ups.slice(0, 16).map(chip).join('')}</div>
+        <div class="qsList${tight ? ' tight' : ''}">
+        ${box ? '<div id="qsBox" style="font-size:16px;color:var(--warn);font-weight:800">家门口有 1 个战利品箱</div>' : ''}
+        <div id="qsUps" style="font-size:16px;font-weight:700">${q.ups.length ? '今天点亮的' : '这次没有新点亮的格子，明天接着来'}</div>
+        ${q.ups.length ? `<div class="qsChips">${q.ups.slice(0, upMax).map(chip).join('')}${q.ups.length > upMax ? `<span class="chip2 more">+${q.ups.length - upMax}</span>` : ''}</div>` : ''}
         ${newMist ? `<div class="muted" style="font-size:14px">新进错题本 ${newMist} 道，明天再来</div>` : ''}
-        ${full ? '<div style="font-size:15px;color:var(--warn);font-weight:700">练满 10 分钟了，去墙上贴 1 颗珠子</div>' : ''}
-        ${box ? '<div style="font-size:16px;color:var(--warn);font-weight:800">家门口有 1 个战利品箱</div>' : ''}
+        ${GM.summary(q, q.day, {todayRun: q.kind === 'today'})}
         </div>
         <div style="display:flex;gap:12px;flex:none">
           ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
-          ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">${full && !box ? '贴好珠子，回到岛上' : '回到岛上'}</button>
+          ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">回到岛上</button>
         </div>
       </div>`;
-    show('qsum'); GM.bind($('qsum'), 'qsum');
+    show('qsum'); GM.bind($('qsum'), 'qsum'); foldGems(q, tight); if (tight) trimChips(q.ups.length, 2);
     WORLD.sceneBg($('qsBg'), q.zone, innerWidth, innerHeight); WORLD.drawSprite($('qsHero'), WORLD.HERO, 'a'); WORLD.drawSprite($('qsDog'), WORLD.DOG, 'b');
     $('qsBag').querySelectorAll('i').forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 60));
     // 回到岛上：这次点亮的格子所在的木牌闪一下
@@ -2021,6 +2057,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const red = K.understand.filter(s => s.items.every(it => E.lv(S, it.id) === 3)).length;
     $('weekly').innerHTML = `最近 7 天练了 ${last7.length} 天 · 每天中位 ${med.toFixed(0)} 分钟<br>新点亮 ${last7.reduce((n, x) => n + (x.ups || 0), 0)} 格<br>练完后剩下的错题：最多 ${last7.reduce((n, x) => Math.max(n, x.over || 0), 0)} 道<br>最久没练的技能：${E.gapNow(S, t)} 天<br>${K.understand.length} 个理解技能里，已牢固 ${red} 个${placed ? ` · 摸底后练了 ${practiced} 天` : ''}`;
     const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+    { let at = null; try { at = +store.getItem(SYNC_KEY) || null; } catch (e) { at = null; } const ago = C.syncAgo(at, Date.now()); $('syncInfo').innerHTML = ago === null ? '还没在两台设备之间同步过' : `上次同步：<b>${ago === 0 ? '今天' : ago + ' 天前'}</b>` + (ago > 3 ? '<br><span class="syncOld">超过 3 天没同步，两台设备各发一次</span>' : ''); }   // 只在家长区提示，不打扰孩子
     $('bkInfo').innerHTML = days === null ? '还没备份过<br>建议每周备份一次' : `上次备份是 <b>${days} 天前</b>（${C.dayOf(S.lastBackup)}）<br>建议每周备份一次`;
     // 设置
     $('segFlash').innerHTML = [[1000, '1 秒'], [1500, '1.5 秒'], [2500, '2.5 秒']].map(([v, l]) => `<button class="${flashMs() === v ? 'on' : ''}" data-flash="${v}">${l}</button>`).join('');
@@ -2219,6 +2256,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } if (ioKind === 'broken') $('btnBrokenDel').hidden = false; };
     navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; if (ioKind === 'broken') $('btnBrokenDel').hidden = false; });
   });
+  // 导入进度文字（家长区「导入进度」和「接收进度」共用）：all = 整份替换，否则只增不减。返回 'nosave' = 存不下来；true = 碎片没导入；false = 都导入了；不是备份就抛错
+  function mergeText(text, all) {
+    const keep = S.testDays, ro = S.readOnly;
+    GM.syncNow();
+    const gems = C.gemsOf(text);   // 备份里的碎片、宝石、伙伴罐（旧备份没有，就不动碎片）
+    S = all ? C.importText(text) : C.importMerge(S, text);
+    S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
+    if (!save()) return 'nosave';
+    return !!gems && !GM.importBackup(gems, all ? 'all' : 'merge');   // 碎片关着或备份里的碎片读不了：进度照样导入，提示一句
+  }
   $('ioApply').addEventListener('click', () => {
     let gemsMiss = false;
     try {
@@ -2226,17 +2273,46 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
         INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); saveInk();
       } else {
-        const keep = S.testDays, ro = S.readOnly;
-        GM.syncNow();
-        const text = $('ioText').value, gems = C.gemsOf(text);   // 备份里的碎片、宝石、伙伴罐（旧备份没有，就不动碎片）
-        S = ioKind === 'all' ? C.importText(text) : C.importMerge(S, text);
-        S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
-        if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
-        gemsMiss = gems && !GM.importBackup(gems, ioKind === 'all' ? 'all' : 'merge');   // 碎片关着或备份里的碎片读不了：进度照样导入，提示一句
+        const r = mergeText($('ioText').value, ioKind === 'all');
+        if (r === 'nosave') { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
+        gemsMiss = r;
       }
       $('ioMsg').textContent = gemsMiss ? '进度已导入，碎片没有导入' : '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
+  // ---------- 家长一键同步（C 暂代 F，中控 11-08 派单）：发送 = 导出文字存成文件，用系统分享（隔空投送）；接收 = 选文件，走同一条只增不减的合并 ----------
+  async function syncSend() {
+    GM.syncNow();
+    const text = C.exportText(S, GM.exportState()), name = C.syncName(today()), msg = t => { $('syncMsg').textContent = t; };
+    const sent = () => { S.lastBackup = Date.now(); save(); renderParent(); };
+    let f = null; try { f = new File([text], name, {type: 'application/json'}); } catch (e) { f = null; }
+    if (f && navigator.share && navigator.canShare && navigator.canShare({files: [f]})) {
+      try { await navigator.share({files: [f]}); sent(); msg('已发送'); } catch (e) { msg(e && e.name === 'AbortError' ? '' : '发送失败，请重试'); }
+      return;
+    }
+    if (inApp) { msg('这台设备现在不能分享文件，请用「导出进度」'); return; }   // App 里下载会被外壳拦掉，不能报成功（审查 R1）
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'application/json'})); a.download = name;   // 不能分享文件的浏览器：下载文件
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    sent(); msg('进度文件已下载，用隔空投送发到另一台设备');
+  }
+  let syncBusy = false;   // 正在接收：连着触发两次时后一次不盖掉前一次的结果（审查 R1）
+  async function syncReceive(file) {
+    if (syncBusy) return; syncBusy = true;
+    try { await syncReceive1(file); } finally { syncBusy = false; }
+  }
+  async function syncReceive1(file) {
+    const msg = t => { $('syncMsg').textContent = t; };
+    let text = ''; try { text = await file.text(); } catch (e) { msg('文件读不了，请重新选择'); return; }
+    const before = JSON.parse(JSON.stringify({cards: S.cards, skills: S.skills, mistakes: S.mistakes})), g0 = GM.total();
+    let r; try { r = mergeText(text, false); } catch (e) { msg('这个文件不是进度文件，请重新选择'); return; }
+    if (r === 'nosave') { renderParent(); msg('这次存不下来：请先看「存储」那一栏'); return; }
+    try { store.setItem(SYNC_KEY, String(Date.now())); } catch (e) {}
+    const g1 = GM.total();
+    renderParent(); msg(C.syncText(C.syncDiff(before, S), r || g0 === null || g1 === null ? null : g1 - g0) + (r ? '；碎片没有合并' : ''));
+  }
+  $('btnSyncOut').addEventListener('click', () => { syncSend(); });
+  $('btnSyncIn').addEventListener('click', () => { $('syncMsg').textContent = ''; $('syncFile').value = ''; $('syncFile').click(); });
+  $('syncFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) syncReceive(f); });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
   $('btnResetYes').addEventListener('click', () => { GM.syncNow(); S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); INKS.recent = []; saveInk(); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
 
