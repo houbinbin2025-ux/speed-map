@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>昼夜四季 · 前后对比</title>
+<style>
+:root{
+  color-scheme: dark;
+  --cave:#1b1d22; --stone:#2a2d34; --stone-hi:#3a3e47;
+  --ink:#ecebe4; --mute:#b8bac3; --dim:#9a9ca6;
+  --lv0:#3a3e47; --lv1:#fff3b0; --lv2:#f6a5a0; --lv3:#b3261e;
+  --warn:#f2c14e; --go:#6fae3a; --go-ink:#10140c; --plank:#c08a52; --plank-dk:#8a5a2c;
+  --f-num:ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "PingFang SC", system-ui, sans-serif;
+  --f-cn:"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cave);color:var(--ink);font-family:var(--f-cn);padding:16px;max-width:1440px;margin:0 auto}
+h1{font-size:22px;margin:4px 0 6px}
+.lede{color:var(--mute);font-size:14px;line-height:1.6;margin:0 0 12px;max-width:980px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--stone);border:3px solid #000;padding:10px 12px;margin-bottom:12px}
+.ctrl .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ctrl .lb{font-size:13px;color:var(--dim);margin-right:2px}
+.ctrl button,.ctrl select{font:inherit;font-size:14px;min-height:36px;padding:0 10px;background:var(--stone-hi);color:var(--ink);border:2px solid #000;cursor:pointer}
+.ctrl button.on{background:var(--warn);color:#2a1a00;font-weight:900}
+.ctrl .now{font-size:13px;color:var(--mute)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:900px){.pair{grid-template-columns:1fr}}
+.col h2{font-size:15px;margin:0 0 6px;display:flex;gap:8px;align-items:baseline}
+.col h2 small{font-weight:400;color:var(--dim);font-size:12px}
+.frame{position:relative;width:100%;aspect-ratio:844/390;overflow:hidden;border:3px solid #000;background:#000}
+.stage{position:absolute;left:0;top:0;width:844px;height:390px;transform-origin:0 0}
+.stage canvas{position:absolute;left:0;top:0;width:844px;height:390px;image-rendering:pixelated}
+/* 照抄现网岛上的木牌和右下卡片，只为看昼夜下界面还读不读得清 */
+.w-sign{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.w-sign .board{background:var(--plank);border:3px solid #000;box-shadow:inset 0 -4px 0 var(--plank-dk);padding:4px 9px 6px;min-width:104px;text-align:center;color:#2a1a0a}
+.w-sign .nm{font-size:15px;font-weight:900;white-space:nowrap;letter-spacing:1px}
+.w-sign .row{display:flex;gap:2px;justify-content:center;margin-top:4px}
+.w-sign .row i{width:9px;height:9px;border:2px solid #000;background:var(--lv0)}
+.w-sign .row i.l1{background:var(--lv1)}
+.w-sign .post{width:6px;height:16px;background:var(--plank-dk);border:2px solid #000;border-top:0}
+.w-sign.today .board{outline:4px solid var(--warn)}
+.w-flag{position:absolute;top:-24px;background:var(--warn);color:#2a1a00;border:2px solid #000;font-size:12px;font-weight:900;padding:1px 7px;white-space:nowrap}
+.w-lead{position:absolute;right:16px;bottom:12px;width:280px;display:flex;flex-direction:column;gap:6px;background:var(--cave);border:3px solid #000;box-shadow:0 5px 0 #000;padding:8px 10px 10px}
+.w-lead h3{margin:0;font-size:17px;font-weight:900;line-height:1.3}
+.w-lead .muted{font-size:12px;line-height:1.4;color:var(--mute)}
+.gobig{background:var(--go);color:var(--go-ink);border:3px solid #000;box-shadow:0 5px 0 #000;font-weight:900;font-family:inherit;height:64px;font-size:23px}
+.tag{position:absolute;left:12px;top:10px;background:var(--cave);border:2px solid #000;font-size:12px;padding:2px 8px;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
+@media (max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
+.cell{background:var(--stone);border:3px solid #000}
+.cell canvas{display:block;width:100%;image-rendering:pixelated;aspect-ratio:238/110}
+.cell div{font-size:12px;color:var(--mute);padding:4px 6px}
+.notes{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:900px){.notes{grid-template-columns:1fr}}
+.notes section{background:var(--stone);border:3px solid #000;padding:10px 12px;font-size:13px;line-height:1.65;color:var(--mute)}
+.notes h3{margin:0 0 4px;font-size:14px;color:var(--ink)}
+.notes b{color:var(--ink)}
+code{font-size:12px;background:var(--cave);padding:0 4px}
+</style>
+</head>
+<body>
+<h1>昼夜四季 · 前后对比（视觉参考 X 帖子 · 方案 P1）</h1>
+<p class="lede">借的是帖子里「小镇跟着现实时间和天气变」这一条。改后版只看设备时钟（不联网、不查天气）：早晨 / 白天 / 傍晚 / 夜晚 四个时段，春夏秋冬四个季节。左边是现在线上的岛（直接用项目里的 <code>v2/world.js</code> 画），右边是同一块地方叠上时段和季节。木牌和右下卡片照抄现网样式，用来看昼夜下界面是否还读得清。</p>
+
+<div class="ctrl">
+  <div class="grp"><span class="lb">时段</span><span id="phaseBtns"></span></div>
+  <div class="grp"><span class="lb">季节</span><span id="seasonBtns"></span></div>
+  <div class="grp"><span class="lb">地点</span><select id="zone"></select></div>
+  <div class="grp"><span class="now" id="nowTxt"></span></div>
+</div>
+
+<div class="pair">
+  <div class="col"><h2>现状<small>永远是夏天的白天</small></h2><div class="frame" id="fA"><div class="stage" id="sA"></div></div></div>
+  <div class="col"><h2>改后<small id="afterSub"></small></h2><div class="frame" id="fB"><div class="stage" id="sB"></div></div></div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="notes">
+  <section><h3>规则（交 E 实施时照这个）</h3>
+    <b>时段</b>：5–7 点早晨，8–16 点白天，17–18 点傍晚，19–4 点夜晚。<br>
+    <b>季节</b>：3–5 月春（树上开花、草上小花），6–8 月夏（=现状），9–11 月秋（树叶变橙红、地上落叶），12–2 月冬（所有顶面积 2 格雪、飘 1 格大的雪片）。<br>
+    <b>时间来源</b>：页面的「今天」（测试模式的模拟日期也算）+ 设备小时；测试种子固定在白天夏天，截图回归不受影响。</section>
+  <section><h3>给孩子的底线</h3>
+    夜里只压暗到约 40%，<b>主角、窗户、火把、矿石不压暗</b>；灯光是 2 圈硬边像素光圈，不用模糊发光。木牌、卡片、按钮是界面层，<b>不跟着变暗</b>。<br>
+    动的东西只有雪片和星星闪，<code>prefers-reduced-motion</code> 时都停。没有新文字，不需要加英文。</section>
+  <section><h3>不借的</h3>
+    不接天气接口（要联网、要后端，违反硬约束 3）；不用移轴模糊、毛玻璃、圆角胶囊（违反视觉规范第 4 节）；不做 3D。<br>
+    实施时颜色应在 <code>world.js</code> 画的时候就换（<code>TEX.leaf</code>、<code>drawSky</code>），本原型为了不改项目代码，是在画好的图上按颜色替换的，所以数位村庄的绿方块等个别像素会被误伤——实施版不会。</section>
+</div>
+
+<script>
+/* ↓ 内联自 v2/world.js（原样拷贝，原型不改项目代码） */
+// 空空数学岛 · 岛世界（首页的方块浮空岛）：像素画、左右拖动带惯性、木牌、小人和小狗、走过去进练习、练习页和结算页的场景背景
+// 只管"画"和"手势"，不碰进度：木牌颜色、今天的旗子、点了地方做什么，都由页面传进来（create 的 o）。全部原创像素画，不用 Mojang 素材
+// 浏览器里挂到 window.WORLD；来源：v4 岛世界原型（Ben 10-28 试过两轮，10-29 搬进 v2 后归档到 ~/08_归档/原型-deprecated/秒答地图-原型-v4-岛世界-snapshot-2026-10-29/）
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.WORLD = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+  // 6 块地 + 家；id 和 render.js 的 GROUPS 一样；x = 在岛上的位置（像素画坐标），sx = 木牌位置（避开塔和城堡）
+  const ZONES = [
+    {id: 'home', x: 52, name: '空空的家', short: '家', icon: '#c08a52'},
+    {id: 'look', x: 180, name: '看数草原', short: '看数', icon: '#6fae3a'},
+    {id: 'bond', x: 322, name: '分合矿洞', short: '分合', icon: '#9a9da4'},
+    {id: 'place', x: 462, name: '数位村庄', short: '数位', icon: '#f2c14e'},
+    {id: 'cmp', x: 592, sx: 572, name: '比大小双塔', short: '比大小', icon: '#b3261e'},
+    {id: 'line', x: 722, name: '数线铁轨', short: '数线', icon: '#6ea8fe'},
+    {id: 'speed', x: 850, sx: 816, name: '秒答高塔', short: '秒答', icon: '#5a3a20'},
+    {id: 'garden', x: 985, name: '规律花园', short: '规律', icon: '#d9342b'},
+    {id: 'market', x: 1130, name: '钟楼集市', short: '集市', icon: '#f2c14e'},
+    {id: 'dock', x: 1270, name: '故事码头', short: '码头', icon: '#3d7fd9'},
+    {id: 'balance', x: 1410, name: '天平桥', short: '天平', icon: '#c08a52'},
+    {id: 'target', x: 1550, name: '凑数矿', short: '凑数', icon: '#5fd9e6'},
+    {id: 'clue', x: 1690, name: '线索营地', short: '线索', icon: '#7bd88f'},
+    {id: 'block', x: 1830, name: '方块工坊', short: '工坊', icon: '#6ea8fe'},
+  ];
+  const WW = 1904, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
+  const ORE = ['#f2c14e', '#6ea8fe', '#7bd88f', '#f6a5a0'];
+
+  // ---------- 像素画工具 ----------
+  function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const R = rng(7);
+  const pick = a => a[Math.floor(R() * a.length)];
+  function sprite(ctx, rows, pal, ox, oy) { rows.forEach((r, y) => [...r].forEach((ch, x) => { if (pal[ch]) { ctx.fillStyle = pal[ch]; ctx.fillRect(ox + x, oy + y, 1, 1); } })); }
+  const TEX = {
+    grass: ['#6fae3a', '#62a033', '#7dbb44'], dirt: ['#7a5230', '#6b4628', '#86593a'], stone: ['#8a8d94', '#7c7f86', '#979aa1'],
+    plank: ['#c08a52', '#b27d48'], log: ['#6b4628', '#5a3a20'], leaf: ['#3d7524', '#4f8a2e', '#2f5e1c'], brick: ['#9a9da4', '#878a91'],
+  };
+  function tile(ctx, tx, ty, kind) {
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+      let c;
+      if (kind === 'grassTop') c = y < 2 ? pick(TEX.grass) : y === 2 && R() < .5 ? TEX.grass[1] : pick(TEX.dirt);
+      else if (kind === 'ore') c = (x > 1 && x < 4 && y > 1 && y < 4) || (x > 4 && x < 7 && y > 4 && y < 7) ? ctx._ore : pick(TEX.stone);
+      else if (kind === 'plank') c = y % 4 === 3 ? '#8a5a2c' : TEX.plank[(x + (y >> 2) * 3) % 7 === 0 ? 1 : 0];
+      else if (kind === 'brick') c = y % 4 === 3 || (x + (y >> 2) * 4) % 8 === 0 ? '#6c6f76' : pick(TEX.brick);
+      else if (kind === 'log') c = x % 3 === 0 ? TEX.log[1] : TEX.log[0];
+      else c = pick(TEX[kind]);
+      ctx.fillStyle = c; ctx.fillRect(tx + x, ty + y, 1, 1);
+    }
+  }
+  // 地面高度：每 8 个像素一列
+  const COLS = WW / 8, GT = new Array(COLS).fill(72);
+  [[36, 64], [37, 56], [38, 48], [39, 40], [40, 40], [41, 40], [42, 40], [43, 48], [44, 56]].forEach(([c, y]) => { GT[c] = y; });
+  for (let c = 101; c < 110; c++) GT[c] = 64;
+  const surf = x => GT[Math.max(0, Math.min(COLS - 1, Math.floor(x / 8)))];
+
+  function drawMain(cv) {
+    cv.width = WW; cv.height = WH; const g = cv.getContext('2d');
+    for (let c = 0; c < COLS; c++) {
+      const edge = Math.min(c, COLS - 1 - c), depth = Math.min(6, 1 + Math.floor(edge * 0.7)) + (edge > 8 ? 2 : 0);
+      const t = GT[c], bottom = Math.min(WH + 8, 72 + depth * 8 + (R() < .4 ? 8 : 0));
+      for (let y = t, r = 0; y < bottom; y += 8, r++) {
+        const caveMouth = c >= 39 && c <= 41 && y >= 48 && y < 72;
+        if (caveMouth) { g.fillStyle = '#1b1d22'; g.fillRect(c * 8, y, 8, 8); continue; }
+        if (r === 0) tile(g, c * 8, y, 'grassTop');
+        else if (r < 3 && y < 88) tile(g, c * 8, y, 'dirt');
+        else if (R() < .1) { g._ore = pick(['#f2c14e', '#6ea8fe', '#2b2b2b', '#f6a5a0']); tile(g, c * 8, y, 'ore'); }
+        else tile(g, c * 8, y, y >= bottom - 8 && edge < 8 ? 'dirt' : 'stone');
+      }
+    }
+    // 洞口边框和火把（分合矿洞）
+    g.fillStyle = '#000'; g.fillRect(311, 47, 1, 25); g.fillRect(336, 47, 1, 25); g.fillRect(311, 47, 26, 1);
+    [[302, 58], [342, 58]].forEach(([x, y]) => { g.fillStyle = '#6b4628'; g.fillRect(x, y + 2, 2, 8); g.fillStyle = '#f2c14e'; g.fillRect(x, y, 2, 2); g.fillStyle = '#fff3b0'; g.fillRect(x, y, 1, 1); });
+    cart(g, 318, 62);
+    // 空空的家
+    for (let y = 48; y < 72; y += 8) for (let x = 32; x < 72; x += 8) tile(g, x, y, x === 32 || x === 64 ? 'log' : 'plank');
+    for (let i = 0; i < 4; i++) { g.fillStyle = i % 2 ? '#8a5a2c' : '#6b4628'; g.fillRect(28 + i * 4, 44 - i * 4, 48 - i * 8, 4); }
+    g.fillStyle = '#4a2f1b'; g.fillRect(48, 58, 8, 14); g.fillStyle = '#f2c14e'; g.fillRect(54, 64, 1, 1);
+    g.fillStyle = '#000'; g.fillRect(35, 53, 9, 9); g.fillStyle = '#bfe3ff'; g.fillRect(36, 54, 7, 7); g.fillStyle = '#000'; g.fillRect(39, 54, 1, 7); g.fillRect(36, 57, 7, 1);
+    // 看数草原：树、花、骰子方块
+    [[140, 4], [214, 5], [250, 4]].forEach(([x, h]) => tree(g, x, 72, h));
+    for (let x = 100; x < 280; x += 7) if (R() < .5) { g.fillStyle = pick(['#f6a5a0', '#fff3b0', '#ecebe4']); g.fillRect(x, 70, 1, 1); g.fillStyle = '#3d7524'; g.fillRect(x, 71, 1, 1); }
+    dice(g, 172, 56);
+    // 数位村庄：3 根十条 + 4 块一 = 34，旁边一间小屋
+    for (let r = 0; r < 3; r++) for (let k = 0; k < 10; k++) block(g, 440 + r * 6, 68 - k * 4, '#6fae3a');
+    for (let k = 0; k < 4; k++) block(g, 462 + (k % 2) * 5, 68 - Math.floor(k / 2) * 4, '#f2c14e');
+    for (let y = 56; y < 72; y += 8) for (let x = 480; x < 504; x += 8) tile(g, x, y, 'plank');
+    g.fillStyle = '#b3261e'; g.fillRect(478, 52, 28, 4); g.fillStyle = '#8a1c16'; g.fillRect(482, 48, 20, 4);
+    g.fillStyle = '#4a2f1b'; g.fillRect(488, 62, 6, 10);
+    // 比大小双塔
+    for (let y = 48; y < 72; y += 8) tile(g, 568, y, 'brick');
+    for (let y = 32; y < 72; y += 8) for (let x = 600; x < 616; x += 8) tile(g, x, y, 'brick');
+    g.fillStyle = '#6b4628'; g.fillRect(607, 18, 1, 14); g.fillStyle = '#f2c14e'; g.fillRect(608, 18, 7, 5);
+    // 数线铁轨：枕木 + 两条轨 + 0—10 刻度
+    for (let x = 676; x < 776; x += 4) { g.fillStyle = '#6b4628'; g.fillRect(x, 70, 3, 2); }
+    g.fillStyle = '#9a9da4'; g.fillRect(676, 69, 100, 1);
+    for (let i = 0; i <= 10; i++) { const x = 680 + i * 9; g.fillStyle = i % 5 ? '#ecebe4' : '#f2c14e'; g.fillRect(x, i % 5 ? 64 : 60, 1, i % 5 ? 5 : 9); }
+    cart(g, 712, 61);
+    // 秒答高塔
+    for (let y = 32; y < 64; y += 8) for (let x = 832; x < 872; x += 8) tile(g, x, y, 'brick');
+    for (let x = 832; x < 872; x += 8) tile(g, x, 24, 'brick');
+    g.fillStyle = '#8ec8ff'; for (let x = 836; x < 872; x += 8) g.fillRect(x, 24, 4, 3);
+    g.fillStyle = '#1b1d22'; g.fillRect(846, 48, 12, 16); g.fillStyle = '#000'; g.fillRect(845, 47, 14, 1);
+    g.fillStyle = '#6b4628'; g.fillRect(851, 8, 1, 16); g.fillStyle = '#b3261e'; g.fillRect(852, 8, 9, 6); g.fillStyle = '#ecebe4'; g.fillRect(855, 10, 2, 2);
+    tree(g, 886, 64, 3);
+    // 规律花园：按规律排的花、彩色方块拱门
+    for (let x = 920; x < 1050; x += 8) { const col = ['#d9342b', '#f2c14e', '#3d7fd9'][((x - 920) / 8) % 3]; g.fillStyle = '#3d7524'; g.fillRect(x + 2, 66, 2, 6); g.fillStyle = col; g.fillRect(x, 61, 6, 5); g.fillStyle = '#fff3b0'; g.fillRect(x + 2, 63, 2, 2); }
+    for (let y = 22; y < 60; y += 8) [958, 1006].forEach(x => { g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 10, 10); g.fillStyle = (y >> 3) % 2 ? '#d9342b' : '#3d7fd9'; g.fillRect(x, y, 8, 8); });
+    for (let x = 958; x < 1014; x += 8) { g.fillStyle = '#000'; g.fillRect(x - 1, 13, 10, 10); g.fillStyle = ['#f2c14e', '#7bd88f', '#5fd9e6'][(x >> 3) % 3]; g.fillRect(x, 14, 8, 8); }
+    tree(g, 1046, 72, 4);
+    // 钟楼集市：钟楼 + 两个摊位
+    for (let y = 12; y < 72; y += 8) for (let x = 1076; x < 1108; x += 8) tile(g, x, y, 'brick');
+    g.fillStyle = '#8a1c16'; g.fillRect(1072, 8, 40, 4); g.fillStyle = '#b3261e'; g.fillRect(1080, 2, 24, 6); g.fillStyle = '#1b1d22'; g.fillRect(1086, 60, 12, 12);
+    g.fillStyle = '#000'; g.fillRect(1081, 18, 22, 22); g.fillStyle = '#f4ecd8'; g.fillRect(1083, 20, 18, 18); g.fillStyle = '#1b1d22'; g.fillRect(1091, 22, 2, 8); g.fillStyle = '#b3261e'; g.fillRect(1092, 28, 5, 2);
+    [[1120, '#b3261e'], [1172, '#3d7fd9']].forEach(([x, col]) => { for (let i = 0; i < 6; i++) { g.fillStyle = i % 2 ? col : '#ecebe4'; g.fillRect(x + i * 7, 40, 7, 7); } g.fillStyle = '#6b4628'; g.fillRect(x + 2, 47, 2, 25); g.fillRect(x + 38, 47, 2, 25); g.fillStyle = '#c08a52'; g.fillRect(x, 61, 42, 11); g.fillStyle = '#8a5a2c'; g.fillRect(x, 61, 42, 2); });
+    [[1126, '#f2c14e'], [1134, '#5fd9e6'], [1144, '#d9342b'], [1178, '#c9ccd2'], [1188, '#f2c14e'], [1198, '#6fae3a']].forEach(([x, col]) => { g.fillStyle = col; g.fillRect(x, 55, 5, 6); });
+    // 故事码头：水面、栈桥、灯塔、小船
+    for (let x = 1238; x < 1344; x += 2) for (let y = 73; y < 92; y += 2) { g.fillStyle = (x + y) % 8 === 0 ? '#6ea8fe' : (x * 3 + y) % 14 < 2 ? '#4f8fe0' : '#3d7fd9'; g.fillRect(x, y, 2, 2); }
+    for (let x = 1232; x < 1300; x += 6) { g.fillStyle = x % 12 ? '#c08a52' : '#b27d48'; g.fillRect(x, 70, 6, 3); } [1244, 1272, 1296].forEach(x => { g.fillStyle = '#5a3a20'; g.fillRect(x, 73, 3, 14); });
+    for (let i = 0; i < 5; i++) { g.fillStyle = i % 2 ? '#ecebe4' : '#b3261e'; g.fillRect(1218, 64 - i * 8, 12, 8); } g.fillStyle = '#2b2b2b'; g.fillRect(1216, 30, 16, 2); g.fillStyle = '#f2c14e'; g.fillRect(1220, 24, 8, 6); g.fillStyle = '#b3261e'; g.fillRect(1218, 20, 12, 4);
+    g.fillStyle = '#6b4628'; g.fillRect(1306, 70, 32, 7); g.fillStyle = '#8a5a2c'; g.fillRect(1310, 77, 24, 3); g.fillStyle = '#5a3a20'; g.fillRect(1320, 40, 2, 30); g.fillStyle = '#ecebe4'; g.fillRect(1322, 42, 14, 22); g.fillStyle = '#b3261e'; g.fillRect(1322, 37, 7, 4);
+    // 天平桥：立柱、横梁当桥面、两边托盘放方块
+    g.fillStyle = '#5a3a20'; g.fillRect(1406, 34, 8, 38); g.fillRect(1396, 68, 28, 4);
+    g.fillStyle = '#000'; g.fillRect(1357, 31, 106, 6); g.fillStyle = '#c08a52'; g.fillRect(1358, 32, 104, 4);
+    [1370, 1436].forEach((x, i) => { g.fillStyle = '#ecebe4'; g.fillRect(x + 7, 36, 1, 16); g.fillRect(x, 52, 16, 2); [0, 6].forEach(d => block(g, x + 1 + d, 48, i ? '#6ea8fe' : '#f2c14e')); block(g, x + 4, 44, i ? '#6ea8fe' : '#f2c14e'); });
+    // 凑数矿：石头矿洞口、矿石、矿车
+    for (let y = 40; y < 72; y += 8) for (let x = 1520; x < 1584; x += 8) tile(g, x, y, 'brick');
+    g.fillStyle = '#1b1d22'; g.fillRect(1536, 48, 32, 24); g.fillStyle = '#6b4628'; g.fillRect(1534, 46, 36, 3); g.fillRect(1534, 46, 3, 26); g.fillRect(1567, 46, 3, 26);
+    [[1525, 44, '#5fd9e6'], [1574, 52, '#f2c14e'], [1526, 60, '#7bd88f'], [1560, 42, '#f6a5a0']].forEach(([x, y, c]) => block(g, x, y, c));
+    cart(g, 1588, 65);
+    // 线索营地：帐篷、篝火、木箱
+    for (let i = 0; i < 18; i++) { g.fillStyle = i < 9 ? '#b3261e' : '#8a1c16'; g.fillRect(1660 + i, 72 - (i < 9 ? i : 17 - i) * 2 - 2, 1, (i < 9 ? i : 17 - i) * 2 + 2); }
+    for (let y = 0; y < 22; y++) { const hw = y + 2; g.fillStyle = '#d9c9a0'; g.fillRect(1668 - hw, 50 + y, hw * 2, 1); g.fillStyle = '#1b1d22'; if (y > 8) g.fillRect(1668 - (y - 8) / 2, 50 + y, y - 8, 1); }
+    g.fillStyle = '#5a3a20'; g.fillRect(1696, 69, 12, 3); g.fillStyle = '#f2c14e'; g.fillRect(1699, 62, 6, 7); g.fillStyle = '#d9342b'; g.fillRect(1701, 64, 2, 5);
+    [1720, 1732, 1726].forEach((x, i) => { const y = i === 2 ? 52 : 62; g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 12, 11); g.fillStyle = '#c08a52'; g.fillRect(x, y, 10, 9); g.fillStyle = '#8a5a2c'; g.fillRect(x, y + 4, 10, 1); });
+    tree(g, 1760, 72, 3);
+    // 方块工坊：木屋和一面左右对称的方块墙
+    for (let y = 32; y < 72; y += 8) for (let x = 1800; x < 1860; x += 8) tile(g, x, y, 'plank');
+    g.fillStyle = '#8a1c16'; g.fillRect(1796, 28, 68, 4); g.fillStyle = '#1b1d22'; g.fillRect(1822, 54, 14, 18);
+    [[0, 0, '#6ea8fe'], [1, 0, '#6ea8fe'], [1, 1, '#f2c14e'], [2, 1, '#6ea8fe'], [2, 2, '#f2c14e']].forEach(([a, b, c]) => { [1829 - 6 - a * 7, 1829 + a * 7].forEach(x => { g.fillStyle = '#000'; g.fillRect(x - 1, 34 + b * 6, 8, 7); g.fillStyle = c; g.fillRect(x, 35 + b * 6, 6, 5); }); });
+  }
+  function tree(g, x, base, h) {
+    for (let i = 0; i < h; i++) { g.fillStyle = i % 2 ? '#5a3a20' : '#6b4628'; g.fillRect(x, base - (i + 1) * 4, 4, 4); }
+    const ty = base - h * 4 - 8;
+    for (let yy = 0; yy < 12; yy += 4) for (let xx = -8; xx < 12; xx += 4) { if ((yy === 0 && (xx < -4 || xx > 4))) continue; tileSmall(g, x + xx, ty - 4 + yy, TEX.leaf); }
+  }
+  function tileSmall(g, x, y, tex) { for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) { g.fillStyle = pick(tex); g.fillRect(x + a, y + b, 1, 1); } }
+  function block(g, x, y, c) { g.fillStyle = '#000'; g.fillRect(x, y, 5, 4); g.fillStyle = c; g.fillRect(x, y, 4, 3); }
+  function dice(g, x, y) { g.fillStyle = '#000'; g.fillRect(x - 1, y - 1, 18, 17); g.fillStyle = '#f4ecd8'; g.fillRect(x, y, 16, 15); g.fillStyle = '#6ea8fe'; [[3, 3], [11, 3], [7, 7], [3, 11], [11, 11]].forEach(([a, b]) => g.fillRect(x + a, y + b, 2, 2)); }
+  function cart(g, x, y) { sprite(g, ['k..........k', 'kGGGGGGGGGGk', 'kGgGGGGGGgGk', 'kGGGGGGGGGGk', '.kkkkkkkkkk.', '..kk....kk..', '..kk....kk..'], {k: '#2b2b2b', G: '#8a8d94', g: '#f2c14e'}, x, y); }
+  function drawFar(cv, w) {
+    cv.width = w; cv.height = WH; const g = cv.getContext('2d');
+    const RR = rng(3);
+    for (let i = 0; i < w / 60; i++) { // 远处的小浮空岛
+      const x = Math.floor(RR() * w), y = 30 + Math.floor(RR() * 40), s = 6 + Math.floor(RR() * 10);
+      g.fillStyle = '#8fb3cf'; for (let k = 0; k < s; k++) g.fillRect(x + Math.floor(k * 0.9), y + 3 + k, Math.max(2, s * 2 - Math.floor(k * 1.8)), 1);
+      g.fillStyle = '#93c27a'; g.fillRect(x, y, s * 2, 2); g.fillStyle = '#7fae69'; g.fillRect(x, y + 2, s * 2, 1);
+      if (s > 10) { g.fillStyle = '#6f9a5c'; g.fillRect(x + 4, y - 4, 3, 4); g.fillRect(x + 3, y - 6, 5, 2); }
+    }
+    for (let i = 0; i < w / 45; i++) { // 方块云
+      const x = Math.floor(RR() * w), y = 4 + Math.floor(RR() * 24), n = 3 + Math.floor(RR() * 4);
+      g.fillStyle = '#f2f6fb'; g.fillRect(x, y, n * 6, 4); g.fillRect(x + 4, y - 3, n * 6 - 8, 3);
+      g.fillStyle = '#dbe7f3'; g.fillRect(x, y + 4, n * 6, 1);
+    }
+  }
+  function drawSky(cv) {
+    cv.width = 1; cv.height = WH; const g = cv.getContext('2d');
+    ['#79bdf9', '#86c4fb', '#93cbfc', '#a1d2fd', '#afd9fe', '#bde0ff'].forEach((c, i) => { g.fillStyle = c; g.fillRect(0, i * 19, 1, 19); });
+  }
+  const HERO = {
+    pal: {H: '#4a2f1b', S: '#f1c27d', E: '#1b1d22', M: '#c0705a', G: '#6fae3a', g: '#4f8a2e', B: '#3b5bdb', K: '#2b2b2b'},
+    a: ['..HHHH..', '.HHHHHH.', '.HSSSSH.', '.SESSES.', '.SSSSSS.', '..SMMS..', '.GGGGGG.', 'gGGGGGGg', 'gGGGGGGg', 'gGGGGGGg', 'SGGGGGGS', '.BBBBBB.', '.BB..BB.', '.BB..BB.', '.KK..KK.'],
+    b: ['..HHHH..', '.HHHHHH.', '.HSSSSH.', '.SESSES.', '.SSSSSS.', '..SMMS..', '.GGGGGG.', 'gGGGGGGg', 'gGGGGGGg', 'gGGGGGGg', 'SGGGGGGS', '.BBBBBB.', '..BBBB..', '.BB..BB.', 'KK....KK'],
+  };
+  const DOG = {pal: {B: '#e0a15a', D: '#8a5a2a', E: '#1b1d22', N: '#2b2b2b'}, a: ['.......DD.', '.......BBB', 'D.BBBBBBEN', '.BBBBBBBB.', '.BBBBBBB..', '.B.B..B.B.'], b: ['.......DD.', '.......BBB', '.DBBBBBBEN', '.BBBBBBBB.', '.BBBBBBB..', 'B..B.B..B.']};
+  function drawSprite(cv, S, f, flip) { const rows = S[f]; cv.width = rows[0].length; cv.height = rows.length; const g = cv.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.save(); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); } sprite(g, rows, S.pal, 0, 0); g.restore(); }
+  // 小图标（练习页的矿车、终点旗、错题宝箱），返回 data URL 给 CSS 用
+  const ICONS = {
+    cart: [['..HHHH......', '.HSSSSH.....', '.SESSES.....', 'kGGGGGGGGGGk', 'kGgGGGGGGgGk', 'kGGGGGGGGGGk', '.kkkkkkkkkk.', '..kk....kk..', '..kk....kk..', '............'], {k: '#2b2b2b', G: '#8a8d94', g: '#f2c14e', H: '#4a2f1b', S: '#f1c27d', E: '#1b1d22'}],
+    goal: [['k.....', 'kRRRR.', 'kRRRRR', 'kRRRR.', 'k.....', 'k.....', 'k.....', 'k.....', 'k.....', 'k.....'], {k: '#2b2b2b', R: '#b3261e'}],
+    chest: [['.kkkkkkkkkk.', 'kPPPPPPPPPPk', 'kPpppppppppk', 'kkkkkGGkkkkk', 'kPPPPGGPPPPk', 'kPPPPPPPPPPk', 'kPpppppppppk', 'kPPPPPPPPPPk', 'kkkkkkkkkkkk', '............'], {k: '#000', P: '#c08a52', p: '#8a5a2c', G: '#f2c14e'}],
+  };
+  function iconURL(name) { const [rows, pal] = ICONS[name], cv = document.createElement('canvas'); cv.width = rows[0].length; cv.height = rows.length; sprite(cv.getContext('2d'), rows, pal, 0, 0); return cv.toDataURL(); }
+
+  // ---------- 一个岛世界（首页） ----------
+  // root 里要有：.w-vp（拖动区）、.w-say、.w-mini、.w-hint；o = {sign(id) → {sq:[档位…], today}, onZone(z), heroLine() → 小人说的话}
+  function create(root, o) {
+    const q = s => root.querySelector(s);
+    const vp = q('.w-vp');
+    vp.innerHTML = '<canvas class="w-sky px"></canvas><div class="w-layer w-far"><canvas class="px"></canvas></div><div class="w-layer w-main"><canvas class="px"></canvas><div class="w-props"></div><div class="w-dog"><canvas class="px"></canvas></div><div class="w-hero"><canvas class="px"></canvas></div></div>';
+    const sky = q('.w-sky'), far = q('.w-far canvas'), main = q('.w-main canvas'), Lmain = q('.w-main'), Lfar = q('.w-far'), props = q('.w-props');
+    const heroEl = q('.w-hero'), dogEl = q('.w-dog'), say = q('.w-say'), mini = q('.w-mini'), hint = q('.w-hint');
+    drawSky(sky); drawMain(main); drawFar(far, Math.ceil(WW * 0.45 + 400));
+    let started = false, lastW = 0, P = 4, camX = 0, maxX = 0, onZone = null, pinZone = null, hintOn = false, cam0 = 0, entering = false, anim = null, drag = null;
+    const hero = {x: 180 - 26, flip: false}, signs = {};
+    const W = () => root.clientWidth || innerWidth, H = () => root.clientHeight || innerHeight;
+    const shown = () => !root.hidden && root.getClientRects().length > 0;   // 不能用 offsetParent：.scr 是 position:fixed，它永远是 null
+    const centerOf = z => z.x * P - W() / 2;
+    function placeHero() {
+      heroEl.style.width = 8 * P + 'px'; heroEl.style.height = 15 * P + 'px'; heroEl.style.left = hero.x * P + 'px'; heroEl.style.top = (surf(hero.x + 4) - 15) * P + 'px';
+      const dx = hero.x + (hero.flip ? 12 : -14);
+      dogEl.style.width = 10 * P + 'px'; dogEl.style.height = 6 * P + 'px'; dogEl.style.left = dx * P + 'px'; dogEl.style.top = (surf(dx + 5) - 6) * P + 'px';
+    }
+    const frame = f => { drawSprite(heroEl.firstChild, HERO, f, hero.flip); drawSprite(dogEl.firstChild, DOG, f, hero.flip); };
+    // 木牌、旗子、小地图：每次回到首页按真实进度重画
+    function refresh() {
+      props.innerHTML = '';
+      ZONES.forEach(z => {
+        if (z.id === 'home') {   // 家：木牌 + 有战利品箱时的旗子
+          const s = document.createElement('div'), loot = o.homeLoot && o.homeLoot();
+          s.className = 'w-sign' + (loot ? ' today' : ''); s.dataset.z = 'home'; s.style.left = z.x * P + 'px'; s.style.top = Math.max(84, 15 * P) + 'px';
+          s.innerHTML = (loot ? '<span class="w-flag">战利品箱</span>' : '') + `<div class="board"><div class="nm">${z.name}</div></div>`;
+          props.appendChild(s); return;
+        }
+        const st = o.sign(z.id), s = document.createElement('div');
+        s.className = 'w-sign' + (st.today ? ' today' : ''); s.dataset.z = z.id;
+        s.style.left = (z.sx || z.x) * P + 'px'; s.style.top = Math.max(84, 15 * P) + 'px';
+        s.innerHTML = (st.today ? '<span class="w-flag">今天先来这里</span>' : '') + `<div class="board"><div class="nm">${z.name}</div><div class="row">${st.sq.map(l => `<i class="l${l}"></i>`).join('')}</div></div><div class="post"></div>`;
+        props.appendChild(s); signs[z.id] = s;
+      });
+      mini.innerHTML = ZONES.map(z => `<button data-z="${z.id}" class="${z.id !== 'home' && o.sign(z.id).today ? 'today' : ''}"><i style="background:${z.icon}"></i><span>${z.short}</span></button>`).join('');
+      onZone = null; pinZone = null; setCam(camX);
+    }
+    let seenW = -1, seenH = -1;
+    function layout() {
+      const mid = started ? (camX + lastW / 2) / P : null;   // 转屏前屏幕中间对着岛上哪里（像素画坐标），转完还对着那里
+      P = H() / WH; lastW = W();
+      seenW = root.clientWidth; seenH = root.clientHeight;
+      main.style.width = WW * P + 'px'; main.style.height = H() + 'px';
+      far.style.width = far.width * P + 'px'; far.style.height = H() + 'px';
+      maxX = Math.max(0, WW * P - W());
+      refresh(); placeHero(); setCam(Math.max(0, Math.min(maxX, mid === null ? camX : mid * P - W() / 2)));
+    }
+    // ---------- 镜头：拖动、惯性、回弹 ----------
+    const clampSoft = x => x < 0 ? x * 0.35 : x > maxX ? maxX + (x - maxX) * 0.35 : x;
+    function setCam(x) {
+      camX = x;
+      Lmain.style.transform = `translate3d(${-camX}px,0,0)`;
+      Lfar.style.transform = `translate3d(${-camX * 0.45}px,0,0)`;
+      const mid = (camX + W() / 2) / P;
+      let best = ZONES[0]; ZONES.forEach(z => { if (Math.abs(z.x - mid) < Math.abs(best.x - mid)) best = z; });
+      if (camX <= 1) best = ZONES[0]; else if (camX >= maxX - 1) best = ZONES[ZONES.length - 1]; // 到边时镜头没法居中，按边上那个算
+      if (pinZone) best = pinZone;
+      if (best.id !== onZone) { onZone = best.id; mini.querySelectorAll('button').forEach(b => { const on = b.dataset.z === best.id; b.classList.toggle('on', on); if (on && mini.scrollWidth > mini.clientWidth) mini.scrollLeft = b.offsetLeft - (mini.clientWidth - b.offsetWidth) / 2; }); }
+      if (hintOn && Math.abs(camX - cam0) > 60) { hintOn = false; hint.classList.add('gone'); }
+    }
+    function stopAnim() { if (anim) cancelAnimationFrame(anim); anim = null; say.classList.remove('on'); }
+    function glide(v) {
+      stopAnim(); let last = performance.now();
+      const step = now => {
+        const dt = Math.min(32, now - last); last = now;
+        let x = camX + v * dt; v *= Math.pow(0.94, dt / 16);
+        if (x < 0 || x > maxX) { const tgt = x < 0 ? 0 : maxX; v *= 0.6; x += (tgt - x) * Math.min(1, dt / 90); }
+        setCam(x);
+        if (Math.abs(v) > 0.02 || camX < -0.5 || camX > maxX + 0.5) anim = requestAnimationFrame(step); else { setCam(Math.max(0, Math.min(maxX, camX))); anim = null; }
+      };
+      anim = requestAnimationFrame(step);
+    }
+    function panTo(tx, ms, done) {
+      stopAnim(); ms = ms || 480; tx = Math.max(0, Math.min(maxX, tx)); const from = camX, t0 = performance.now();
+      const step = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); setCam(from + (tx - from) * e); if (k < 1) anim = requestAnimationFrame(step); else { anim = null; done && done(); } };
+      anim = requestAnimationFrame(step);
+    }
+    vp.addEventListener('pointerdown', e => { if (entering) return; pinZone = null; stopAnim(); try { vp.setPointerCapture(e.pointerId); } catch (x) {} drag = {id: e.pointerId, x0: e.clientX, cam0: camX, t0: performance.now(), moved: 0, s: [[performance.now(), e.clientX]]}; vp.classList.add('drag'); });   // 新手指接管，之前搭着的手指不再算
+    vp.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x0; drag.moved = Math.max(drag.moved, Math.abs(dx));
+      setCam(clampSoft(drag.cam0 - dx));
+      drag.s.push([performance.now(), e.clientX]); if (drag.s.length > 6) drag.s.shift();
+    });
+    vp.addEventListener('pointerup', e => {
+      if (!drag || e.pointerId !== drag.id) return; vp.classList.remove('drag');
+      const d = drag; drag = null;
+      if (window.TOUCHFIX && TOUCHFIX.multiSince(d.t0) && d.moved < 14) { if (camX < 0 || camX > maxX) glide(0); return; }   // 同时有别的手指：搭着的手指抬起不算点地图
+      // 手指轻微滑动（< 14 像素）、按得慢一点（< 0.7 秒）也算点
+      if (d.moved < 14 && performance.now() - d.t0 < 700) { const r = vp.getBoundingClientRect(); tapWorld(e.clientX - r.left, e.clientY - r.top); if (camX < 0 || camX > maxX) glide(0); return; }
+      const a = d.s[0], b = d.s[d.s.length - 1], v = b[0] - a[0] > 0 ? -(b[1] - a[1]) / (b[0] - a[0]) : 0;
+      glide(Math.max(-4, Math.min(4, v)));
+    });
+    vp.addEventListener('pointercancel', e => { if (drag && e.pointerId !== undefined && e.pointerId !== drag.id) return; drag = null; vp.classList.remove('drag'); if (!entering) glide(0); });   // 走向关卡途中不能动镜头动画，否则走不到
+    vp.addEventListener('wheel', e => { e.preventDefault(); if (entering) return; stopAnim(); setCam(Math.max(0, Math.min(maxX, camX + (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY)))); }, {passive: false});
+    function zoneAt(ax) { let best = null; ZONES.forEach(z => { if (Math.abs(z.x - ax) < 62 && (!best || Math.abs(z.x - ax) < Math.abs(best.x - ax))) best = z; }); return best; }
+    function tapWorld(cx, cy) {
+      const wasOpen = o.closeAll && o.closeAll(), ax = (camX + cx) / P, ay = cy / P;
+      if (ax > hero.x - 3 && ax < hero.x + 11 && ay > surf(hero.x + 4) - 18) { sayAt(heroEl, hero.x + 4, surf(hero.x + 4) - 15, o.heroLine()); return; }
+      const dx = hero.x + (hero.flip ? 12 : -14);
+      if (ax > dx - 2 && ax < dx + 12 && ay > surf(dx + 5) - 10) { sayAt(dogEl, dx + 5, surf(dx + 5) - 6, '汪汪！'); return; }
+      const z = zoneAt(ax); if (z && !(wasOpen && z.id === 'home')) focus(z.id);
+    }
+    function sayAt(el, ax, ay, t) { // 在岛上某个位置上方冒一句话；el 是要跳一下的角色
+      if (el) { el.classList.remove('jump'); void el.offsetWidth; el.classList.add('jump'); }
+      say.textContent = t; say.style.left = ax * P - camX + 'px'; say.style.top = ay * P - 46 + 'px';
+      say.classList.add('on'); clearTimeout(sayAt.t); sayAt.t = setTimeout(() => say.classList.remove('on'), 1800);
+    }
+    function focus(id) {
+      const z = ZONES.find(x => x.id === id); panTo(centerOf(z));
+      if (z.id === 'home') { o.onHome(); return; }
+      o.onZone(z);
+    }
+    mini.addEventListener('click', e => { const b = e.target.closest('button'); if (!b || entering) return; pinZone = ZONES.find(x => x.id === b.dataset.z); focus(b.dataset.z); });
+    // ---------- 走过去 → 进练习 ----------
+    function walkTo(tx, done) {
+      heroEl.classList.add('walk'); hero.flip = tx < hero.x;
+      const from = hero.x, ms = Math.min(900, 200 + Math.abs(tx - from) * 4), t0 = performance.now(); let f = 0, lastF = 0;
+      const step = now => { const k = Math.min(1, (now - t0) / ms); hero.x = from + (tx - from) * k; placeHero(); setCam(Math.max(0, Math.min(maxX, (hero.x + 20) * P - W() / 2))); if (now - lastF > 110) { f ^= 1; lastF = now; frame(f ? 'b' : 'a'); } if (k < 1) requestAnimationFrame(step); else { frame('a'); heroEl.classList.remove('walk'); done && done(); } };
+      requestAnimationFrame(step);
+    }
+    // 走到这块地 → 镜头往里推、渐黑 → done()（进练习）。走的过程中锁住岛，防打断和连点
+    function go(id, done) {
+      if (entering) return false; entering = true;
+      drag = null; vp.classList.remove('drag');   // 搭着的手指抬起不能打断走路
+      const z = ZONES.find(x => x.id === id) || ZONES[1], fade = document.querySelector('.w-fade');
+      let arrived = false;
+      const arrive = () => {
+        if (arrived) return; arrived = true; clearTimeout(guard);
+        Lmain.classList.add('zoom'); Lmain.style.transformOrigin = `${z.x * P}px ${H() * .6}px`;
+        Lmain.style.transform = `translate3d(${-camX}px,0,0) scale(1.35)`;
+        if (fade) fade.classList.add('on');
+        setTimeout(() => { Lmain.classList.remove('zoom'); Lmain.style.transformOrigin = '0 0'; setCam(camX); entering = false; try { done(); } finally { if (fade) setTimeout(() => fade.classList.remove('on'), 30); } }, 260);
+      };
+      const guard = setTimeout(arrive, 3000);   // 兜底：动画万一被打断也要走到，否则岛一直锁着
+      panTo(Math.max(0, Math.min(maxX, hero.x * P + 20 * P - W() / 2)), 260, () => walkTo(z.x - 20, arrive));
+      return true;
+    }
+    function pulse(id, idx) { const s = signs[id]; if (!s) return; const i = s.querySelectorAll('.row i')[idx]; if (i) { i.classList.remove('pulse'); void i.offsetWidth; i.classList.add('pulse'); } }
+    // 首次：镜头放在今天要去的地方附近，4 秒后收起"拖一拖"提示
+    function start(todayId) {
+      layout();
+      if (!started) { started = true; const z = ZONES.find(x => x.id === todayId) || ZONES[1]; hero.x = z.x - 26; placeHero(); setCam(Math.max(0, Math.min(maxX, centerOf(z) - W() * 0.1))); cam0 = camX; hintOn = true; setTimeout(() => { hintOn = false; hint.classList.add('gone'); }, 4000); }
+    }
+    frame('a');
+    setInterval(() => { if (!heroEl.classList.contains('walk') && shown()) { frame('b'); setTimeout(() => frame('a'), 160); } }, 2600); // 待机：眨眼、摇尾巴
+    addEventListener('resize', () => { if (shown()) layout(); });   // 转屏、Safari 工具栏伸缩
+    // iOS 打开页面时尺寸还没定（转屏中、页面宽度没生效、工具栏伸缩），也不一定发 resize：盯住实际尺寸，变了就重算，否则岛会放大（Ben 11-07）
+    const fitNow = () => { if (shown() && (root.clientWidth !== seenW || root.clientHeight !== seenH)) layout(); };
+    if (window.ResizeObserver) new ResizeObserver(fitNow).observe(root);
+    addEventListener('pageshow', fitNow);
+    return {start, layout, refresh, focus, go, pulse, sayAt: (t) => sayAt(heroEl, hero.x + 4, surf(hero.x + 4) - 15, t), get entering() { return entering; }, get camX() { return camX; }, get maxX() { return maxX; }};
+  }
+
+  // 练习页 / 结算页的背景 = 岛上这一块地方的像素画（截一屏宽）
+  let MAIN = null, FAR = null, SKY = null;
+  function sceneBg(cv, id, w, h) {
+    if (!MAIN) { MAIN = document.createElement('canvas'); FAR = document.createElement('canvas'); SKY = document.createElement('canvas'); drawSky(SKY); drawMain(MAIN); drawFar(FAR, Math.ceil(WW * 0.45 + 400)); }
+    const z = ZONES.find(x => x.id === id) || ZONES[1], P = h / WH, vw = Math.round(w / P), sx = Math.max(0, Math.min(WW - vw, Math.round(z.x - vw / 2)));
+    cv.width = vw; cv.height = WH; const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+    g.drawImage(SKY, 0, 0, vw, WH); g.drawImage(FAR, Math.round(sx * .45), 0, vw, WH, 0, 0, vw, WH); g.drawImage(MAIN, sx, 0, vw, WH, 0, 0, vw, WH);
+  }
+  // 答对：一块矿石从 from 飞进 to（计数器）
+  function flyOre(from, to, n, after) {
+    const c = ORE[n % ORE.length], a = from.getBoundingClientRect(), b = to.getBoundingClientRect(), f = document.createElement('i');
+    f.className = 'w-fly'; f.style.background = c; document.body.appendChild(f);
+    const x0 = a.left + a.width / 2 - 15, y0 = a.top + a.height / 2 - 15, x1 = b.left + 4, y1 = b.top + b.height / 2 - 15;
+    const done = () => { f.remove(); after && after(c); };
+    if (!f.animate) return done();
+    f.animate([{transform: `translate(${x0}px,${y0}px) scale(1.4) rotate(0)`}, {transform: `translate(${(x0 + x1) / 2}px,${Math.min(y0, y1) - 60}px) scale(1.1) rotate(160deg)`}, {transform: `translate(${x1}px,${y1}px) scale(.8) rotate(360deg)`}], {duration: 560, easing: 'cubic-bezier(.4,.1,.6,1)'}).onfinish = done;
+  }
+  return {ZONES, ORE, WW, WH, HERO, DOG, create, sceneBg, flyOre, drawSprite, iconURL};
+});
+</script>
+<script>
+'use strict';
+const W = window.WORLD, WH = W.WH;
+const VW = 238;                         // 844×390 的手机横屏：390/110 ≈ 3.55 倍，一屏 238 个像素格宽
+const hex = (r, g, b) => '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+const rgb = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// 现网 world.js 用到的颜色（天、远景、云、树叶、草顶、灯）
+const SKY0 = ['#79bdf9', '#86c4fb', '#93cbfc', '#a1d2fd', '#afd9fe', '#bde0ff'];
+const FAR = ['#8fb3cf', '#93c27a', '#7fae69', '#6f9a5c'], CLOUD = ['#f2f6fb', '#dbe7f3'];
+const BACK = new Set([...SKY0, ...FAR, ...CLOUD]);
+const LEAF = ['#3d7524', '#4f8a2e', '#2f5e1c'], GRASS = ['#6fae3a', '#62a033', '#7dbb44'];
+const WINDOWS = new Set(['#bfe3ff', '#8ec8ff']);           // 家的窗、秒答高塔的窗：夜里亮灯
+const GLOWS = new Set(['#f2c14e', '#fff3b0', '#5fd9e6', '#6ea8fe', '#f6a5a0', '#7bd88f']); // 火把、矿石、方块：夜里不压暗
+// 灯的位置（岛的像素坐标，抄自 world.js 的 drawMain）：火把、篝火、灯塔、家的窗、高塔的窗、钟面
+const LIGHTS = [[303, 59, 7], [343, 59, 7], [1702, 65, 9], [1224, 27, 12], [39, 57, 8], [854, 26, 9], [1092, 29, 9]];
+
+const SKY = {
+  dawn: ['#8fb8e8', '#a9c6e8', '#c8d3e2', '#e6d9cf', '#f5dcc0', '#fbe3b8'],
+  day: SKY0,
+  dusk: ['#4a4f8f', '#6a5a9a', '#a5679a', '#e07a7a', '#f29a6b', '#f7bf6b'],
+  night: ['#0e1430', '#121a3a', '#172044', '#1c2650', '#212c58', '#263260'],
+  winterDay: ['#a9c4dc', '#b4cbe0', '#bfd3e5', '#c9dae9', '#d4e1ee', '#dfe8f2'],
+};
+const MUL = {dawn: [1, .94, .88], day: [1, 1, 1], dusk: [.95, .74, .64], night: [.36, .4, .62]};
+const HEROMUL = {dawn: [1, .97, .94], day: [1, 1, 1], dusk: [.98, .88, .82], night: [.72, .74, .86]};
+const PHASES = [['dawn', '早晨'], ['day', '白天'], ['dusk', '傍晚'], ['night', '夜晚']];
+const SEASONS = [['spring', '春'], ['summer', '夏'], ['autumn', '秋'], ['winter', '冬']];
+const phaseOf = h => h >= 5 && h <= 7 ? 'dawn' : h >= 8 && h <= 16 ? 'day' : h >= 17 && h <= 18 ? 'dusk' : 'night';
+const seasonOf = m => m >= 3 && m <= 5 ? 'spring' : m >= 6 && m <= 8 ? 'summer' : m >= 9 && m <= 11 ? 'autumn' : 'winter';
+
+// 地面高度（抄 world.js，小人站的位置用）
+const GT = new Array(W.WW / 8).fill(72);
+[[36, 64], [37, 56], [38, 48], [39, 40], [40, 40], [41, 40], [42, 40], [43, 48], [44, 56]].forEach(([c, y]) => { GT[c] = y; });
+for (let c = 101; c < 110; c++) GT[c] = 64;
+const surf = x => GT[Math.max(0, Math.min(GT.length - 1, Math.floor(x / 8)))];
+
+function sxOf(z) { return Math.max(0, Math.min(W.WW - VW, Math.round(z.x - VW / 2))); }
+
+// 现状：world.js 原样画
+function base(zone) {
+  const cv = document.createElement('canvas');
+  W.sceneBg(cv, zone.id, 844, 390);               // 宽 238、高 110
+  return cv;
+}
+function drawActors(g, zone, mul) {
+  const sx = sxOf(zone), hx = zone.x - 26 - sx;
+  const h = document.createElement('canvas'); W.drawSprite(h, W.HERO, 'a', false);
+  const d = document.createElement('canvas'); W.drawSprite(d, W.DOG, 'a', false);
+  [[h, hx, surf(zone.x - 22) - 15], [d, hx - 14, surf(zone.x - 36) - 6]].forEach(([c, x, y]) => {
+    if (mul) tint(c, mul);
+    g.drawImage(c, x, y);
+  });
+}
+function tint(cv, m) {
+  const g = cv.getContext('2d'), im = g.getImageData(0, 0, cv.width, cv.height), d = im.data;
+  for (let i = 0; i < d.length; i += 4) { d[i] *= m[0]; d[i + 1] *= m[1]; d[i + 2] *= m[2]; }
+  g.putImageData(im, 0, 0);
+}
+
+// 改后：在同一张图上换天、换季、上灯
+function ambient(zone, phase, season) {
+  const cv = base(zone), g = cv.getContext('2d'), w = cv.width, h = cv.height;
+  const im = g.getImageData(0, 0, w, h), d = im.data, R = rng(11 + zone.x);
+  const at = (x, y) => (y * w + x) * 4;
+  const get = (x, y) => { const i = at(x, y); return hex(d[i], d[i + 1], d[i + 2]); };
+  const put = (x, y, c) => { const i = at(x, y), v = rgb(c); d[i] = v[0]; d[i + 1] = v[1]; d[i + 2] = v[2]; };
+  const kind = new Array(w * h);              // 'sky' | 'far' | 'cloud' | 'win' | 'glow' | 'fg'
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const c = get(x, y);
+    kind[y * w + x] = SKY0.includes(c) ? 'sky' : FAR.includes(c) ? 'far' : CLOUD.includes(c) ? 'cloud' : WINDOWS.has(c) ? 'win' : GLOWS.has(c) ? 'glow' : 'fg';
+  }
+  const top = [];                             // 每一列最上面的前景格
+  for (let x = 0; x < w; x++) { let y = 0; while (y < h && ['sky', 'far', 'cloud'].includes(kind[y * w + x])) y++; top[x] = y; }
+
+  // 1. 季节（先换，再上光）
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = kind[y * w + x]; if (k !== 'fg' && k !== 'far') continue;
+    const c = get(x, y), li = LEAF.indexOf(c), fi = FAR.indexOf(c);
+    if (season === 'autumn') {
+      if (li >= 0) put(x, y, ['#c9641e', '#e0952e', '#9a3f17'][li]);
+      if (fi > 0) put(x, y, ['', '#c9a35a', '#b08848', '#a0603a'][fi]);
+    } else if (season === 'winter') {
+      if (li >= 0) put(x, y, ['#5f7f6a', '#7a9a84', '#4a6a55'][li]);
+      if (fi > 0) put(x, y, ['', '#e8eef4', '#cfd9e3', '#b9c6d2'][fi]);
+    } else if (season === 'spring') {
+      if (li >= 0 && R() < .2) put(x, y, R() < .5 ? '#f6c1d0' : '#fbe3ea');
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    const y = top[x]; if (y >= h) continue;
+    const c = get(x, y);
+    if (season === 'winter') { put(x, y, '#ffffff'); kind[y * w + x] = 'snow'; if (y + 1 < h) { put(x, y + 1, x % 3 ? '#eef3f8' : '#ffffff'); kind[(y + 1) * w + x] = 'snow'; } }
+    else if (season === 'autumn' && GRASS.includes(c) && R() < .14 && y > 0) put(x, y - 1, R() < .5 ? '#e0952e' : '#c9641e');
+    else if (season === 'spring' && GRASS.includes(c) && R() < .12 && y > 0) put(x, y - 1, R() < .5 ? '#f6c1d0' : '#ffffff');
+  }
+
+  // 2. 天
+  const skyPal = phase === 'day' && season === 'winter' ? SKY.winterDay : SKY[phase];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = kind[y * w + x];
+    if (k === 'sky') put(x, y, skyPal[Math.min(5, Math.floor(y / 19))]);
+    if (phase === 'night' && k === 'sky' && R() < .008 && y < 70) put(x, y, R() < .3 ? '#fff3b0' : '#dfe6ff');
+  }
+
+  // 3. 光：前景按时段压色，窗户点亮，灯周围 2 圈硬边光
+  const m = MUL[phase], sx = sxOf(zone);
+  const lit = new Float32Array(w * h);
+  if (phase === 'night' || phase === 'dusk') LIGHTS.forEach(([lx, ly, r]) => {
+    const cx = lx - sx; if (cx < -r || cx > w + r) return;
+    for (let y = Math.max(0, ly - r); y < Math.min(h, ly + r + 1); y++) for (let x = Math.max(0, cx - r); x < Math.min(w, cx + r + 1); x++) {
+      const dd = Math.hypot(x - cx, y - ly), v = dd <= r * .5 ? .75 : dd <= r ? .45 : 0;
+      lit[y * w + x] = Math.max(lit[y * w + x], phase === 'dusk' ? v * .5 : v);
+    }
+  });
+  if (phase !== 'day') for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const k = kind[y * w + x], i = at(x, y);
+    if (k === 'sky') continue;
+    if (k === 'win' && phase !== 'dawn') { put(x, y, '#ffd36b'); continue; }
+    if (k === 'glow' && phase === 'night') { d[i] *= .9; d[i + 1] *= .9; d[i + 2] *= .95; continue; }
+    const L = lit[y * w + x], mm = (k === 'snow' && phase === 'night' ? [.62, .68, .88] : m).map(v => v + (1 - v) * L);   // 雪在夜里也是亮的
+    d[i] *= mm[0]; d[i + 1] *= mm[1] * (1 - L * .05); d[i + 2] *= mm[2] * (1 - L * .25);   // 灯光偏暖
+  }
+  g.putImageData(im, 0, 0);
+  drawActors(g, zone, phase === 'day' ? null : HEROMUL[phase]);
+  return cv;
+}
+
+// ---------- 页面 ----------
+const S = {phase: 'now', season: 'now', zone: 'look'};
+const now = new Date();
+const curPhase = () => S.phase === 'now' ? phaseOf(now.getHours()) : S.phase;
+const curSeason = () => S.season === 'now' ? seasonOf(now.getMonth() + 1) : S.season;
+const zoneById = id => W.ZONES.find(z => z.id === id);
+
+function seg(el, list, key) {
+  el.innerHTML = '';
+  [...list, ['now', '跟现在']].forEach(([v, t]) => {
+    const b = document.createElement('button'); b.textContent = t; b.className = S[key] === v ? 'on' : '';
+    b.onclick = () => { S[key] = v; render(); }; el.appendChild(b);
+  });
+}
+const zsel = document.getElementById('zone');
+W.ZONES.forEach(z => { const o = document.createElement('option'); o.value = z.id; o.textContent = z.name; zsel.appendChild(o); });
+zsel.value = S.zone; zsel.onchange = () => { S.zone = zsel.value; render(); };
+
+function ui(stage, zone) {
+  const sx = sxOf(zone), P = 390 / WH, left = (zone.x - sx) * P;
+  const s = document.createElement('div'); s.className = 'w-sign today';
+  s.style.left = left + 'px'; s.style.top = '86px';
+  s.innerHTML = `<span class="w-flag">今天先来这里</span><div class="board"><div class="nm">${zone.name}</div><div class="row"><i class="l1"></i><i></i><i></i></div></div><div class="post"></div>`;
+  const l = document.createElement('div'); l.className = 'w-lead';
+  l.innerHTML = '<h3>空空，今天练 10 分钟</h3><div class="muted">学一点新的，再练练快的</div><button class="gobig">开始今天的探险</button>';
+  stage.append(s, l);
+}
+function mount(stageId, cv, zone, label) {
+  const st = document.getElementById(stageId); st.innerHTML = '';
+  st.appendChild(cv); ui(st, zone);
+  if (label) { const t = document.createElement('div'); t.className = 'tag'; t.textContent = label; st.appendChild(t); }
+  return st;
+}
+let snow = null;
+function render() {
+  seg(document.getElementById('phaseBtns'), PHASES, 'phase');
+  seg(document.getElementById('seasonBtns'), SEASONS, 'season');
+  const z = zoneById(S.zone), p = curPhase(), s = curSeason();
+  const a = base(z); drawActors(a.getContext('2d'), z, null);
+  mount('sA', a, z);
+  const b = ambient(z, p, s);
+  const st = mount('sB', b, z);
+  const pn = Object.fromEntries(PHASES)[p], sn = Object.fromEntries(SEASONS)[s];
+  document.getElementById('afterSub').textContent = `${sn}天的${pn}`;
+  document.getElementById('nowTxt').textContent = `「跟现在」= 这台设备的时间 ${now.getMonth() + 1} 月 ${now.getDate()} 日 ${now.getHours()} 点 → ${Object.fromEntries(SEASONS)[seasonOf(now.getMonth() + 1)]}天的${Object.fromEntries(PHASES)[phaseOf(now.getHours())]}`;
+  snow && snow.stop(); snow = fx(st, s, p);
+  grid(z);
+  fit();
+}
+// 雪片和星星：叠在像素画上面的一层，按同样的像素格大小画
+function fx(stage, season, phase) {
+  const cv = document.createElement('canvas'); cv.width = VW; cv.height = WH; stage.insertBefore(cv, stage.children[1]);
+  const g = cv.getContext('2d'), R = rng(5), flakes = season === 'winter' ? Array.from({length: 46}, () => ({x: R() * VW, y: R() * WH, v: .12 + R() * .16, s: R() * 6})) : [];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let t = 0, raf = 0, last = 0;
+  function frame(ts) {
+    raf = requestAnimationFrame(frame);
+    if (ts - last < 50) return; last = ts; t++;
+    g.clearRect(0, 0, VW, WH);
+    flakes.forEach(f => { if (!reduce) { f.y += f.v; f.x += Math.sin((t + f.s * 10) / 14) * .12; if (f.y > WH) { f.y = -1; f.x = R() * VW; } } g.fillStyle = '#ffffff'; g.fillRect(Math.round(f.x), Math.round(f.y), 1, 1); });
+  }
+  if (flakes.length) raf = requestAnimationFrame(frame);
+  return {stop: () => cancelAnimationFrame(raf)};
+}
+function grid(z) {
+  const el = document.getElementById('grid'); el.innerHTML = '';
+  SEASONS.forEach(([s, sn]) => PHASES.forEach(([p, pn]) => {
+    const c = document.createElement('div'); c.className = 'cell';
+    const cv = ambient(z, p, s); c.appendChild(cv);
+    const t = document.createElement('div'); t.textContent = `${sn} · ${pn}`; c.appendChild(t);
+    c.onclick = () => { S.phase = p; S.season = s; render(); scrollTo({top: 0, behavior: 'smooth'}); };
+    el.appendChild(c);
+  }));
+}
+function fit() {
+  [['fA', 'sA'], ['fB', 'sB']].forEach(([f, s]) => { const k = document.getElementById(f).clientWidth / 844; document.getElementById(s).style.transform = `scale(${k})`; });
+}
+addEventListener('resize', fit);
+render();
+</script>
+</body>
+</html>
