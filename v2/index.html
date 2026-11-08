@@ -314,6 +314,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .flag.me path.f{fill:var(--counter)}.flag.ok path.f{fill:var(--ok)}
 .flag path.p{stroke:var(--ink);stroke-width:4}.flag.ok path.p{stroke:var(--ok)}
 .gap-arrow{position:absolute;top:92px;height:22px}.gap-arrow path{stroke:var(--ok);stroke-width:3;fill:none}
+/* Safari 横屏带工具栏（874×297 这类矮屏）：数线原来在屏幕外，孩子插不了旗子（11-07 e2e13 发现）→ 线、刻度、旗子整体上收 60 */
+@media (max-height:330px){.linebox{min-height:100px}.linebox .ln{top:58px}.linebox .cap0,.linebox .cap1,.linebox .capm{top:44px}.linebox .lab{top:72px;font-size:22px}.flag{top:-26px}.gap-arrow{top:32px}}
 .calm{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:30;background:var(--stone);border:3px solid #000;box-shadow:0 6px 0 #000;padding:18px 26px;font-size:24px;font-weight:900}
 /* 示范卡 */
 #demo{flex-direction:column;gap:12px}
@@ -333,6 +335,19 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .demo .rod{height:150px;width:14px}.demo .one{width:14px;height:14px}.demo .ones{grid-template-columns:repeat(5,14px)}
 
 .ackrow{display:flex;align-items:center;gap:16px}
+/* 第二批 2a：题面里的图（线段图、条形图、长方形）和讲解卡（说明书-到四年级第二批） */
+.eq.tw{white-space:normal;overflow-wrap:break-word}
+.bcard{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}.bcp{background:var(--stone);border:2px solid #000;padding:6px;font-size:13px;display:flex;flex-direction:column;gap:4px}.bcp svg.fig2{width:100%;height:120px}.bcp .nrows span{min-width:30px;font-size:15px}.bcp .eq{font-size:22px}   /* 题面带文字（如「四舍五入到百位」）：英文日翻译变长时换行，不出左栏 */
+.fig2w{flex:1;min-height:0;min-width:0;width:100%;max-width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.fig2w>svg.fig2{display:block;width:100%;height:100%;max-width:100%;max-height:100%}   /* 图里的字已保证不出图（svgclip.py），外框再防一手 2 像素的取整误差 */
+.explain:has(.fig2w){flex:1;min-height:0}.explain .fig2w{flex:1 1 0;min-height:90px;max-height:260px}   /* 答错图解：图随剩余空间缩放，不把左栏撑破（e2e13） */
+#demo .dstep .eq.tw{display:block;font-size:clamp(16px,2.4vw,22px);line-height:1.15;white-space:normal;max-width:34vw;text-align:center}#demo .dstep .eq.tw .box{width:1.4em;height:1.2em;vertical-align:middle}   /* 示范卡里带文字的题面（英文长）：缩字换行，不出框（demofit） */
+/* 讲解卡（第二批）：「下一步」浮在右下角、提示浮起来，矮屏也把高度留给图（e2e13 874×297） */
+#demo.card{gap:6px}#demo.card .ackrow{position:absolute;right:var(--padR);bottom:max(10px,env(safe-area-inset-bottom))}#demo.card .dcard .cline{padding-right:200px;min-height:52px;display:flex;align-items:center}#demo.card .dcard{gap:6px}
+#dQuitHint{position:absolute;left:calc(var(--padL) + 104px);top:max(16px,env(safe-area-inset-top));z-index:2;background:var(--cave);padding:4px 8px}   /* 提示贴着「长按结束」按钮，不压讲解卡的字 */
+.dcard .cdots{margin-left:auto;display:flex;gap:6px}.dcard .cdots i{width:12px;height:12px;background:var(--stone-hi);border:2px solid #000}.dcard .cdots i.on{background:var(--warn)}
+.dcard .cfig{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}.dcard .cfig>svg.fig2{width:100%;flex:1;min-height:0;max-height:100%}
+.dcard .cline .nbsay{font-size:clamp(17px,3vw,22px);justify-content:flex-start}
+.nrows{display:flex;flex-direction:column;gap:12px}.nrows>div{display:flex;align-items:center;gap:10px}.nrows b{width:2.6em;font-size:20px}.nrows span{min-width:46px;padding:4px 8px;text-align:center;border:3px solid #000;background:var(--stone);font-size:22px}.nrows span.on{background:var(--ok);color:#0b3d17}
 #ack{width:240px;height:64px;font-size:22px}
 #ack .fillbar{position:absolute}
 .ackwrap{position:relative;overflow:hidden}
@@ -651,6 +666,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div class="qtop"><button class="btn hold-btn" id="dQuit">长按结束<i></i></button><div class="tbar" id="dBar"><i></i></div></div>
   <div id="demoBox" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
   <div class="ackrow"><span style="flex:1"></span><button class="gobig" id="ack" disabled>我知道了</button></div>
+  <div class="hint-pop" id="dQuitHint" hidden>要结束就按住左上角</div>
 </div>
 
 <!-- 6 结算（v3：今日练习 / 自由加练 / 复习这一组） -->
@@ -901,7 +917,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v113:9c3958b92f8d -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v113:f1bdf1c40ec1 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1534,7 +1550,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     save();
     if (!x) return finishQ(false);
     Q.x = x; Q.redo = false;
-    if (x.kind === 'demo') return showDemo(x.skill);
+    if (x.kind === 'demo') return showDemo(x);
     showQuestion(x);
   }
   // 顶部时间进度条：今日练习 / 摸底按今天的 10 分钟；自由加练、复习这一组按题数
@@ -1553,6 +1569,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (k < 0.99) b.style.zoom = Math.max(0.5, k).toFixed(3);
   }
   new MutationObserver(fitBody).observe($('qBody'), {childList: true});
+  // 图里的字（data-fit = 最多多宽）：翻成英文后太长就横向压紧，不裁不叠（第二批代码审查 R2）
+  function fitSvgText() { document.querySelectorAll('svg.fig2 text[data-fit]').forEach(t => { try { t.removeAttribute('textLength'); const max = +t.dataset.fit; if (t.getComputedTextLength() > max) { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } } catch (e) {} }); }
+  let svgFitRaf = 0; new MutationObserver(() => { if (svgFitRaf) return; svgFitRaf = requestAnimationFrame(() => { svgFitRaf = 0; fitSvgText(); }); }).observe(document.body, {childList: true, subtree: true, characterData: true});
+  window.__fitSvg = fitSvgText;
   addEventListener('resize', fitBody);
   function showQuestion(x) {
     const inst = x.inst, vp = vertOn(inst), v = vp ? Object.assign({}, R.question(inst), {input: 'vert', vp, flash: false, note: ''}) : R.question(inst);
@@ -1831,15 +1851,29 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   longPress($('qQuit'), 1000, () => GM.askQuit(Q, () => finishQ(true)), () => { $('qQuitHint').hidden = false; clearTimeout(window._qh); window._qh = setTimeout(() => { $('qQuitHint').hidden = true; }, 1500); });
 
   // ---------- 3a 学一学 · 示范卡：动画播完（约 3 秒）「我知道了」才能点 ----------
-  function showDemo(skill) {
+  // x = {skill, concept?}：有概念 = 讲解卡（多页，第二批 §3），否则原来的 3 秒示范卡
+  function showDemo(x) {
     Q.phase = 'demo'; show('demo');
-    $('demoBox').innerHTML = R.demo(skill);
+    if (x.concept && R.card(x.concept)) {
+      if (!Q.card || Q.card.c !== x.concept) Q.card = {c: x.concept, p: 0, t0: Date.now(), n: R.card(x.concept).pages.length};   // 切后台回来停在同一页
+      $('demo').classList.add('card'); drawCard(); qBar(); return;
+    }
+    $('demo').classList.remove('card'); Q.card = null; $('demoBox').innerHTML = R.demo(x.skill); $('ack').textContent = '我知道了';
     $('ack').disabled = true;
     Q.ackT = setTimeout(() => { $('ack').disabled = false; }, 3000);
     qBar();
   }
-  $('ack').addEventListener('click', () => { if (Q && Q.phase === 'demo' && !$('ack').disabled) nextQ(); });
-  longPress($('dQuit'), 1000, () => GM.askQuit(Q, () => finishQ(true)));
+  function drawCard() {
+    const k = Q.card; $('demoBox').innerHTML = R.cardPage(k.c, k.p); $('ack').textContent = k.p === k.n - 1 ? '试一试' : '下一步';
+    $('ack').disabled = true; clearTimeout(Q.ackT); Q.ackT = setTimeout(() => { $('ack').disabled = false; }, 800);   // 每页至少停 0.8 秒，连点不会一下翻完
+  }
+  $('ack').addEventListener('click', () => {
+    if (!Q || Q.phase !== 'demo' || $('ack').disabled) return;
+    if (Q.card && Q.card.p < Q.card.n - 1) { Q.card.p++; drawCard(); return; }
+    if (Q.card) { if (Q.sess.demoTime) Q.sess.demoTime((Date.now() - Q.card.t0) / 1000); Q.card = null; }   // 按实际停留计时，最多 90 秒
+    nextQ();
+  });
+  longPress($('dQuit'), 1000, () => GM.askQuit(Q, () => finishQ(true)), () => { $('dQuitHint').hidden = false; clearTimeout(window._dh); window._dh = setTimeout(() => { $('dQuitHint').hidden = true; }, 1500); });
 
   // ---------- 6 结算 / 2b 摸底结果 ----------
   const lvColor = id => ['var(--lv0)', 'var(--lv1)', 'var(--lv2)', 'var(--lv3)'][E.lv(S, id) || 0];
@@ -2022,6 +2056,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="panel"><div class="ptitle">熟题</div>${row('作答', a.k + ' 题')}${row('失误', a.ks + ' 次')}${row('失误率', pctOf(a.ks, a.k) + prevOf(a.ks, a.k, b.ks, b.k))}<div class="muted" style="font-size:12px;line-height:1.5">熟题：格子已到淡红，或这道题已在不同的日子算过 2 次秒答。失误：熟题答错，不含点「不会」。写对但被识别错，也会计入</div></div>
       <div class="panel"><div class="ptitle">书写</div><div class="kv">书写评分（试运行）：<b>${digs || '--'}</b></div>${row('免确认识别率', pctOf(a.ic, a.ia))}<div class="muted" style="font-size:12px;line-height:1.5">书写评分和规范字形比，0–100，还没有校准。不同数字之间不可比，所以按数字显示（括号里是个数），也不做前后对比。请对照下面的字判断是否准确。免确认识别率是识别的把握，不代表工整</div></div>
       <div class="panel"><div class="ptitle">读题</div>${row('文字题平均用时', a.wn ? (a.ws / a.wn).toFixed(0) + ' 秒' : '--')}${row('朗读次数', a.say + ' 次')}</div>
+      <div class="panel"><div class="ptitle">讲解卡后前 5 题</div>${Object.keys(S.introStat || {}).length ? Object.entries(S.introStat).filter(([c, v]) => Array.isArray(v)).map(([c, v]) => row((R.card(c) || {title: c}).title, `${v[0] || 0} 题 · 答对 ${v[1] || 0} · 不会 ${v[2] || 0}`)).join('') : '<div class="muted">还没看过讲解卡</div>'}<div class="muted" style="font-size:12px;line-height:1.5">新概念第一次出现时先看讲解卡。5 题里答对少、点「不会」多，说明这张讲解卡没讲明白。</div></div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${String(m.d).slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 认定为 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
   }
@@ -2064,6 +2099,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       let body = '';
       if (bankOpen[s.id]) {
         const sets = [];
+        if (s.concept && R.card(s.concept)) { const k = R.card(s.concept); sets.push({title: `讲解卡「${k.title}」：第一次碰到这个概念时出${(S.demoSeen || {})['c:' + s.concept] ? ' · 空空已看过' : ''}`, html: `<div class="bcard">${k.pages.map(p => `<div class="bcp">${p.fig}<div>${p.line}</div></div>`).join('')}</div>`}); }
         const cardIt = s.items.filter(it => !it.gen);
         if (cardIt.length) sets.push({title: `${cardIt.length} 道固定题（颜色 = 空空现在的进度）`, list: cardIt.map(it => ({inst: bankItems(it)[0], lv: E.lv(S, it.id)}))});
         s.items.filter(it => it.gen).forEach(it => {
@@ -2080,7 +2116,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
             .map(m => ({inst: s.speed ? {id: it.id, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans} : {id: it.id, q: m.q, ans: m.ans}}));
           if (out.length) sets.push({title: `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 题库外的旧错题（${out.length}）`, list: out});
         });
-        body = sets.map(st => `<div class="bkset"><div class="bt">${st.title}</div><div class="bqs">${st.list.map(o => { BQ.push(o.inst); return `<button class="bq${o.lv ? ' l' + o.lv : ''}${isMist(o.inst) ? ' m' : ''}" data-bq="${BQ.length - 1}">${qText(o.inst)}</button>`; }).join('')}</div></div>`).join('');
+        body = sets.map(st => st.html ? `<div class="bkset"><div class="bt">${st.title}</div>${st.html}</div>` : `<div class="bkset"><div class="bt">${st.title}</div><div class="bqs">${st.list.map(o => { BQ.push(o.inst); return `<button class="bq${o.lv ? ' l' + o.lv : ''}${isMist(o.inst) ? ' m' : ''}" data-bq="${BQ.length - 1}">${qText(o.inst)}</button>`; }).join('')}</div></div>`).join('');
       }
       return `<div class="bkrow"><div class="bh"><b>${s.name}</b><span class="muted">${(l => (l.length > 1 ? `第 ${l[0]}–${l[l.length - 1]} 级` : `第 ${l[0]} 级`))([...new Set(s.items.flatMap(it => K.itemLevels(it.id)))].sort((x, y) => x - y))} · ${n} 道题${cardsN ? ` · ${cardsN} 道固定题` : ''}${typesN ? ` · ${typesN} 个题型` : ''} · 亮了 ${lit} / ${s.items.length} 格</span><span style="flex:1"></span><button class="btn" data-bo="${s.id}">${bankOpen[s.id] ? '收起' : '看题目'}</button></div>
         <div class="bk"><em>学什么</em>：${txt[0]}<br><em>怎样算学会</em>：${ruleText(s)}<br><em>怎么教</em>：${txt[1]}<br><em>要先学会</em>：${pre}</div>${body}</div>`;
@@ -2197,7 +2233,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('pauseGo').addEventListener('click', () => {
     $('ovPause').hidden = true; if (!Q) return;
     Q.paused = false;
-    if (Q.wasDemo) showDemo(Q.x.skill);
+    if (Q.wasDemo) showDemo(Q.x);
     else if (Q.redo) showQuestion(Q.x);
     else nextQ();
   });
@@ -2226,7 +2262,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('popstate', () => {
     try { history.pushState({km: 1}, ''); } catch (e) {}
     if (!$('ovPause').hidden || !$('ovTab').hidden || !$('ovNew').hidden || !$('ovCrash').hidden) return;
-    if (cur === 'qplay' || cur === 'demo') { $('qQuitHint').hidden = false; setTimeout(() => { $('qQuitHint').hidden = true; }, 1500); return; }
+    if (cur === 'qplay' || cur === 'demo') { const h = $(cur === 'demo' ? 'dQuitHint' : 'qQuitHint'); h.hidden = false; setTimeout(() => { h.hidden = true; }, 1500); return; }   // 示范卡页有自己的提示（练习页的藏着看不到）
     if (cur === 'play') { $('quitHint').hidden = false; setTimeout(() => { $('quitHint').hidden = true; }, 1500); return; }
     if (cur === 'calib') return $('calBack').click();
     if (cur === 'summary') return (renderSpeed(), show('home'));

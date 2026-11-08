@@ -8,7 +8,7 @@ SIZES = [(956, 440), (932, 430), (852, 393), (844, 390), (812, 375), (667, 375)]
 seed = {'v': 2, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'placedAt': 1, 'known': {}, 'settings': {'bilingual': bool(EN)}}
 SCAN = """async ([n]) => { const {K, R} = window.__sm, $ = id => document.getElementById(id), bad = [];
   ['island','placeIntro','placeResult','qplay','demo','qsum','skillmap','home','calib','play','summary','mist','parent'].forEach(k => { $(k).hidden = k !== 'qplay'; });
-  const check = (inst, what, v) => { I18N.flush(); const wide = v.input !== 'write'; $('qplay').classList.toggle('wide', wide); $('qWide').hidden = !wide;
+  const check = (inst, what, v) => { I18N.flush(); if (window.__fitSvg) window.__fitSvg();   /* 图里翻成英文的长名字，页面在下一帧压紧；量之前先压，和孩子看到的一致 */ const wide = v.input !== 'write'; $('qplay').classList.toggle('wide', wide); $('qWide').hidden = !wide;
     $('qPad').hidden = wide; window.__sm.fitBody();
     const lim = wide ? {l: 0, r: innerWidth} : (() => { const p = $('qPad').getBoundingClientRect(); return {l: 0, r: p.left}; })();
     const box = $('qBody').getBoundingClientRect();

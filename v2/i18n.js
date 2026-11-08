@@ -423,7 +423,55 @@
   ];
 
   // 拆开的文本节点：跟在一个数字节点后面，要看前面是不是 1 才知道单复数
-  P.unshift(...P34);
+  // ---------- 第二批 2a（docs/说明书-到四年级第二批.md）：线段图、条形图、长方形、选择题、讲解卡 ----------
+  const N2 = {红花: ['red flower', 'red flowers'], 黄花: ['yellow flower', 'yellow flowers'], 白花: ['white flower', 'white flowers'], 蓝花: ['blue flower', 'blue flowers'], 红球: ['red ball', 'red balls'], 蓝球: ['blue ball', 'blue balls'],
+    大鱼: ['big fish', 'big fish'], 小鱼: ['small fish', 'small fish'], 男生: ['boy', 'boys'], 女生: ['girl', 'girls'], 红气球: ['red balloon', 'red balloons'], 黄气球: ['yellow balloon', 'yellow balloons'], 白羊: ['white sheep', 'white sheep'], 黑羊: ['black sheep', 'black sheep'],
+    苹果: ['apple', 'apples'], 梨: ['pear', 'pears'], 桃: ['peach', 'peaches'], 橘子: ['orange', 'oranges']};
+  const NOUN2 = {花: 'flowers', 球: 'balls', 鱼: 'fish', 学生: 'students', 气球: 'balloons', 羊: 'sheep'};
+  const PAL = Object.assign({小狗: 'Little Dog', 小兔: 'Little Rabbit'}, NAME), N2K = `(${Object.keys(N2).join('|')})`, PK = `(${Object.keys(PAL).join('|')})`, U2 = '[个朵条只块]';
+  const cap = t => t[0].toUpperCase() + t.slice(1), lab2 = n => (PAL[n] ? PAL[n] : N2[n][1]);   // 句子里的条名（小写）；图上单独的名字在 D 里首字母大写
+  const pal = n => !!PAL[n], TH3 = (n, t) => pl(n, (TH2[t] || THING[t])[0], (TH2[t] || THING[t])[1]);
+  const P2A = [
+    [new RegExp(`^${N2K} (\\d+) ${U2}，${N2K} (\\d+) ${U2}。一共几${U2}？$`), (m, a, x, b, y) => `${pl(x, N2[a][0], N2[a][1])} and ${pl(y, N2[b][0], N2[b][1])}. How many in all?`],
+    [new RegExp(`^一共 (\\d+) ${U2}(花|球|鱼|学生|气球|羊)，(\\d+) ${U2}是${N2K}，剩下的是${N2K}。${N2K}几${U2}？$`), (m, t, n, a, x, y) => `There are ${t} ${NOUN2[n]}. ${a} ${+a === 1 ? 'is a ' + N2[x][0] : 'are ' + N2[x][1]}, and the rest are ${N2[y][1]}. How many ${N2[y][1]} are there?`],
+    [new RegExp(`^${N2K}有几[个朵]？$`), (m, a) => `How many ${N2[a][1]} are there?`],
+    [new RegExp(`^${PK}钓了几条鱼？$`), (m, a) => `How many fish did ${PAL[a]} catch?`],
+    [new RegExp(`^(${Object.keys(N2).concat(Object.keys(PAL)).join('|')})的条顶对着 (\\d+)$`), (m, a, n) => `The top of ${pal(a) ? PAL[a] + "'s bar" : 'the ' + lab2(a) + ' bar'} lines up with ${n}`],
+    [new RegExp(`^一格是 (\\d+)，(${Object.keys(N2).concat(Object.keys(PAL)).join('|')})的条顶对着 (\\d+)$`), (m, s, a, n) => `Each line is ${s}. The top of ${pal(a) ? PAL[a] + "'s bar" : 'the ' + lab2(a) + ' bar'} lines up with ${n}`],
+    [new RegExp(`^(${Object.keys(N2).concat(Object.keys(PAL)).join('|')})比(${Object.keys(N2).concat(Object.keys(PAL)).join('|')})(多|少)几${U2}？$`), (m, a, b, w) => (pal(a) ? `How many ${w === '多' ? 'more' : 'fewer'} fish did ${PAL[a]} catch than ${PAL[b]}?` : `How many ${w === '多' ? 'more' : 'fewer'} ${N2[a][1]} than ${N2[b][1]} are there?`)],
+    [new RegExp(`^(${Object.keys(N2).concat(Object.keys(PAL)).join('|')})和(${Object.keys(N2).concat(Object.keys(PAL)).join('|')})一共几${U2}？$`), (m, a, b) => (pal(a) ? `How many fish did ${PAL[a]} and ${PAL[b]} catch in all?` : `How many ${N2[a][1]} and ${N2[b][1]} are there in all?`)],
+    [/^(\d+) 厘米$/, (m, n) => `${n} cm`], [/^周长 (\d+) 厘米$/, (m, n) => `Perimeter ${n} cm`], [/^面积 (\d+) 平方厘米$/, (m, n) => `Area ${n} square cm`],
+    [/^(\d+) 个 (\d+)：(\d+ × \d+ = \d+)$/, (m, a, b, r) => `${a} groups of ${b}: ${r}`],
+    [/^一行 (\d+) 格，有 (\d+) 行，(.+)$/, (m, a, b, r) => `${a} in a row, ${b} rows: ${r}`],
+    [/^长 × 宽：(.+)$/, (m, r) => `Length × width: ${r}`],
+    [/^去掉多的 (\d+)，剩下两个小的数：(.+)$/, (m, a, r) => `Take away the extra ${a}, which leaves two smaller numbers: ${r}`],
+    [/^([\d.]+) (最大|最小)$/, (m, a, w) => `${a} is the ${w === '最大' ? 'largest' : 'smallest'}`],
+    [/^先比整数，再比十分位、百分位：([\d.]+) (最大|最小)$/, (m, a, w) => `Compare the whole numbers, then tenths, then hundredths: ${a} is the ${w === '最大' ? 'largest' : 'smallest'}`],
+    [/^哪个数最(大|小)？ ([\d.、]+)$/, (m, w, l) => `Which number is the ${w === '大' ? 'largest' : 'smallest'}? ${l.replace(/、/g, ', ')}`],
+    [new RegExp(`^${WHO}有 (\\d+) ${M}${THG}，${WHO}的是${WHO}的 (\\d+) 倍。${WHO}有几${M}？$`), (m, a, n, t, b, a2, k) => `${NAME[a]} has ${TH3(n, t)}. ${NAME[b]} has ${k} times as many. How many does ${NAME[b]} have?`],
+    [new RegExp(`^${WHO}和${WHO}一共有 (\\d+) ${M}${THG}，${WHO}的是${WHO}的 (\\d+) 倍。${WHO}有几${M}？$`), (m, a, b, n, t, b2, a2, k) => `${NAME[a]} and ${NAME[b]} have ${TH3(n, t)} in all. ${NAME[b]} has ${k} times as many as ${NAME[a]}. How many does ${NAME[a]} have?`],
+    [/^两个数的和是 (\d+)，大的数比小的数多 (\d+)。小的数是几？$/, (m, t, d) => `Two numbers add up to ${t}. The bigger one is ${d} more than the smaller one. What is the smaller number?`],
+  ];
+  Object.assign(D, Object.fromEntries(Object.entries(PAL).map(([k, v]) => [k, v])), Object.fromEntries(Object.keys(N2).map(k => [k, cap(N2[k][1])])), {
+    大的数: 'Bigger', 小的数: 'Smaller', 线段图: 'Bar models', 条形图: 'Bar charts', 长方形: 'Rectangle', 边长相加: 'Adding sides', 条形图比较: 'Comparing bars', 倍的线段图: 'Times as many', 和倍入门: 'Sum and times',
+    一格代表几: 'Chart scales', 看图求周长: 'Perimeter from a picture', 数方格求面积: 'Area by counting', 小数比大小: 'Comparing decimals', 两位小数比大小: 'Comparing hundredths', 和差线段图: 'Sum and difference', 余数: 'Remainders',
+    公倍数和公因数: 'Multiples and factors', 小数: 'Decimals', 点一个: 'Tap one', 哪个数最大: 'Which number is the largest?', '哪个数最大？': 'Which number is the largest?', '哪个数最小？': 'Which number is the smallest?',
+    '长方形四条边一共长几厘米？': 'How long are the four sides of the rectangle in all, in cm?', '这个长方形的周长是几厘米？': 'What is the perimeter of this rectangle in cm?', '这个正方形的周长是几厘米？': 'What is the perimeter of this square in cm?',
+    '每个小方格是 1 平方厘米。这个长方形的面积是几平方厘米？': 'Each small square is 1 square cm. What is the area of this rectangle in square cm?', '这个长方形的面积是几平方厘米？': 'What is the area of this rectangle in square cm?',
+    '一个苹果一格：小猫 7 个，小狗 5 个': 'One square for each apple: Little Cat has 7, Little Dog has 5', '不画格子，在线上写数': 'Skip the squares and write the number on the bar', '合起来有几个？看整条线': 'How many altogether? Look at the whole bar',
+    '7 + 5 = 12，合起来 12 个': '7 + 5 = 12, so 12 altogether', '反过来：一共 12 个，小猫 7 个，小狗 12 − 7 = 5 个': 'The other way: 12 in all and Little Cat has 7, so Little Dog has 12 − 7 = 5',
+    '小猫钓了 6 条鱼，一条鱼画一块，摞起来': 'Little Cat caught 6 fish. One block for each fish, stacked up', '摞起来就是一根条，条越高越多': 'A stack makes a bar. The taller the bar, the more there are',
+    '小狗的条顶对着左边的 8，小狗钓了 8 条': "The top of Little Dog's bar lines up with 8, so Little Dog caught 8", '长方形：长 6 厘米，宽 4 厘米': 'A rectangle: 6 cm long and 4 cm wide',
+    '对边一样长：上下都是 6，左右都是 4': 'Opposite sides are equal: top and bottom are 6, left and right are 4', '绕一圈：6 + 4 + 6 + 4 = 20，这一圈的长度叫周长': 'Go all the way around: 6 + 4 + 6 + 4 = 20. The distance around is the perimeter',
+    '这块地有多大？': 'How big is this field?', '铺满 1 平方厘米的小方格': 'Cover it with squares of 1 square cm', '数一数：12 格，面积是 12 平方厘米': 'Count them: 12 squares, so the area is 12 square cm',
+    '一行 4 格，有 3 行：4 × 3 = 12。长 × 宽 = 面积': '4 in a row, 3 rows: 4 × 3 = 12. Length × width = area', '小猫有 3 条鱼': 'Little Cat has 3 fish', '小狗的鱼是 4 个 3，小狗的是小猫的 4 倍': "Little Dog's fish make 4 threes, so Little Dog has 4 times as many as Little Cat", 下一步: 'Next', 试一试: 'Try it',
+    '4 倍就是 4 个 3：3 × 4 = 12': '4 times as many means 4 threes: 3 × 4 = 12', '14 个苹果，每盘放 4 个': '14 apples, 4 on each plate', '放满 3 盘，还剩 2 个': '3 full plates and 2 left over',
+    '剩下的 2 叫余数，余数比 4 小': 'The 2 left over is the remainder. It is less than 4', '三个小伙伴钓的鱼：4、8、6': 'Fish caught by three pals: 4, 8, 6', '多的分给少的，变得一样多': 'Move some from the most to the fewest until they are equal',
+    '每个都是 6 条，6 叫平均数': 'Each has 6. 6 is the average', '4 的倍数和 6 的倍数': 'Multiples of 4 and multiples of 6', '两行都有的 12、24 叫公倍数，最小的是 12': '12 and 24 are in both rows. They are common multiples, and the least is 12',
+    '12 和 18 能被哪些数整除': 'Which numbers divide 12 and 18 evenly?', '两行都有的叫公因数，最大的是 6': 'Numbers in both rows are common factors. The greatest is 6',
+    '一条分成 10 份，涂了 3 份': 'A bar cut into 10 parts, with 3 parts colored', '3 份就是 0.3，读作零点三': '3 parts is 0.3, read as "zero point three"', '1 整条加 3 份是 1.3': '1 whole bar and 3 parts is 1.3',
+  });
+  P.unshift(...P2A, ...P34);
   const AFTER = [
     [/^ 个百$/, o => (o ? ' hundred' : ' hundreds')], [/^ 个十$/, o => (o ? ' ten' : ' tens')], [/^ 个一$/, o => (o ? ' one' : ' ones')],
     [/^ 个十和 (\d+) 个一$/, (o, n) => ` ${o ? 'ten' : 'tens'} and ${pl(n, 'one')}`],

@@ -81,3 +81,13 @@ test('题库页的秒答时间说明：按题算的写范围', () => {
   assert.equal(K.fastLabel('3+4'), K.fastThink('3+4') + ' 秒');
   assert.doesNotMatch(K.fastLabel('speed:g13:div2'), /(\d+)–\1 秒/, '两头一样只写一个数');
 });
+
+test('iPad 竖式和秒答时间对齐：点「写好了」的 1.5 秒从用时里扣掉，秒答和闪电都用扣过的用时，竖式题型都在笔算类或有分类', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const VERT = require('../v2/vert.js'), html = fs.readFileSync(path.join(__dirname, '../v2/index.html'), 'utf8');
+  assert.equal(VERT.TAP_MS, 1500);
+  assert.match(html, /Q\.ms = Math\.max\(0, performance\.now\(\) - Q\.t0 - VERT\.TAP_MS\)/, '竖式用时要扣掉点「写好了」');
+  assert.match(html, /const qLimit = inst => K\.fastMs\(inst, \{oral: S\.oral, speed: INKS\.speed, en: I18N\.on\}\)/, 'qLimit 要走 K.fastMs');
+  assert.match(html, /const used = Q\.v\.input === 'write' \|\| Q\.v\.input === 'vert' \? Q\.ms/, '闪电也用扣过的用时');
+  Object.keys(VERT.IDS).forEach(id => assert.equal(K.fastClass(id), 'column', id + ' 是竖式，要归多位笔算'));
+});

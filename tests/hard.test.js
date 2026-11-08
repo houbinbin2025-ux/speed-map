@@ -48,7 +48,7 @@ test('每道题都能画题面和图解，每个挑战技能都有示范卡、�
     assert.ok(R.demo(s.id).length > 20, s.id);
     s.items.forEach(it => HB.pools[it.id].forEach(x => {
       const inst = {id: it.id, q: x.q, ans: x.ans}, v = R.question(inst);
-      assert.equal(v.input, s.input); assert.ok(v.input === 'line' || v.html); if (s.input === 'pick') assert.equal(v.pick.length, 2);
+      assert.equal(v.input, s.input); assert.ok(v.input === 'line' || v.html); if (s.input === 'pick') assert.equal(v.pick.length, x.q.view === 'choice' ? x.q.opts.length : 2);   // 选择题（第二批 2a）3 个选项，比大小 2 个
       assert.ok(!/undefined|NaN/.test(JSON.stringify(v) + R.explain(inst)), it.id);
       assert.ok(!/undefined/.test(R.mistLabel({src: s.group, uid: it.id, q: x.q})));
     }));

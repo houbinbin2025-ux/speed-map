@@ -65,3 +65,10 @@ test('防连点：点「继续」后 0.5 秒内，下一题同一位置的「不
   ['qDunno', 'qClear', 'btnDunno', 'btnClear', 'qOralNext', 'btnOralNext'].forEach(id =>
     assert.match(html, new RegExp(`\\$\\('${id}'\\)\\.addEventListener\\('click', \\(\\) => \\{\\s*if \\(guarded\\(\\)\\) return;`), id + ' 没加防连点'));
 });
+
+test('页面内嵌脚本都能编译（11-07 踩坑：新变量和已有函数重名，整页脚本报错、孩子打开是空白）', () => {
+  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'v2', 'index.html'), 'utf8');
+  const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  assert.ok(blocks.length >= 2, '没找到内嵌脚本');
+  blocks.forEach((code, i) => { try { new Function(code); } catch (e) { assert.fail(`第 ${i + 1} 段内嵌脚本编译不过：${e.message}`); } });
+});
