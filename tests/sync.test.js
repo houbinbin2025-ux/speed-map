@@ -104,3 +104,23 @@ test('文件名带日期；「上次同步」几天前', () => {
   assert.equal(C.syncAgo(-5, now), null, '坏值当没同步过');
   assert.equal(C.syncAgo(now + 864e5, now), null, '未来时间当没同步过');
 });
+
+// 中控 11-08 条件：合并后复习进度不能倒退（passes 不减、已过关不被旧数据拉回）；只有另一台更晚又答错才回到复习（和单台设备一样：engine.js 已过关的题再答错会重置）
+test('错题合并不倒退：两边各复习过一次、一边过关一边没过关、同一份导两次（中控 11-08）', () => {
+  const m = (o) => Object.assign(mist('cmp1:a', '2026-11-01'), o), merge = (a, b) => C.mergeMistakes({'cmp1:a': a}, {'cmp1:a': b})['cmp1:a'];
+  // 两边各复习过一次（不同天）：取后复习的那条，passes 不比较早那条少
+  const early = m({passes: 1, due: '2026-11-04', last: '2026-11-02'}), late = m({passes: 2, due: '2026-11-10', last: '2026-11-05'});
+  assert.equal(merge(early, late).passes, 2); assert.equal(merge(late, early).passes, 2, '两个方向都一样');
+  // 一边已过关、另一边没过关且更早：保持过关，不被拉回
+  const passed = m({passes: 5, due: null, last: '2026-11-06'}), stale = m({passes: 2, due: '2026-11-09', last: '2026-11-03'});
+  assert.equal(merge(passed, stale).due, null); assert.equal(merge(stale, passed).due, null);
+  assert.equal(merge(stale, passed).passes, 5, 'passes 不减');
+  // 已过关后另一台更晚又答错：回到复习（真实的新错误，和单台设备上再答错一样）
+  const wrongAgain = m({passes: 0, due: '2026-11-09', last: '2026-11-07'});
+  assert.equal(merge(passed, wrongAgain).due, '2026-11-09');
+  // 同一份文件导两次：结果不变
+  const once = C.mergeMistakes({'cmp1:a': stale}, {'cmp1:a': passed}), twice = C.mergeMistakes(once, {'cmp1:a': passed});
+  assert.deepEqual(twice, once);
+  // 只在一边的错题：原样带过来
+  assert.deepEqual(C.mergeMistakes({}, {'cmp1:a': passed}), {'cmp1:a': passed});
+});
