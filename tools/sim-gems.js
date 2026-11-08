@@ -6,6 +6,8 @@ let seed = 1; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; re
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), G = require('../v2/gems.js');
 if (process.env.TUNE) Object.assign(G.TUNE, JSON.parse(process.env.TUNE));
 // 秒答假设（拿不到空空的真实秒答比例）：答对里秒答的比例 FAST，秒答里闪电秒答的比例 BOLTP
+// 专注假设：每个孩子 lit = 答题时火苗亮着的比例（默认 0.9，存档里没有每题用时，第 1 周用家长区的专注记录复核）
+const QCM = +(process.env.QCM || 2);   // 限时挑战里碎片倍数（试参数用）
 const FAST = +(process.env.FAST || 0.6), BOLTP = +(process.env.BOLTP || 0.4);
 const speed = ok => { const fast = ok && rnd() < FAST; return {fast, bolt: fast && rnd() < BOLTP}; };
 const S0 = JSON.parse(JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['speedmap.v2']);
@@ -27,6 +29,8 @@ const KIDS = {
   '练20分钟': {p: flat(0.9), s: t(5, 8), ch: 0.7, take: 0.8, plan: (S, d, r) => { today(S, d, r); more(S, d, r, 2); }},
   '练30分钟': {p: flat(0.9), s: t(5, 8), ch: 0.7, take: 0.8, plan: (S, d, r) => { today(S, d, r); more(S, d, r, 2); free(S, d, r, ALLG, 1); }},
   '不理弹窗': {p: flat(0.9), s: t(5, 8), plan: today, ch: 0.7, take: 0},
+  '常发呆_火苗亮一半': {p: flat(0.9), s: t(5, 8), plan: today, ch: 0.7, take: 0.8, lit: 0.5},
+  '火苗一直亮': {p: flat(0.9), s: t(5, 8), plan: today, ch: 0.7, take: 0.8, lit: 1},
   '全接弹窗': {p: flat(0.9), s: t(5, 8), plan: today, ch: 0.7, take: 1},
   '绕开今日只刷块': {p: flat(0.9), s: t(5, 8), take: 0.8, plan: (S, d, r) => free(S, d, r, ['bond', 'place', 'cmp', 'line', 'dock', 'market', 'garden'], 2)},
   '刷_乱猜': {p: guess, s: t(2.5, 4), plan: today, ch: 0.2, take: 1},
@@ -56,7 +60,7 @@ function round(st, S, day, kind, retry, kid, top) {
     let s1 = kid.s(); const hard = K.levelOf(inst) > top || E.lv(S, inst.id) === 0, p = kid.p({inst}) * (hard ? 0.8 : 1), ok = rnd() < p; if (!ok) s1 += 4;
     if (t + s1 > tg.T) { t = tg.T; break; }
     t += s1; G.addSec(st, day, Math.min(30, s1)); G.notePace(st, s1, ok);
-    const sp = speed(ok), got = G.answer(st, {day, inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, inst.id), rand: rnd}); if (got) earned[got] = (earned[got] || 0) + 1;
+    const sp = speed(ok), got = G.answer(st, {day, inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, inst.id), rand: rnd, mult: kind === "qc" ? QCM : undefined}); if (got && !got.rep) got.forEach(t => { earned[t] = (earned[t] || 0) + 1; });
     if (ok) done++;
     if (done >= tg.n) break;
   }
@@ -74,16 +78,18 @@ for (const name of Object.keys(KIDS)) {
     for (let d = 0; d < DAYS; d++) {
       const day = C.addDays('2026-11-08', d); let tickets = 0, clock = 0;
       const run = (sess, o) => {
-        G.sync(st, S, E.autoLevel(S)); const top = G.top(st, E.autoLevel(S)), R = {}; let cnt = 0;
+        G.sync(st, S, E.autoLevel(S)); const top = G.top(st, E.autoLevel(S)), R = {}, CB = G.comboNew(); let cnt = 0;
         for (let x = sess.next(), g = 0; x && g < 700; x = sess.next(), g++) {
           if (x.kind !== 'q') continue; cnt++;
           const du = kid.dunno && kid.dunno(x) && !x.retry, p = x.retry && kid.p !== guess ? Math.max(0.9, kid.p(x)) : kid.p(x), ok = !du && rnd() < p;
           let s1 = kid.s(); if (!ok) s1 += du ? 2 : 4;
-          const secs = Math.min(30, s1); clock += s1; const effNow = G.addSec(st, day, secs); eff += secs; qn++; if (!x.retry) G.notePace(st, secs, ok);
-          const e = G.eventStep(st, day, R, effNow, clock, rnd);
+          const secs = G.effSecs(s1, K.fastMs(x.inst, {speed: 800})); clock += s1; const effNow = G.addSec(st, day, secs); eff += secs; qn++; if (!x.retry) G.notePace(st, secs, ok);
+          const lit = rnd() < (kid.lit === undefined ? 0.9 : kid.lit), crit = G.critOn(CB, clock), mult = 1 + (lit ? 1 : 0) + (crit ? 1 : 0);
+          const e = G.eventStep(st, day, R, effNow, clock, rnd, lit && !crit);
           if (e.offer && rnd() < (kid.take || 0)) { const k = G.acceptOffer(R, clock); if (k) { let r2 = false; for (;;) { const w = round(st, S, day, k, r2, kid, top); eff += w.t; clock += w.t; if (k === 'qc') { qcT++; if (w.won) qcW++; } else { dbT++; if (w.won) dbW++; } if (w.won || k !== 'dbl' || r2 || rnd() > 0.8) break; r2 = true; } } }
-          const sp = speed(ok), got = G.answer(st, {day, inst: x.inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, x.inst.id), dunno: du, retry: x.retry, mistake: !!x.mkey, rand: rnd});
-          if (got && sp.fast) G.speedBonus(st, day, sp.bolt);
+          const sp = speed(ok), got = G.answer(st, {day, inst: x.inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, x.inst.id), dunno: du, retry: x.retry, mistake: !!x.mkey, rand: rnd, mult});
+          if (got && !got.rep && sp.fast) G.speedBonus(st, day, sp.bolt, mult);
+          if (!x.retry && !(got && got.rep)) G.comboStep(st, day, CB, clock, {ok, fast: sp.fast, dunno: du});
           sess.answer({ok, fast: sp.fast, secs});
         }
         if (o.ticket && sess.done && cnt >= 10 && G.earnTicket(st, {done: true, n: cnt})) tickets++;

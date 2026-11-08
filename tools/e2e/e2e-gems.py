@@ -12,6 +12,7 @@ fails, errs = [], []
 def check(ok, msg):
     print(('ok  ' if ok else 'FAIL'), msg)
     if not ok: fails.append(msg)
+G_ALL = ['p', 'g', 's', 'm', 'h', 'l', 'o3', 'o4', 'o6', 'o7', 'o8', 'o12', 'o13']
 cur = lambda pg: pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]")
 def play(pg, n, ok=True):
     # 真实走 resolve：和点选、写字判定后是同一个入口
@@ -37,7 +38,8 @@ def start_today(pg):
     pg.click('#btnStart', force=True); pg.wait_for_timeout(1800)
 with sync_playwright() as p:
     b = p.chromium.launch(); ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True); pg = ctx.new_page()
-    ctx.add_init_script('window.__gemRand = () => 0.99')   # 回归里关掉杂色碎片，数量才断言得准；杂色碎片单独测（第 12 组）
+    ctx.add_init_script('window.__gemRand = () => 0.99')
+    ctx.add_init_script("addEventListener('DOMContentLoaded', () => { if (window.GEMS) GEMS.TUNE.exitRate = 0; })")   # 退出挽留是随机的：回归里默认关掉，单独测   # 回归里关掉杂色碎片，数量才断言得准；杂色碎片单独测（第 12 组）
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.add_init_script(f"if(!localStorage.getItem('speedmap.v2.test')) {{ localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); localStorage.setItem('speedmap.ink.test', {json.dumps(json.dumps(ink))}); }}")
     pg.goto(url); pg.wait_for_timeout(800)
@@ -76,7 +78,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(300); pg.screenshot(path=str(out / f'forge-{W}.png'))
     pg.click('#forgeGo'); pg.wait_for_timeout(3600); pg.screenshot(path=str(out / f'forge-hit-{W}.png')); pg.wait_for_timeout(2000); pg.screenshot(path=str(out / f'forge-gem-{W}.png')); pg.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000)
     check(pg.locator('#forgeMsg').inner_text() == '得到宝石 1，废料 30', '1 大 8 中：' + pg.locator('#forgeMsg').inner_text())
-    inv = pg.evaluate("GEMUI.state().inv"); check(inv == {'s': 20, 'm': 12, 'l': 1}, f'扣对了碎片 {inv}')
+    inv = pg.evaluate("GEMUI.state().inv"); check({k: inv[k] for k in ('s', 'm', 'l')} == {'s': 20, 'm': 12, 'l': 1}, f'扣对了碎片 {inv}')
     pg.screenshot(path=str(out / f'forge-done-{W}.png'))
     # 3 领取：链接签名算对；再领一次是同一个累计数
     check(pg.locator('#forgeClaim').inner_text() == '领 1 颗宝石', '领取按钮：' + pg.locator('#forgeClaim').inner_text())
@@ -115,12 +117,12 @@ with sync_playwright() as p:
     pg3.evaluate("Object.assign(GEMUI.state().inv,{s:0,m:10,l:0}); GEMUI.openForge('island')"); pg3.wait_for_timeout(200)
     for _ in range(10): pg3.locator('[data-add=m]').click()
     pg3.click('#forgeGo'); pg3.wait_for_function("document.getElementById('forgeMsg').textContent", timeout=25000)
-    check(pg3.locator('#forgeMsg').inner_text() == pg3.evaluate("I18N.text('得到宝石 1，废料 0')"), '手机上能炼')   # 这一页走真实日期，单日是英文
-    check(pg3.locator('#forgeClaim').is_hidden(), '手机上没有领宝石按钮'); check(pg3.evaluate("I18N.text('近 14 天 1')") in pg3.locator('#forgeToday').inner_text(), '手机上显示近 14 天炼出：' + pg3.locator('#forgeToday').inner_text())
+    check(pg3.locator('#forgeMsg').inner_text() in ('得到宝石 1，废料 0', pg3.evaluate("I18N.text('得到宝石 1，废料 0')")), '手机上能炼')   # 这一页走真实日期：单日英文、双日中文，两种都认
+    check(pg3.locator('#forgeClaim').is_hidden(), '手机上没有领宝石按钮'); check(any(t in pg3.locator('#forgeToday').inner_text() for t in ('近 14 天 1', pg3.evaluate("I18N.text('近 14 天 1')"))), '手机上显示近 14 天炼出：' + pg3.locator('#forgeToday').inner_text())
     pg3.screenshot(path=str(out / f'phone-{W}.png'))
     # 7 动画被系统暂停（finished 永远不结束）：不能卡死在锻造台
     def fresh(extra=None, gems=None):
-        c2 = b.new_context(viewport={'width': W, 'height': H}); c2.add_init_script('window.__gemRand = () => 0.99'); pp = c2.new_page(); pp.on('pageerror', lambda e: errs.append('异常场景 ' + str(e)))
+        c2 = b.new_context(viewport={'width': W, 'height': H}); c2.add_init_script('window.__gemRand = () => 0.99'); c2.add_init_script("addEventListener('DOMContentLoaded', () => { if (window.GEMS) GEMS.TUNE.exitRate = 0; })"); pp = c2.new_page(); pp.on('pageerror', lambda e: errs.append('异常场景 ' + str(e)))
         sd = dict(seed); sd.update(extra or {})
         init = f"localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(sd))}); localStorage.setItem('speedmap.ink.test', {json.dumps(json.dumps(ink))});"
         if gems is not None: init += f" localStorage.setItem('speedmap.test.gems', {json.dumps(gems)});"
@@ -181,13 +183,46 @@ with sync_playwright() as p:
         if cur(pp) != 'qplay': break
         pp.evaluate("__sm.Q&&__sm.Q.phase==='q'&&__sm.resolve({ok:true,fast:true})"); pp.wait_for_timeout(1000)
     pp.wait_for_timeout(600); f1 = pp.evaluate(DAYK + ".forged"); check(f1 == f0 + 1, f'答够题数得 1 颗宝石（{f0} → {f1}）'); check(cur(pp) == 'qsum', '限时挑战出结果')
-    pp = forced("GEMS.TUNE.critAt=0; GEMS.TUNE.crit1=1; GEMS.TUNE.crit2=1; GEMS.TUNE.gapMin=1e9; GEMS.TUNE.gapMax=1e9; window.__gemRand=()=>0"); play(pp, 1); pp.wait_for_timeout(100); check(pp.evaluate("GEMUI.state().inv.l") >= 1, '暴击得大碎片'); pp.screenshot(path=str(out / f'ev-crit-{W}.png'))
-    pp = forced("GEMS.TUNE.gapMin=1e9; GEMS.TUNE.gapMax=1e9;"); play(pp, 2); pp.evaluate("GEMS.TUNE.critAt=99999; " + DAYK + ".sec=99999-120")
-    box = pp.locator('#qQuit').bounding_box(); pp.mouse.move(box['x'] + 5, box['y'] + 5); pp.mouse.down(); pp.wait_for_timeout(1150); pp.mouse.up(); pp.wait_for_timeout(200)
-    check(pp.locator('#exitOv').is_visible() and cur(pp) == 'qplay', '差一点开启暴击时间：长按结束先提示'); pp.screenshot(path=str(out / f'ev-exit-{W}.png'))
-    pp.click('#exitEnd'); pp.wait_for_timeout(400); check(cur(pp) != 'qplay', '选结束直接退出')
-    pp = forced("GEMS.TUNE.gapMin=1e9; GEMS.TUNE.gapMax=1e9;"); play(pp, 2); box = pp.locator('#qQuit').bounding_box(); pp.mouse.move(box['x'] + 5, box['y'] + 5); pp.mouse.down(); pp.wait_for_timeout(1150); pp.mouse.up(); pp.wait_for_timeout(300)
-    check(not pp.locator('#exitOv').is_visible() and cur(pp) != 'qplay', '离得远不弹，直接退出')
+    NOEV = "GEMS.TUNE.gapMin=1e9; GEMS.TUNE.gapMax=1e9;"
+    def hold(pp):
+        box = pp.locator('#qQuit').bounding_box(); pp.mouse.move(box['x'] + 5, box['y'] + 5); pp.mouse.down(); pp.wait_for_timeout(1150); pp.mouse.up(); pp.wait_for_timeout(300)
+    inv = lambda pp, t: pp.evaluate(f"GEMUI.state().inv.{t}||0")
+    def toq(pp):   # 跳过示范卡，停在练习页
+        for _ in range(6):
+            if cur(pp) == 'demo': pp.wait_for_timeout(3300); pp.click('#ack'); pp.wait_for_timeout(500)
+            else: break
+        pp.wait_for_timeout(600)
+    # 专注火苗：一进来就亮，碎片是金色；熄灭后是普通碎片
+    pp = forced(NOEV); play(pp, 1); toq(pp); pp.wait_for_timeout(600)
+    check(pp.locator('#qFire.on').is_visible() and pp.locator('#qFire b').inner_text() == '×2', '一进来火苗就亮，显示 ×2')
+    fit = pp.evaluate("(()=>{const r=e=>document.getElementById(e).getBoundingClientRect(),f=r('qFeel'),q=r('qQuit');return f.right<=innerWidth+0.5&&f.top>=0&&q.right<=f.left&&r('qCombo').height>=40})()"); check(fit, '火苗和能量格不超屏、不挡结束按钮'); pp.screenshot(path=str(out / f'fire-on-{W}.png'))
+    check(inv(pp, 'g') + inv(pp, 'm') >= 1 and inv(pp, 'p') + inv(pp, 's') == 0, '火苗亮：得金色碎片')
+    pp.evaluate("__sm.Q.focus.w=[[120,0]]; __sm.Q.focus.at=Date.now()/1000; __sm.Q.focus.last=0"); pp.wait_for_timeout(700)
+    check(pp.locator('#qFire.on.low').count() == 1 and '火苗' in pp.locator('#gemEv').inner_text(), '专注掉到 70% 以下：火苗先闪，提示答题保持：' + pp.locator('#gemEv').inner_text())
+    pp.evaluate("__sm.Q.focus.low=1"); pp.wait_for_timeout(700); check(pp.locator('#qFire.on').count() == 0, '超过 5 秒熄灭'); pp.screenshot(path=str(out / f'fire-off-{W}.png'))
+    p0, s0 = inv(pp, 'p'), inv(pp, 's'); pp.evaluate("__sm.Q.focus.w=[[120,0]]; __sm.Q.focus.last=0"); play(pp, 1); toq(pp); check(inv(pp, 'p') + inv(pp, 's') > p0 + s0, '火苗灭：得普通碎片')
+    # 连对能量 → 暴击时刻：碎片 ×3（金色 + 普通）
+    pp = forced(NOEV + "GEMS.TUNE.comboN=[2,2,2]"); play(pp, 1); toq(pp); pp.wait_for_timeout(700)
+    check(pp.locator('#qplay.crit').count() == 1 and '暴击时刻' in pp.locator('#qCombo').inner_text(), '攒满进入暴击时刻：' + pp.locator('#qCombo').inner_text()); pp.screenshot(path=str(out / f'crit-{W}.png'))
+    g0, p0 = inv(pp, 'g') + inv(pp, 'm'), inv(pp, 'p') + inv(pp, 's'); play(pp, 1); toq(pp); check(inv(pp, 'g') + inv(pp, 'm') > g0 and inv(pp, 'p') + inv(pp, 's') > p0, '暴击时刻里每题金色加普通')
+    check(pp.evaluate("__sm.Q.crit") == 1, '这次练习记 1 次暴击')
+    # 退出挽留：差一点炼宝石 → 接受 → 小目标 → 完成 → 可以结束
+    pp = forced(NOEV + "GEMS.TUNE.exitRate=1; Object.assign(GEMUI.state().inv,{m:9})"); play(pp, 2); toq(pp)
+    for t in G_ALL: pp.evaluate(f"GEMUI.state().inv.{t}=0")
+    pp.evaluate("GEMUI.state().inv.m=9; __sm.Q.gemV=40; __sm.Q.gAns=2"); hold(pp)
+    t = pp.locator('#exitOv').inner_text(); check(pp.locator('#exitOv').is_visible() and '再得 10 碎片' in t and cur(pp) == 'qplay', '差一点炼宝石：先挽留：' + t.replace(chr(10), ' ')); pp.screenshot(path=str(out / f'exit-gem-{W}.png'))
+    eb = pp.evaluate("(()=>{const a=document.getElementById('exitGo').getBoundingClientRect(),b=document.getElementById('exitEnd').getBoundingClientRect();return [a.height,b.height,a.width,b.width]})()"); check(eb[1] >= eb[0] - 1 and eb[3] >= 0.6 * eb[2], f'结束按钮和主按钮一样大 {eb}')
+    pp.click('#exitGo'); pp.wait_for_timeout(500); check(pp.locator('#qGoal').is_visible() and pp.locator('#qGoal').inner_text() == '目标 0/1', '顶部出现小目标：' + pp.locator('#qGoal').inner_text()); pp.screenshot(path=str(out / f'goal-{W}.png'))
+    play(pp, 1); toq(pp); pp.wait_for_timeout(800); t = pp.locator('#exitOv').inner_text(); check(pp.locator('#exitOv').is_visible() and '目标完成' in t, '目标完成：' + t.replace(chr(10), ' ')); pp.screenshot(path=str(out / f'goal-done-{W}.png'))
+    pp.click('#exitGo'); pp.wait_for_timeout(300); check(cur(pp) == 'qplay' and not pp.locator('#qGoal').is_visible(), '继续练习，小目标收起'); hold(pp); check(not pp.locator('#exitOv').is_visible() and cur(pp) != 'qplay', '这次不再挽留，长按直接结束')
+    # 宝箱：没有其他理由时
+    pp = forced(NOEV + "GEMS.TUNE.exitRate=1; GEMS.TUNE.boxN=2"); play(pp, 2); toq(pp)
+    for t in G_ALL: pp.evaluate(f"GEMUI.state().inv.{t}=0")
+    hold(pp); check('打开宝箱' in pp.locator('#exitOv').inner_text(), '没有差一点的：宝箱 ' + pp.locator('#exitOv').inner_text().replace(chr(10), ' '))
+    pp.click('#exitGo'); play(pp, 2); toq(pp); pp.wait_for_timeout(800); check('宝箱打开了' in pp.locator('#exitOv').inner_text(), '答够题数打开宝箱'); pp.screenshot(path=str(out / f'box-{W}.png'))
+    pp.click('#exitEnd'); pp.wait_for_timeout(500); check(cur(pp) != 'qplay', '选结束直接走')
+    pp = forced(NOEV + "GEMS.TUNE.exitRate=0"); play(pp, 2); toq(pp); hold(pp); check(not pp.locator('#exitOv').is_visible() and cur(pp) != 'qplay', '没抽中（80%）直接退出')
+    t4s = pp.locator('.gemsum').inner_text(); check('有效答题' in t4s, '结算页显示这次专注：' + t4s.replace(chr(10), ' ')[:120])
     # 30 分钟：提示倒计时 → 结束 → 休息盖住界面 → 刷新跳不过
     pp = forced("GEMS.TUNE.gapMin=1e9; GEMS.TUNE.gapMax=1e9; GEMS.TUNE.restGrace=2"); play(pp, 1); pp.evaluate("GEMUI.state().rest={sec:1799,at:Date.now()/1000,until:0}"); play(pp, 1); pp.wait_for_timeout(700)
     check('休息' in pp.locator('#gemEv').inner_text() or 'Rest' in pp.locator('#gemEv').inner_text(), '满 30 分钟提示：' + pp.locator('#gemEv').inner_text()); pp.screenshot(path=str(out / f'rest-soon-{W}.png'))
