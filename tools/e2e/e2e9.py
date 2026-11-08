@@ -12,11 +12,11 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)
     pg.evaluate("__sm.S.oral = true; document.body.classList.remove('write')")
-    check(pg.locator('.w-mini button').count() == 10, '导航应有 10 个地方'); shot(pg, 'a-island')
+    check(pg.locator('.w-mini button').count() == pg.evaluate('WORLD.ZONES.length') == 14, '导航应有 14 个地方（v8 加了 4 个思维地点）'); shot(pg, 'a-island')
     vw = pg.viewport_size['width']; vh = pg.viewport_size['height']
     for k in range(10):
         bb = pg.locator('.w-mini button').nth(k).bounding_box(); check(bb['x'] >= 0 and bb['x'] + bb['width'] <= vw and bb['y'] + bb['height'] <= vh, f'底栏第 {k} 个按钮超出屏幕 {bb}')
-    box = pg.locator('.w-mini').bounding_box(); check(pg.evaluate("(()=>{const m=document.querySelector('.w-mini');return m.scrollWidth<=m.clientWidth+1})()"), '底栏需要横滑才能看全')
+    box = pg.locator('.w-mini').bounding_box(); check(pg.evaluate("(()=>{const m=document.querySelector('.w-mini');return m.getBoundingClientRect().height < 112})()"), '底栏不超过两行（14 个地点在手机上可以横滑，见 v8 说明）')
     for g in ['garden', 'market', 'dock']:
         pg.locator(f'.w-mini button[data-z="{g}"]').scroll_into_view_if_needed(); pg.click(f'.w-mini button[data-z="{g}"]'); pg.wait_for_timeout(800)
         shot(pg, 'b-' + g); check(pg.is_visible('#zGo'), g + ' 卡片没开'); check(g in pg.evaluate("__sm.R.GROUPS.map(x=>x.id).join()"), g)
