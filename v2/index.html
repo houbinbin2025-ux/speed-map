@@ -920,7 +920,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v112:d1f860474be1 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v113:ab36f7c40872 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -930,25 +930,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=112"></script>
-<script src="i18n.js?v=112"></script>
-<script src="bank.js?v=112"></script>
-<script src="hardbank.js?v=112"></script>
-<script src="placebank.js?v=112"></script>
-<script src="core.js?v=112"></script>
-<script src="ink.js?v=112"></script>
-<script src="skills.js?v=112"></script>
-<script src="engine.js?v=112"></script>
-<script src="render.js?v=112"></script>
-<script src="world.js?v=112"></script>
-<script src="home.js?v=112"></script>
-<script src="puzzles.js?v=112"></script>
-<script src="thinking.js?v=112"></script>
-<script src="house.js?v=112"></script>
-<script src="kongmine.js?v=112"></script>
-<script src="gems.js?v=112"></script>
-<script src="gemui.js?v=112"></script>
-<script src="vert.js?v=112"></script>
+<script src="touchfix.js?v=113"></script>
+<script src="i18n.js?v=113"></script>
+<script src="bank.js?v=113"></script>
+<script src="hardbank.js?v=113"></script>
+<script src="placebank.js?v=113"></script>
+<script src="core.js?v=113"></script>
+<script src="ink.js?v=113"></script>
+<script src="skills.js?v=113"></script>
+<script src="engine.js?v=113"></script>
+<script src="render.js?v=113"></script>
+<script src="world.js?v=113"></script>
+<script src="home.js?v=113"></script>
+<script src="puzzles.js?v=113"></script>
+<script src="thinking.js?v=113"></script>
+<script src="house.js?v=113"></script>
+<script src="kongmine.js?v=113"></script>
+<script src="gems.js?v=113"></script>
+<script src="gemui.js?v=113"></script>
+<script src="vert.js?v=113"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -2190,7 +2190,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     ioKind = kind; $('ioPanel').hidden = false; $('ioMsg').textContent = '';
     const out = kind === 'out' || kind === 'inkout' || kind === 'broken';
     $('ioTitle').textContent = out ? '把下面这段文字复制下来，存到备忘录里' : kind === 'all' ? '把之前导出的文字粘贴到下面（会整份替换现在的进度）' : '把之前导出的文字粘贴到下面';
-    $('ioText').value = kind === 'out' ? C.exportText(S) : kind === 'inkout' ? JSON.stringify(INKS) : kind === 'broken' ? (store.getItem(KEYS.broken) || '') : '';
+    $('ioText').value = kind === 'out' ? C.exportText(S, GM.exportState()) : kind === 'inkout' ? JSON.stringify(INKS) : kind === 'broken' ? (store.getItem(KEYS.broken) || '') : '';
     $('ioCopy').hidden = !out; $('ioApply').hidden = out;
     $('ioApply').textContent = kind === 'all' ? '确认替换（会覆盖）' : '确认导入';
   }
@@ -2214,9 +2214,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       } else {
         const keep = S.testDays, ro = S.readOnly;
         GM.syncNow();
-        S = ioKind === 'all' ? C.importText($('ioText').value) : C.importMerge(S, $('ioText').value);
+        const text = $('ioText').value, gems = C.gemsOf(text);   // 备份里的碎片、宝石、伙伴罐（旧备份没有，就不动碎片）
+        S = ioKind === 'all' ? C.importText(text) : C.importMerge(S, text);
         S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
         if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
+        if (gems) GM.importBackup(gems, ioKind === 'all' ? 'all' : 'merge');
       }
       $('ioMsg').textContent = '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }

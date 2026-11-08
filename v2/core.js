@@ -368,11 +368,14 @@
     return M;
   }
 
-  const exportText = S => JSON.stringify(clean(S));
+  // 备份文字 = 进度 JSON + 顶层 gems（speedmap.gems 整份，碎片关着时不加；捣蛋鬼第 1 轮第 11 条）。gems 不进进度，导入时拿掉
+  const exportText = (S, gems) => JSON.stringify(gems ? Object.assign(clean(S), {gems}) : clean(S));
+  const gemsOf = text => { const v = parse(text); return v && v.gems && typeof v.gems === 'object' && !Array.isArray(v.gems) ? v.gems : null; };
   // 「整份替换（会覆盖）」：好存档基准跟着重置
   function importText(text) {
     const v = parse(text);
     if (!valid(v)) throw new Error('不是有效的备份');
+    delete v.gems;
     return Object.assign(upgrade(v), {goodReset: true});
   }
   // 家（说明书-v5-家 §6）：得到过的取并集、日期取早，矿石取大；备份里没开的箱子，这边已得到过就不再进箱；摆放按当前设备
@@ -387,6 +390,7 @@
   function importMerge(S, text) {
     const v = parse(text);
     if (!valid(v)) throw new Error('不是有效的备份');
+    delete v.gems;
     const M = upgrade(mergeProgress(S, v));
     M.skills = mergeCards(S.skills || {}, v.skills || {});
     M.mistakes = Object.assign({}, v.mistakes || {}, S.mistakes || {});
@@ -423,7 +427,7 @@
     upgrade, LEVEL_REMAP, isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, importText, importMerge, mergeCards, mergeProgress, fixCard,
+    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
     _resetDecks: () => { DECKS = {}; }, useDecks,

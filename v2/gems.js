@@ -48,6 +48,29 @@
     if (inv.p) { inv.b = (inv.b || 0) + inv.p; } delete inv.p;   // 11-07 的小碎片 2 和金色小碎片 2 一样，并成一种
     return Object.assign(b, o, {inv, seen});
   }
+  // 导入备份里的碎片（「导入进度」只增不减；捣蛋鬼第 1 轮第 11 条，中控 11-08 确认）：返回合并后的新对象，备份读不了返回 null，不改传入的两份
+  // 背包按种类取大（不相加：同一份导两次不翻倍）；每天记录、已领按天按字段取大；伙伴罐余额取大（旧备份会让花掉的宝石回来，已接受）；
+  // 券、最高纪录、各格档位取大；今天发过碎片的题同一天取并集、不同天留新的；专注、挑战、休息等统计留本机，本机没有才用备份的
+  function mergeBackup(local, backup) {
+    const b = isObj(backup) ? parse(JSON.stringify(backup)) : null;
+    if (!b) return null;
+    const M = JSON.parse(JSON.stringify(local)), max = (x, y) => Math.max(+x || 0, +y || 0);
+    for (const k in b) if (M[k] === undefined) M[k] = b[k];
+    for (const t in b.inv) if (known(t)) M.inv[t] = max(M.inv[t], b.inv[t]);
+    M.tickets = max(M.tickets, b.tickets); M.best = max(M.best, b.best);
+    for (const k in b.lvMax) M.lvMax[k] = max(M.lvMax[k], b.lvMax[k]);
+    for (const d in b.days) { const D = M.days[d]; if (!isObj(D)) { M.days[d] = Object.assign({}, b.days[d]); continue; } for (const f in b.days[d]) if (typeof b.days[d][f] === 'number') D[f] = max(D[f], b.days[d][f]); }
+    for (const d in b.sent) M.sent[d] = max(M.sent[d], b.sent[d]);
+    if (isObj(b.palJar)) {
+      const J = M.palJar = isObj(M.palJar) ? M.palJar : {bal: 0, moved: {}, target: 0, res: {day: '', n: 0}}, BJ = b.palJar;
+      J.bal = max(J.bal, BJ.bal); J.moved = isObj(J.moved) ? J.moved : {};
+      for (const d in BJ.moved || {}) J.moved[d] = max(J.moved[d], BJ.moved[d]);
+    }
+    const a = M.seen, bs = b.seen;
+    if (bs.day > a.day) M.seen = bs;
+    else if (bs.day === a.day) { Object.assign(a.keys, bs.keys, Object.assign({}, a.keys)); Object.assign(a.cells, bs.cells, Object.assign({}, a.cells)); }
+    return M;
+  }
   function prune(st, today) {
     const old = Object.keys(st.days).filter(d => d <= today).sort();
     old.slice(0, Math.max(0, old.length - KEEP_DAYS)).forEach(d => { delete st.days[d]; delete st.sent[d]; if (st.palJar && st.palJar.moved) delete st.palJar.moved[d]; });
@@ -398,6 +421,6 @@
     return got;
   }
 
-  return {TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {mergeBackup, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });
