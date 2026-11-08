@@ -200,7 +200,7 @@
     const a = S.mistakes || {}, b = v.mistakes || {};
     for (const k in M.mistakes) {
       const x = a[k], y = b[k]; if (!x || !y || typeof x !== 'object' || typeof y !== 'object') continue;
-      const m = M.mistakes[k] = Object.assign({}, x), cnt = {};
+      const m = M.mistakes[k] = Object.assign({}, M.mistakes[k]), cnt = {};   // 以合并后选中的那条为准（整条选哪边归 importMerge：C 同步分支改成取 last 晚的，F 11-08 同意）
       // 同样内容的经过：每种取两边条数多的那边（同一天两次一模一样的「不会」是两条，不是重复）
       const side = arr => (Array.isArray(arr) ? arr : []).map(histItem).filter(Boolean), hx = side(x.hist), hy = side(y.hist);
       hy.forEach(e => { const id = histKey(e); cnt[id] = (cnt[id] || 0) + 1; });
