@@ -572,6 +572,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gemline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:15px;font-weight:700}
 .gemsum .gemline .frag{animation:fragLand .35s}
 .gembtns{display:flex;flex-wrap:wrap;gap:8px}.gembtns .btn{min-height:52px;font-size:16px;padding:0 14px}
+.syncOld{color:var(--warn);font-size:13px}
 </style>
 </head>
 <body class="write">
@@ -836,6 +837,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     <div class="panel">
       <div class="ptitle">进度备份</div>
       <div class="warnbox" id="bkInfo"></div>
+      <div class="kv" id="syncInfo"></div>
+      <button class="btn" id="btnSyncOut">发送进度</button>
+      <button class="btn" id="btnSyncIn">接收进度</button>
+      <input type="file" id="syncFile" accept=".json,application/json,text/plain" hidden>
+      <div class="muted" style="font-size:12px;line-height:1.5">手机和 iPad 各发一次给对方（隔空投送），两边进度合在一起；接收只会变多，不会变少。</div>
+      <span class="msg" id="syncMsg"></span>
       <button class="btn" id="btnExport">导出进度（复制到备忘录）</button>
       <button class="btn" id="btnImport">导入进度（只会变多，不会变少）</button>
       <details id="bkMore"><summary class="muted" id="bkMoreBtn" style="min-height:44px;display:flex;align-items:center">更多</summary>
@@ -933,7 +940,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v124:7f75f7b43734 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v125:ab044f309b1e -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -943,25 +950,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=124"></script>
-<script src="i18n.js?v=124"></script>
-<script src="bank.js?v=124"></script>
-<script src="hardbank.js?v=124"></script>
-<script src="placebank.js?v=124"></script>
-<script src="core.js?v=124"></script>
-<script src="ink.js?v=124"></script>
-<script src="skills.js?v=124"></script>
-<script src="engine.js?v=124"></script>
-<script src="render.js?v=124"></script>
-<script src="world.js?v=124"></script>
-<script src="home.js?v=124"></script>
-<script src="puzzles.js?v=124"></script>
-<script src="thinking.js?v=124"></script>
-<script src="house.js?v=124"></script>
-<script src="kongmine.js?v=124"></script>
-<script src="gems.js?v=124"></script>
-<script src="gemui.js?v=124"></script>
-<script src="vert.js?v=124"></script>
+<script src="touchfix.js?v=125"></script>
+<script src="i18n.js?v=125"></script>
+<script src="bank.js?v=125"></script>
+<script src="hardbank.js?v=125"></script>
+<script src="placebank.js?v=125"></script>
+<script src="core.js?v=125"></script>
+<script src="ink.js?v=125"></script>
+<script src="skills.js?v=125"></script>
+<script src="engine.js?v=125"></script>
+<script src="render.js?v=125"></script>
+<script src="world.js?v=125"></script>
+<script src="home.js?v=125"></script>
+<script src="puzzles.js?v=125"></script>
+<script src="thinking.js?v=125"></script>
+<script src="house.js?v=125"></script>
+<script src="kongmine.js?v=125"></script>
+<script src="gems.js?v=125"></script>
+<script src="gemui.js?v=125"></script>
+<script src="vert.js?v=125"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -971,6 +978,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const CTX = {test: TEST, preview: PREVIEW && !TEST, known: id => !!K.ITEM[id]};
   window.addEventListener('hashchange', () => location.reload());
   const KEYS = C.keysFor(CTX);
+  const SYNC_KEY = KEYS.prog + '.sync';   // 家长一键同步：上次接收的时间，只存本机，不进进度
   // 写入报错交给 core 判断（存不了 / 只读）；读不到当没有
   const store = {
     getItem: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -2021,6 +2029,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const red = K.understand.filter(s => s.items.every(it => E.lv(S, it.id) === 3)).length;
     $('weekly').innerHTML = `最近 7 天练了 ${last7.length} 天 · 每天中位 ${med.toFixed(0)} 分钟<br>新点亮 ${last7.reduce((n, x) => n + (x.ups || 0), 0)} 格<br>练完后剩下的错题：最多 ${last7.reduce((n, x) => Math.max(n, x.over || 0), 0)} 道<br>最久没练的技能：${E.gapNow(S, t)} 天<br>${K.understand.length} 个理解技能里，已牢固 ${red} 个${placed ? ` · 摸底后练了 ${practiced} 天` : ''}`;
     const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+    { let at = null; try { at = +store.getItem(SYNC_KEY) || null; } catch (e) { at = null; } const ago = C.syncAgo(at, Date.now()); $('syncInfo').innerHTML = ago === null ? '还没在两台设备之间同步过' : `上次同步：<b>${ago === 0 ? '今天' : ago + ' 天前'}</b>` + (ago > 3 ? '<br><span class="syncOld">超过 3 天没同步，两台设备各发一次</span>' : ''); }   // 只在家长区提示，不打扰孩子
     $('bkInfo').innerHTML = days === null ? '还没备份过<br>建议每周备份一次' : `上次备份是 <b>${days} 天前</b>（${C.dayOf(S.lastBackup)}）<br>建议每周备份一次`;
     // 设置
     $('segFlash').innerHTML = [[1000, '1 秒'], [1500, '1.5 秒'], [2500, '2.5 秒']].map(([v, l]) => `<button class="${flashMs() === v ? 'on' : ''}" data-flash="${v}">${l}</button>`).join('');
@@ -2219,6 +2228,16 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const ok = () => { $('ioMsg').textContent = '已复制'; if (ioKind === 'out') { S.lastBackup = Date.now(); save(); renderParent(); $('ioPanel').hidden = false; } if (ioKind === 'broken') $('btnBrokenDel').hidden = false; };
     navigator.clipboard.writeText($('ioText').value).then(ok).catch(() => { $('ioText').select(); $('ioMsg').textContent = '请长按文字手动复制'; if (ioKind === 'broken') $('btnBrokenDel').hidden = false; });
   });
+  // 导入进度文字（家长区「导入进度」和「接收进度」共用）：all = 整份替换，否则只增不减。返回 'nosave' = 存不下来；true = 碎片没导入；false = 都导入了；不是备份就抛错
+  function mergeText(text, all) {
+    const keep = S.testDays, ro = S.readOnly;
+    GM.syncNow();
+    const gems = C.gemsOf(text);   // 备份里的碎片、宝石、伙伴罐（旧备份没有，就不动碎片）
+    S = all ? C.importText(text) : C.importMerge(S, text);
+    S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
+    if (!save()) return 'nosave';
+    return !!gems && !GM.importBackup(gems, all ? 'all' : 'merge');   // 碎片关着或备份里的碎片读不了：进度照样导入，提示一句
+  }
   $('ioApply').addEventListener('click', () => {
     let gemsMiss = false;
     try {
@@ -2226,17 +2245,46 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
         INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); saveInk();
       } else {
-        const keep = S.testDays, ro = S.readOnly;
-        GM.syncNow();
-        const text = $('ioText').value, gems = C.gemsOf(text);   // 备份里的碎片、宝石、伙伴罐（旧备份没有，就不动碎片）
-        S = ioKind === 'all' ? C.importText(text) : C.importMerge(S, text);
-        S.testDays = keep; S.settings = S.settings || {}; if (ro) S.readOnly = true; S.decks = C.useDecks(S.decks);
-        if (!save()) { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
-        gemsMiss = gems && !GM.importBackup(gems, ioKind === 'all' ? 'all' : 'merge');   // 碎片关着或备份里的碎片读不了：进度照样导入，提示一句
+        const r = mergeText($('ioText').value, ioKind === 'all');
+        if (r === 'nosave') { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
+        gemsMiss = r;
       }
       $('ioMsg').textContent = gemsMiss ? '进度已导入，碎片没有导入' : '已导入'; renderParent(); $('ioPanel').hidden = false;
     } catch (e) { $('ioMsg').textContent = '这段文字不是有效的备份，请重新粘贴'; }
   });
+  // ---------- 家长一键同步（C 暂代 F，中控 11-08 派单）：发送 = 导出文字存成文件，用系统分享（隔空投送）；接收 = 选文件，走同一条只增不减的合并 ----------
+  async function syncSend() {
+    GM.syncNow();
+    const text = C.exportText(S, GM.exportState()), name = C.syncName(today()), msg = t => { $('syncMsg').textContent = t; };
+    const sent = () => { S.lastBackup = Date.now(); save(); renderParent(); };
+    let f = null; try { f = new File([text], name, {type: 'application/json'}); } catch (e) { f = null; }
+    if (f && navigator.share && navigator.canShare && navigator.canShare({files: [f]})) {
+      try { await navigator.share({files: [f]}); sent(); msg('已发送'); } catch (e) { msg(e && e.name === 'AbortError' ? '' : '发送失败，请重试'); }
+      return;
+    }
+    if (inApp) { msg('这台设备现在不能分享文件，请用「导出进度」'); return; }   // App 里下载会被外壳拦掉，不能报成功（审查 R1）
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'application/json'})); a.download = name;   // 不能分享文件的浏览器：下载文件
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    sent(); msg('进度文件已下载，用隔空投送发到另一台设备');
+  }
+  let syncBusy = false;   // 正在接收：连着触发两次时后一次不盖掉前一次的结果（审查 R1）
+  async function syncReceive(file) {
+    if (syncBusy) return; syncBusy = true;
+    try { await syncReceive1(file); } finally { syncBusy = false; }
+  }
+  async function syncReceive1(file) {
+    const msg = t => { $('syncMsg').textContent = t; };
+    let text = ''; try { text = await file.text(); } catch (e) { msg('文件读不了，请重新选择'); return; }
+    const before = JSON.parse(JSON.stringify({cards: S.cards, skills: S.skills, mistakes: S.mistakes})), g0 = GM.total();
+    let r; try { r = mergeText(text, false); } catch (e) { msg('这个文件不是进度文件，请重新选择'); return; }
+    if (r === 'nosave') { renderParent(); msg('这次存不下来：请先看「存储」那一栏'); return; }
+    try { store.setItem(SYNC_KEY, String(Date.now())); } catch (e) {}
+    const g1 = GM.total();
+    renderParent(); msg(C.syncText(C.syncDiff(before, S), r || g0 === null || g1 === null ? null : g1 - g0) + (r ? '；碎片没有合并' : ''));
+  }
+  $('btnSyncOut').addEventListener('click', () => { syncSend(); });
+  $('btnSyncIn').addEventListener('click', () => { $('syncMsg').textContent = ''; $('syncFile').value = ''; $('syncFile').click(); });
+  $('syncFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) syncReceive(f); });
   $('btnReset').addEventListener('click', () => { const open = $('btnResetYes').hidden; $('btnResetYes').hidden = !open; $('btnReset').textContent = open ? '取消' : '清空进度'; });
   $('btnResetYes').addEventListener('click', () => { GM.syncNow(); S = C.resetProgress(S); S.settings = S.settings || {}; S.decks = C.useDecks(S.decks); INKS.recent = []; saveInk(); save(); renderParent(); $('resetMsg').textContent = '已清空，可以重新开始'; });
 
