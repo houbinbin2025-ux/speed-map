@@ -185,6 +185,38 @@
   // 秒答地图（speed:Lx:y）按级别：第 1–2 级「10 以内秒答」，第 3 级十几加减几，第 4 级过十加减，第 6–7 级进退位加减
   const SPEED_TOPIC = {1: '10 以内秒答', 2: '10 以内秒答', 3: '十几加减几', 4: '过十加减', 6: '进退位加减', 7: '进退位加减'};
   const topicOf = (s, lv) => s.speed ? SPEED_TOPIC[lv] : TOPIC[s.id];
+  // ---------- 错题按知识点分组（家长页用，F 的 docs/方案-错题数据字段.md；中控 11-08）----------
+  // 类别 → 技能；家长看得懂的说法，粒度参考 docs/原型/错题-家长视角。同一技能里题型知识点不同的，在 MIST_CAT_ITEM 按题型单独归。
+  // 只是显示时的映射，错题数据按技能存，改类别不用迁移。tests/mistcat.test.js：每个技能、每个题型都有且只有一个类别
+  const MIST_GROUPS = [
+    ['看图数数', ['look1', 'look3', 'look4', 'lookH1', 'lookH2']],
+    ['数的分合', ['bond2', 'bondH3']], ['凑十', ['bond3', 'bond5']], ['缺数算式', ['bond4']], ['整十、整百分合', ['bondH1', 'bondH2']],
+    ['10 以内加减', ['speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5']], ['十几加减几', ['speed:L2:0']],
+    ['20 以内进位加法', ['speed:L2:1', 'speed:L2:2', 'speed:L2:3']], ['20 以内退位减法', ['speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7']],
+    ['100 以内加法', ['speed:L3:0', 'speed:L4:0']], ['100 以内减法', ['speed:L3:1', 'speed:L4:1']], ['两位数加减两位数', ['speedH2']], ['连加连减', ['speedH1']],
+    ['20 以内比大小', ['cmp1', 'cmp2']], ['两位数比大小', ['cmp3']], ['三位数比大小', ['cmpH2']], ['前后数', ['cmp4']], ['算式比大小', ['cmpH1']],
+    ['数线', ['line1', 'line2', 'line3', 'line4', 'lineH1', 'lineH2']],
+    ['两位数的数位', ['place1', 'place2']], ['百、千的数位', ['placeH1', 'placeH2', 'g34:g10:thou']], ['取整（四舍五入）', ['g34:g13:round']],
+    ['找规律', ['gardenA', 'gardenC']], ['跳着数', ['gardenB', 'gardenH1', 'gardenH2']],
+    ['认钟', ['clockA', 'clockB', 'marketH3']], ['时间计算', ['g34:g10:span', 'g34:g12:24', 'g34:g12:year']], ['付钱和找零', ['money1', 'money2', 'marketH1', 'marketH2']], ['单位换算', ['g34:g10:conv', 'g34:g14:unit']],
+    ['表内乘除', ['speedH3', 'speedH4', 'speedH5']], ['有余数除法', ['g34:g10:rem', 'g34:g10:remain']],
+    ['三位数加减', ['g34:g10:add3']], ['多位数乘法', ['g34:g11:mul', 'g34:g12:mul2', 'g34:g13:mul3']], ['多位数除法', ['g34:g11:div', 'g34:g13:div2']],
+    ['四则混合运算', ['g34:g13:order']], ['简便运算', ['g34:g14:law']],
+    ['小数加减', ['g34:g12:dec', 'g34:g14:dec2']], ['小数比大小', ['g34:g12:deccmp', 'g34:g14:deccmp']], ['小数点移动', ['g34:g14:move']],
+    ['认识分数', ['g34:g11:fracbar', 'g34:g11:part']], ['分数加减', ['g34:g12:fracadd']], ['分数比大小', ['g34:g12:fraccmp', 'g34:g15:fraccmp2']], ['等值分数', ['g34:g15:equiv']],
+    ['加减应用题', ['dockA', 'dockB', 'dockC', 'dockD', 'dockH1', 'dockH2', 'dockH3']], ['乘除应用题', ['dockH4', 'dockH5', 'dockH6']],
+    ['两步、多步应用题', ['g34:g10:two', 'g34:g11:two', 'g34:g15:three']], ['线段图应用题', ['g34:g7:bar']], ['倍', ['g34:g9:times', 'g34:g11:times']],
+    ['和倍差倍', ['g34:g9:sumtimes', 'g34:g15:timessum']], ['和差', ['g34:g15:sumdiff', 'g34:g15:barsum']],
+    ['路程和速度', ['g34:g11:speed', 'g34:g13:speed', 'g34:g14:meet']], ['单价和归一', ['g34:g12:price', 'g34:g13:unit']], ['平均分和平均数', ['g34:g13:share', 'g34:g14:avg']],
+    ['鸡兔同笼', ['g34:g15:legs']], ['年龄问题', ['g34:g15:age']],
+    ['条形图读数', ['g34:g8:chart', 'g34:g9:chart2', 'g34:g10:chart5']],
+    ['周长', ['g34:g8:side', 'g34:g11:perim', 'g34:g11:perim2']], ['面积', ['g34:g12:area', 'g34:g12:area2']], ['三角形内角和', ['g34:g14:tri']],
+    ['公倍数和公因数', ['g34:g15:lcm', 'g34:g15:gcd']],
+  ];
+  const MIST_CAT = {}; MIST_GROUPS.forEach(([cat, ids]) => ids.forEach(id => { MIST_CAT[id] = cat; }));
+  const MIST_CAT_ITEM = {'speed:g11:divrem': '有余数除法'};   // 「除以一位数」里商和余数一起写的题型
+  // 题型编号或技能编号 → 类别；查不到返回 null（测试保证不会）
+  const mistCat = id => MIST_CAT_ITEM[id] || MIST_CAT[id] || (ITEM[id] && MIST_CAT[ITEM[id].skill]) || null;
   // 思维地点（puzzles.js，自由练习，不进每日排课）每一档的建议级别：孩子到这一级大概就能玩。只做家长区参考，不锁
   // 天平桥：两边和在 7–15，过十 → 第 4 级起；凑数矿：只用加、10 以内 → 第 2 级，带减、15–20 → 第 4 级；
   // 线索营地：三行 / 四行 / 粗线框的数独式推理，数字只到 4 → 按推理步数排；方块工坊：轴对称是二年级下（第 8 级），旋转更难（第 11、13 级）
@@ -344,6 +376,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, thinkMs, fastLabel,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, thinkMs, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

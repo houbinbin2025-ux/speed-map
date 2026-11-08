@@ -139,6 +139,92 @@
     };
   };
 
+  // ---------- 错题记录：错几次、最近 5 次经过、按技能累计、每日新增 / 过关（docs/方案-错题数据字段.md，中控 11-08 批准）----------
+  // 只记录，不影响排课（passes / due 只归 addMistake / reviewMistake 管）。B 在作答流程里调用 noteMistake / notePassed
+  // m.wrongs 错了几次 · m.hist 最近 5 次 {d, k:'w'写错|'d'不会|'s'对但慢, w 写了什么, s 秒, o 口答} · m.part 旧错题记录不全 · m.pd 过关那天
+  // S.mistStat[技能] = {w, d, s, p, last} · S.stats[日].mn 新增 / .mp 过关
+  const HIST_MAX = 5, W_MAX = 16, MKIND = {w: 1, d: 1, s: 1}, MSTAT = ['w', 'd', 's', 'p'];
+  const posInt = x => Number.isInteger(x) && x > 0;
+  const dayStat = (S, d) => { S.stats = S.stats || {}; return (S.stats[d] = S.stats[d] || {sec: 0, n: 0, ups: 0, over: 0, gap: 0}); };
+  function histItem(e) {   // 清洗一条经过，坏的返回 null
+    if (!e || typeof e !== 'object' || typeof e.d !== 'string' || !MKIND[e.k]) return null;
+    const o = {d: e.d, k: e.k, w: e.w === null || e.w === undefined ? null : String(e.w).slice(0, W_MAX)};
+    if (typeof e.s === 'number' && Number.isFinite(e.s)) o.s = Math.round(Math.min(120, Math.max(0, e.s)) * 10) / 10;
+    if (e.o) o.o = 1;
+    return o;
+  }
+  const histKey = e => [e.d, e.k, e.w, e.s, e.o].join('|');
+  function mistStatOf(S, skill, day) {
+    if (typeof skill !== 'string' || !skill) return null;
+    if (!S.mistStat || typeof S.mistStat !== 'object') S.mistStat = {};
+    const t = S.mistStat[skill] = S.mistStat[skill] || {w: 0, d: 0, s: 0, p: 0}; t.last = day; return t;
+  }
+  // ev = {k, w, s, o, skill, fresh}；fresh：这次是新进错题本（原来没有，或已过关）
+  function noteMistake(S, key, ev, day) {
+    const m = S.mistakes && S.mistakes[key], e = ev && histItem(Object.assign({}, ev, {d: day})); if (!m || !e) return;
+    if (e.k !== 's') { if (!posInt(m.wrongs) && !ev.fresh) m.part = 1; m.wrongs = (posInt(m.wrongs) ? m.wrongs : 0) + 1; }
+    m.hist = (Array.isArray(m.hist) ? m.hist : []).concat(e).slice(-HIST_MAX);
+    const t = mistStatOf(S, ev.skill, day); if (t) t[e.k]++;
+    if (ev.fresh && e.k !== 's') { const st = dayStat(S, day); st.mn = (st.mn || 0) + 1; }
+  }
+  // 复习过关（due 变成 null）后调用一次；同一天重复调用不重复算
+  function notePassed(S, key, day, skill) {
+    const m = S.mistakes && S.mistakes[key]; if (!m || m.due !== null || m.out || m.pd === day) return;   // m.out：秒答下架（engine.js），不是复习过关
+    m.pd = day;
+    if (Array.isArray(m.hist)) m.hist = m.hist.slice(-1);
+    const t = mistStatOf(S, skill, day); if (t) t.p++;
+    const st = dayStat(S, day); st.mp = (st.mp || 0) + 1;
+  }
+  // 读档清洗：坏字段只丢这个字段，错题本身和排课不受影响
+  function cleanMist(S) {
+    for (const k in S.mistakes || {}) {
+      const m = S.mistakes[k]; if (!m || typeof m !== 'object') continue;
+      if ('wrongs' in m && !posInt(m.wrongs)) delete m.wrongs;
+      if ('hist' in m) { const h = (Array.isArray(m.hist) ? m.hist : []).map(histItem).filter(Boolean).slice(-HIST_MAX); if (h.length) m.hist = m.due === null ? h.slice(-1) : h; else delete m.hist; }
+      if ('part' in m && m.part !== 1) delete m.part;
+      if ('pd' in m && typeof m.pd !== 'string') delete m.pd;
+    }
+    if ('mistStat' in S) {
+      if (!S.mistStat || typeof S.mistStat !== 'object' || Array.isArray(S.mistStat)) delete S.mistStat;
+      else for (const id in S.mistStat) {
+        const t = S.mistStat[id]; if (!t || typeof t !== 'object' || Array.isArray(t)) { delete S.mistStat[id]; continue; }
+        for (const f in t) if (!MSTAT.includes(f) && f !== 'last') delete t[f];
+        MSTAT.forEach(f => { if (!(Number.isInteger(t[f]) && t[f] >= 0)) t[f] = 0; });
+        if (typeof t.last !== 'string') delete t.last;
+      }
+    }
+    for (const d in S.stats || {}) { const st = S.stats[d]; if (st && typeof st === 'object') ['mn', 'mp'].forEach(f => { if (f in st && !(Number.isInteger(st[f]) && st[f] >= 0)) delete st[f]; }); }
+  }
+  // 导入合并：错题整条仍以本机为准，只合并新字段（取大、并集去重，同一份导两次不翻倍）
+  function mergeMist(M, S, v) {
+    const a = S.mistakes || {}, b = v.mistakes || {};
+    for (const k in M.mistakes) {
+      const x = a[k], y = b[k]; if (!x || !y || typeof x !== 'object' || typeof y !== 'object') continue;
+      const m = M.mistakes[k] = Object.assign({}, M.mistakes[k]), cnt = {};   // 以合并后选中的那条为准（整条选哪边归 importMerge：C 同步分支改成取 last 晚的，F 11-08 同意）
+      // 同样内容的经过：每种取两边条数多的那边（同一天两次一模一样的「不会」是两条，不是重复）
+      const side = arr => (Array.isArray(arr) ? arr : []).map(histItem).filter(Boolean), hx = side(x.hist), hy = side(y.hist);
+      hy.forEach(e => { const id = histKey(e); cnt[id] = (cnt[id] || 0) + 1; });
+      const h = hx.concat(hy.filter(e => { const id = histKey(e), inX = hx.filter(f => histKey(f) === id).length; if (cnt[id] > inX) { cnt[id]--; return true; } return false; }))
+        .sort((p, q) => p.d.localeCompare(q.d));
+      const nw = Math.max(posInt(x.wrongs) ? x.wrongs : 0, posInt(y.wrongs) ? y.wrongs : 0, h.filter(e => e.k !== 's').length);
+      if (nw) m.wrongs = nw; else delete m.wrongs;
+      const keep = m.due === null ? h.slice(-1) : h.slice(-HIST_MAX); if (keep.length) m.hist = keep; else delete m.hist;
+      if (x.part || y.part) m.part = 1;
+    }
+    const sa = S.mistStat, sb = v.mistStat;
+    if ((sa && typeof sa === 'object') || (sb && typeof sb === 'object')) {
+      const out = {};
+      [sa, sb].forEach(src => { if (!src || typeof src !== 'object') return; for (const id in src) { const t = src[id]; if (id === '__proto__' || !t || typeof t !== 'object') continue;
+        const o = out[id] = out[id] || {w: 0, d: 0, s: 0, p: 0}; MSTAT.forEach(f => { if (Number.isInteger(t[f]) && t[f] > o[f]) o[f] = t[f]; });
+        if (typeof t.last === 'string' && (!o.last || t.last > o.last)) o.last = t.last; } });
+      M.mistStat = out;
+    }
+    for (const d in v.stats || {}) {   // 每日新增 / 过关按天取大（没有习惯记录的日子也合并）
+      const vs = v.stats[d]; if (d === '__proto__' || !vs || typeof vs !== 'object') continue;
+      ['mn', 'mp'].forEach(f => { if (Number.isInteger(vs[f]) && vs[f] > 0) { const st = dayStat(M, d); if (!(st[f] >= vs[f])) st[f] = vs[f]; } });
+    }
+  }
+
   // ---------- 出题（v1 规则 + 错题合并） ----------
   const shuffle = (a, r) => { r = r || Math.random; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const DECK = 20, LEARN_MAX = 4, PROBE_MIN = 6, HARD_MAX = 8, ERR_FIRST = 4;
@@ -234,7 +320,7 @@
     if (Array.isArray(st.levels)) st.levels = [...new Set(st.levels.map(n => LEVEL_REMAP[n]).filter(Boolean))].sort((a, b) => a - b);
     st.levelsV = 2;
   }
-  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; migrateLevels(S.settings); return S; };
+  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; migrateLevels(S.settings); cleanMist(S); return S; };
   const trySet = (store, k, v) => { try { store.setItem(k, v); return true; } catch (e) { return false; } };
   const TRANSIENT = ['readOnly', 'stopped', 'goodReset'];
   const litOf = S => [S.cards, S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0);
@@ -392,13 +478,44 @@
       loot: (a.loot || []).concat((b.loot || []).filter(k => !ga[k])), place: Object.assign({}, b.place, a.place), pets: mergePets(a.pets, b.pets)});
   }
   // 「导入进度」：按格子取高合并，旧备份不会把新进度退回去；错题、摸底记录取并集
+  // 家长一键同步（C 暂代 F，中控 11-08 派单）：文件就是导出文字，接收走 importMerge。下面只是给家长看的结果和文件名
+  const mistOf = S => Object.keys(S.mistakes || {}).length;
+  const lvOf = S => Object.assign({}, ...[S.cards, S.skills].map(o => Object.fromEntries(Object.entries(o || {}).map(([k, c]) => [k, (c && c.lv) || 0]))));
+  function syncDiff(a, b) {   // a = 合并前，b = 合并后
+    const la = lvOf(a), lb = lvOf(b), ma = a.mistakes || {}, mb = b.mistakes || {};
+    const lit = Object.keys(lb).filter(k => lb[k] > 0 && !(la[k] > 0)).length, up = Object.keys(lb).filter(k => la[k] > 0 && lb[k] > la[k]).length;   // 升级 = 原来就亮、档位变高（审查 R1：只升档位也要说）
+    const mistUp = Object.keys(mb).filter(k => ma[k] && JSON.stringify(ma[k]) !== JSON.stringify(mb[k])).length;
+    return {lit, up, mist: Math.max(0, mistOf(b) - mistOf(a)), mistUp};
+  }
+  function syncText(d, shards) {   // shards = 碎片多了几个（个数，不是面值；碎片关着传 null）
+    const parts = [d.lit ? `新点亮 ${d.lit} 格` : '', d.up ? `升级 ${d.up} 格` : '', d.mist ? `新错题 ${d.mist} 道` : '', d.mistUp ? `错题进度更新 ${d.mistUp} 道` : '', shards > 0 ? `碎片 +${shards} 个` : ''].filter(Boolean);
+    return parts.length ? `已合并：${parts.join('、')}` : '已合并：没有新内容';   // 只收一次只能保证本机不比对方少，不说「两边一致」（审查 R1）
+  }
+  const syncName = day => `空空数学岛-进度-${day}.json`;
+  const syncAgo = (at, now) => (Number.isFinite(at) && at > 0 && at <= now + 6e4 ? dayDiff(dayOf(at), dayOf(now)) : null);   // 按日历天；坏值、未来时间当没同步过（审查 R1）
+  // 同一道错题两边都有：取最近一次复习的那条（last 晚的，每次复习都会更新 last；晚于今天的当今天，防时钟错的设备一直赢）；
+  // 同一天两边都复习过、结果不同：取没过关、过的关少的那条（同一天有一次答错就按答错算，学习效果优先，审查 R2）；完全一样留本机
+  function newerMistake(a, b, today) {
+    if (!a) return b; if (!b) return a;
+    const t = today || dayOf(Date.now()), cap = d => (d && d > t ? t : d || '');
+    const la = cap(a.last), lb = cap(b.last);
+    if (la !== lb) return lb > la ? b : a;
+    if ((a.due === null) !== (b.due === null)) return b.due === null ? a : b;
+    return (b.passes || 0) < (a.passes || 0) ? b : a;
+  }
+  function mergeMistakes(local, other) {
+    const M = Object.assign({}, other, local);
+    for (const k in other) if (local[k]) M[k] = newerMistake(local[k], other[k]);
+    return M;
+  }
   function importMerge(S, text) {
     const v = parse(text);
     if (!valid(v)) throw new Error('不是有效的备份');
     delete v.gems;
     const M = upgrade(mergeProgress(S, v));
+    if (M.stats && typeof M.stats === 'object') M.stats = Object.fromEntries(Object.entries(M.stats).map(([d, x]) => [d, x && typeof x === 'object' ? Object.assign({}, x, x.h && typeof x.h === 'object' ? {h: Object.assign({}, x.h, x.h.ds && typeof x.h.ds === 'object' ? {ds: Object.assign({}, x.h.ds)} : {})} : {}) : x]));   // 合并不改动本机 S.stats（审查：原来是同一个对象）
     M.skills = mergeCards(S.skills || {}, v.skills || {});
-    M.mistakes = Object.assign({}, v.mistakes || {}, S.mistakes || {});
+    M.mistakes = mergeMistakes(S.mistakes || {}, v.mistakes || {});   // 同一道错题取最近一次复习的那条（原来以本机为准：两台设备互发后过关状态对不上，审查 11-08）
     M.known = Object.assign({}, v.known || {}, S.known || {});
     M.demoSeen = Object.assign({}, v.demoSeen || {}, S.demoSeen || {});
     M.placedAt = S.placedAt || v.placedAt;
@@ -417,13 +534,14 @@
     { const ok = x => Number.isInteger(x) && x >= 0 && x <= 15; if (ok(S.lvMax) && ok(v.lvMax)) M.lvMax = Math.max(S.lvMax, v.lvMax); else delete M.lvMax; }   // 到过的最高级别：两边都有就取大；任一边没有（或坏值）就等下次练习按合并后的进度重新迁移，不会按 0 算掉级（第二批 §6、代码审查 R2）
     // 习惯记录按天取大，最近失误合并去重（其他每日统计不合并，和原来一样）
     for (const d in v.stats || {}) {
-      const vh = v.stats[d] && v.stats[d].h; if (!vh) continue;
+      const vh = v.stats[d] && v.stats[d].h; if (d === '__proto__' || !vh) continue;
       M.stats = M.stats || {}; const day = M.stats[d] = M.stats[d] || {sec: 0, n: 0, ups: 0, over: 0, gap: 0}, h = day.h = day.h || {};
       for (const k in vh) {
         if (k === 'ds') { const ds = h.ds = h.ds || {}; for (const d in vh.ds) if (!ds[d] || ds[d][0] < vh.ds[d][0]) ds[d] = vh.ds[d]; }
         else if (!(h[k] >= vh[k])) h[k] = vh[k];
       }
     }
+    mergeMist(M, S, v); cleanMist(M);   // 错题记录的新字段（docs/方案-错题数据字段.md §4）；只在备份里有的错题也洗一遍
     if (S.slips || v.slips) { const seen = new Set(); M.slips = [].concat(S.slips || [], v.slips || []).filter(m => { const k = JSON.stringify(m); if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => String(a.d).localeCompare(String(b.d))).slice(-30); }
     return M;
   }
@@ -432,7 +550,8 @@
     upgrade, LEVEL_REMAP, isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, mergePets, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
+    noteMistake, notePassed, cleanMist, HIST_MAX,
+    keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, mergePets, syncDiff, syncText, syncName, syncAgo, newerMistake, mergeMistakes, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
     _resetDecks: () => { DECKS = {}; }, useDecks,
