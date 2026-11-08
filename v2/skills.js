@@ -136,8 +136,11 @@
   g2('dock', '条形图比较', ['dock:g9:chart2'], 'chart'); g2('dock', '倍的线段图', ['dock:g9:times'], 'times'); g2('dock', '和倍入门', ['dock:g9:sumtimes'], 'bar');
   g2('dock', '一格代表几', ['dock:g10:chart5'], 'chart'); g2('dock', '看图求周长', ['dock:g11:perim2'], 'perim'); g2('place', '数方格求面积', ['place:g12:area2'], 'area');
   g2('cmp', '小数比大小', ['cmp:g12:deccmp'], 'dec', {input: 'pick'}); g2('cmp', '两位小数比大小', ['cmp:g14:deccmp'], 'dec', {input: 'pick'}); g2('dock', '和差线段图', ['dock:g15:barsum'], 'bar');
+  // 第二批 2b-1 分数：只问一个整数（说明书-到四年级第二批 §2b-1）
+  g2('dock', '分数读图', ['dock:g11:fracbar'], 'frac'); g2('speedH', '同分母加减', ['speed:g12:fracadd'], 'fracadd'); g2('cmp', '分数比大小', ['cmp:g12:fraccmp'], 'fraccmp', {input: 'pick'});
+  g2('cmp', '同分子比大小', ['cmp:g15:fraccmp2'], 'fraccmp2', {input: 'pick'}); g2('speedH', '等值分数', ['speed:g15:equiv'], 'equiv');
   // 第一批已上线、当时没讲解的技能也挂上概念（第二批 §2）
-  Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec'}).forEach(([id, c]) => { BY[id].concept = c; });
+  Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec', 'g34:g11:part': 'frac'}).forEach(([id, c]) => { BY[id].concept = c; });
 
   // ---------- 15 级难度（说明书-难度分级）：每道题一个级别，按题算，题库数据不改 ----------
   const LEVELS = [
@@ -219,6 +222,7 @@
     'speed:g13:mul3': 45, 'speed:g13:div2': 25, 'speed:g13:order': 20, 'place:g13:round': 5, 'dock:g13:unit': 25, 'dock:g13:speed': 25, 'dock:g13:share': 25,
     'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 12, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
     'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
+    'dock:g11:fracbar': 6, 'speed:g12:fracadd': 6, 'cmp:g12:fraccmp': 5, 'cmp:g15:fraccmp2': 5, 'speed:g15:equiv': 8,   // 2b-1 分数：A 估计值，B 按真实用时定
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };
   const READ_MS = 400, EN_READ = 1.5;   // 题面每个汉字；英文日读得慢，多给一半（按中文字数估）

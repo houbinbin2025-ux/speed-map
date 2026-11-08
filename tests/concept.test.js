@@ -17,7 +17,7 @@ function run(S, day, o) {
 }
 
 test('每个概念都有讲解卡（3–5 页，每页有图和一句话）；挂了概念的技能都对得上', () => {
-  R.CONCEPTS.forEach(c => { const k = R.card(c); assert.ok(k.pages.length >= 3 && k.pages.length <= 5, c); k.pages.forEach((p, i) => { assert.ok(p.fig.length > 20 && p.line, `${c} ${i}`); assert.ok(R.cardPage(c, i).includes(p.line)); }); });
+  R.CONCEPTS.forEach(c => { const k = R.card(c); assert.ok(k.pages.length >= 3 && k.pages.length <= 5, c); k.pages.forEach((p, i) => { assert.ok(p.fig.length > 20 && p.line, `${c} ${i}`); assert.ok(R.cardPage(c, i).includes(p.read || p.line)); }); });   // 分数卡显示上下结构，朗读字段里是整句
   const used = new Set(ALL.filter(s => s.concept).map(s => s.concept));
   used.forEach(c => assert.ok(R.CONCEPTS.includes(c), c));
   assert.deepEqual([...used].sort(), R.CONCEPTS.slice().sort(), '没有用不上的讲解卡');
