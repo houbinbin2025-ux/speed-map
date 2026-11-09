@@ -128,3 +128,22 @@ test('⑦ 开关关着时，只有趣味题的地块照旧显示没有题（和�
   });
 });
 
+
+// 审查 R1（只有趣味题的地块）：按钮能点就一定出得了题；趣味题都练完了显示「全部通关」，不是「没有题」
+test('⑦ 只有趣味题的地块：趣味题型深红但没下架时按钮不能点（全部通关），点得了就一定出题；全部下架时也是通关、不是没有题', () => {
+  if (!(K.FUN_SEC > 0)) return;
+  const at = (L, g, set) => { const S = chosen(L); S.known = Object.fromEntries(ALL.map(s => [s.id, true])); set(S); return S; };
+  const its = (S, g) => R.skillsOf(S, g).filter(s => s.fun).flatMap(s => s.items).filter(it => E.itemOn(S, it.id));
+  [[4, 'garden'], [5, 'dock']].forEach(([L, g]) => {
+    const red = at(L, g, S => its(S, g).forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, d: ['2026-11-01', '2026-11-03', '2026-11-07'], seen: 9, lastDay: '2026-11-07'})));
+    assert.ok(its(red, g).length && its(red, g).every(it => !E.outOf(red, it.id)), `第 ${L} 级 ${g}：深红、没下架`);
+    assert.equal(E.groupEmpty(red, g), false, `第 ${L} 级 ${g} 深红：不是「没有题」`);
+    assert.equal(E.groupOut(red, g, '2026-11-10'), true, `第 ${L} 级 ${g} 深红：全部通关（按钮不能点）`);
+    const out = at(L, g, S => its(S, g).forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, out: 1})));
+    assert.equal(E.groupEmpty(out, g), false, `第 ${L} 级 ${g} 全部下架：不是「没有题」`);
+    assert.equal(E.groupOut(out, g, '2026-11-10'), true, `第 ${L} 级 ${g} 全部下架：全部通关`);
+    // 只深红一部分：按钮能点，点进去一定出题
+    const half = at(L, g, S => { const a = its(S, g); Object.assign(E.prog(S, a[0].id), {lv: 3, d: ['2026-11-01', '2026-11-03', '2026-11-07'], seen: 9, lastDay: '2026-11-07'}); });
+    if (its(half, g).length > 1) { assert.equal(E.groupOut(half, g, '2026-11-10'), false); const x = E.free(half, '2026-11-10', g).next(); assert.ok(x, `第 ${L} 级 ${g} 按钮能点却出不了题`); }
+  });
+});

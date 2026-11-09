@@ -177,10 +177,17 @@
   // 还有题能出吗（一格、一组、全部）：先看都到深红了没有，到了才真的试着抽，平时不动发牌进度
   const itemsOut = (S, its0, day) => { const its = its0.filter(it => itemOn(S, it.id)); return its.length > 0 && (!!chosen(S) || its.every(it => lv(S, it.id) === 3)) && its.every(it => !makeLive(S, it.id, Math.random, day)); };
   const groupItems = (S, group) => K.SKILLS.concat(K.HARD).filter(s => inGroup(s, group)).flatMap(s => s.items);
-  const groupOut = (S, group, day) => itemsOut(S, groupItems(S, group), day);
-  // 这块地在现在的难度下没有题；趣味开关打开时也算趣味题（这一级开放、前置点亮、还没下架，和地块卡片 R.skillsOf 同一判断；B 11-09，中控认可）
-  const funOn = (S, group) => K.FUN_SEC > 0 && (K.FUN || []).some(s => inGroup(s, group) && funReady(S, s) && s.items.some(it => itemOn(S, it.id) && !outOf(S, it.id)));
-  const groupEmpty = (S, group) => !groupItems(S, group).some(it => itemOn(S, it.id)) && !funOn(S, group);
+  // 趣味开关打开时，这块地这一级卡片上列着的趣味题（和 R.skillsOf / funOf 同一判断：开放、前置点亮）；还能出 = 没到深红、没下架（和 funChannel.pick 同一判断，审查 R1）
+  const funItems = (S, group) => K.FUN_SEC > 0 ? (K.FUN || []).filter(s => inGroup(s, group) && funReady(S, s)).flatMap(s => s.items).filter(it => itemOn(S, it.id)) : [];
+  const funCan = (S, id) => lv(S, id) < 3 && !outOf(S, id);
+  // 全部通关：普通题照旧；有趣味题时还要趣味题都练完（只有趣味题的地块：趣味题都练完才算，按钮能点就一定出得了题）
+  const groupOut = (S, group, day) => {
+    const fi = funItems(S, group); if (!fi.length) return itemsOut(S, groupItems(S, group), day);
+    const its = groupItems(S, group).filter(it => itemOn(S, it.id));
+    return (!its.length || itemsOut(S, its, day)) && !fi.some(it => funCan(S, it.id));
+  };
+  // 这块地在现在的难度下没有题：卡片上一个都没有（普通题、趣味题都算；趣味题练完了算「全部通关」，不算没有题）
+  const groupEmpty = (S, group) => !groupItems(S, group).some(it => itemOn(S, it.id)) && !funItems(S, group).length;
   const allOut = (S, day) => itemsOut(S, ALL_ITEMS, day);
   // 家长区题库页用：这一格有多少道题已经下架
   const spentCount = (S, id) => Object.keys(S.fast || {}).filter(k => (k === id || k.startsWith(id + '|')) && S.fast[k][0] >= FAST_OUT).length;
