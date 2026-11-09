@@ -326,6 +326,7 @@
 .vboard{width:1000px;display:flex;flex-direction:column;gap:14px}
 .vboard .vbq{font-size:30px;line-height:1.4;color:#f3f1ea;zoom:1.25}
 .vboard.vb-word .vbq{zoom:1.75}.vboard.vb-word .vgrid{height:220px}
+.vboard:has(.fig2w) .vbq .nbsay{font-size:25px}.vboard:has(.fig2w) .vbq .spk{transform:scale(1.3)}.vboard:has(.fig2w) .fig2w{text-align:center}.vboard:has(.fig2w) .fig2{max-height:270px;width:auto;max-width:100%}.vboard:has(.fig2w) .vgrid{height:130px}.vboard:has(.fig2w) .vbq .eq{text-align:center;justify-content:center}   /* .eq 是 flex，居中要 justify-content； 看图题（题面有图）：图限高、题干和应用题一样大、草稿区矮一点，整块不再缩到答案格 < 60 点（A 方案，中控 11-09） */
 .vboard .vcard{padding:14px 24px}.vdotc{align-self:end;justify-self:center;width:16px;height:16px;border-radius:50%;background:#2b2920;margin-bottom:14px}.vboard .vlab{font-size:22px}
 .vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
 .vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}
