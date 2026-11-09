@@ -306,6 +306,15 @@
   // 笔迹校准等练习以外的时间：计入当天 10 分钟和用时统计
   function addTime(S, day, sec) { daily(S, day).sec += sec; stat(S, day).sec += sec; }
 
+  // 逐题用时（秒答校准第一步，中控 11-09；存储按 F《F-逐题用时-存储要求.md》）：S.ftime = {技能编号: [倍数, …]}，最旧在前，每技能最多 FTIME_N 条。
+  // 只记录，不改任何判断；写入前顺手洗掉这个技能数组里的坏值（合并、读档清洗归 F）
+  const FTIME_N = 10, okRatio = v => typeof v === 'number' && isFinite(v) && v > 0 && v <= 10;
+  function noteThink(S, skill, r) {
+    if (!okRatio(r)) return;
+    if (!S.ftime || typeof S.ftime !== 'object' || Array.isArray(S.ftime)) S.ftime = {};
+    const a = (Array.isArray(S.ftime[skill]) ? S.ftime[skill] : []).filter(okRatio);
+    a.push(Math.round(r * 100) / 100); S.ftime[skill] = a.slice(-FTIME_N);
+  }
   // 一题作答之后的共同处理：升级、错题、维持复习档位、统计
   function settle(S, x, res, day, onTime) {
     if (x.afterDemo) S.demoSeen[x.afterDemo] = true;
@@ -335,6 +344,7 @@
       const key = addMistake(S, x.inst, day);
       if (note) C.noteMistake(S, key, ev(res.dunno ? 'd' : 'w', fresh), day);
     }
+    if (note && res.ok && !res.oral && res.think != null) noteThink(S, skill, res.think);   // 逐题用时：答对、不是再来一次、没看提示、不是口答
     const st = stat(S, day); st.sec += res.secs || 0; st.n++; if (out.up) st.ups++;
     if (K.BY[skill] && K.BY[skill].fun) {   // 第三批趣味题（说明书-第三批 §4.3）：和习惯记录 h 并列，合并、清洗归 F（core.importMerge）
       st.funSec = Math.round(((st.funSec || 0) + (res.secs || 0)) * 10) / 10;   // 实际用时，再来一次也算：管每天 90 秒
@@ -670,7 +680,7 @@
     };
   }
 
-  return {qkey, demoDone, settle, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
+  return {qkey, demoDone, settle, noteThink, FTIME_N, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
     chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
     prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,

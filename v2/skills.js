@@ -376,6 +376,13 @@
     const write = s.input === 'write' ? (o.oral ? 0 : sp * C.digits(inst.ans)) + (col ? sp * col.work : 0) : 0;
     return thinkMs(inst) + read + write;
   }
+  // 逐题用时（秒答校准第一步，中控 11-09）：想的时间 ÷ 估计想的时间，两位小数。想的时间 = 实际用时 − 读题 − 写字（同 fastMs 的口径）。
+  // 想得比读题写字还快记 0.05（写字速度估慢了）；超过 10 倍（走神）或不是数返回 null，不记
+  function thinkRatio(inst, usedMs, o) {
+    const th = thinkMs(inst); if (!(th > 0) || !isFinite(usedMs)) return null;
+    const r = (usedMs - (fastMs(inst, o) - th)) / th;
+    return r > 10 ? null : Math.max(0.05, Math.round(r * 100) / 100);
+  }
   // 题库页：这个题型想的时间（按题算的写范围）
   const LB = {};
   function fastLabel(id) {
@@ -396,6 +403,6 @@
   }
 
   HARD.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 高级题的前置也只留登记了的（关掉的趣味技能不登记，写进前置会让 ready() 查不到而崩，审查 R1）
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, fastLabel,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, thinkRatio, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });
