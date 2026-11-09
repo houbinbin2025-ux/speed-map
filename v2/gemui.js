@@ -89,7 +89,8 @@
       got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand, mult});
       credit(q, got);
       const fsid = r.ok && !r.dunno && !q.peeked && !x.retry ? funSkill(x.inst.id) : null;   // 趣味题答对：1 颗谜题水晶（不进锻造）；答错后的再来一次、看过提示、点「不会」不给
-      if (fsid) { const pz = G.puzzleAnswer(st, fsid); q.puzzle = (q.puzzle || 0) + 1; if (pz.badge) q.badges = (q.badges || []).concat(fsid); flyCrystal(); }
+      const pz = fsid ? G.puzzleAnswer(st, fsid, q.day) : null;   // 当天 10 颗满了返回 null：不飞水晶、结算页不显示这一行
+      if (pz) { q.puzzle = (q.puzzle || 0) + 1; if (pz.badge) q.badges = (q.badges || []).concat(fsid); flyCrystal(); }
       if (got && !got.rep && r.fast && !S().oral) { more = G.speedBonus(st, q.day, r.bolt, mult); credit(q, more.extra, got.length); }
       if (fx) afterAnswer(q, x, r, got, now, !!(got && got.rep));
     }

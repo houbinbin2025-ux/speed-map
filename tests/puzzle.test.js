@@ -94,3 +94,17 @@ test('徽章名单和趣味技能一一对应，英文徽章名齐全（以后�
   Object.values(names).forEach(n => assert.notEqual(I.text('新徽章 ' + n), '新徽章 ' + n, `「${n}」没有英文`));
   assert.equal(I.text('谜题水晶 +1'), 'Puzzle crystal +1'); assert.equal(I.text('谜题水晶 +2'), 'Puzzle crystals +2');
 });
+
+test('中控 11-09：水晶每天最多 10 颗；到上限后不给水晶、不记题型（碎片照常，另测），第二天重新有；合并按天取大', () => {
+  const st = G.blank(), d1 = '2026-11-10', d2 = '2026-11-11';
+  assert.equal(G.PUZZLE_DAY, 10);
+  const got = Array.from({length: 12}, () => G.puzzleAnswer(st, 'g34:g4:pyr', d1));
+  assert.equal(got.filter(Boolean).length, 10); assert.equal(got[10], null); assert.equal(got[11], null);
+  assert.deepEqual(st.puzzle, {n: 10, by: {'g34:g4:pyr': 10}});
+  assert.equal(st.days[d1].pz, 10);
+  assert.ok(G.puzzleAnswer(st, 'g34:g5:saw', d2), '第二天重新有');
+  const other = G.blank(); for (let i = 0; i < 4; i++) G.puzzleAnswer(other, 'g34:g5:saw', d1);
+  const M = G.mergeBackup(other, JSON.parse(JSON.stringify(st)));
+  assert.equal(M.days[d1].pz, 10, '同一天按天取大，合并后不会多出机会');
+  assert.equal(G.puzzleAnswer(M, 'x', d1), null);
+});

@@ -35,7 +35,7 @@
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
   // 谜题水晶（方案 7，中控 11-09 批准）：趣味题答对 1 道给 1 颗，只收藏、不进锻造（不影响宝石比例）；同一题型答对 PUZZLE_BADGE 道得这个题型的徽章。
   // 存 st.puzzle = {n, by: {题型: 答对数}}，第一次答对才建。合并与清洗按 F 11-09 定的规则（cleanPuzzle / mergeBackup）
-  const PUZZLE_BADGE = 3;
+  const PUZZLE_BADGE = 3, PUZZLE_DAY = 10;   // 每天最多 10 颗（中控 11-09：正常一天约 3 颗，只拦反复开自由加练刷水晶）；记 st.days[日].pz，合并按天取大
   const natural = v => Number.isSafeInteger(v) && v >= 0;   // 安全整数：两个极大的数相加不会变成无穷大（审查建议 4）
   const sumBy = by => Object.keys(by).reduce((n, k) => n + by[k], 0);
   function cleanPuzzle(x) {   // 不是对象当没有；by 里不是非负整数的删掉；跳过 __proto__；查不到的题型保留；n 不是非负整数当 0，且不比 by 的总和小
@@ -44,7 +44,8 @@
     Object.keys(src).forEach(k => { if (k !== '__proto__' && Object.prototype.hasOwnProperty.call(src, k) && natural(src[k])) by[k] = src[k]; });
     return {n: Math.max(natural(x.n) ? x.n : 0, sumBy(by)), by};
   }
-  function puzzleAnswer(st, sid) {
+  function puzzleAnswer(st, sid, day) {   // 到当天上限返回 null：不给水晶、不记题型（碎片照常）
+    if (day) { const D = dayOf(st, day), had = natural(D.pz) ? D.pz : 0; if (had >= PUZZLE_DAY) return null; D.pz = had + 1; }
     const P = st.puzzle = cleanPuzzle(st.puzzle) || {n: 0, by: {}};
     P.by[sid] = (P.by[sid] || 0) + 1; P.n += 1;
     return {n: P.n, k: P.by[sid], badge: P.by[sid] === PUZZLE_BADGE};
@@ -480,6 +481,6 @@
     return got;
   }
 
-  return {PUZZLE_BADGE, puzzleAnswer, puzzleCount, puzzleBadges, FORGE_DAY, forgeLeft, forgeEnter, placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {PUZZLE_BADGE, PUZZLE_DAY, puzzleAnswer, puzzleCount, puzzleBadges, FORGE_DAY, forgeLeft, forgeEnter, placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });
