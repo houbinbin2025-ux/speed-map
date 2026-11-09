@@ -28,7 +28,7 @@
     const ms = Object.values(S.mistakes || {});
     return {
       S, iron: all.filter(i => lv(i.id) >= 1).length, gold: all.filter(i => lv(i.id) >= 2).length, diamond: all.filter(i => lv(i.id) >= 3).length, total: all.length,
-      days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null && !m.out).length,
+      days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null).length,   // 错题真的会了 = 复习满 5 次，或秒答满 3 次被下架（m.out，项目里「学会」的标准，比 5 次复习更严）。C 方案 4 甲，F、中控 11-09 同意；F 的合并口径和错题记录不动
       learned: ALLSK.filter(s => s.items.every(i => lv(i.id) >= 1)).length,
       started: PLACES.concat([['speed', '']]).filter(([g]) => ALLSK.some(s => (g === 'speed' ? s.speed || s.group === 'speedH' : inGroup(s, g)) && s.items.some(i => lv(i.id) >= 1))).length,
       ore: (S.home && S.home.ore) || 0,
