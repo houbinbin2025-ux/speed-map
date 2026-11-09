@@ -143,7 +143,7 @@
   const fun = (group, name, id, pre, concept, o) => g2(group, name, [id], concept, Object.assign({fun: true, fastClass: 'word', pre}, o));
   fun('garden', '数塔', 'garden:g4:pyr', ['bondH3', 'speed:L2:1', 'speed:L2:4']); fun('garden', '数塔（两位数）', 'garden:g7:pyr2', ['speedH2']); fun('garden', '幻方', 'garden:g7:magic', ['speedH2']);
   fun('dock', '植树（两头都种）', 'dock:g5:tree', ['cmp4'], 'tree'); fun('dock', '锯木头', 'dock:g5:saw', ['cmp4'], 'saw'); fun('dock', '植树（只种一头、两头不种）', 'dock:g7:tree2', ['g34:g5:tree', 'speedH2'], 'tree2');
-  fun('dock', '植树（先算段数）', 'dock:g9:tree3', ['g34:g5:tree', 'speedH5']); fun('dock', '排顺序', 'dock:g5:order', ['cmp3'], undefined, {input: 'pick'});
+  fun('dock', '植树（先算段数）', 'dock:g9:tree3', ['g34:g5:tree', 'g34:g7:tree2', 'speedH5']); fun('dock', '排顺序', 'dock:g5:order', ['cmp3'], undefined, {input: 'pick'});
   fun('dock', '猜数（加减）', 'dock:g7:riddle', ['speedH2'], 'riddle'); fun('dock', '猜数（乘除）', 'dock:g9:riddle2', ['g34:g7:riddle', 'speedH5']); fun('dock', '算式谜（缺一个数字）', 'dock:g7:cipher', ['speedH2']);
   // 第一批已上线、当时没讲解的技能也挂上概念（第二批 §2）
   Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec', 'g34:g11:part': 'frac'}).forEach(([id, c]) => { BY[id].concept = c; });
@@ -303,7 +303,7 @@
     'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 8, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
     'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
     'dock:g11:fracbar': 6, 'speed:g12:fracadd': 6, 'cmp:g12:fraccmp': 5, 'cmp:g15:fraccmp2': 5, 'speed:g15:equiv': 8,   // 2b-1 分数：A 估计值，B 按真实用时定
-    'garden:g4:pyr': 4, 'garden:g7:pyr2': 6, 'garden:g7:magic': 6, 'dock:g5:tree': 8, 'dock:g5:saw': 8, 'dock:g7:tree2': 10, 'dock:g9:tree3': 13, 'dock:g5:order': 8, 'dock:g7:riddle': 12, 'dock:g9:riddle2': 15, 'dock:g7:cipher': 10,   // 第三批趣味题：A 估计值，门 5 真人试后回填
+    'garden:g4:pyr': 4, 'garden:g7:pyr2': 6, 'garden:g7:magic': 6, 'dock:g5:tree': 8, 'dock:g5:saw': 8, 'dock:g7:tree2': 8, 'dock:g9:tree3': 13, 'dock:g5:order': 8, 'dock:g7:riddle': 12, 'dock:g9:riddle2': 15, 'dock:g7:cipher': 10,   // 第三批趣味题：A 估计值，门 5 真人试后回填
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };
   const READ_MS = 400, EN_READ = 1.5;   // 题面每个汉字；英文日读得慢，多给一半（按中文字数估）

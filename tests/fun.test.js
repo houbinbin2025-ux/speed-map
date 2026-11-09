@@ -61,20 +61,33 @@ test('幻方：题面写的和 = 8 条线的和；只空一格；9 个数 1–20
   });
 });
 
-test('植树、锯木头：按种法从题目里的数反推答案；先算段数的数字组合 ≥ 50 种', () => {
-  const DK = {both: 1, one: 0, none: -1, saw: 1};
-  ['dock:g5:tree', 'dock:g7:tree2', 'dock:g5:saw'].forEach(id => all(id, x => {
-    const d = x.q.data, n = nums(x.q.say)[0], k = DK[d.kind], askGaps = /几段|几次|几刀/.test(x.q.say) && !/成几段/.test(x.q.say);
-    if (id === 'dock:g5:tree') assert.equal(d.kind, 'both'); if (id === 'dock:g7:tree2') assert.ok(['one', 'none'].includes(d.kind)); if (id === 'dock:g5:saw') assert.equal(d.kind, 'saw');
-    if (d.kind === 'saw') assert.equal(x.ans, /成几段/.test(x.q.say) ? n + 1 : n - 1, x.q.say);
-    else assert.equal(x.ans, askGaps ? n - k : n + k, x.q.say);
-    assert.ok(n <= 30, x.q.say);
-    const kw = {both: '两头都', one: '只在一头', none: '两头都不'}[d.kind]; if (kw) assert.ok(x.q.say.includes(kw) && (d.kind !== 'both' || !x.q.say.includes('两头都不')), x.q.say);
+// 植树另一种算法：不用生成器的「段 ± 1」，按题面的字把路画出来——路分成 S 段，分点 0..S，按题面说的种法在哪些分点种，数一数
+function plant(say, S) {
+  if (/两头都(种|装|插|摆)/.test(say) && !/两头都不/.test(say)) return {trees: S + 1, between: S};   // 两头都种：每个分点都种；树和树之间的段 = 路的段
+  const pts = []; for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S; if (!edge || (/一头也/.test(say) && k === 0)) pts.push(k); }
+  return {trees: pts.length, between: pts.length - 1};
+}
+test('植树：按题面的字把树一棵棵放到路上再数，答案对得上；倒着问的只有一个段数符合；种法词和图一致', () => {
+  ['dock:g5:tree', 'dock:g7:tree2'].forEach(id => all(id, x => {
+    const say = x.q.say, n = nums(say)[0];
+    if (/之间有 \d+ 段/.test(say)) { const S = n; assert.equal(plant(say, S).trees, x.ans, say); }   // 两头都种，给的是树和树之间的段数
+    else if (/分成 \d+ 段/.test(say)) assert.equal(plant(say, n).trees, x.ans, say);
+    else { const ok = []; for (let S = 1; S <= 60; S++) if (plant(say, S).trees === n) ok.push(/之间有几段/.test(say) ? plant(say, S).between : S); assert.deepEqual(ok, [x.ans], say); }
+    if (/两头都不/.test(say)) assert.equal(x.q.data.kind, 'none', say); else if (/一头也/.test(say)) assert.equal(x.q.data.kind, 'one', say); else assert.equal(x.q.data.kind, 'both', say);
+    if (id === 'dock:g5:tree') assert.equal(x.q.data.kind, 'both');
+    if (x.q.data.kind !== 'both') assert.ok(!/(树|路灯|旗子|花盆)和\1之间/.test(say), `只种一头 / 两头不种不许问「树和树之间」：${say}`);
+    assert.ok(n <= 30, say);
   }));
+});
+
+test('锯木头：锯 k 次是 k + 1 段（逐次加一段数出来）；先算段数：路长 ÷ 间隔，再按种法数树；数字组合 ≥ 50 种', () => {
+  all('dock:g5:saw', x => { const n = nums(x.q.say)[0], pieces = k => { let p = 1; for (let i = 0; i < k; i++) p++; return p; };
+    if (/成几段/.test(x.q.say)) assert.equal(x.ans, pieces(n), x.q.say); else { const ok = []; for (let k = 1; k <= 40; k++) if (pieces(k) === n) ok.push(k); assert.deepEqual(ok, [x.ans], x.q.say); } });
   const combos = new Set();
   all('dock:g9:tree3', x => {
-    const [L, dd] = nums(x.q.say), seg = L / dd, k = {both: 1, one: 0, none: -1}[x.q.data.kind]; assert.ok(Number.isInteger(seg) && dd >= 2 && dd <= 9 && seg >= 2 && seg <= 9, x.q.say);
-    assert.equal(x.ans, seg + k, x.q.say); combos.add(`${L}-${dd}-${k}`);
+    const [L, dd] = nums(x.q.say), S = L / dd; assert.ok(Number.isInteger(S) && dd >= 2 && dd <= 9 && S >= 2 && S <= 9, x.q.say);
+    const say = x.q.say.replace(/两头都(不)?(种|装|插|摆)。/, (m, no, v) => (no ? '两头都不' : '两头都') + v).replace(/只在一头(种|装|插|摆)/, '一头也$1');
+    assert.equal(x.ans, plant(say, S).trees, x.q.say); combos.add(`${L}-${dd}-${x.q.data.kind}`);
   });
   assert.ok(combos.size >= 50, `组合 ${combos.size}`);
 });
@@ -117,5 +130,6 @@ test('算式谜：代 0–9 只有答案那个数字成立；十位不为 0；�
 test('讲解卡：植树、锯木头、植树三种种法、倒着算挂在对应技能上；每个题型都有示范卡', () => {
   const C = {'g34:g5:tree': 'tree', 'g34:g5:saw': 'saw', 'g34:g7:tree2': 'tree2', 'g34:g7:riddle': 'riddle'};
   Object.entries(C).forEach(([id, c]) => { assert.equal(K.BY[id].concept, c); assert.ok(R.CONCEPTS.includes(c)); });
-  FUN.forEach(s => assert.ok(R.demo(s.id).length > 50, s.id));
+  FUN.forEach(s => { const d = R.demo(s.id), x = HB.pools[s.items[0].id][0]; assert.ok(d.includes(x.q.say), `${s.id} 示范卡没有题目`); assert.ok(d.includes(String(x.q.view === 'choice' ? x.q.opts[x.ans] : x.ans)), `${s.id} 示范卡没有答案`); });
+  ['dock:g5:tree', 'dock:g7:tree2', 'dock:g5:saw'].forEach(id => assert.ok(!/几段？$|几次？$|几刀？$/.test(HB.pools[id][0].q.say) || /成几段？$/.test(HB.pools[id][0].q.say), `${id} 示范用正着问的题`));
 });

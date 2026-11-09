@@ -59,16 +59,21 @@ fill('garden:g7:magic', 3403, r => {
 });
 
 // ---------- 植树、锯木头：段数和棵数 ----------
-const PLACES = ['小路', '河边', '操场边', '小桥'], ITEMS = [['树', '棵', '种'], ['路灯', '盏', '装'], ['旗子', '面', '插'], ['花盆', '个', '摆']];
+const ROADS = ['一条小路', '河边的路', '操场边的路'], ITEMS = [['树', '棵', '种'], ['路灯', '盏', '装'], ['旗子', '面', '插'], ['花盆', '个', '摆']];
 // kind：both 两头都种（棵 = 段 + 1）、one 只种一头（棵 = 段）、none 两头都不种（棵 = 段 − 1）
 const KIND = {both: ['两头都', 1], one: ['只在一头', 0], none: ['两头都不', -1]};
+// 两头都种：用「树和树之间有几段」问（两头都种时树和树之间的段 = 整条路的段）。
+// 只种一头 / 两头都不种：「树和树之间」的段数和路的段数不一样，改用「路分成几段一样长，树种在段和段之间」问（审查 11-09：原题按字面答案是错的）
 function treeQ(r, kinds, lo, hi, tag) {
-  const kind = pick(kinds, r), [kw, dk] = KIND[kind], [it, u, v] = pick(ITEMS, r), pl = pick(PLACES, r), back = r() < .4;
+  const kind = pick(kinds, r), [kw, dk] = KIND[kind], [it, u, v] = pick(ITEMS, r), pl = pick(ROADS, r), back = r() < .4;
   const seg = int(r, lo, hi), cnt = seg + dk; if (cnt < 2) return null;
-  const head = `${pl}${kind === 'one' ? '只在一头' : kw}${v}${it}`;
   const hw = `${kw}${v}`;   // 两头都种 / 只在一头摆 / 两头都不插
-  if (!back) return {q: {view: 'trees', say: `${head}，${it}和${it}之间有 ${seg} 段。一共几${u}${it}？`, text: '□', qk: `${tag}${kind}${pl}${it}${seg}`, why: dk ? `${hw}：${it}比段${dk > 0 ? '多' : '少'} 1，${seg} ${dk > 0 ? '+' : '−'} 1 = ${cnt}` : `${hw}：${it}和段一样多，是 ${cnt}`, data: {kind, seg, it}}, ans: cnt};
-  return {q: {view: 'trees', say: `${head}，一共 ${cnt} ${u}${it}。${it}和${it}之间有几段？`, text: '□', qk: `${tag}${kind}b${pl}${it}${cnt}`, why: dk ? `${hw}：段比${it}${dk > 0 ? '少' : '多'} 1，${cnt} ${dk > 0 ? '−' : '+'} 1 = ${seg}` : `${hw}：段和${it}一样多，是 ${seg}`, data: {kind, seg, it}}, ans: seg};
+  const why = back ? (dk ? `${hw}：段比${it}${dk > 0 ? '少' : '多'} 1，${cnt} ${dk > 0 ? '−' : '+'} 1 = ${seg}` : `${hw}：段和${it}一样多，是 ${seg}`)
+    : (dk ? `${hw}：${it}比段${dk > 0 ? '多' : '少'} 1，${seg} ${dk > 0 ? '+' : '−'} 1 = ${cnt}` : `${hw}：${it}和段一样多，是 ${cnt}`);
+  const data = {kind, seg, it, lab: back ? `共 ${cnt} ${u}` : `共 ${seg} 段`}, ans = back ? seg : cnt, qk = `${tag}${kind}${back ? 'b' : ''}${pl}${it}${back ? cnt : seg}`;
+  if (kind === 'both') return {q: {view: 'trees', say: back ? `${pl}两头都${v}${it}，一共 ${cnt} ${u}${it}。${it}和${it}之间有几段？` : `${pl}两头都${v}${it}，${it}和${it}之间有 ${seg} 段。一共几${u}${it}？`, text: '□', qk, why, data}, ans};
+  const rule = kind === 'one' ? `一头也${v}、另一头不${v}` : `两头都不${v}`;
+  return {q: {view: 'trees', say: back ? `${pl}分成一样长的几段，${it}${v}在段和段之间，${rule}，共 ${cnt} ${u}。分成了几段？` : `${pl}分成 ${seg} 段一样长，${it}${v}在段和段之间，${rule}。一共几${u}？`, text: '□', qk, why, data}, ans};
 }
 fill('dock:g5:tree', 3501, r => treeQ(r, ['both'], 6, 25, 't'));
 fill('dock:g7:tree2', 3701, r => treeQ(r, ['one', 'none'], 6, 30, 'T'));
@@ -80,7 +85,7 @@ fill('dock:g5:saw', 3502, r => {
 });
 // 先算段数：路长 = 每段 × 段数（表内除法）
 fill('dock:g9:tree3', 3901, r => {
-  const kind = pick(['both', 'both', 'one', 'none'], r), [kw, dk] = KIND[kind], [it, u, v] = pick(ITEMS, r), pl = pick(['一条小路', '河边的路', '操场边的路', '小桥'], r), d = int(r, 2, 9), seg = int(r, 3, 9), L = d * seg, cnt = seg + dk;
+  const kind = pick(['both', 'both', 'one', 'none'], r), [kw, dk] = KIND[kind], [it, u, v] = pick(ITEMS, r), pl = pick(ROADS, r), d = int(r, 2, 9), seg = int(r, 3, 9), L = d * seg, cnt = seg + dk;
   return {q: {view: 'trees', say: `${pl}长 ${L} 米，每隔 ${d} 米${v}一${u}${it}，${kind === 'one' ? '只在一头' : kw}${v}。一共几${u}？`, text: '□', qk: `L${kind}${pl}${it}${L}-${d}`, why: `先算段数：${L} ÷ ${d} = ${seg} 段；${kw}${v}，${kind === 'both' ? `${seg} + 1 = ${cnt}` : kind === 'one' ? `和段一样多，是 ${cnt}` : `${seg} − 1 = ${cnt}`}`, data: {kind, seg, it, d}}, ans: cnt};
 });
 
@@ -124,5 +129,7 @@ fill('dock:g7:cipher', 3703, r => {
   return {q: {view: 'eq', say: '方框里是几？', text, qk: `c${text}`, why: `${back}，所以 □ 是 ${d}`}, ans: d};
 });
 
+// 第一次见的示范用题池第 1 道（K.example）：植树、锯木头放一道正着问的在最前面
+['dock:g5:tree', 'dock:g7:tree2', 'dock:g5:saw'].forEach(id => { const i = P[id].findIndex(x => !/几段？$|几次？$|几刀？$/.test(x.q.say) || /成几段？$/.test(x.q.say)); if (i > 0) P[id].unshift(P[id].splice(i, 1)[0]); });
 module.exports = P;
 if (require.main === module) Object.entries(P).forEach(([k, v]) => console.log(k, v.length, JSON.stringify(v[0]).slice(0, 220)));

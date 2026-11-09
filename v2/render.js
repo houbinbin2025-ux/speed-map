@@ -153,7 +153,7 @@
   // 植树、锯木头的示意图：kind = both / one / none / saw；题目里画 5 段（第 4 段是「……」），讲解卡用 o.n 画准确的段数，o.mark = 'seg' 标段、'tree' 标树
   function treesSvg(d, a, o) {
     o = o || {};
-    const S = o.n || 5, dots = !o.n, W = 460, H = o.mark ? 132 : 110, x0 = 34, x1 = W - 34, X = k => x0 + (x1 - x0) * k / S, gy = 84;
+    const S = o.n || 5, dots = !o.n, W = 460, H = o.mark || d.lab ? 132 : 110, x0 = 34, x1 = W - 34, X = k => x0 + (x1 - x0) * k / S, gy = 84;
     const tree = x => `<rect x="${x - 4}" y="${gy - 22}" width="8" height="22" fill="#8a5a2b"/><circle cx="${x}" cy="${gy - 34}" r="17" fill="#3f9a52" stroke="#000" stroke-width="3"/>`;
     const end = x => `<line x1="${x}" y1="${gy - 18}" x2="${x}" y2="${gy + 10}" stroke="${FC.gray}" stroke-width="5"/>`;
     let out = '';
@@ -165,6 +165,7 @@
       for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S, has = d.kind === 'both' || (d.kind === 'one' && k < S) || (d.kind === 'none' && !edge); out += has ? tree(X(k)) : edge ? end(X(k)) : ''; }
     }
     if (dots) out += svgT((X(3) + X(4)) / 2, gy - 10, '……', {size: 28});
+    if (d.lab && !o.mark) out += svgT(W / 2, gy + 38, `${d.lab}（图只画了一部分）`, {size: 22, fill: FC.gray});
     if (o.mark === 'seg') for (let k = 0; k < S; k++) out += svgT((X(k) + X(k + 1)) / 2, gy + 34, k + 1, {size: 24, fill: QM});
     if (o.mark === 'tree') { let c = 0; for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S; if (d.kind === 'both' || (d.kind === 'one' && k < S) || (d.kind === 'none' && !edge)) out += svgT(X(k), gy + 34, ++c, {size: 24, fill: OK}); } }
     return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="${d.kind === 'saw' ? '锯木头' : '植树'}">${out}</svg>`;
@@ -275,9 +276,9 @@
       [treesSvg({kind: 'saw'}, undefined, {n: 2}), '锯 1 次，变成 2 段'],
       [treesSvg({kind: 'saw'}, undefined, {n: 4, mark: 'seg'}), '锯 3 次，变成 4 段：段比次数多 1']]},
     tree2: {title: '植树的三种种法', pages: [
-      [treesSvg({kind: 'both'}, undefined, {n: 3, mark: 'tree'}), '两头都种：3 段 4 棵，树比段多 1'],
-      [treesSvg({kind: 'one'}, undefined, {n: 3, mark: 'tree'}), '只种一头：3 段 3 棵，树和段一样多'],
-      [treesSvg({kind: 'none'}, undefined, {n: 3, mark: 'tree'}), '两头都不种：3 段 2 棵，树比段少 1']]},
+      [treesSvg({kind: 'both'}, undefined, {n: 3, mark: 'tree'}), '路分成 3 段，两头都种：4 棵，树比段多 1'],
+      [treesSvg({kind: 'one'}, undefined, {n: 3, mark: 'tree'}), '树种在段和段之间，一头也种：3 棵，树和段一样多'],
+      [treesSvg({kind: 'none'}, undefined, {n: 3, mark: 'tree'}), '树种在段和段之间，两头都不种：2 棵，树比段少 1']]},
     riddle: {title: '倒着算', pages: [
       [`<div class="eq num sm">? + 8 − 5 = 20</div>`, '一个数加上 8，再减去 5，得 20'],
       [`<div class="eq num sm">20 + 5 = 25</div>`, '倒着走：最后减了 5，先加回 5'],
@@ -487,6 +488,7 @@
       body = s.input === 'pick' && q.view === 'choice' ? step(1, `<div class="cards2">${q.opts.map(t => `<b class="sm">${fr(t)}</b>`).join('')}</div>`, q.say) + arrow + step(2, `<div class="cards2"><b class="sm win">${fr(q.opts[ex.ans])}</b></div>`, '点它')
         : s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
         : q.view === 'fracbar' ? step(1, `<div class="fig2w">${fracSvg(q.data)}</div>`, '看题') + arrow + step(2, `<div class="eq num sm">${fr(q.text, ans(ex.ans), .72)}</div>`, '写答案')   // 分数读图：图只画一次（demofit 812）
+        : s.fun ? step(1, `<div class="whysay" style="font-size:14px;line-height:1.25">${q.say}</div>` + (FIGS[q.view] ? FIGS[q.view](q.data).replace('<svg class="fig2"', '<svg class="fig2" style="height:64px;width:auto;max-width:100%"') : q.view === 'eq' ? `<div class="eq num sm">${q.text.replace('□', box)}</div>` : ''), '看题') + arrow + step(2, `<div class="eq num sm">${q.view === 'eq' ? q.text.replace('□', ans(ex.ans)) : ans(ex.ans)}</div>`, '写答案')   // 趣味题：示范里要有题目（答错讲解同样写 whysay）
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
       foot = hasFr(q.why) ? fr(q.why) : q.why;
     } else if (s.speed) {
