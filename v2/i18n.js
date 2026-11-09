@@ -524,10 +524,10 @@
   const PLACE3 = {小路: ['a path', 'The path'], 河边: ['the river', 'The riverbank'], 操场边: ['the playground', 'The playground edge'], 小桥: ['a bridge', 'The bridge'], 一条小路: [0, 'A path'], 河边的路: [0, 'The path by the river'], 操场边的路: [0, 'The path by the playground']};
   const ITEM3 = {树: ['tree', 'trees'], 路灯: ['street lamp', 'street lamps'], 旗子: ['flag', 'flags'], 花盆: ['flower pot', 'flower pots']};
   const VERB3 = {种: 'planted', 装: 'put up', 插: 'put up', 摆: 'placed'};
-  const WHERE3 = {两头都: 'at both ends', 只在一头: 'at one end only', 两头都不: 'but not at either end'}, WHERE3C = {两头都: 'Both ends', 只在一头: 'One end only', 两头都不: 'Neither end'};
+  const WHERE3 = {两头都: 'at both ends', 只在一头: 'at one end only', 两头都不: 'but not at either end'}, WHERE3C = {两头都: 'Both ends', 只在一头: 'One end only', 一头也: 'One end only', 两头都不: 'Neither end'};
   const CUT3 = {木头: 'log', 绳子: 'rope', 面包: 'loaf of bread', 纸条: 'paper strip', 竹子: 'bamboo pole', 甘蔗: 'sugarcane stalk'};
   const LINE3 = {第一行: 'top row', 第二行: 'middle row', 第三行: 'bottom row', 第一列: 'left column', 第二列: 'middle column', 第三列: 'right column', 斜线: 'diagonal'};
-  const FK3 = '(小林|小方|小月|小冬|小青|小雨|小石|小禾)', FC3 = '(高|矮|重|轻|跑得快|跑得慢|年纪大|年纪小)', FW3 = '(两头都不|两头都|只在一头)', FV3 = '(种|装|插|摆)', FI3 = '(树|路灯|旗子|花盆)', FU3 = '[棵盏面个]', FPL3 = '(小路|河边|操场边|小桥)', FT3 = '(木头|绳子|面包|纸条|竹子|甘蔗)';
+  const FK3 = '(小林|小方|小月|小冬|小青|小雨|小石|小禾)', FC3 = '(高|矮|重|轻|跑得快|跑得慢|年纪大|年纪小)', FW3 = '(两头都不|两头都|只在一头|一头也)', FV3 = '(种|装|插|摆)', FI3 = '(树|路灯|旗子|花盆)', FU3 = '[棵盏面个]', FPL3 = '(小路|河边|操场边|小桥)', FT3 = '(木头|绳子|面包|纸条|竹子|甘蔗)';
   const nn = (n, i) => pl(n, ITEM3[i][0], ITEM3[i][1]);
   const ROAD3 = {一条小路: 'a path', 河边的路: 'the riverside path', 操场边的路: 'the path by the playground'}, FRD3 = '(一条小路|河边的路|操场边的路)', FRULE3 = '(一头也(?:种|装|插|摆)、另一头不(?:种|装|插|摆)|两头都不(?:种|装|插|摆))';
   const RULE3 = r => (r.includes('一头也') ? 'and at one end of the path but not the other' : 'but not at either end of the path');
@@ -545,11 +545,11 @@
     [/^看(第一行|第二行|第三行|第一列|第二列|第三列|斜线)：(.+)$/, (m, l, e) => `Look at the ${LINE3[l]}: ${e}`],
     [new RegExp(`^${FRD3}两头都${FV3}${FI3}，${FI3}和${FI3}之间有 (\\d+) 段。一共几${FU3}${FI3}？$`), (m, p, v, i, a, b, n) => `${cap(ITEM3[i][1])} are ${VERB3[v]} along ${ROAD3[p]}, including both ends. There are ${pl(n, 'section')} between them. How many ${ITEM3[i][1]} in all?`],
     [new RegExp(`^${FRD3}两头都${FV3}${FI3}，一共 (\\d+) ${FU3}${FI3}。${FI3}和${FI3}之间有几段？$`), (m, p, v, i, n) => `${cap(ITEM3[i][1])} are ${VERB3[v]} along ${ROAD3[p]}, including both ends. There are ${nn(n, i)} in all. How many sections are between them?`],
-    [new RegExp(`^${FRD3}分成 (\\d+) 段一样长，${FI3}${FV3}在段和段之间，${FRULE3}。一共几${FU3}？$`), (m, p, n, i, v, r) => `${cap(ROAD3[p])} is split into ${n} equal sections. ${cap(ITEM3[i][1])} are ${VERB3[v]} where the sections meet, ${RULE3(r)}. How many ${ITEM3[i][1]} in all?`],
+    [new RegExp(`^${FRD3}分成一样长的 (\\d+) 段，${FI3}${FV3}在段和段之间，${FRULE3}。一共几${FU3}？$`), (m, p, n, i, v, r) => `${cap(ROAD3[p])} is split into ${n} equal sections. ${cap(ITEM3[i][1])} are ${VERB3[v]} where the sections meet, ${RULE3(r)}. How many ${ITEM3[i][1]} in all?`],
     [new RegExp(`^${FRD3}分成一样长的几段，${FI3}${FV3}在段和段之间，${FRULE3}，共 (\\d+) ${FU3}。分成了几段？$`), (m, p, i, v, r, n) => `${cap(ROAD3[p])} is split into equal sections. ${cap(ITEM3[i][1])} are ${VERB3[v]} where the sections meet, ${RULE3(r)}. There are ${nn(n, i)}. How many sections are there?`],
-    [/^共 (\d+) (段|棵|盏|面|个)（图只画了一部分）$/, (m, n, u) => `${u === '段' ? pl(n, 'section') : n} in all (only part is drawn)`],
-    [new RegExp(`^(一条小路|河边的路|操场边的路|小桥)长 (\\d+) 米，每隔 (\\d+) 米${FV3}一${FU3}${FI3}，${FW3}${FV3}。一共几${FU3}？$`), (m, p, L, d, v, i, w) => `${PLACE3[p][1]} is ${L} m long. A ${ITEM3[i][0]} is ${VERB3[v]} every ${d} m, ${WHERE3[w]}. How many ${ITEM3[i][1]} in all?`],
-    [new RegExp(`^先算段数：(\\d+) ÷ (\\d+) = (\\d+) 段；${FW3}${FV3}，(.+)$`), (m, L, d, g, w, v, t) => { const r = restTree(t); return r === null ? null : `Gaps first: ${L} ÷ ${d} = ${g}. ${WHERE3C[w]}: ${r}`; }],
+    [/^共 (\d+) (段|棵|盏|面|个|次|刀)（图只画了一部分）$/, (m, n, u) => `${u === '段' ? pl(n, 'section') : u === '次' || u === '刀' ? pl(n, 'cut') : n} in all (only part is drawn)`], [/^（图只画了一部分）$/, () => '(only part is drawn)'],
+    [new RegExp(`^(一条小路|河边的路|操场边的路|小桥)长 (\\d+) 米，每隔 (\\d+) 米${FV3}一${FU3}${FI3}，(两头都不|两头都|一头也)${FV3}(?:、另一头不${FV3})?。一共几${FU3}？$`), (m, p, L, d, v, i, w) => `${cap(ROAD3[p] || 'the bridge')} is ${L} m long. A ${ITEM3[i][0]} is ${VERB3[v]} every ${d} m, ${w === '一头也' ? 'and at one end but not the other' : WHERE3[w]}. How many ${ITEM3[i][1]} in all?`],
+    [new RegExp(`^先算段数：(\\d+) ÷ (\\d+) = (\\d+) 段；(两头都不|两头都|一头也)${FV3}，(.+)$`), (m, L, d, g, w, v, t) => { const r = restTree(t); return r === null ? null : `Sections first: ${L} ÷ ${d} = ${g}. ${w === '一头也' ? 'One end' : WHERE3C[w]}: ${r}`; }],
     [new RegExp(`^${FW3}${FV3}：(.+)$`), (m, w, v, t) => { const r = restTree(t); return r === null ? null : `${WHERE3C[w]}: ${r}`; }],
     [new RegExp(`^把一根${FT3}(锯|剪|切|砍) (\\d+) (次|刀)，(锯|剪|切|砍)成几段？$`), (m, t, v, n) => `Cut a ${CUT3[t]} ${pl(n, 'time')}. How many pieces?`],
     [new RegExp(`^要把一根${FT3}(锯|剪|切|砍)成 (\\d+) 段，要(锯|剪|切|砍)几(次|刀)？$`), (m, t, v, n) => `To cut a ${CUT3[t]} into ${n} pieces, how many cuts?`],

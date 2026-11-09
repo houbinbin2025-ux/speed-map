@@ -153,7 +153,7 @@
   // 植树、锯木头的示意图：kind = both / one / none / saw；题目里画 5 段（第 4 段是「……」），讲解卡用 o.n 画准确的段数，o.mark = 'seg' 标段、'tree' 标树
   function treesSvg(d, a, o) {
     o = o || {};
-    const S = o.n || 5, dots = !o.n, W = 460, H = o.mark || d.lab ? 132 : 110, x0 = 34, x1 = W - 34, X = k => x0 + (x1 - x0) * k / S, gy = 84;
+    const S = o.n || 5, dots = !o.n, W = 460, H = o.mark || d.lab !== undefined ? 132 : 110, x0 = 34, x1 = W - 34, X = k => x0 + (x1 - x0) * k / S, gy = 84;
     const tree = x => `<rect x="${x - 4}" y="${gy - 22}" width="8" height="22" fill="#8a5a2b"/><circle cx="${x}" cy="${gy - 34}" r="17" fill="#3f9a52" stroke="#000" stroke-width="3"/>`;
     const end = x => `<line x1="${x}" y1="${gy - 18}" x2="${x}" y2="${gy + 10}" stroke="${FC.gray}" stroke-width="5"/>`;
     let out = '';
@@ -165,7 +165,7 @@
       for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S, has = d.kind === 'both' || (d.kind === 'one' && k < S) || (d.kind === 'none' && !edge); out += has ? tree(X(k)) : edge ? end(X(k)) : ''; }
     }
     if (dots) out += svgT((X(3) + X(4)) / 2, gy - 10, '……', {size: 28});
-    if (d.lab && !o.mark) out += svgT(W / 2, gy + 38, `${d.lab}（图只画了一部分）`, {size: 22, fill: FC.gray});
+    if (d.lab !== undefined && !o.mark) out += svgT(W / 2, gy + 38, `${d.lab}（图只画了一部分）`, {size: 22, fill: FC.gray});
     if (o.mark === 'seg') for (let k = 0; k < S; k++) out += svgT((X(k) + X(k + 1)) / 2, gy + 34, k + 1, {size: 24, fill: QM});
     if (o.mark === 'tree') { let c = 0; for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S; if (d.kind === 'both' || (d.kind === 'one' && k < S) || (d.kind === 'none' && !edge)) out += svgT(X(k), gy + 34, ++c, {size: 24, fill: OK}); } }
     return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="${d.kind === 'saw' ? '锯木头' : '植树'}">${out}</svg>`;

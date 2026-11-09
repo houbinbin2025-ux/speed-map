@@ -71,7 +71,7 @@ test('植树：按题面的字把树一棵棵放到路上再数，答案对得�
   ['dock:g5:tree', 'dock:g7:tree2'].forEach(id => all(id, x => {
     const say = x.q.say, n = nums(say)[0];
     if (/之间有 \d+ 段/.test(say)) { const S = n; assert.equal(plant(say, S).trees, x.ans, say); }   // 两头都种，给的是树和树之间的段数
-    else if (/分成 \d+ 段/.test(say)) assert.equal(plant(say, n).trees, x.ans, say);
+    else if (/分成一样长的 \d+ 段/.test(say)) assert.equal(plant(say, n).trees, x.ans, say);
     else { const ok = []; for (let S = 1; S <= 60; S++) if (plant(say, S).trees === n) ok.push(/之间有几段/.test(say) ? plant(say, S).between : S); assert.deepEqual(ok, [x.ans], say); }
     if (/两头都不/.test(say)) assert.equal(x.q.data.kind, 'none', say); else if (/一头也/.test(say)) assert.equal(x.q.data.kind, 'one', say); else assert.equal(x.q.data.kind, 'both', say);
     if (id === 'dock:g5:tree') assert.equal(x.q.data.kind, 'both');
@@ -86,7 +86,7 @@ test('锯木头：锯 k 次是 k + 1 段（逐次加一段数出来）；先算�
   const combos = new Set();
   all('dock:g9:tree3', x => {
     const [L, dd] = nums(x.q.say), S = L / dd; assert.ok(Number.isInteger(S) && dd >= 2 && dd <= 9 && S >= 2 && S <= 9, x.q.say);
-    const say = x.q.say.replace(/两头都(不)?(种|装|插|摆)。/, (m, no, v) => (no ? '两头都不' : '两头都') + v).replace(/只在一头(种|装|插|摆)/, '一头也$1');
+    const say = x.q.say;
     assert.equal(x.ans, plant(say, S).trees, x.q.say); combos.add(`${L}-${dd}-${x.q.data.kind}`);
   });
   assert.ok(combos.size >= 50, `组合 ${combos.size}`);

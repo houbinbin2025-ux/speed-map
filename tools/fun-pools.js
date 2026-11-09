@@ -61,7 +61,7 @@ fill('garden:g7:magic', 3403, r => {
 // ---------- 植树、锯木头：段数和棵数 ----------
 const ROADS = ['一条小路', '河边的路', '操场边的路'], ITEMS = [['树', '棵', '种'], ['路灯', '盏', '装'], ['旗子', '面', '插'], ['花盆', '个', '摆']];
 // kind：both 两头都种（棵 = 段 + 1）、one 只种一头（棵 = 段）、none 两头都不种（棵 = 段 − 1）
-const KIND = {both: ['两头都', 1], one: ['只在一头', 0], none: ['两头都不', -1]};
+const KIND = {both: ['两头都', 1], one: ['一头也', 0], none: ['两头都不', -1]};
 // 两头都种：用「树和树之间有几段」问（两头都种时树和树之间的段 = 整条路的段）。
 // 只种一头 / 两头都不种：「树和树之间」的段数和路的段数不一样，改用「路分成几段一样长，树种在段和段之间」问（审查 11-09：原题按字面答案是错的）
 function treeQ(r, kinds, lo, hi, tag) {
@@ -73,20 +73,20 @@ function treeQ(r, kinds, lo, hi, tag) {
   const data = {kind, seg, it, lab: back ? `共 ${cnt} ${u}` : `共 ${seg} 段`}, ans = back ? seg : cnt, qk = `${tag}${kind}${back ? 'b' : ''}${pl}${it}${back ? cnt : seg}`;
   if (kind === 'both') return {q: {view: 'trees', say: back ? `${pl}两头都${v}${it}，一共 ${cnt} ${u}${it}。${it}和${it}之间有几段？` : `${pl}两头都${v}${it}，${it}和${it}之间有 ${seg} 段。一共几${u}${it}？`, text: '□', qk, why, data}, ans};
   const rule = kind === 'one' ? `一头也${v}、另一头不${v}` : `两头都不${v}`;
-  return {q: {view: 'trees', say: back ? `${pl}分成一样长的几段，${it}${v}在段和段之间，${rule}，共 ${cnt} ${u}。分成了几段？` : `${pl}分成 ${seg} 段一样长，${it}${v}在段和段之间，${rule}。一共几${u}？`, text: '□', qk, why, data}, ans};
+  return {q: {view: 'trees', say: back ? `${pl}分成一样长的几段，${it}${v}在段和段之间，${rule}，共 ${cnt} ${u}。分成了几段？` : `${pl}分成一样长的 ${seg} 段，${it}${v}在段和段之间，${rule}。一共几${u}？`, text: '□', qk, why, data}, ans};
 }
 fill('dock:g5:tree', 3501, r => treeQ(r, ['both'], 6, 25, 't'));
 fill('dock:g7:tree2', 3701, r => treeQ(r, ['one', 'none'], 6, 30, 'T'));
 const CUTS = [['木头', '锯', '次'], ['绳子', '剪', '刀'], ['面包', '切', '刀'], ['纸条', '剪', '刀'], ['竹子', '锯', '次'], ['甘蔗', '砍', '刀']];
 fill('dock:g5:saw', 3502, r => {
   const [th, v, u] = pick(CUTS, r), k = int(r, 6, 25), back = r() < .4;
-  if (!back) return {q: {view: 'trees', say: `把一根${th}${v} ${k} ${u}，${v}成几段？`, text: '□', qk: `s${th}${k}`, why: `${v} 1 ${u}是 2 段，段比${u}数多 1：${k} + 1 = ${k + 1}`, data: {kind: 'saw', seg: k + 1, it: th}}, ans: k + 1};
-  return {q: {view: 'trees', say: `要把一根${th}${v}成 ${k + 1} 段，要${v}几${u}？`, text: '□', qk: `S${th}${k}`, why: `${u}数比段少 1：${k + 1} − 1 = ${k}`, data: {kind: 'saw', seg: k + 1, it: th}}, ans: k};
+  if (!back) return {q: {view: 'trees', say: `把一根${th}${v} ${k} ${u}，${v}成几段？`, text: '□', qk: `s${th}${k}`, why: `${v} 1 ${u}是 2 段，段比${u}数多 1：${k} + 1 = ${k + 1}`, data: {kind: 'saw', seg: k + 1, it: th, lab: `共 ${k} ${u}`}}, ans: k + 1};
+  return {q: {view: 'trees', say: `要把一根${th}${v}成 ${k + 1} 段，要${v}几${u}？`, text: '□', qk: `S${th}${k}`, why: `${u}数比段少 1：${k + 1} − 1 = ${k}`, data: {kind: 'saw', seg: k + 1, it: th, lab: `共 ${k + 1} 段`}}, ans: k};
 });
 // 先算段数：路长 = 每段 × 段数（表内除法）
 fill('dock:g9:tree3', 3901, r => {
   const kind = pick(['both', 'both', 'one', 'none'], r), [kw, dk] = KIND[kind], [it, u, v] = pick(ITEMS, r), pl = pick(ROADS, r), d = int(r, 2, 9), seg = int(r, 3, 9), L = d * seg, cnt = seg + dk;
-  return {q: {view: 'trees', say: `${pl}长 ${L} 米，每隔 ${d} 米${v}一${u}${it}，${kind === 'one' ? '只在一头' : kw}${v}。一共几${u}？`, text: '□', qk: `L${kind}${pl}${it}${L}-${d}`, why: `先算段数：${L} ÷ ${d} = ${seg} 段；${kw}${v}，${kind === 'both' ? `${seg} + 1 = ${cnt}` : kind === 'one' ? `和段一样多，是 ${cnt}` : `${seg} − 1 = ${cnt}`}`, data: {kind, seg, it, d}}, ans: cnt};
+  return {q: {view: 'trees', say: `${pl}长 ${L} 米，每隔 ${d} 米${v}一${u}${it}，${kind === 'one' ? `一头也${v}、另一头不${v}` : kw + v}。一共几${u}？`, text: '□', qk: `L${kind}${pl}${it}${L}-${d}`, why: `先算段数：${L} ÷ ${d} = ${seg} 段；${kind === 'one' ? `一头也${v}` : kw + v}，${kind === 'both' ? `${seg} + 1 = ${cnt}` : kind === 'one' ? `和段一样多，是 ${cnt}` : `${seg} − 1 = ${cnt}`}`, data: {kind, seg, it, d, lab: ''}}, ans: cnt};
 });
 
 // ---------- 谁最高：两句话连成一串，3 选 1 ----------
