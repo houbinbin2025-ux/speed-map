@@ -72,8 +72,9 @@ SAMPLER = r"""(() => {
   // 一直在动的小动画（火苗、计数、闪光只改 class / style）会让页面永远「不静」：文字和结构静了满 1 秒、只剩样式在动，也算跑完（审查 R2：结算页从没被量到）
   let lastStruct = 0, lastStyle = 0, tm = 0;
   const wait = () => { const now = performance.now(), a = now - lastStruct, b = now - lastStyle; return a < 300 ? 300 - a : b < 300 && a < 1000 ? Math.min(300 - b, 1000 - a) : 0; };
-  const sample = () => { const w = wait(); if (w > 0) { clearTimeout(tm); tm = setTimeout(sample, w + 10); return; }
-    requestAnimationFrame(() => requestAnimationFrame(() => { if (wait() <= 0) measure(); else sample(); })); };
+  let lastMeasure = 0;   // 两次整页量之间至少隔 300ms：只剩样式动画的页面（结算页火苗）别每帧都量一遍拖慢导游（审查 R3）
+  const sample = () => { const w = Math.max(wait(), lastMeasure + 300 - performance.now()); if (w > 0) { clearTimeout(tm); tm = setTimeout(sample, w + 10); return; }
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (wait() <= 0) { lastMeasure = performance.now(); measure(); } else sample(); })); };
   addEventListener('DOMContentLoaded', () => { new MutationObserver(ms => { const now = performance.now();
       if (ms.some(m => m.type !== 'attributes' || m.attributeName === 'hidden')) lastStruct = now; else lastStyle = now;
       clearTimeout(tm); tm = setTimeout(sample, wait() + 10); })
@@ -121,10 +122,10 @@ def drive(prof, lang, outjson, script, args):
     dump()
 
 # 导游：脚本名 + 参数（{root} {out} 会替换）；超时秒数
-SHOT_WAIT = {'demofit.py', 'e2e-qsum.py'}   # 截图前要停一下才量得到的导游（见 drive）
+SHOT_WAIT = {'demofit.py', 'e2e-qsum.py', 'e2e-en.py', 'e2e.py'}   # 截图前要停一下才量得到的导游（见 drive）：不停的话示范卡、结算、地点卡片、技能地图一闪而过量不到（审查 R2、R3）
 GUIDES = [   # 脚本、参数、只走哪种设备（None = 都走）、必须量到的页面（缺一个 = 导游走偏，判不通过，审查 R2）
-    ('e2e-en.py', ['{root}', '{out}'], None, '#island #qplay #demo #qsum #home #house'),   # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、技能地图、秒答地图和练习、家、图鉴、奖状
-    ('e2e.py', ['{root}', '{out}'], None, '#qplay #demo #placeResult'),                 # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
+    ('e2e-en.py', ['{root}', '{out}'], None, '#island #qplay #demo #qsum #home #house #calib #play #summary #skillmap #mist'),   # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、技能地图、秒答地图和练习、家、图鉴、奖状
+    ('e2e.py', ['{root}', '{out}'], None, '#qplay #demo #placeIntro #placeResult #skillmap'),                 # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
     ('e2e-gems.py', ['{root}', '{out}'], None, '#forge #qsum #qplay'),                   # 碎片条、小目标弹窗（Goal done）、炉子、锻造确认
     ('e2e-qsum.py', ['{root}', '{out}'], 'phone', '#qsum'),                              # 结算页（信息最多）；它要等的「碎片收起」只在矮屏出现
     ('e2e-v8.py', ['{root}', '{out}'], None, '#think'),                                  # 四个思维地点
@@ -208,9 +209,10 @@ def main():
         k = (x['combo'], x['area'], x['sig'], x['tier'])
         if k not in uniq or x['pt'] < uniq[k]['pt']: uniq[k] = x
     bad = sorted(uniq.values(), key=lambda x: (x['combo'], x['area'], x['tier'], x['pt']))
-    (out / 'report.json').write_text(json.dumps({'标准pt': MIN, '设备': {k: v['k'] for k, v in PROFILES.items()}, '量过': len(rows), '不达标': bad, '导游没走完': broken, '导游自身检查失败数（强制尺寸后预期会有，不算字号问题）': guide_fail,
+    (out / 'report.json').write_text(json.dumps({'标准pt': MIN, '设备': {k: v['k'] for k, v in PROFILES.items()}, '量过': len(rows), '不达标': bad, '局部补量（不是全量）': bool(GONLY) or '--skip-a' in sys.argv or '--skip-b' in sys.argv, '导游没走完': broken, '导游自身检查失败数（强制尺寸后预期会有，不算字号问题）': guide_fail,
         '覆盖': {f'{c} {g}': a for (c, g), a in cover.items()}}, ensure_ascii=False, indent=1))
-    lines = [f'量过 {len(rows)} 种文字（去重后），不达标 {len(bad)} 处（同一元素同一档算一处）；导游没走完 {len(broken)} 个'] + [f'  ！{x}' for x in broken]
+    part = bool(GONLY) or '--skip-a' in sys.argv or '--skip-b' in sys.argv
+    lines = (['【局部补量，不是全量结果】'] if part else []) + [f'量过 {len(rows)} 种文字（去重后），不达标 {len(bad)} 处（同一元素同一档算一处）；导游没走完 {len(broken)} 个'] + [f'  ！{x}' for x in broken]
     by = {}
     for x in bad: by.setdefault(x['combo'], {}).setdefault(x['tier'], 0); by[x['combo']][x['tier']] += 1
     for c, d in sorted(by.items()): lines.append(f'  {c}: ' + '、'.join(f'{t} {n}' for t, n in d.items()))

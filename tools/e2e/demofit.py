@@ -11,14 +11,19 @@ CHECK = """() => { const res = []; const body = document.querySelector('#demoBox
   if (head.scrollWidth > head.clientWidth + 1) res.push('dhead 横向溢出');
   const B = body.getBoundingClientRect();
   body.querySelectorAll('.dstep').forEach(st => { const r = st.getBoundingClientRect(); if (r.top < B.top - 1 || r.bottom > B.bottom + 1 || r.left < B.left - 1 || r.right > B.right + 1) res.push('步骤超出框'); if (st.scrollWidth > st.clientWidth + 24) res.push('步骤内容横向溢出'); });
-  const ack = document.getElementById('ack').getBoundingClientRect(), D = document.querySelector('#demoBox .demo').getBoundingClientRect(); if (ack.bottom > innerHeight + 1 || D.bottom > ack.top + 1) res.push('和按钮重叠或超出屏幕');
+  const ack = document.getElementById('ack').getBoundingClientRect(), D = document.querySelector('#demoBox .demo').getBoundingClientRect(); if (ack.bottom > innerHeight + 1) res.push('按钮超出屏幕');
+  // 按钮在卡片下方（大屏），或在右下角和提示句同一行（矮屏，字号审查 R3）：都不许压住图框、标题和提示句的字
+  const hit = r => r.width && r.height && r.left < ack.right - 1 && r.right > ack.left + 1 && r.top < ack.bottom - 1 && r.bottom > ack.top + 1;
+  const foot = document.querySelector('#demoBox .dfoot'), fr = foot && (() => { const g = document.createRange(); g.selectNodeContents(foot); return [...g.getClientRects()]; })();
+  if (hit(body.getBoundingClientRect()) || hit(head.getBoundingClientRect()) || (fr || []).some(hit)) res.push('和按钮重叠');
+  if (D.bottom > innerHeight + 1) res.push('卡片超出屏幕');
   return res; }"""
 with sync_playwright() as p:
     b = __import__('quiet').launch(p)
     for w, h in [(956, 440), (932, 430), (852, 393), (844, 390), (812, 375), (667, 375)]:
         pg = b.new_page(viewport={'width': w, 'height': h}); pg.goto(url); pg.evaluate("en => localStorage.setItem('speedmap.v2.test', JSON.stringify({v: 2, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}, placedAt: 1, known: {}, settings: {bilingual: en}, testDays: en && !I18N.isEn({}, SM.dayOf(Date.now(), 0)) ? 1 : 0}))", EN); pg.reload(); pg.wait_for_timeout(300)
         if EN: assert pg.evaluate("document.documentElement.lang") == 'en'
-        for sid in pg.evaluate("__sm.K.SKILLS.concat(__sm.K.HARD).filter(s=>s.nb||s.hard||s.group==='line').map(s=>s.id)"):
+        for sid in pg.evaluate("__sm.K.SKILLS.concat(__sm.K.HARD, __sm.K.FUN || []).filter(s=>s.nb||s.hard||s.fun||s.group==='line').map(s=>s.id)"):
             pg.evaluate("sid => {" + SCREENS + "document.getElementById('demoBox').innerHTML=__sm.R.demo(sid);}", sid); pg.wait_for_timeout(40)
             r = pg.evaluate(CHECK)
             if r: bad.append((w, sid, r))
