@@ -14,7 +14,7 @@ def check(ok, msg):
     if not ok: fails.append(msg)
 total = "GEMUI.total()"
 with sync_playwright() as p:
-    b = p.chromium.launch(); ctx = b.new_context(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); ctx = b.new_context(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg = ctx.new_page(); pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); localStorage.setItem('speedmap.ink.test', {json.dumps(json.dumps(ink))})")
     pg.close(); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e))); pg.goto(url); pg.wait_for_timeout(900)
     if not pg.evaluate("__sm.K.FUN_SEC > 0"): print('跳过：趣味题开关还关着（K.FUN_SEC = 0）'); b.close(); sys.exit(0)
