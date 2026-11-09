@@ -13,12 +13,13 @@ SEED = """([levels, hard]) => { const S = {v: 2, savedAt: 0, cards: {}, boss: {}
   if (levels.length) { S.settings.levels = levels; S.settings.levelsV = 2; }
   ['look1', 'look3'].forEach(sid => __sm.K.BY[sid].items.forEach(i => { S.skills[i.id] = {lv: 3, d: ['2026-09-01', '2026-09-02', '2026-09-06'], seen: 3, lastDay: '2026-09-06', win: []}; }));
   __sm.K.HARD.forEach(s => s.items.forEach(i => { if (Math.max(...__sm.K.itemLevels(i.id)) <= hard) S.skills[i.id] = {lv: 3, d: ['2026-09-01', '2026-09-02', '2026-09-06'], seen: 3, lastDay: '2026-09-06', win: []}; }));
+  if (hard >= 9) S.home = {pets: ['lv:9', 'look1']};   // 带一只三四年级伙伴回家
   for (let d = 1; d <= 8; d++) S.stats['2026-09-0' + d] = {sec: 620, n: 40, ups: 0, over: 0, gap: 0};
   localStorage.setItem('speedmap.v2.test', JSON.stringify(S)); }"""
 CASES = [('没开三四年级', [1, 2, 3], 0), ('手选 3–8 级、学到第 8 级', [3, 4, 5, 6, 7, 8], 8), ('手选 1–15 级、全部学会', list(range(1, 16)), 15)]
 with sync_playwright() as p:
     b = p.chromium.launch()
-    for W, H in [(667, 375), (844, 390), (1194, 834)]:
+    for W, H in [(667, 375), (844, 390), (874, 297), (932, 651), (1194, 834)]:
         for name, levels, hard in CASES:
             for en in ([False, True] if W == 844 and hard == 15 else [False]):
                 pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True); tag = f'{W}x{H} {name}' + (' 英文' if en else '')
@@ -26,15 +27,19 @@ with sync_playwright() as p:
                 pg.goto(url); pg.evaluate("localStorage.clear()"); pg.evaluate(SEED, [levels, hard])
                 if en: pg.evaluate("(()=>{const S=JSON.parse(localStorage.getItem('speedmap.v2.test'));S.testDays=I18N.isEn({}, SM.dayOf(Date.now(),0))?0:1;S.settings.bilingual=true;localStorage.setItem('speedmap.v2.test',JSON.stringify(S));})()")
                 pg.reload(); pg.wait_for_timeout(700)
-                pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2600)
-                check(pg.evaluate("!document.getElementById('house').hidden"), tag + ' 进得了家（不卡死）')
-                # 开箱：新奖状、新伙伴都要能弹出来
-                if pg.locator('#h_loot:not([hidden])').count() or pg.evaluate("(__sm.S.home.loot || []).length"):
-                    for _ in range(3):
-                        if pg.locator('#h_lootOk').is_visible(): pg.click('#h_lootOk'); pg.wait_for_timeout(500)
-                    for _ in range(6):
-                        x = pg.locator('#h_certV:not([hidden]) button, #h_certV:not([hidden]) .x').first
-                        if pg.evaluate("!document.getElementById('h_certV').hidden"): pg.evaluate("document.getElementById('h_certV').click()"); pg.wait_for_timeout(300)
+                pg.click('.w-mini button[data-z="home"]')
+                try: pg.wait_for_function("!document.getElementById('house').hidden", timeout=12000)
+                except Exception: pass
+                pg.wait_for_timeout(600)
+                pg.wait_for_timeout(300)
+                check(pg.evaluate("!document.getElementById('house').hidden") and not [e for e in errs if e.startswith(tag)], tag + ' 进得了家、没有报错：' + str([e for e in errs if e.startswith(tag)][:2]))
+                # 开箱：点箱子 → 列表里有新奖状、新伙伴的小图 → 收下，接着连弹的奖状大图都关掉
+                if pg.locator('#h_lootC').count() and pg.is_visible('#h_lootC'):
+                    pg.click('#h_lootC'); pg.wait_for_timeout(1800)
+                    if hard: check(pg.locator('#h_lootL canvas').count() > 0, tag + f' 开箱列表有小图（{pg.locator("#h_lootL canvas").count()} 个）')
+                    if pg.is_visible('#h_lootOk'): pg.click('#h_lootOk'); pg.wait_for_timeout(500)
+                for _ in range(4):
+                    if pg.evaluate("!document.getElementById('h_certV').hidden"): pg.evaluate("document.getElementById('h_certV').click()"); pg.wait_for_timeout(300)
                 st = pg.evaluate("(() => { const H = HOME, S = __sm.S, lv = H.CERTS.filter(c => c.lv), sh = lv.filter(c => H.shown(S, c)); return {shown: sh.length, got: sh.filter(c => S.home.got[c.id]).length, tC: document.getElementById('h_tC').textContent, tM: document.getElementById('h_tM').textContent, nav: [...document.querySelectorAll('#h_nav button')].map(b => b.textContent)}; })()")
                 want_lv = {0: 0, 8: 8, 15: 22}[hard]
                 check(st['shown'] == want_lv, tag + f' 显示的三四年级奖状 {st["shown"]} 张（应 {want_lv}）')

@@ -186,5 +186,5 @@ test('家：三四年级伙伴图鉴的说明、「新本领」导航有英文�
   assert.equal(txt('第 4–5 级新本领全部点亮后解锁').indexOf('unlock') > 0, true);
   assert.ok(!I18N.ZH.test(txt('学会了第 15 级的全部新本领，全部隔 3 天还做对')));
   assert.equal(txt('新本领'), 'New skills');
-  ['林间小鹿', '驼驼', '斑斑豹', '雪球熊', '墨墨章鱼', '岩角羊', '火尾蜥', '铠甲虫', '紫夜鸮', '云鲸', '小飞龙'].forEach(n => assert.ok(!I18N.ZH.test(txt(n)), n));
+  ['林间小鹿', '驼驼', '斑斑豹', '冰冰熊', '泡泡海马', '岩角羊', '火尾蜥', '铜壳虫', '紫夜鸮', '云鲸', '小飞龙'].forEach(n => assert.ok(!I18N.ZH.test(txt(n)), n));
 });
