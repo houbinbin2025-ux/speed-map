@@ -236,7 +236,7 @@
     }
     const box = v => `<b class="vfillv">${v}</b>`;
     const full = p.dp ? (p.ans / 10 ** p.dp).toFixed(p.dp) : p.ans;
-    if (p.kind === 'fill' && p.ahtml) return {html: `<div class="vls"><div>${p.ahtml}</div></div>`, steps: []};   // 页面传进来的整式（分数上下结构，render.js fr）
+    if (p.kind === 'fill' && p.noWorked) return {html: '', steps: []};   // 分数题：讲解里已经是上下结构的整式，不再重复一张「正确写法」（E 核对第 5 条）
     if (p.kind === 'fig') return {html: '', steps: []};
     if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : full)) : p.text.replace(/=\s*$/, '= ' + box(full))}</div></div>`, steps: []};
     if (p.kind === 'word') return {html: '', steps: []};
@@ -335,6 +335,7 @@
 .vls{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:48px}.vls .vfillv{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;padding:0 6px;font-weight:400}
 .vq .vres{position:absolute;right:0;top:0;bottom:0;width:55%;background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
 .vq .vres.show{transform:none}
+.vq.vres-on .vboard .vbq,.vq.vres-on .vboard .vrow:has(.vgrid){display:none}.vq.vres-on .vboard:not(.vb-step){width:max-content;min-width:520px}.vq.vres-on.vres-wide .vres{width:42%}   /* 递等式的行是孩子写在画布上的，不能压窄（字会变形）：改为讲解栏让出 10% */   /* 写错后：蓝框题左边只留孩子写的（递等式的行、答案格），题面和草稿收起，放大看得清（E 核对第 2 条、台账第 16 条） */
 .vq .vres .explain{color:#e6e3da}
 #qplay #qWide .vq .vres .explain{display:flex;flex-direction:column;gap:8px;align-items:stretch}   /* 宽版讲解的两栏规则（index.html #qplay.wide #qWide .explain）不用在讲解栏里：看图题的图会被挤进 0 宽的一栏 */
 .vq .vres .vresc{flex:1;min-height:0;overflow-y:auto}.vq .vres .vresi{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
@@ -429,7 +430,7 @@
         const can = plan(p).steps.length > 0;
         r.innerHTML = `<div class="vresc"><div class="vresi"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div></div><div class="vfoot"></div>`;
         if (can) r.querySelector('.vstep').onclick = onStep;
-        box.querySelector('.vside').style.display = 'none';   // 答完右边按钮用不上了，让出地方给讲解栏和孩子的竖式
+        box.querySelector('.vside').style.display = 'none'; box.classList.add('vres-on'); if (p.kind === 'step') box.classList.add('vres-wide');   // 答完右边按钮用不上了，让出地方给讲解栏和孩子的竖式
         r.classList.add('show'); if (root.I18N && root.I18N.flush) root.I18N.flush(); fitNow();   // 英文日先翻好再量
         return r.querySelector('.vfoot');
       },

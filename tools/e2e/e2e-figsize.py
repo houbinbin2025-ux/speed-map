@@ -29,6 +29,11 @@ with sync_playwright() as p:
             check(m['cell'] >= 60, f'{name} {id} 答案格 {m["cell"]} 点（≥ 60）')
             check(m['font'] >= 24, f'{name} {id} 题干 {m["font"]} 点（≥ 24）')
             check(fit_ok(pg), f'{name} {id} 整块放得下')
+            # 写错后：左边孩子写的（标签、答案格）还看得清（E 核对第 2 条、台账第 16 条）
+            pg.click('.vdunno'); pg.wait_for_timeout(700)
+            w = pg.evaluate("""(k) => { const f = document.querySelector('.vfit'), sc = f.getBoundingClientRect().width / f.offsetWidth, lab = f.querySelector('.vlab'), cell = f.querySelector('.vcell');
+              return {label: Math.round(parseFloat(getComputedStyle(lab).fontSize) * sc * k), cell: Math.round(cell.getBoundingClientRect().width * k), inside: cell.getBoundingClientRect().right <= document.querySelector('.vres').getBoundingClientRect().left + 1}; }""", k)
+            check(w['label'] >= 12 and w['cell'] >= 60 and w['inside'], f'{name} {id} 写错后左边：标签 {w["label"]} 点（≥ 12）、答案格 {w["cell"]} 点（≥ 60）、不被讲解栏盖住')
             if id in ('dock:g8:chart', 'dock:g7:bar', 'dock:g11:fracbar', 'garden:g4:pyr', 'garden:g7:magic', 'dock:g5:tree', 'dock:g7:cipher', 'dock:g7:riddle'): pg.screenshot(path=str(out / f'{name}-{id.replace(":", "_")}.png'))
         pg.close()
     b.close()

@@ -165,11 +165,10 @@ test('分数题和看图题都进蓝框：分数按填空、看图题按看图�
       assert.ok(html.includes('class="q"') && (html.match(/class="vcell"/g) || []).length === p.n, id + ' 题面在上、答案格对');
     });
   });
-  // 看图题：正确写法不重复（讲解里有算式）；分数题：正确写法用页面传进来的上下结构整式
+  // 看图题、分数题：正确写法不重复（讲解里已有算式 / 上下结构的整式，E 核对第 5 条）
   const f = V.parse({id: 'dock:g7:bar', q: K.rawPool('dock:g7:bar')[0].q, ans: K.rawPool('dock:g7:bar')[0].ans}, 2);
   assert.equal(V.worked(f, false), '');
   const x = K.rawPool('speed:g12:fracadd')[0], p = V.parse({id: 'speed:g12:fracadd', q: x.q, ans: x.ans}, 2);
-  p.ahtml = R.fr(x.q.text, `<b>${x.ans}</b>`);
-  const w = V.worked(p, false); assert.ok(w.includes('class="frac"') && w.includes(`<b>${x.ans}</b>`), '正确写法是上下结构的整式');
+  p.noWorked = true; assert.equal(V.worked(p, false), '', '分数题不再重复一张正确写法');
   assert.ok(R.hasFr('2/4 − 1/4 = □/4') && !R.hasFr('3 / 10 题'));
 });

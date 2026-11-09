@@ -43,7 +43,7 @@ with sync_playwright() as p:
                 c = pg.locator('.vcell'); write(pg, c.nth(0), (it['ans'] + 1) % 10 if it['ans'] < 9 else 1); pg.click('.vdone'); pg.wait_for_timeout(600)
                 if pg.locator('.vres.show').count() == 0: check(False, f'{tag} 写错出讲解栏'); continue
                 rs = pg.evaluate(RES); check(rs['over'] <= 0 and not rs['clip'] and hit(pg, '.vres #qNext'), f'{tag} 写错：讲解栏不用滑、「继续」点得到：{rs}')
-                if id in FRAC: check(rs['frac'] >= 1 and str(it['ans']) in pg.inner_text('.vres .vwk'), f'{tag} 正确写法是上下结构的整式')
+                if id in FRAC: check(rs['frac'] >= 1 and pg.locator('.vres .vwk').count() == 0, f'{tag} 讲解里是上下结构的整式，不再重复一张正确写法')
                 if not en and id in (FRAC + FIG[:2]): pg.screenshot(path=str(out / f'{name}-{id.replace(":", "_")}-wrong.png'))
                 pg.click('.vres #qNext'); pg.wait_for_timeout(700)
             pg.close()
