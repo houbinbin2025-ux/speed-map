@@ -41,13 +41,17 @@ SAMPLER = r"""(() => {
   };
   const area = el => { let e = el; while (e.parentElement && e.parentElement !== document.body) e = e.parentElement; return e.id ? '#' + e.id : (e.className && e.className.baseVal === undefined ? '.' + String(e.className).split(' ')[0] : e.tagName.toLowerCase()); };
   const sig = el => { const a = el.closest('[id]'), own = el.tagName.toLowerCase() + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : ''); return (a && a !== el ? '#' + a.id + ' ' : '') + (el.id ? '#' + el.id : own); };
+  // 分档（和 v2/index.html 的 txtFloor 同一口径，docs/视觉规范.md 2.3）
+  const BODY_ROLE = '.why,.whysay,.nbsay,.nbthink,.qnote,.dfoot,.fwcard span,.padtip,.hint-pop,.badline,#leadSub,#hint';
   const tierOf = (el, t) => {
-    const inQ = el.closest(QSEL), num = /^[\s\d+\-−×x÷=.,/%%:：✓✗★·…()（）□?？<>]{1,6}$/.test(t);
-    const n = (t.match(CJK) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length, sentence = n >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, ''));   // 句子：中文 ≥ 9 字、英文 ≥ 6 词或带标点（中英判法一致，名字和短标签算说明）
-    if (inQ) return el.closest(MAIN) && !el.closest('svg') && !el.closest('.vs') ? '题目' : num ? '角标' : sentence ? '正文' : '说明';   // 题区：题干和讲解的句子算正文，图里的短标注算说明、数字刻度算角标
-    if (num && t.replace(/\s/g, '').length <= 4) return '角标';
-    const bt = el.closest(BTN); if (bt) return bt === el || /^(B|STRONG)$/.test(el.tagName) ? '按钮' : '说明';   // 按钮里的副标题小字算说明
-    if (el.closest('.qtag,.chip,.chip2,.zsk,.mq,.tag,.dcap')) return '说明';   // 标签、小签：不管几个词都算说明
+    const inQ = el.closest(QSEL), numeric = /^[\s\d+\-−×x÷=.,/%%:：✓✗★·…()（）□?？<>]+$/.test(t), short = t.replace(/\s/g, '').length <= 4;
+    const n = (t.match(CJK) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length, sentence = n >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, ''));
+    if (inQ && el.closest(MAIN) && !el.closest('svg') && !el.closest('.vs')) return '题目';   // 主算式、选项、竖式格
+    const bt = el.closest(BTN); if (bt && (bt === el || /^(B|STRONG)$/.test(el.tagName))) return '按钮';
+    if (numeric && short) return '角标';   // 1–4 位数字、符号
+    if (el.closest(BODY_ROLE)) return '正文';   // 讲解、题干、提示：不管多长都按正文
+    if (bt) return '说明';   // 按钮里的副标题小字
+    if (el.closest('.qtag,.chip,.chip2,.zsk,.mq,.tag,.dcap')) return '说明';   // 标签、小签
     return sentence ? '正文' : '说明';
   };
   const measure = () => {
@@ -151,7 +155,7 @@ def main():
         return drive(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6:])
     root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
     only = next((a.split('=', 1)[1] if '=' in a else sys.argv[sys.argv.index(a) + 1] for a in sys.argv if a.startswith('--only')), 'phone-zh,phone-en,ipad-zh,ipad-en').split(',')
-    rows = []
+    rows, broken, cover = [], [], {}
     for combo in only:
         prof, lang = combo.split('-')
         if '--skip-a' not in sys.argv:
@@ -162,10 +166,15 @@ def main():
             for g, args in GUIDES:
                 f = out / f'raw-{combo}-{g}.json'; shots = out / 'shots' / combo / g.replace('.py', ''); shots.mkdir(parents=True, exist_ok=True)
                 cmd = [sys.executable, str(HERE / 'fontsize.py'), '--drive', prof, lang, str(f), g] + [s.replace('{root}', str(root)).replace('{out}', str(shots)) for s in args]
-                t0 = time.time()
-                try: subprocess.run(cmd, cwd=root, timeout=900, capture_output=True)
-                except subprocess.TimeoutExpired: print(f'{combo} {g} 超时（只影响覆盖面）', flush=True)
+                t0 = time.time(); why = ''
+                try:
+                    r = subprocess.run(cmd, cwd=root, timeout=1800, capture_output=True, text=True)
+                    if '导游脚本中途出错' in (r.stderr or ''): why = '中途出错：' + r.stderr.strip().splitlines()[-1][:160]
+                except subprocess.TimeoutExpired: why = '超时（30 分钟）'
                 b = json.loads(f.read_text()) if f.exists() else []
+                if not b and not why: why = '一个字都没量到'
+                if why: broken.append(f'{combo} {g}：{why}')   # 导游没走完 = 这部分页面没量，审查不能算通过（审查 R1）
+                for x in b: cover.setdefault((combo, g), {}).setdefault(x['area'], 0); cover[(combo, g)][x['area']] += 1
                 for x in b: x.update(combo=combo, part='页面', guide=g)
                 rows += b; print(f'{combo} {g} 量了 {len(b)} 种 · {time.time() - t0:.0f}s', flush=True)
     bad = [x for x in rows if x['pt'] < MIN[x['tier']] * 0.98]   # 2% 容差：缩放比按整数布局宽算，有舍入
@@ -176,8 +185,9 @@ def main():
         k = (x['combo'], x['area'], x['sig'], x['tier'])
         if k not in uniq or x['pt'] < uniq[k]['pt']: uniq[k] = x
     bad = sorted(uniq.values(), key=lambda x: (x['combo'], x['area'], x['tier'], x['pt']))
-    (out / 'report.json').write_text(json.dumps({'标准pt': MIN, '设备': {k: v['k'] for k, v in PROFILES.items()}, '量过': len(rows), '不达标': bad}, ensure_ascii=False, indent=1))
-    lines = [f'量过 {len(rows)} 种文字（去重后），不达标 {len(bad)} 处（同一元素同一档算一处）']
+    (out / 'report.json').write_text(json.dumps({'标准pt': MIN, '设备': {k: v['k'] for k, v in PROFILES.items()}, '量过': len(rows), '不达标': bad, '导游没走完': broken,
+        '覆盖': {f'{c} {g}': a for (c, g), a in cover.items()}}, ensure_ascii=False, indent=1))
+    lines = [f'量过 {len(rows)} 种文字（去重后），不达标 {len(bad)} 处（同一元素同一档算一处）；导游没走完 {len(broken)} 个'] + [f'  ！{x}' for x in broken]
     by = {}
     for x in bad: by.setdefault(x['combo'], {}).setdefault(x['tier'], 0); by[x['combo']][x['tier']] += 1
     for c, d in sorted(by.items()): lines.append(f'  {c}: ' + '、'.join(f'{t} {n}' for t, n in d.items()))
@@ -186,6 +196,8 @@ def main():
     lines.append('按页面：' + '、'.join(f'{a} {n}' for a, n in sorted(areas.items(), key=lambda z: -z[1])))
     for x in bad[:400]: lines.append(f"  [{x['combo']}] {x['tier']} {x['pt']}pt < {MIN[x['tier']]}（css {x['css']}px ×缩放 → {x['px']}px）{x['area']} {x['sig']} 「{x['text'][:30]}」")
     (out / 'summary.txt').write_text('\n'.join(lines)); print('\n'.join(lines[:12]))
-    sys.exit(1 if bad else 0)
+    lines.append('覆盖（每个导游量到的页面和文字种数）：' + '；'.join(f'{c} {g}: ' + ' '.join(f'{a}×{n}' for a, n in sorted(v.items())) for (c, g), v in sorted(cover.items())))
+    (out / 'summary.txt').write_text('\n'.join(lines))
+    sys.exit(1 if bad or broken else 0)
 
 if __name__ == '__main__': main()

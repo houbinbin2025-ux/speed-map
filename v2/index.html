@@ -36,7 +36,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .btn{min-height:44px;padding:0 14px;font-size:17px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .big{min-height:56px;min-width:96px;font-size:17px;font-weight:900;border-width:3px}
 .go{background:var(--grass);color:#fff;border:3px solid #000;box-shadow:inset -4px -4px 0 rgba(0,0,0,.3)}
-.muted{font-size:15px;color:var(--mute)}div.muted{font-size:17px}#calib .pbar .muted,#l2tip{font-size:17px}
+.muted{font-size:15px;color:var(--mute)}div.muted{font-size:17px}#parent .btn,#habit .btn,#bankv .btn,#mistp .btn,#ovQ .btn{font-size:15px}#parent .muted,#habit .muted,#bankv .muted,#mistp .muted,#ovQ .muted{font-size:13px}   /* 家长区、题库保持原来的字号（字号审查不管大人看的页面） */#calib .pbar .muted,#l2tip{font-size:17px}
 .num{font-family:var(--f-num);font-weight:900;font-variant-numeric:tabular-nums}
 
 /* 首页 */
@@ -258,7 +258,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
 .qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:15px;font-weight:700}
 /* 碎片的火苗、能量、小目标浮在练习页右上角（写字板右上角里面），不占顶栏和题签的位置（捣蛋鬼第 1 轮第 5 条；放题签行会把题签截掉，审查 R1） */
-#gemToast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translateX(-50%);z-index:60;background:var(--stone);border:3px solid #000;box-shadow:0 4px 0 rgba(0,0,0,.35);padding:8px 16px;font-size:17px;font-weight:800;pointer-events:none;max-width:calc(100% - 32px);text-align:center}#gemToast[hidden]{display:none}#gemToast.mid{top:45%}body:has(#forgeWarn:not([hidden])) #gemToast,body:has(#exitOv:not([hidden])) #gemToast,body:has(#restOv:not([hidden])) #gemToast{display:none}   /* 弹窗打开时提示条让开，不压住说明句（中控 11-09） */
+#gemToast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translateX(-50%);z-index:60;background:var(--stone);border:3px solid #000;box-shadow:0 4px 0 rgba(0,0,0,.35);padding:8px 16px;font-size:17px;font-weight:800;pointer-events:none;max-width:calc(100% - 32px);text-align:center}#gemToast[hidden]{display:none}#gemToast.mid{top:45%}body:has(#forgeWarn:not([hidden])) #gemToast,body:has(#exitOv:not([hidden])) #gemToast,body:has(#restOv:not([hidden])) #gemToast,body:has(.ovl:not([hidden])) #gemToast{display:none}   /* 弹窗打开时提示条让开，不压住说明句（中控 11-09） */
 #btnForge.spent{opacity:.55}   /* 锻造室今天 5 次用完 */
 #qFeel{position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:calc(var(--padR) + 8px);z-index:20;pointer-events:none}
 /* 宽版（选择题、iPad 竖式）没有写字板，顶栏铺满整行，右上角是矿石数：挪到题签那一行的右端 */
@@ -269,7 +269,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #qplay:not(.wide):has(#qCheck:not([hidden])) #qFeel{top:calc(env(safe-area-inset-top) + 94px)}
 #qplay:has(#qPadTip:not([hidden]), #qConfirm:not([hidden]), #qGhost:not([hidden])) #qFeel, #qplay.wide:has(#qWarn:not([hidden])) #qFeel{visibility:hidden}   /* 窄屏宽版：题签右边给碎片条留位置，长题签换行，不钻到下面 */
 #qQuit{flex:none;white-space:nowrap}#qplay .qtop .tbar{min-width:70px}
-.qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}.qbody.scrolly{justify-content:safe center;overflow-y:auto;overflow-x:hidden}
+.qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}.qbody.scrolly{justify-content:safe center;overflow-y:auto;overflow-x:hidden}.qbody.scrolly:not(.atend){-webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(to bottom,#000 calc(100% - 36px),transparent)}   /* 下面还有：底部渐隐，滚到底就不隐 */
 .qnote{font-size:17px;color:var(--mute)}
 .qfoot{display:flex;gap:10px;align-items:center;min-height:56px}
 .badline{font-size:22px;font-weight:900;color:var(--bad);flex:none}.badline s{font-size:28px;text-decoration-thickness:3px}
@@ -1674,20 +1674,31 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
   }
   // 题面区兜底：内容比左栏宽 / 高就整体缩小，不钻到写字板下面
-  const txtFloor = t => { const cjk = (t.match(/[㐀-鿿]/g) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length;
-    return /^[\s\d+\-−×÷=.,/%:?？□…()（）]+$/.test(t) ? 13 : cjk >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, '')) ? 17 : 15; };
+  // 孩子看到的字的下限（docs/视觉规范.md 2.3，和 tools/e2e/fontsize.py 同一口径）：讲解、题干、提示这些「说话」的地方一律按正文 17；
+  // 其余按文字判——纯数字和符号（1–4 位）13，句子 17（中文 ≥ 9 字、英文 ≥ 6 个词、带中文句读或以 . ? ! 结尾），短标签 15
+  const BODY_ROLE = '.why,.whysay,.nbsay,.nbthink,.qnote,.dfoot,.fwcard span,.padtip,.hint-pop,.badline,#leadSub,#hint';
+  const txtFloor = (t, el) => { if (/^[\s\d+\-−×÷=.,/%:?？□…()（）]+$/.test(t)) return t.replace(/\s/g, '').length <= 4 || !(el && el.closest(BODY_ROLE)) ? 13 : 17;
+    if (el && el.closest(BODY_ROLE)) return 17;
+    const cjk = (t.match(/[㐀-鿿]/g) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length;
+    return cjk >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, '')) ? 17 : 15; };
+  // 屏幕上实际的缩放：自己和各级祖先的 zoom × transform。不用 getBoundingClientRect / getScreenCTM——iPad 的 WebKit 里
+  // 它们不含 CSS zoom（11-10 模拟器实测）；读到的字号 × 各级 zoom 在 Chromium 和 WebKit 里都等于屏幕上的字号
+  const effScale = el => { let k = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = getComputedStyle(e); k *= parseFloat(c.zoom) || 1;
+    if (c.transform && c.transform !== 'none') { const m = c.transform.match(/matrix\(([^)]+)\)/); if (m) { const v = m[1].split(',').map(parseFloat); k *= Math.hypot(v[2], v[3]); } } } return k; };
+  // 图（svg.fig2）自己的布局缩放：布局尺寸 ÷ viewBox（默认等比放进框里），两种浏览器的 clientWidth/Height 都不含 zoom
+  const svgScale = svg => { const vb = svg.viewBox && svg.viewBox.baseVal; const lay = vb && vb.width && vb.height ? Math.min(svg.clientWidth / vb.width, svg.clientHeight / vb.height) : 1; return (lay || 0) * effScale(svg); };
   function fitBody() {
     I18N.flush();   // 先翻好再量尺寸
     const b = $('qBody'); b.style.zoom = ''; b.classList.remove('scrolly'); b.querySelectorAll('[data-fz]').forEach(e => { e.style.zoom = ''; delete e.dataset.fz; }); b.querySelectorAll('.fig2w').forEach(e => { e.style.minHeight = ''; e.style.maxHeight = ''; });
     if (b.hidden || !b.clientWidth) return;
     // 缩小有底线（docs/视觉规范.md 2.3，Ben 11-09 嫌字小）：缩完每个字不低于它那一档的下限
-    const floorOf = (el, t) => el.closest('.eq') && !el.closest('svg') ? 22 : txtFloor(t);
+    const floorOf = (el, t) => el.closest('.eq') && !el.closest('svg') ? 22 : txtFloor(t, el);
     const lowest = root => { let lo = 0.5;   // 这块里最「经不起缩」的字：下限 ÷ 现在的显示字号
       for (const el of [root, ...root.querySelectorAll('*')]) {
         if (el.closest('svg') && el.tagName !== 'text') continue;
         const t = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.data).join('').trim(); if (!t) continue;
-        const css = parseFloat(getComputedStyle(el).fontSize), r = el.getBoundingClientRect();
-        const sc = el.tagName === 'text' && el.getScreenCTM ? Math.hypot(el.getScreenCTM().c, el.getScreenCTM().d) : el.offsetWidth ? r.width / el.offsetWidth : 1;
+        const css = parseFloat(getComputedStyle(el).fontSize), sv = el.tagName === 'text' && el.closest('svg');
+        const sc = sv ? svgScale(sv) : effScale(el);
         lo = Math.max(lo, floorOf(el, t) / (css * sc));
       }
       return lo; };
@@ -1702,27 +1713,29 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const z = Math.max(k, Math.min(1, lowest(b)));
     if (z < 0.99) b.style.zoom = z.toFixed(3);
     if (z > k + 0.005) {
-      b.classList.add('scrolly');
-      b.querySelectorAll('.fig2w>svg.fig2').forEach(svg => { const vb = svg.viewBox.baseVal, m = svg.getScreenCTM(); if (!vb || !vb.height || !m) return;
-        let need = 0; svg.querySelectorAll('text').forEach(t => { need = Math.max(need, txtFloor(t.textContent.trim()) / (+(t.dataset.fs0 || parseFloat(getComputedStyle(t).fontSize)))); });
-        const w = svg.parentElement.clientWidth, sNow = Math.hypot(m.c, m.d) / z, want = Math.min(need, w / vb.width);   // 宽度够才长高；宽度不够的交给 fitSvgText 放大字
+      b.classList.add('scrolly'); b.classList.remove('atend'); b.scrollTop = 0;
+      b.querySelectorAll('.fig2w>svg.fig2').forEach(svg => { const vb = svg.viewBox.baseVal; if (!vb || !vb.height) return;
+        let need = 0; svg.querySelectorAll('text').forEach(t => { need = Math.max(need, txtFloor(t.textContent.trim(), t) / (+(t.dataset.fs0 || parseFloat(getComputedStyle(t).fontSize)))); });
+        const w = svg.parentElement.clientWidth, sNow = svgScale(svg) / z, want = Math.min(need, w / vb.width);   // 宽度够才长高；宽度不够的交给 fitSvgText 放大字
         if (want > sNow * 1.01) { svg.parentElement.style.minHeight = Math.min(320, vb.height * want / z).toFixed(0) + 'px'; svg.parentElement.style.maxHeight = 'none'; } });
     }
     fitSvgText();
   }
   new MutationObserver(fitBody).observe($('qBody'), {childList: true});
+  $('qBody').addEventListener('scroll', e => { const b = e.currentTarget; b.classList.toggle('atend', b.scrollTop + b.clientHeight >= b.scrollHeight - 2); }, {passive: true});
   // 图里的字：①缩放后低于下限就单独放大（docs/视觉规范.md 2.3，Ben 11-09 嫌字小），放大的标签最多比原来宽 1/4，再宽就横向压紧；
   // ②data-fit = 最多多宽：翻成英文后太长就横向压紧，不裁不叠（第二批代码审查 R2）
   function fitSvgText() {
     document.querySelectorAll('svg.fig2').forEach(svg => { try {
       if (!svg.getClientRects().length || svg.closest('.mq,.bq,#parent,#bankv,#ovQ')) return;   // 错题小签里的缩略图只认形状，不算
+      if (svg.dataset.vb0 === undefined) svg.dataset.vb0 = svg.getAttribute('viewBox') || ''; else if (svg.dataset.vb0) svg.setAttribute('viewBox', svg.dataset.vb0);   // 每次从原图算起（转屏、换尺寸不留空白）
       for (let pass = 0, prev = 0; pass < 4; pass++) {   // 拆行后图变高、在限高的框里会再缩一点：算到缩放不再变为止
-      const m = svg.getScreenCTM(); const sc = m ? Math.hypot(m.c, m.d) : 0; if (!sc || Math.abs(sc - prev) < sc * 0.01) break; prev = sc;
+      const sc = svgScale(svg); if (!sc || Math.abs(sc - prev) < sc * 0.01) break; prev = sc;
       svg.querySelectorAll('text').forEach(t => {
         t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
         if (t.dataset.split && !t.dataset.fs0) delete t.dataset.split;
         if (!t.dataset.fs0) { t.dataset.fs0 = parseFloat(getComputedStyle(t).fontSize); t.dataset.w0 = t.getComputedTextLength(); }
-        const fs0 = +t.dataset.fs0, need = txtFloor(t.textContent.trim()) * 1.02 / sc, big = fs0 < need;
+        const fs0 = +t.dataset.fs0, need = txtFloor(t.textContent.trim(), t) * 1.02 / sc, big = fs0 < need;
         t.style.fontSize = big ? need.toFixed(2) + 'px' : '';
         const max = Math.min(t.dataset.fit ? +t.dataset.fit : Infinity, big ? +t.dataset.w0 * 1.25 : Infinity);
         if (t.getComputedTextLength() <= max) return;
@@ -1736,9 +1749,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         }
         if (t.dataset.split) {
           t.querySelectorAll('tspan').forEach(sp => { sp.removeAttribute('textLength'); if (sp.getComputedTextLength() > max) { sp.setAttribute('textLength', max); sp.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } });
-          const vb = svg.viewBox.baseVal, bb = svg.getBBox(); if (vb && vb.height && bb.y + bb.height > vb.y + vb.height) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${Math.ceil(bb.y + bb.height - vb.y + 4)}`);
         } else { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
       });
+      if (svg.querySelector('text[data-split]')) { const vb = svg.viewBox.baseVal, bb = svg.getBBox(); if (vb && vb.height && bb.y + bb.height > vb.y + vb.height) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${Math.ceil(bb.y + bb.height - vb.y + 4)}`); }   // 拆成两行的标签：图加高到装得下
       }
     } catch (e) {} });
   }

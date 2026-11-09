@@ -16,6 +16,7 @@ SCAN = """async ([n]) => { const {K, R} = window.__sm, $ = id => document.getEle
     const nt = $('qNote'); nt.textContent = v.note || ''; I18N.flush(); if (nt.getBoundingClientRect().right > lim.r + 1) bad.push({id: inst.id, what: '提示', cls: 'qnote', right: Math.round(nt.getBoundingClientRect().right), lim: Math.round(lim.r), bottom: 0});
     const sy = $('qBody').classList.contains('scrolly'), qb = $('qBody').getBoundingClientRect();   // 题面在栏内滚动（字不再缩，docs/视觉规范.md 2.3）：只要滚动区本身在屏内，里面的不算超出底部
     if (sy && qb.bottom > innerHeight + 1) bad.push({id: inst.id, what: what + '（滚动区）', cls: 'qbody', right: Math.round(qb.right), lim: Math.round(lim.r), bottom: Math.round(qb.bottom)});
+    { const w = sy && $('qBody').querySelector('.why'); if (w && w.getBoundingClientRect().bottom > qb.bottom + 1) bad.push({id: inst.id, what: what + '（讲解句不在滚动区可见范围）', cls: 'why', right: 0, lim: 0, bottom: Math.round(w.getBoundingClientRect().bottom)}); }   // 同 e2e-fun / e2e13 / e2e2b（审查 R1）
     for (const el of $('qBody').querySelectorAll('*')) { const b = el.getBoundingClientRect(); if (!b.width) continue;
       if (b.right > lim.r + 1 || b.left < -1 || (!sy && b.bottom > innerHeight + 1)) { bad.push({id: inst.id, what, cls: el.className || el.tagName, right: Math.round(b.right), lim: Math.round(lim.r), bottom: Math.round(b.bottom)}); return; } } };
   for (const id of Object.keys(K.ITEM)) { const seen = new Set();
