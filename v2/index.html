@@ -258,6 +258,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
 .qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:14px;font-weight:700}
 /* 碎片的火苗、能量、小目标浮在练习页右上角（写字板右上角里面），不占顶栏和题签的位置（捣蛋鬼第 1 轮第 5 条；放题签行会把题签截掉，审查 R1） */
+#gemToast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translateX(-50%);z-index:60;background:var(--stone);border:3px solid #000;box-shadow:0 4px 0 rgba(0,0,0,.35);padding:8px 16px;font-size:16px;font-weight:800;pointer-events:none;max-width:calc(100% - 32px);text-align:center}#gemToast[hidden]{display:none}#gemToast.mid{top:45%}
+#btnForge.spent{opacity:.55}   /* 锻造室今天 5 次用完 */
 #qFeel{position:absolute;top:calc(env(safe-area-inset-top) + 16px);right:calc(var(--padR) + 8px);z-index:20;pointer-events:none}
 /* 宽版（选择题、iPad 竖式）没有写字板，顶栏铺满整行，右上角是矿石数：挪到题签那一行的右端 */
 #qplay.wide #qFeel{top:calc(env(safe-area-inset-top) + 62px);right:var(--padR)}
@@ -735,7 +737,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <canvas id="forgeScene" class="px"></canvas>
   <div id="forgeList"></div>
   <div class="forgeMid"><div class="fmode"><button id="fmGem" class="on">炼宝石</button><button id="fmBig">炼大碎片</button></div><div id="forgeSlots"></div><button class="gobig" id="forgeGo">锻造</button><div id="forgeMsg"></div></div>
-  <div class="forgeSide"><div id="forgeToday"></div><button class="btn" id="forgeClaim" hidden>领宝石</button><button class="btn" id="forgeBack">返回</button></div>
+  <div class="forgeSide"><div id="forgeToday"></div><div id="forgeLeft" class="muted" style="font-size:14px;font-weight:700"></div><button class="btn" id="forgeClaim" hidden>领宝石</button><button class="btn" id="forgeBack">返回</button></div>
   <div id="forgeWarn" hidden><div class="fwcard"><b>碎片不够，炼不出宝石</b><span>开始锻造后，炉子里的碎片都会变成废料，不退回</span><div class="gembtns"><button class="btn go" id="forgeWarnBack">先不炼</button><button class="btn" id="forgeWarnGo">仍然锻造</button></div></div></div>
 </div>
 
