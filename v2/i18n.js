@@ -488,7 +488,7 @@
   // 1–99 的中文数字（带分数的假分数分子会到 49）：十一、二十二、四十九
   const CNUM99 = '[一二三四五六七八九]?十[一二三四五六七八九]?|[一二三四五六七八九十]';
   const cnn = s => { if (CNN[s]) return CNN[s]; const m = /^([一二三四五六七八九])?十([一二三四五六七八九])?$/.exec(s); return m ? (m[1] ? CNN[m[1]] : 1) * 10 + (m[2] ? CNN[m[2]] : 0) : 0; };
-  const FCN = `(${CNUM99}|几)分之(${CNUM99}|几)`;
+  const FCN = `(十[一二]|[一二三四五六七八九十]|几)分之(${CNUM99}|几)`;   // 分母只到十二（ORD 序数词表到 twelfth），分子到 99
   const oneW = k => ONE[k] || String(k);
   const frEn = (d, n) => d === '几' ? `${oneW(cnn(n))} out of how many` : n === '几' ? `how many ${ORD[cnn(d)][1]}` : `${oneW(cnn(n))} ${ORD[cnn(d)][cnn(n) === 1 ? 0 : 1]}`;
   const frAll = t => t.replace(new RegExp(FCN, 'g'), (m, d, n) => frEn(d, n));

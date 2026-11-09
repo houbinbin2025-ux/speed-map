@@ -93,7 +93,10 @@
   const HARD = [];
   // 第三批趣味题的保险（说明书-第三批 §4.3「关掉 / 退回」）：每日趣味题时间上限；= 0 时 fun 技能完全不登记（不进 HARD / BY / ITEM），
   // 练习、挑战、开级、allOut 都一道不出，留在错题本里的趣味错题查不到题型就不回炉。和 A、C 同一次上线时改成 90
-  const FUN_SEC = (typeof process === 'object' && process.env && Number(process.env.FUN_SEC) > 0) ? Number(process.env.FUN_SEC) : 0;   // 网页里永远是 0；node 测试可用 FUN_SEC=90 npm test 提前跑打开后的路径
+  const FUN_SEC = (typeof process === 'object' && process.env && Number(process.env.FUN_SEC) > 0) ? Number(process.env.FUN_SEC) : 0;
+  // 2b-2 分步作答（一题几个空）：B 的多格答题界面做完前关着——两个技能不登记、不出题、级别说明不写「带分数」、讲解卡不出；题库数据照样在 hardbank。
+  // 网页里永远是 false；B 接好界面的那次提交改成 true。node 测试可用 MULTI_CELL=1 npm test 提前跑打开后的路径
+  const MULTI_CELL = typeof process === 'object' && !!process.env && process.env.MULTI_CELL === '1';   // 网页里永远是 0；node 测试可用 FUN_SEC=90 npm test 提前跑打开后的路径
   const funAllowed = (o, sec) => !o.fun || sec > 0;
   const FUN = [];   // 趣味技能：登记进 BY / ITEM（内容、题库页、测试查得到），但永远不进 HARD —— 练习、挑战、开级、allOut 都从 HARD 取题；只走单独的插入通道（engine，FUN_SEC > 0 才出）
   const hard = o => { const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; (s.fun ? FUN : HARD).push(s); };
@@ -145,7 +148,7 @@
   g2('dock', '分数读图', ['dock:g11:fracbar'], 'frac'); g2('speedH', '同分母加减', ['speed:g12:fracadd'], 'fracadd'); g2('cmp', '分数比大小', ['cmp:g12:fraccmp'], 'fraccmp', {input: 'pick'});
   g2('cmp', '同分子比大小', ['cmp:g15:fraccmp2'], 'fraccmp2', {input: 'pick'}); g2('speedH', '等值分数', ['speed:g15:equiv'], 'equiv');
   // 第二批 2b-2 分步作答（一题两个空）：ans 是各格拼起来的整数，q.cells 记每格几位；多格作答界面归 B（docs/方案-2b-2多格作答.md）
-  g2('speedH', '商和余数', ['speed:g10:divrem2'], 'rem'); g2('speedH', '假分数化带分数', ['speed:g15:mixed'], 'mixed');
+  if (MULTI_CELL) { g2('speedH', '商和余数', ['speed:g10:divrem2'], 'rem'); g2('speedH', '假分数化带分数', ['speed:g15:mixed'], 'mixed'); }
   // 第三批 3a 趣味题（说明书-第三批 §四）：fun = 趣味题，排课走单独的插入通道（B），挑战不选（C）；fastClass = 秒答类别「读题题」（B 的 fastClass() 先看它）
   const fun = (group, name, id, pre, concept, o) => g2(group, name, [id], concept, Object.assign({fun: true, fastClass: 'word', pre}, o));
   fun('garden', '数塔', 'garden:g4:pyr', ['bondH3', 'speed:L2:1', 'speed:L2:4']); fun('garden', '数塔（两位数）', 'garden:g7:pyr2', ['speedH2']); fun('garden', '幻方', 'garden:g7:magic', ['speedH2']);
@@ -201,7 +204,9 @@
   const SPEED_TOPIC = {1: '10 以内秒答', 2: '10 以内秒答', 3: '十几加减几', 4: '过十加减', 6: '进退位加减', 7: '进退位加减'};
   // 关掉趣味题（FUN_SEC = 0）时，只属于趣味技能的内容词不写进级别说明（说明 = 这一级实际出的内容）
   const funOnly = w => FUN.some(f => TOPIC[f.id] === w) && !Object.keys(TOPIC).some(id => TOPIC[id] === w && BY[id] && !BY[id].fun);
-  LEVELS = LEVEL_TOPICS.map(([name, topics0], i) => { const topics = FUN_SEC > 0 ? topics0 : topics0.filter(w => !funOnly(w)); return {n: i + 1, name, topics, what: topics.join('、')}; });
+  // 只属于没登记技能的内容词（MULTI_CELL 关着时的「带分数」）也不写进级别说明
+  const offOnly = w => Object.keys(TOPIC).some(id => TOPIC[id] === w) && !Object.keys(TOPIC).some(id => TOPIC[id] === w && BY[id]);
+  LEVELS = LEVEL_TOPICS.map(([name, topics0], i) => { const topics = (FUN_SEC > 0 ? topics0 : topics0.filter(w => !funOnly(w))).filter(w => !offOnly(w)); return {n: i + 1, name, topics, what: topics.join('、')}; });
   const topicOf = (s, lv) => s.speed ? SPEED_TOPIC[lv] : TOPIC[s.id];
   // ---------- 错题按知识点分组（家长页用，F 的 docs/方案-错题数据字段.md；中控 11-08）----------
   // 类别 → 技能；家长看得懂的说法，粒度参考 docs/原型/错题-家长视角。同一技能里题型知识点不同的，在 MIST_CAT_ITEM 按题型单独归。
@@ -232,6 +237,8 @@
     ['公倍数和公因数', ['g34:g15:lcm', 'g34:g15:gcd']],
     ['数塔和幻方', ['g34:g4:pyr', 'g34:g7:pyr2', 'g34:g7:magic']], ['植树和锯木头', ['g34:g5:tree', 'g34:g7:tree2', 'g34:g9:tree3', 'g34:g5:saw']], ['比一比排顺序', ['g34:g5:order']], ['猜数和算式谜', ['g34:g7:riddle', 'g34:g9:riddle2', 'g34:g7:cipher']],
   ];
+  // 没登记的技能（MULTI_CELL 关着时的分步作答）不进类别；空类别去掉
+  MIST_GROUPS.forEach(g => { g[1] = g[1].filter(id => BY[id]); }); for (let i = MIST_GROUPS.length - 1; i >= 0; i--) if (!MIST_GROUPS[i][1].length) MIST_GROUPS.splice(i, 1);
   const MIST_CAT = {}; MIST_GROUPS.forEach(([cat, ids]) => ids.forEach(id => { MIST_CAT[id] = cat; }));
   const MIST_CAT_ITEM = {'speed:g11:divrem': '有余数除法'};   // 「除以一位数」里商和余数一起写的题型
   // 题型编号或技能编号 → 类别；查不到返回 null（测试保证不会）
@@ -399,6 +406,6 @@
   }
 
   HARD.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 高级题的前置也只留登记了的（关掉的趣味技能不登记，写进前置会让 ready() 查不到而崩，审查 R1）
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, fastLabel,
+  return {MULTI_CELL, LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

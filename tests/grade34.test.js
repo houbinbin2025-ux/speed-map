@@ -4,7 +4,7 @@ const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require(
 const D = n => C.addDays('2026-11-01', n);
 const seeded = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
 const blank = () => { const S = C.blank(); S.placedAt = 1; S.demoSeen = Object.fromEntries(K.SKILLS.concat(K.HARD).map(s => [s.id, true])); return S; };
-const G = Object.entries(HB.pools).filter(([id]) => /:g\d+:/.test(id) && !K.BY[K.ITEM[id].skill].late);   // 第一批；第二批 2a 的图题在 batch2a.test.js 从图的数据重算
+const G = Object.entries(HB.pools).filter(([id]) => /:g\d+:/.test(id) && K.ITEM[id] && !K.BY[K.ITEM[id].skill].late);   // K.ITEM 没有的：开关关着、还没登记的题池（2b-2 分步作答，batch2b2.test.js 查）   // 第一批；第二批 2a 的图题在 batch2a.test.js 从图的数据重算
 
 // ---------- 级别映射 ----------
 test('第 1–9 级是现有题，第 10–15 级是新题', () => {

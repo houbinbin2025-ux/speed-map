@@ -26,7 +26,15 @@ test('假分数化带分数：分子 = 整数 × 分母 + 余下的分子，0 < 
     assert.ok(/分之/.test(x.q.read) && !/\d|\//.test(x.q.read), x.q.read); });
 });
 
-test('接进题库：hardbank 里的两个题池和生成脚本一致；技能登记、late、级别 = 编号里的 gN、挂讲解卡；内容词进级别说明', () => {
+test('开关 MULTI_CELL 关着（B 的多格界面做完前）：题库数据在，但两个技能不登记、不出题，级别说明没有「带分数」，带分数讲解卡不出', {skip: K.MULTI_CELL}, () => {
+  for (const id in P) { assert.deepEqual(HB.pools[id], P[id], `${id} hardbank 没重新生成`); assert.ok(!K.ITEM[id], `${id} 关着时不该登记`); }
+  assert.ok(!K.BY['g34:g10:divrem2'] && !K.BY['g34:g15:mixed']);
+  assert.ok(!K.LEVELS[14].topics.includes('带分数'), '关着时第 15 级说明不该有带分数');
+  assert.ok(!R.CONCEPTS.includes('mixed'), '关着时带分数讲解卡不该出');
+  assert.ok(!K.mistCat('g34:g15:mixed'));
+});
+
+test('开关打开（MULTI_CELL=1）：hardbank 里的两个题池和生成脚本一致；技能登记、late、级别 = 编号里的 gN、挂讲解卡；内容词进级别说明', {skip: !K.MULTI_CELL}, () => {
   for (const id in P) assert.deepEqual(HB.pools[id], P[id], `${id} hardbank 没重新生成`);
   [['speed:g10:divrem2', 10, 'rem'], ['speed:g15:mixed', 15, 'mixed']].forEach(([id, lv, c]) => {
     const s = K.BY[K.ITEM[id].skill]; assert.ok(s && s.late && s.hard, id);
@@ -41,4 +49,5 @@ test('R.cellsText：按 cells 把答案依次填进题面的方框，余数题�
   assert.equal(R.cellsText(x.q, x.ans), '3 余 2'); assert.equal(R.cellsText(y.q, y.ans), '3 又 2/5');
   assert.equal(R.cellsText({text: '50 ÷ 4 = □ 余 □', cells: [2, 1]}, 122), '12 余 2', '多位的格');
   for (const id in P) P[id].forEach(z => { const t = R.cellsText(z.q, z.ans); assert.ok(!t.includes('□') && t.split(/\D+/).filter(Boolean).length >= 2, t); });
+  assert.ok(!R.cellsText({text: '17 ÷ 5 = □ 余 □', cells: [1, 1]}, 3).includes('undefined'), '格数和答案位数对不上时不出 undefined');
 });

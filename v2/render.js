@@ -310,7 +310,7 @@
   // ---------- 2b-2 分步作答（一题几个空）：ans 是各格拼起来的整数，q.cells 记每格几位（B 方案 §6）----------
   const cellParts = (q, a) => { const s = String(a), out = []; let i = 0; (q.cells || []).forEach(n => { out.push(s.slice(i, i + n)); i += n; }); return out; };
   // 按 cells 把答案依次填进题面的方框，返回等号右边：「3 余 2」「3 又 2/5」（答对整式、口答、你写的是、错题记录都用它）
-  const cellsText = (q, a) => { const p = cellParts(q, a); let i = 0; const t = String(q.text || '').replace(/□/g, () => p[i++]); return t.includes(' = ') ? t.split(' = ').slice(1).join(' = ') : t; };
+  const cellsText = (q, a) => { const p = cellParts(q, a); let i = 0; const t = String(q.text || '').replace(/□/g, () => p[i++] ?? ''); return t.includes(' = ') ? t.split(' = ').slice(1).join(' = ') : t; };
   // 题面 / 讲解：独立的方框用 box（或填答案），分数里的方框交给 fr（分子上下结构）
   function cellsFig(q, a) {
     const t = String(q.text || ''), p = a === undefined ? null : cellParts(q, a); let i = 0, slot;
@@ -599,5 +599,6 @@
     return `数线 · ${q.target}`;
   }
 
+  if (!K.MULTI_CELL) delete CARDS.mixed;   // 分步作答没开时，带分数讲解卡不出（没有技能挂它）
   return {ansText, cellsText, fr, hasFr, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, skillsOf, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });
