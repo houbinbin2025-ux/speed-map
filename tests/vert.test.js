@@ -196,3 +196,30 @@ test('2b-2 多格蓝框：每道题分组、格数、组间字；判对 / 一组
   const p = V.parse({id: 'speed:g10:divrem2', q: {text: '16 ÷ 5 = □ 余 □', cells: [1, 1]}, ans: 31}, 0);
   const j = V.judge(['3', '1', '', '1'], p); assert.equal(j.ok, false); assert.equal(j.text, '31 余 1', '孩子写的按组显示，不按格切');
 });
+
+// 审查 R1（2b-2）阻断：用答案定夺两可笔迹时，每格期望的数要和答案格对齐、靠右（竖式题没有 p.n，曾整体左移一格把写对的判错）
+test('VERT.want：所有蓝框和竖式题，期望的数和答案格数一样长、靠右对齐（多格按组；孩子靠左写时按写了的格对齐）', () => {
+  const cellsOf = h => (h.match(/class="vcell"/g) || []).length;
+  ALL.concat(BALL).forEach(i => {
+    const p = V.parse(i, V.BOARD.includes(i.id) ? maxLen(i.id) : 0), n = cellsOf(V.layout(p, false));
+    assert.deepEqual(V.want(p, n), String(i.ans).padStart(n, ' ').split(''), i.id + ' ' + JSON.stringify(i.q).slice(0, 40));
+  });
+  const p = V.parse({id: 'speed:g10:divrem2', q: {text: '16 ÷ 5 = □ 余 □', cells: [1, 1]}, ans: 31}, 0);
+  assert.deepEqual(V.want(p, 4), [' ', '3', ' ', '1'], '多格：组内靠右');
+  assert.deepEqual(V.want(p, 4, [true, false, true, false]), ['3', ' ', '1', ' '], '多格：孩子靠左写，按写了的格对齐');
+  assert.deepEqual(V.want(p, 4, [true, true, false, true]), [' ', '3', ' ', '1'], '一组写了两格（位数不对）：照旧靠右');
+});
+
+// 多格规则不依赖 MULTI_CELL：用构造的题测（npm test 默认就跑）
+test('2b-2 多格蓝框（构造的题，开关关着也跑）：分组、组间字、判对 / 一组错 / 组内靠左 / 空一组 / 一组写两位按组显示 / 多位格', () => {
+  const mk = (text, cells, ans) => V.parse({id: 'speed:g10:divrem2', q: {text, cells}, ans}, 0);
+  const a = mk('16 ÷ 5 = □ 余 □', [1, 1], 31), b = mk('17/6 = □ 又 □/6', [1, 1], 25), c = mk('125 ÷ 9 = □ 余 □', [2, 1], 138);
+  assert.deepEqual([a.groups, a.seps, a.tail, b.seps, b.tail, c.groups], [[2, 2], ['余'], '', ['又'], '/6', [3, 2]]);
+  assert.ok(V.judge(['', '3', '', '1'], a).ok); assert.ok(V.judge(['3', '', '1', ''], a).ok);
+  assert.equal(V.judge(['', '3', '', '2'], a).ok, false); assert.deepEqual(V.judge(['', '3', '', ''], a), {empty: true, note: '还有一个答案没写'});
+  const two = V.judge(['3', '1', '', '1'], a); assert.equal(two.ok, false); assert.equal(two.text, '31 余 1');
+  assert.equal(V.judge(['', '2', '', '5'], b, true).text, '2 余 5'.replace('余', '又') + '/6', '孩子写的一律存中文（显示时再翻）');
+  assert.ok(V.judge(['', '1', '3', '', '8'], c).ok, '多位格（商 13）'); assert.equal(V.judge(['', '', '1', '', '8'], c).ok, false, '商少写一位');
+  assert.deepEqual(V.judge(['', '1', '3', '', '8'], c).cellOk, [true, true, true, true, true]);
+  assert.deepEqual(V.judge(['', '1', '3', '', '7'], c).cellOk, [true, true, true, false, false], '错的那组标红');
+});

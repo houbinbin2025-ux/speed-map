@@ -252,7 +252,16 @@
   }
   // 多格：答案按 cells 切开；每格对应的期望读数（组内靠右，前面空），用答案定夺两可笔迹时用
   const cellParts = p => { const s = String(p.ans), out = []; let i = 0; p.cells.forEach(c => { out.push(s.slice(i, i + c)); i += c; }); return out; };
-  const want = p => (p.cells ? [].concat(...cellParts(p).map((x, k) => x.padStart(p.groups[k], ' ').split(''))) : String(p.ans).padStart(p.n, ' ').split(''));
+  // n = 答案格数（竖式题的解析结果里没有 p.n，由页面按格子数传进来，审查 R1 阻断）；filled = 每格写没写
+  // 多格：每组按孩子实际写了的格对齐（写的格数 = 这一格位数时）；否则组内靠右
+  function want(p, n, filled) {
+    if (!p.cells) return String(p.ans).padStart(n, ' ').split('');
+    let i = 0; return [].concat(...cellParts(p).map((x, k) => {
+      const g = p.groups[k], idx = Array.from({length: g}, (_, j) => j), f = filled ? idx.filter(j => filled[i + j]) : [];
+      const out = f.length === x.length ? idx.map(j => (f.includes(j) ? x[f.indexOf(j)] : ' ')) : x.padStart(g, ' ').split('');
+      i += g; return out;
+    }));
+  }
   const worked = (p, en) => { const h = plan(p, true).html; return h ? `<div class="vwk"><h4>${en ? 'The right way' : '正确写法'}</h4>${h}</div>` : ''; };
 
   // ---------- 输入版面（手指尺寸，同原型） ----------
@@ -312,7 +321,7 @@
       const ok = !tip && parts.every((x, k) => /^\d+$/.test(x) && x.length === p.cells[k]) && parts.join('') === String(p.ans);
       // 孩子写的按组显示（31 余 1、2 又 5/6），不按 cells 切，免得一组写两位时少显示一位
       const want = cellParts(p), cellOk = [].concat(...p.groups.map((g, k) => Array(g).fill(parts[k] === want[k])));
-      return {ok, text: parts.map((x, k) => (k ? ` ${sepWord(p.seps[k - 1], en)} ` : '') + x).join('') + p.tail, tip, groups: parts, cellOk};
+      return {ok, text: parts.map((x, k) => (k ? ` ${p.seps[k - 1]} ` : '') + x).join('') + p.tail, tip, groups: parts, cellOk};   // 孩子写的一律存中文（错题记录），页面显示时再按当天语言翻
     }
     const f = read.findIndex(x => x !== '');
     if (f < 0) return {empty: true};

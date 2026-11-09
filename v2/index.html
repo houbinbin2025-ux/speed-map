@@ -997,7 +997,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v159:f453f25f7a9e -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v160:29e96ef86efc -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1007,26 +1007,26 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=159"></script>
-<script src="i18n.js?v=159"></script>
-<script src="bank.js?v=159"></script>
-<script src="hardbank.js?v=159"></script>
-<script src="placebank.js?v=159"></script>
-<script src="core.js?v=159"></script>
-<script src="ink.js?v=159"></script>
-<script src="skills.js?v=159"></script>
-<script src="engine.js?v=159"></script>
-<script src="render.js?v=159"></script>
-<script src="world.js?v=159"></script>
-<script src="home.js?v=159"></script>
-<script src="puzzles.js?v=159"></script>
-<script src="thinking.js?v=159"></script>
-<script src="house.js?v=159"></script>
-<script src="kongmine.js?v=159"></script>
-<script src="gems.js?v=159"></script>
-<script src="gemui.js?v=159"></script>
-<script src="vert.js?v=159"></script>
-<script src="mistview.js?v=159"></script>
+<script src="touchfix.js?v=160"></script>
+<script src="i18n.js?v=160"></script>
+<script src="bank.js?v=160"></script>
+<script src="hardbank.js?v=160"></script>
+<script src="placebank.js?v=160"></script>
+<script src="core.js?v=160"></script>
+<script src="ink.js?v=160"></script>
+<script src="skills.js?v=160"></script>
+<script src="engine.js?v=160"></script>
+<script src="render.js?v=160"></script>
+<script src="world.js?v=160"></script>
+<script src="home.js?v=160"></script>
+<script src="puzzles.js?v=160"></script>
+<script src="thinking.js?v=160"></script>
+<script src="house.js?v=160"></script>
+<script src="kongmine.js?v=160"></script>
+<script src="gems.js?v=160"></script>
+<script src="gemui.js?v=160"></script>
+<script src="vert.js?v=160"></script>
+<script src="mistview.js?v=160"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, $ = id => document.getElementById(id);
@@ -1691,7 +1691,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const cellParts = (q, a) => { const s = String(a), out = []; let i = 0; q.cells.forEach(n => { out.push(s.slice(i, i + n)); i += n; }); return out; };
   const cellSeps = q => String(q.text || '').split('□').slice(1, -1).map(t => t.replace(/\/\d+$/, '').trim());   // 格之间的字（余、又）；分数格后面的 /5 不算
   const SEP_EN = {余: 'R', 又: 'and'}, sepWord = w => (I18N.on && SEP_EN[w]) || w;   // 英文日：余 → R、又 → and（和 i18n 题面一致）
-  const cellsLine = (q, a) => R.cellsText(q, a).replace(/ (余|又) /g, (m, w) => ` ${sepWord(w)} `);   // 「3 余 2」「3 又 2/5」
+  const cellsLine = (q, a) => R.cellsText(q, a).replace(/ (余|又) /g, (m, w) => ` ${sepWord(w)} `);   // 「3 余 2」「3 又 2/5」（按当天语言）
+  const cellsTail = q => (String(q.text || '').split('□').pop().match(/^\s*(\/\d+)/) || [])[1] || '';
+  const cellsZh = (q, vals) => vals.map((x, k) => (k ? ` ${cellSeps(q)[k - 1]} ` : '') + x).join('') + cellsTail(q);   // 孩子逐格写的（中文，错题记录用）：「52 余 」也不会切错
   function cellsShow() {
     const m = Q && Q.mc; if (!m) return;
     $('qBody').querySelectorAll('.box').forEach((b, k) => { b.dataset.ci = k; b.classList.toggle('cur', Q.phase === 'q' && k === m.i); b.classList.toggle('filled', !!m.vals[k]); b.textContent = m.vals[k] || ''; });
@@ -1759,7 +1761,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // 拿不准的格同写字板（ink.js resolveWith）：只有把它们换成答案要的数字后整串正好等于答案才按答案认，按答案认的格不存字模
   function vertDone() {
     if (guarded() || !Q || Q.phase !== 'q' || Q.vdemo || !Q.vc) return;
-    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = VERT.want(Q.v.vp);   // 每格期望的数（多格按组靠右）
+    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = VERT.want(Q.v.vp, n, strokes.map(st => st.length > 0));   // 每格期望的数：靠右对齐；多格按组、按孩子写了的格对齐
     const recs = strokes.map(st => {
       if (!st.length) return {t: ''};
       const res = I.recognize(st, INKS);
@@ -1840,10 +1842,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     Q.phase = 'q'; qPad.clear(); qPad.enabled = true;
     const next = inst.q.cells.findIndex((_, k) => !m.vals[k]);
     if (next >= 0) { m.i = next; cellsShow(); return; }
-    const text = m.vals.join(''), right = text === String(inst.ans);
-    if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) m.recs.forEach(r => recordInk(r.rec, r.picked, !r.via && !r.byAnswer.length && !Q.x.asked));
+    const right = m.vals.join('') === String(inst.ans) && m.vals.every((x, k) => x.length === inst.q.cells[k]);
+    if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) m.recs.forEach(r => recordInk(r.rec, r.picked, !r.via && !r.byAnswer.length));   // 按格记：别的格弹过确认不算这一格写得不清楚
     if (right) { m.recs.forEach(r => { if (!r.via) r.rec.digits.forEach((d, k) => { if (!r.byAnswer.includes(k)) I.addTemplate(INKS, r.picked[k], d.strokes); }); }); saveInk(); }
-    resolve({ok: right, fast: right && !m.conf && Q.ms <= qLimit(inst), typed: text, confirm: m.conf});
+    resolve({ok: right, fast: right && !m.conf && Q.ms <= qLimit(inst), typed: cellsZh(inst.q, m.vals), confirm: m.conf});
     cellsShow();
   }
   function qDecide(viaConfirm) {
@@ -1926,7 +1928,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     r.bolt = !!r.fast && used <= K.boltMs(inst, limOpt(), GEMS.BOLT);   // 闪电：样本够按自己的第 10 百分位，夹在秒答线 × 0.35–× BOLT；不够 = 秒答线 × BOLT（C 11-09 对齐）
     const gain = GM.answerQ(Q, x, r, secs, lim);
     // 错题记录「孩子写了什么」（docs/方案-错题数据字段.md §2.1）：写字板 = 识别结果、蓝框 = 格子里的数、选择题 = 点的选项、数线 = 插旗的数；小数题加回小数点
-    const typed = r.dunno || r.oral || r.typed == null ? undefined : Q.v.input === 'vert' && Q.vtip ? String(r.typed) : typedText(inst.q, String(r.typed));
+    const typed = r.dunno || r.oral || r.typed == null ? undefined : (Q.v.input === 'vert' && Q.vtip) || cellsOf(inst) ? String(r.typed) : typedText(inst.q, String(r.typed));   // 多格：孩子写的已是中文（「3 余 2」），错题记录不跟当天语言
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, typed, oral: !!r.oral, think: r.ok && !r.oral && !r.confirm && !x.asked && !(Q.pickDelay && Q.v.input === 'pick') ? K.thinkRatio(inst, used, limOpt()) : null, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++; if (out.pass) Q.fastN++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1985,7 +1987,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const pickTyped = (n, b) => { const v = Q.v, q = Q.x.inst.q, i = v.pick.indexOf(n);
     return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : (v.pickText && b.textContent.trim()) || String(n); };
   // 孩子写的数按题目的小数位数加回小数点（小数点写不写都认，写字板不记它）；蓝框的 □ 等非数字原样
-  const typedText = (q, t) => q && K.MULTI_CELL && Array.isArray(q.cells) && q.cells.length > 1 && /^\d+$/.test(t) ? cellsLine(q, t) : q && q.dp && /^\d+$/.test(t) && t.length > q.dp ? t.slice(0, -q.dp) + '.' + t.slice(-q.dp) : t;   // 多格：「3 余 2」
+  const typedText = (q, t) => q && K.MULTI_CELL && Array.isArray(q.cells) && q.cells.length > 1 ? (/^\d+$/.test(t) ? cellsLine(q, t) : t.replace(/ (余|又) /g, (m, w) => ` ${sepWord(w)} `)) : q && q.dp && /^\d+$/.test(t) && t.length > q.dp ? t.slice(0, -q.dp) + '.' + t.slice(-q.dp) : t;   // 多格：「3 余 2」
   function answerLine(inst) {
     const s = K.BY[K.ITEM[inst.id].skill], q = inst.q, F = t => (R.hasFr(t) ? R.fr(t) : t);
     if (cellsOf(inst)) return `${F(q.text.split(' = ')[0])} = <span class="ansv">${F(cellsLine(q, inst.ans))}</span>`;   // 多格：16 ÷ 5 = 3 余 1、17/6 = 2 又 5/6
@@ -2346,7 +2348,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const o = e.target.closest('[data-bo]'); if (o) { bankOpen[o.dataset.bo] = !bankOpen[o.dataset.bo]; const y = $('bankList').scrollTop; renderBank(); $('bankList').scrollTop = y; return; }
     const b = e.target.closest('[data-bq]'); if (!b) return;
     const inst = BQ[+b.dataset.bq], q = R.question(inst);
-    $('qpTag').textContent = q.tag; $('qpAns').innerHTML = '答案：' + (q.pickText ? (q.pickAria || q.pickText)[q.pick.indexOf(inst.ans)] : (cellsOf(inst) ? cellsLine(inst.q, inst.ans) : R.ansText(inst.q, inst.ans)));
+    $('qpTag').textContent = q.tag; $('qpAns').innerHTML = '答案：' + (q.pickText ? (q.pickAria || q.pickText)[q.pick.indexOf(inst.ans)] : (cellsOf(inst) ? R.cellsText(inst.q, inst.ans) : R.ansText(inst.q, inst.ans)));   // 题库预览不翻译
     $('qpQ').innerHTML = q.input === 'pick' ? `${q.html}<div style="display:flex;gap:16px;margin-top:10px">${q.pick.map((n, i) => `<span class="mq" style="font-size:${q.pickText ? 24 : 40}px;padding:10px 26px">${q.pickText ? q.pickText[i] : n}</span>`).join('')}</div>`
       : q.input === 'line' ? `${q.html}<div class="muted" style="font-size:16px;margin-top:8px">在 0—${q.line.max} 的线上插旗</div>` : q.html + (q.note ? `<div class="muted" style="font-size:16px;margin-top:8px">${q.note}</div>` : '');
     $('qpE').innerHTML = R.explain(inst); $('ovQ').hidden = false;

@@ -142,3 +142,11 @@ test('答对的字：秒答统一说秒答；慢了说清楚这次和秒答要�
   assert.equal(R.okWords(line, {pass: true}, 0).big, '⚡ 秒答！');
   assert.equal(R.okWords(line, {pass: false}, 0).big, '✓ 很接近');
 });
+
+test('2b-2 多格：秒答线每换一格多 1 秒（口答不加）', () => {
+  const K = require('../v2/skills.js'), id = Object.keys(K.ITEM).find(i => K.BY[K.ITEM[i].skill].input === 'write' && K.ITEM[i].gen);
+  const base = K.make(id, () => 0.3), one = Object.assign({}, base, {q: Object.assign({}, base.q, {cells: undefined})}), two = Object.assign({}, base, {q: Object.assign({}, base.q, {cells: [1, 1]})}), three = Object.assign({}, base, {q: Object.assign({}, base.q, {cells: [1, 1, 1]})});
+  const o = {speed: 900};
+  assert.equal(K.fastMs(two, o) - K.fastMs(one, o), 1000); assert.equal(K.fastMs(three, o) - K.fastMs(one, o), 2000);
+  assert.equal(K.fastMs(two, {speed: 900, oral: true}), K.fastMs(one, {speed: 900, oral: true}));
+});
