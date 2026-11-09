@@ -22,7 +22,7 @@ function run(sess, answer, max) {
 const secs = x => (isFun(x) ? 20 : 4);
 const okAll = x => ({ok: true, fast: true, secs: secs(x)});
 
-test('关掉（FUN_SEC = 0）：每日练习、自由加练、复习都一道趣味题不出', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+test('关掉（FUN_SEC = 0）：每日练习、自由加练、复习都一道趣味题不出', { skip: K.FUN_SEC > 0 }, () => {
   const S = ready();
   const a = run(E.session(S, D(0), {rnd: seeded(1)}), okAll), b = run(E.free(S, D(0), 'dock', {rnd: seeded(2)}), okAll);
   assert.ok(!a.concat(b).some(isFun));
@@ -61,7 +61,7 @@ test('趣味题答错：只回来一次，而且至少隔 5 道普通题；不�
   assert.ok(!Object.values(S.mistakes).some(m => FUNIDS.has(m.uid)), '趣味题不进错题本');
 }));
 
-test('关掉时不记间隔计数（和改动前的存档完全一样）', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+test('关掉时不记间隔计数（和改动前的存档完全一样）', { skip: K.FUN_SEC > 0 }, () => {
   const S = ready(); run(E.session(S, D(0), {rnd: seeded(7)}), okAll);
   assert.ok(!('sinceFun' in S.daily) && !('funSec' in S.daily));
 });

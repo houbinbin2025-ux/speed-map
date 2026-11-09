@@ -28,7 +28,7 @@
     const ms = Object.values(S.mistakes || {});
     return {
       S, iron: all.filter(i => lv(i.id) >= 1).length, gold: all.filter(i => lv(i.id) >= 2).length, diamond: all.filter(i => lv(i.id) >= 3).length, total: all.length,
-      days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null && !m.out).length,
+      days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null).length,   // 错题真的会了 = 复习满 5 次，或秒答满 3 次被下架（m.out，Ben 11-07 定的全项目「学会」标准）。C 方案 4 甲，F、中控 11-09 同意；F 的合并口径和错题记录不动
       learned: ALLSK.filter(s => s.items.every(i => lv(i.id) >= 1)).length,
       started: PLACES.concat([['speed', '']]).filter(([g]) => ALLSK.some(s => (g === 'speed' ? s.speed || s.group === 'speedH' : inGroup(s, g)) && s.items.some(i => lv(i.id) >= 1))).length,
       ore: (S.home && S.home.ore) || 0,
@@ -59,8 +59,8 @@
   });
   [[1, '平安度过第一夜'], [7, '搭好营地'], [30, '老探险家'], [100, '百日传奇']].forEach(([n, title]) => CERTS.push({id: 'c:day:' + n, kind: 'day', scene: 'day:' + n, name: title, title, need: prog(t => t.days, n), text: `累计练习 ${n} 天`, say: () => `累计练习 ${n} 天`}));
   CERTS.push({id: 'c:fix:1', kind: 'fix', scene: 'fix:1', name: '点燃熔炉', title: '点燃熔炉', need: prog(t => t.passed, 1), text: '错题第一次复习做对', say: () => '写错的题，复习时做对了'});
-  CERTS.push({id: 'c:fix:10', kind: 'fix', scene: 'fix:10', name: '熔炉师傅', title: '熔炉师傅', need: prog(t => t.solved, 10), text: '10 道错题真的会了', say: () => '10 道错题过完 5 次复习'});
-  CERTS.push({id: 'c:fix:50', kind: 'fix', scene: 'fix:50', name: '炼金大师', title: '炼金大师', need: prog(t => t.solved, 50), text: '50 道错题真的会了', say: () => '50 道错题过完 5 次复习'});
+  CERTS.push({id: 'c:fix:10', kind: 'fix', scene: 'fix:10', name: '熔炉师傅', title: '熔炉师傅', need: prog(t => t.solved, 10), text: '10 道错题真的会了', say: () => '10 道错题，都会了'});
+  CERTS.push({id: 'c:fix:50', kind: 'fix', scene: 'fix:50', name: '炼金大师', title: '炼金大师', need: prog(t => t.solved, 50), text: '50 道错题真的会了', say: () => '50 道错题，都会了'});
 
   // 道具：摆在屋里；hidden = 没得到前显示「？」（意料之外的奖励）
   const ITEMS = [
