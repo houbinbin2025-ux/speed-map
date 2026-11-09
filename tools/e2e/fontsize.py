@@ -50,7 +50,7 @@ SAMPLER = r"""(() => {
     if (el.closest('.qtag,.chip,.chip2,.zsk,.mq,.tag,.dcap')) return '说明';   // 标签、小签：不管几个词都算说明
     return sentence ? '正文' : '说明';
   };
-  const sample = () => {
+  const measure = () => {
     const out = [], w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
     // 正在做缩放动画（出场弹一下）的元素先不量，动画结束后的采样再量
     const anim = document.getAnimations().filter(a => a.playState === 'running' && a.effect && a.effect.target && a.effect.getKeyframes().some(k => /scale/.test(k.transform || '') || k.zoom)).map(a => a.effect.target);
@@ -64,9 +64,12 @@ SAMPLER = r"""(() => {
     }
     if (window.__fsReport) window.__fsReport(out);
   };
-  let tm = 0; const later = () => { clearTimeout(tm); tm = setTimeout(sample, 120); };
-  addEventListener('DOMContentLoaded', () => { new MutationObserver(later).observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'style']}); later(); setInterval(sample, 900); });
-  window.__fsSample = sample;
+  // 等页面自己跑完再量（中控 11-09）：距上一次页面变动满 300ms，再等 2 帧（页面的 fitBody、fitSvgText 都在这之前跑完），量到的才是孩子看到的
+  let lastMut = 0, tm = 0;
+  const sample = () => { const q = performance.now() - lastMut; if (q < 300) { clearTimeout(tm); tm = setTimeout(sample, 300 - q + 10); return; }
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (performance.now() - lastMut >= 300) measure(); else sample(); })); };
+  addEventListener('DOMContentLoaded', () => { new MutationObserver(() => { lastMut = performance.now(); clearTimeout(tm); tm = setTimeout(sample, 310); }).observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'style']}); sample(); setInterval(sample, 900); });
+  window.__fsSample = measure;   // 题型部分自己控制时机（逐题塞进去后等页面跑完），直接量
 })()"""
 
 def key_of(x): return (x['area'], x['sig'], x['tier'], re.sub(r'\d+', '#', x['text']))
@@ -116,13 +119,14 @@ GUIDES = [
 # ---------- A：题型逐个量 ----------
 SCAN_A = r"""async () => { const {K, R} = window.__sm, $ = id => document.getElementById(id), res = [];
   ['island','placeIntro','placeResult','qplay','demo','qsum','skillmap','home','calib','play','summary','mist','parent'].forEach(k => { $(k).hidden = k !== 'qplay'; });
+  const settle = () => new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(ok))));   // 等页面自己的 fitBody、fitSvgText 跑完（不替它调用）
   const take = () => new Promise(ok => { const prev = window.__fsReport; window.__fsReport = items => { res.push(...items.filter(x => x.area === '#qplay')); }; window.__fsSample(); window.__fsReport = prev; ok(); });
   for (const id of Object.keys(K.ITEM)) {
     const inst = K.make(id), v = R.question(inst), wide = v.input !== 'write';
     $('qplay').classList.toggle('wide', wide); $('qPad').hidden = wide; $('qTag').textContent = v.tag; $('qNote').textContent = v.note || '';
     $('qBody').innerHTML = v.html; $('qWide').innerHTML = v.input === 'pick' ? `<div class="pickgrid" style="grid-template-columns:repeat(${v.pick.length},minmax(0,1fr))">${v.pick.map((n, i) => `<button class="pickcard${v.pickText ? ' expr' : ''}">${v.pickText ? v.pickText[i] : n}</button>`).join('')}</div>` : '';
-    I18N.flush(); if (window.__fitSvg) window.__fitSvg(); window.__sm.fitBody(); await take();
-    $('qBody').innerHTML = ''; $('qWide').innerHTML = ''; (wide ? $('qWide') : $('qBody')).innerHTML = R.explain(inst); I18N.flush(); if (window.__fitSvg) window.__fitSvg(); window.__sm.fitBody(); await take();
+    await settle(); await take();
+    $('qBody').innerHTML = ''; $('qWide').innerHTML = ''; (wide ? $('qWide') : $('qBody')).innerHTML = R.explain(inst); await settle(); await take();
     res.forEach(x => { if (!x.item) x.item = id; });
   }
   return res; }"""
