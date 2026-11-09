@@ -45,7 +45,7 @@ def inview(pg, sel, W, H, name):
 
 SIZES = [(667, 375), (844, 390), (874, 297), (932, 430), (932, 651), (1194, 834)]
 with sync_playwright() as p:
-    br = p.chromium.launch()
+    br = __import__('quiet').launch(p)
     for (W, H) in SIZES:
         for mode in (['zh', 'en'] if W in (667, 874, 1194) else ['zh']):
             name = f'{W}x{H}-{mode}'
