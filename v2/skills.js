@@ -395,7 +395,7 @@
   //   技能自己不够 8 条但有类尺子：写字 + 个人线 × BOLT；没有任何个人数据：秒答线 × BOLT（照旧）。
   // 样本是这次作答之前的（判完才记进去）。
   const TOO_FAST = 500, FT_MIN = 8, FT_K = 1.2, FT_LO = 0.5, THINK_FLOOR = 1000, BOLT_FLOOR = 0.35, POOL_MIN = 20, POOL_K = 2;
-  const FT = {boltQ: +((typeof process !== 'undefined' && process.env && process.env.BOLT_Q) || 0.1)};   // 闪电分位数：比自己 10 次里 9 次都快（C 11-09 拍板 P10；模拟可用 BOLT_Q 环境变量试）
+  const FT = {boltQ: (q => q > 0 && q < 1 ? q : 0.1)(+((typeof process !== 'undefined' && process.env && process.env.BOLT_Q) || 0.1))};   // 闪电分位数：比自己 10 次里 9 次都快（C 11-09 拍板 P10；模拟可用 BOLT_Q 环境变量试）
   const FT_HI = {card: 1, short: 1, pick: 1, line: 1, word: 1.5, multi: 1.5, column: 1.5};   // 难类最多放宽到 1.5 倍：再慢就是还没熟（模拟：2 倍时用时 2.2 倍的孩子也有 41% 秒答）
   const okRatio = v => typeof v === 'number' && isFinite(v) && v > 0 && v <= 10;
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -445,7 +445,8 @@
     //   简单类（秒答线只紧不松）也不比原来的闪电线松——写字不打折会让闪电反而变松（审查 R2）；难类线放宽了，闪电跟着自己的速度走
     const line = lineCoreMs(inst, o), core = thinkMs(inst) + readMs(inst, o);
     const b = writeMs(inst, o) + clamp(p.bolt === null ? Infinity : core * p.bolt, line * BOLT_FLOOR, line * rate);
-    return (FT_HI[fastClass(inst.id)] || 1) > 1 ? b : Math.min(old, b);
+    // 简单类取较小值后仍不低于「写字 + 个人线 × 0.35」：原来的闪电线把写字也打了 6 折，写字慢、答案两位数时会低于写字本身（审查 R3）
+    return (FT_HI[fastClass(inst.id)] || 1) > 1 ? b : Math.max(writeMs(inst, o) + line * BOLT_FLOOR, Math.min(old, b));
   }
   // 题库页：个人线说明（样本够才有）
   const ftNote = (id, ft) => { const p = ftOf(id, ft); return p ? {n: p.n, by: p.by, line: Math.round(p.line * 100) / 100} : null; };

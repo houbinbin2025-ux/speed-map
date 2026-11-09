@@ -187,3 +187,28 @@ test('审查 R1：页面判题、发奖励、显示「秒答要 M 秒内」用�
   assert.match(body, /!r\.confirm && !x\.asked && !\(Q\.pickDelay && Q\.v\.input === 'pick'\) \? K\.thinkRatio/);
   assert.ok(!/qLimit\(inst\)/.test(body.slice(iRec)), '记录之后不再取线');
 });
+
+test('审查 R3：写字慢、答案两位数的口算卡，闪电线里想的部分仍 ≥ 个人线 × 0.35（不被原来的闪电线压穿）', () => {
+  const f = {'speed:L1:1': ten(0.35), 'speed:L1:2': ten(0.35), 'speed:L1:3': ten(0.35)};
+  const ids = K.BY['speed:L1:5'].items.map(i => i.id).filter(id => C.BYID[id].ans >= 10);
+  assert.ok(ids.length);
+  [1000, 1500, 2000].forEach(speed => ids.forEach(id => {
+    const inst = K.make(id, seeded(1)), o = {speed, ft: f}, w = K.writeMs(inst, o), line = K.fastMs(inst, o) - w;
+    const b = K.boltMs(inst, o, G.BOLT);
+    assert.ok(b - w >= line * K.BOLT_FLOOR - 1 && b <= K.fastMs(inst, o), `${id} 写一个数字 ${speed} 毫秒：闪电 ${b}，写字 ${w}，个人线 ${line}`);
+  }));
+});
+
+test('审查 R3：50 以内和 100 以内的口算卡同一把尺子（都是两位数）', () => {
+  const l3 = K.BY['speed:L3:0'], l4 = K.BY['speed:L4:0'];
+  assert.equal(K.groupOf(l3.items[0].id), K.groupOf(l4.items[0].id));
+  assert.notEqual(K.groupOf(l3.items[0].id), K.groupOf(K.BY['speed:L2:0'].items[0].id));
+  const f = {'speed:L4:0': ten(0.3), 'speed:L4:1': ten(0.3)};   // 只有 100 以内有样本
+  assert.equal(K.ftNote(l3.items[0].id, f).by, '类', '50 以内借得到 100 以内的样本');
+});
+
+test('审查 R3：只用最近 10 条——更早的样本挪得动中位数也不算', () => {
+  const id = pickId('multi'), inst = K.make(id, seeded(8));
+  const a = K.fastMs(inst, withFt(ft(id, ten(1))));
+  assert.equal(K.fastMs(inst, withFt(ft(id, Array(9).fill(1.4).concat(ten(1))))), a, '前面 9 条 1.4 不算');
+});

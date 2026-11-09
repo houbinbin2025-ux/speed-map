@@ -955,7 +955,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v148:1c931f87438e -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v149:4eaaf71cd07e -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -965,25 +965,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=148"></script>
-<script src="i18n.js?v=148"></script>
-<script src="bank.js?v=148"></script>
-<script src="hardbank.js?v=148"></script>
-<script src="placebank.js?v=148"></script>
-<script src="core.js?v=148"></script>
-<script src="ink.js?v=148"></script>
-<script src="skills.js?v=148"></script>
-<script src="engine.js?v=148"></script>
-<script src="render.js?v=148"></script>
-<script src="world.js?v=148"></script>
-<script src="home.js?v=148"></script>
-<script src="puzzles.js?v=148"></script>
-<script src="thinking.js?v=148"></script>
-<script src="house.js?v=148"></script>
-<script src="kongmine.js?v=148"></script>
-<script src="gems.js?v=148"></script>
-<script src="gemui.js?v=148"></script>
-<script src="vert.js?v=148"></script>
+<script src="touchfix.js?v=149"></script>
+<script src="i18n.js?v=149"></script>
+<script src="bank.js?v=149"></script>
+<script src="hardbank.js?v=149"></script>
+<script src="placebank.js?v=149"></script>
+<script src="core.js?v=149"></script>
+<script src="ink.js?v=149"></script>
+<script src="skills.js?v=149"></script>
+<script src="engine.js?v=149"></script>
+<script src="render.js?v=149"></script>
+<script src="world.js?v=149"></script>
+<script src="home.js?v=149"></script>
+<script src="puzzles.js?v=149"></script>
+<script src="thinking.js?v=149"></script>
+<script src="house.js?v=149"></script>
+<script src="kongmine.js?v=149"></script>
+<script src="gems.js?v=149"></script>
+<script src="gemui.js?v=149"></script>
+<script src="vert.js?v=149"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1845,7 +1845,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const secs = Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt + fb) / 1000) * 10) / 10;
     const used = Q.v.input === 'write' || Q.v.input === 'vert' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
     const lim = qLimit(inst);   // 这一题的秒答线只算一次：下面记了逐题用时以后线会变，显示「秒答要 M 秒内」、发奖励都得用判题时这一条（审查 R1）
-    r.bolt = !!r.fast && used <= K.boltMs(inst, limOpt(), GEMS.BOLT);   // 闪电：样本够按自己的第 25 百分位，夹在秒答线 × 0.35–× BOLT；不够 = 秒答线 × BOLT（C 11-09 对齐）
+    r.bolt = !!r.fast && used <= K.boltMs(inst, limOpt(), GEMS.BOLT);   // 闪电：样本够按自己的第 10 百分位，夹在秒答线 × 0.35–× BOLT；不够 = 秒答线 × BOLT（C 11-09 对齐）
     const gain = GM.answerQ(Q, x, r, secs, lim);
     // 错题记录「孩子写了什么」（docs/方案-错题数据字段.md §2.1）：写字板 = 识别结果、蓝框 = 格子里的数、选择题 = 点的选项、数线 = 插旗的数；小数题加回小数点
     const typed = r.dunno || r.oral || r.typed == null ? undefined : Q.v.input === 'vert' && Q.vtip ? String(r.typed) : typedText(inst.q, String(r.typed));
@@ -2210,7 +2210,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
           const win = kind === 'day5' ? (p.fday === t0 ? `今天合格 ${p.fn || 0} / 5 次` : p.seen ? '今天还没合格' : '还没练过')
             : p.win && p.win.length ? `最近 ${p.win.length} 次秒答 ${p.win.reduce((a, b) => a + b, 0)} 次` : p.seen ? '刚升级，重新数' : '还没练过';
           const can = s.speed ? BK.speedPools[it.id].all : BK.meta.all[it.id] || all.length;
-          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · 秒答时间 ${K.fastLabel(it.id)}（另加读题、写字）${(f => f ? `，按${f.by === '类' ? '这一类' : '这个技能'}最近 ${f.n} 次实测 × ${f.line}` : '')(K.ftNote(it.id, S.ftime))}· 秒答满 ${E.FAST_OUT} 次不再出：${E.spentCount(S, it.id)} 道 · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
+          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · 秒答时间 ${K.fastLabel(it.id)}（另加读题、写字）${(f => f ? `，按${f.by === '类' ? '这一类' : '这个技能'}最近 ${f.n} 次实测 × ${f.line}` : '')(K.ftNote(it.id, S.oral ? null : S.ftime))}· 秒答满 ${E.FAST_OUT} 次不再出：${E.spentCount(S, it.id)} 道 · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
           const tags = [...new Set(all.map(x => x.tag || ''))];
           tags.forEach(tg => sets.push({title: tg ? `${head} · ${tg}（${all.filter(x => (x.tag || '') === tg).length}）` : head, list: all.filter(x => (x.tag || '') === tg).map(inst => ({inst}))}));
           // 不在题库里的旧错题（题库建好以前随机出的数），单列出来
