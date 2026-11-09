@@ -6,23 +6,23 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
   const CSS = `#think{--bg:var(--cave);--panel:#23262d;--go-dk:#3f7a22}   /* 颜色用全局 :root（视觉规范 1.2，E-3）；这里只定思维页自己才有的面板色和深绿按钮 */
-#think button{font:inherit;color:var(--ink);background:var(--stone);border:3px solid #000;min-height:62px;cursor:pointer;font-size:20px;font-weight:700;padding:0 12px}
+#think button{font:inherit;color:var(--ink);background:var(--stone);border:3px solid #000;min-height:62px;cursor:pointer;font-size:24px;font-weight:700;padding:0 12px}
 #think button:active{transform:translateY(2px)}
 #think button[disabled]{opacity:.35}
 #think button.go{background:var(--go-dk);box-shadow:inset 0 -5px 0 #2c5a18,inset -5px 0 0 #2c5a18}
 #think .bar{display:flex;align-items:center;gap:8px;height:56px}
-#think .bar button{min-height:54px;font-size:16px;padding:0 10px}
+#think .bar button{min-height:54px;font-size:24px;padding:0 10px}
 #think .tabs{display:flex;gap:4px;flex:1;min-width:0}
-#think .tabs button{flex:1;min-width:0;padding:0 2px;font-size:15px;font-weight:500;color:var(--mute);white-space:nowrap}
+#think .tabs button{flex:1;min-width:0;padding:0 2px;font-size:21px;font-weight:500;color:var(--mute);white-space:nowrap}
 #think .tabs button.on{border-color:var(--warn);color:var(--ink);font-weight:700}
-#think .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.25}#think .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}#think .tabs .tlv{font-size:12px;font-weight:500;color:var(--dim)}
+#think .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.25}#think .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}#think .tabs .tlv{font-size:18px;font-weight:500;color:var(--dim)}
 #think .ore{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;padding:0 10px;height:46px;background:#000}
 #think .ore i{width:18px;height:18px;background:var(--warn);border:2px solid #7a5a12;display:block}
 #think .main{display:flex;gap:14px;height:300px;margin-top:4px}
 #think .col{min-width:0;display:flex;flex-direction:column;position:relative}
-#think .say{font-size:22px;font-weight:700;line-height:1.3;min-height:30px}
-#think .sub{font-size:16px;color:var(--mute);line-height:1.35}
-#think .fb{font-size:18px;font-weight:700;line-height:1.3;min-height:26px;color:var(--mute)}
+#think .say{font-size:24px;font-weight:700;line-height:1.3;min-height:30px}
+#think .sub{font-size:24px;color:var(--mute);line-height:1.35}
+#think .fb{font-size:24px;font-weight:700;line-height:1.3;min-height:26px;color:var(--mute)}
 #think .fb div{margin-top:5px}
 #think .fb.ok{color:var(--ok)}
 #think .fb.bad{color:var(--bad)}
@@ -41,14 +41,14 @@
 #think .scalewrap{position:relative;width:460px;height:170px}
 #think .scalewrap svg{width:460px;height:170px;display:block;overflow:visible}
 #think .veil[hidden]{display:none}
-#think .veil{position:absolute;inset:-22px 0 0 0;z-index:1;display:flex;align-items:center;justify-content:center;background:var(--panel);border:3px dashed #000;font-size:18px;color:var(--mute)}
+#think .veil{position:absolute;inset:-22px 0 0 0;z-index:1;display:flex;align-items:center;justify-content:center;background:var(--panel);border:3px dashed #000;font-size:21px;color:var(--mute)}
 #think .ores{display:flex;gap:8px;justify-content:center}
 #think .ores button{width:70px;height:66px;font-size:30px;font-weight:800;background:#46413a;color:var(--warn);padding:0}
 #think .ores button.used{opacity:.25}
 #think .expr{display:flex;align-items:center;justify-content:center;gap:6px;font-size:28px;font-weight:800;height:50px;background:#000;padding:0 10px}
-#think .target{display:flex;align-items:center;gap:14px;font-size:22px;font-weight:700}
+#think .target{display:flex;align-items:center;gap:14px;font-size:24px;font-weight:700}
 #think .target b{font-size:48px;color:var(--warn);line-height:1.35}
-#think .found{font-size:17px;color:var(--mute);line-height:1.4;min-height:48px}
+#think .found{font-size:24px;color:var(--mute);line-height:1.4;min-height:48px}
 #think .found{width:100%}
 #think .found span{color:var(--ok);font-weight:700;margin-right:10px;white-space:nowrap;display:inline-block}
 #think .signs{display:flex;gap:8px}
@@ -68,7 +68,7 @@
 #think .dogbox button.off{background:#3a3c44;color:#6f7078;text-decoration:line-through}
 #think .dogbox button.hit{background:var(--ok)}
 #think .clues{display:flex;flex-direction:column;gap:6px}
-#think .clues div{background:var(--stone);border:3px solid #000;padding:7px 12px;font-size:21px;font-weight:700}
+#think .clues div{background:var(--stone);border:3px solid #000;padding:7px 12px;font-size:24px;font-weight:700}
 #think .cells{display:grid;gap:2px;background:#000;padding:3px;width:max-content;position:relative}
 #think .cells button{padding:0;min-height:0;border:0;background:var(--paper);display:block}
 #think .cells button.given{background:var(--counter)}
@@ -88,10 +88,10 @@
 #think .mods{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
 #think .mods button{height:138px;text-align:left;padding:10px 14px;display:flex;flex-direction:column;gap:5px;justify-content:center}
 #think .mods b{font-size:25px;color:var(--warn)}
-#think .mods span{font-size:16px;font-weight:500;color:var(--mute);line-height:1.35}
+#think .mods span{font-size:21px;font-weight:500;color:var(--mute);line-height:1.35}
 #think :where(*:not(svg,svg *)){all:revert;box-sizing:border-box}
 #think{padding:0;display:block;touch-action:manipulation;-webkit-user-select:none;user-select:none;color:var(--ink)}
-#think .tstage{position:absolute;left:50%;top:50%;width:860px;height:360px;transform-origin:center;color:var(--ink);font-family:var(--f-cn);font-size:16px}
+#think .tstage{position:absolute;left:50%;top:50%;width:860px;height:360px;transform-origin:center;color:var(--ink);font-family:var(--f-cn);font-size:24px}
 #think{background:var(--bg)}
 #think button{color:var(--ink);box-sizing:border-box}
 #think .col,#think .bar,#think .main{box-sizing:border-box}`;

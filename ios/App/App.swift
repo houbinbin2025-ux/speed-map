@@ -226,10 +226,14 @@ final class WebController: UIViewController, WKNavigationDelegate, WKScriptMessa
           }}});
 
           // 界面大小：页面逻辑宽度变大，界面元素变小、可用空间变大。只存本机，不进进度
-          var ZOOMS = [100, 90, 80, 70, 60], ZKEY = 'kongmath.zoom';
+          // 只给「网页宽 ≤ 屏幕点宽」的档（1 CSS px ≥ 1 pt，字不比手机上小；docs/视觉规范.md 2.3，Ben 11-09 嫌字小）：
+          // iPad Pro 11（1194 点宽）= 100/90/80，iPad mini（1133）= 100/90；存过的更小档按最小可用档算
+          var SCREEN_W = Math.max(screen.width, screen.height);
+          var ZOOMS = [100, 90, 80, 70, 60].filter(function (z) { return z === 100 || 932 * 100 / z <= SCREEN_W; }), ZKEY = 'kongmath.zoom';
           var getZoom = function () {
             var z = 100;
             try { z = +localStorage.getItem(ZKEY); } catch (e) {}
+            if (z > 0 && z < ZOOMS[ZOOMS.length - 1]) return ZOOMS[ZOOMS.length - 1];
             return ZOOMS.indexOf(z) < 0 ? 100 : z;
           };
           var applyZoom = function (meta) {

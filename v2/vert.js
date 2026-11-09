@@ -313,7 +313,7 @@
 .vq .vside{width:150px;flex:none;display:flex;flex-direction:column;gap:12px}
 .vq .vside .big{width:100%;min-width:0}
 .vq .vside .vdone{min-height:88px;font-size:22px}
-.vq .vnote{min-height:22px;font-size:15px;color:#f0b46c;text-align:center;line-height:1.3}
+.vq .vnote{min-height:22px;font-size:17px;color:#f0b46c;text-align:center;line-height:1.3}
 .vcard{background:#f7f4ec;border:3px solid #000;border-radius:12px;color:#2b2920;padding:18px 34px;display:flex;flex-direction:column;gap:6px;font-family:'PingFang SC',system-ui,sans-serif}
 .vrow{display:grid;gap:10px;align-items:center;text-align:center}
 .vlab{font-size:17px;color:#6b6555;font-weight:700;text-align:left;line-height:1.2}
@@ -341,7 +341,7 @@
 .vq .vres .vresc{flex:1;min-height:0;overflow-y:auto}.vq .vres .vresi{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .vq .vres .vresh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .vq .vres .vfoot{flex:none;display:flex;align-items:center;gap:12px}
-.vq .vres .vfoot #qNext{flex:1}.vq .vres .vfoot .qnote{flex:1;font-size:14px}
+.vq .vres .vfoot #qNext{flex:1}.vq .vres .vfoot .qnote{flex:1;font-size:17px}
 .vwk{background:#f7f4ec;color:#2b2920;border-radius:10px;padding:12px 18px;align-self:flex-start}
 .vwk h4{margin:0 0 6px;font-size:15px;color:#8b8676}
 .vg{display:grid;gap:3px 0;font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:42px;text-align:center;align-items:center}
