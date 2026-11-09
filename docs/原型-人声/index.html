@@ -1,0 +1,92 @@
+<title>空空朗读格式试听</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 布局：一张竖排测试单，每行一个格式：播放按钮 + 自动检测结果 + Ben 手标「响 / 不响」 */
+:root{
+  --bg:#f3f5f1; --card:#ffffff; --fg:#1d2420; --dim:#5d6a62; --line:#d5ddd6;
+  --accent:#2f7d4f; --ok:#2f7d4f; --bad:#b4442f;
+  --f-ui:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#151a17;--card:#1f2622;--fg:#e6ece8;--dim:#9db0a5;--line:#34403a;--accent:#6cc28f;--ok:#6cc28f;--bad:#e98a72;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151a17;--card:#1f2622;--fg:#e6ece8;--dim:#9db0a5;--line:#34403a;--accent:#6cc28f;--ok:#6cc28f;--bad:#e98a72;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+main{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font-size:22px;margin:0;text-wrap:balance}
+p{margin:0;color:var(--dim)}
+ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.lang{display:flex;gap:8px}
+.lang button{flex:1}
+.rows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.row{display:grid;grid-template-columns:1fr auto;gap:8px 12px;padding:14px;border-top:1px solid var(--line);align-items:center}
+.row:first-child{border-top:0}
+.row b{font-size:16px}
+.row small{display:block;color:var(--dim);font-size:12px}
+.st{grid-column:1/-1;font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
+.st.ok{color:var(--ok)}.st.bad{color:var(--bad)}
+.mark{grid-column:1/-1;display:flex;gap:8px}
+button{font:inherit;font-size:15px;min-height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.play{background:var(--accent);border-color:var(--accent);color:var(--card);font-weight:700}
+button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.note{font-size:13px}
+</style>
+<main>
+  <h1>空空朗读格式试听</h1>
+  <p>验证人声朗读在 iPhone 上用哪种音频格式、静音模式下会不会响。现在的声音是系统语音占位，不是 Gemini，只看<b>能不能放、响不响</b>。</p>
+  <ol>
+    <li>用 iPhone 的 Safari 打开这页。</li>
+    <li>把手机侧面的<b>静音开关打开</b>（橙色露出来），音量调到一半。</li>
+    <li>每一行点「播放」，听到了就点「响」，没听到点「不响」。</li>
+    <li>四行都标完，截一张图发给我。</li>
+  </ol>
+  <div class="lang" role="group" aria-label="句子语言">
+    <button id="lz" aria-pressed="true">中文题</button>
+    <button id="le" aria-pressed="false">英文题</button>
+  </div>
+  <div class="rows" id="rows"></div>
+  <p class="note" id="ua"></p>
+</main>
+<script>
+const FORMATS = [
+  {id: 'webm', name: 'Opus（WebM）', sub: '最小，计划首选', ext: 'webm', mime: 'audio/webm; codecs="opus"'},
+  {id: 'mp3', name: 'MP3', sub: '最老的格式，体积约多一倍', ext: 'mp3', mime: 'audio/mpeg'},
+  {id: 'm4a', name: 'AAC（M4A）', sub: '兼容最好，体积约多一半', ext: 'mp4', mime: 'audio/mp4; codecs="mp4a.40.2"'},
+  {id: 'tts', name: '系统语音', sub: '现在的做法，对照用', ext: null},
+];
+const TEXT = {zh: '小狐狸有 13 颗松果，送出 11 颗。还剩几颗？', en: 'Little Sheep has 2 apples. Little Cat has 4 times as many. How many does Little Cat have?'};
+let lang = 'zh', cur = null;
+const rows = document.getElementById('rows');
+rows.innerHTML = FORMATS.map(f => `<div class="row" id="r-${f.id}">
+  <div><b>${f.name}</b><small>${f.sub}</small></div>
+  <button class="play" id="p-${f.id}">播放</button>
+  <div class="st" id="s-${f.id}">${f.ext ? '浏览器自报：' + (new Audio().canPlayType(f.mime) || '不支持') : '浏览器自报：' + ('speechSynthesis' in window ? '有' : '没有')}</div>
+  <div class="mark" role="group" aria-label="${f.name} 听到了吗"><button id="y-${f.id}" aria-pressed="false">响</button><button id="n-${f.id}" aria-pressed="false">不响</button></div>
+</div>`).join('');
+function status(id, text, cls) { const s = document.getElementById('s-' + id); s.textContent = text; s.className = 'st' + (cls ? ' ' + cls : ''); }
+function stopAll() { if (cur) { cur.pause(); cur = null; } try { speechSynthesis.cancel(); } catch (e) {} }
+FORMATS.forEach(f => {
+  document.getElementById('p-' + f.id).addEventListener('click', () => {
+    stopAll();
+    if (!f.ext) {
+      try { const u = new SpeechSynthesisUtterance(TEXT[lang]); u.lang = lang === 'zh' ? 'zh-CN' : 'en-US'; u.rate = .9;
+        u.onstart = () => status(f.id, '正在念', 'ok'); u.onerror = e => status(f.id, '出错：' + e.error, 'bad'); speechSynthesis.speak(u); status(f.id, '已发出朗读请求'); }
+      catch (e) { status(f.id, '出错：' + e.message, 'bad'); }
+      return;
+    }
+    const a = new Audio(lang + '.' + f.ext); cur = a; const t0 = performance.now();
+    a.addEventListener('playing', () => status(f.id, `正在播放（${Math.round(performance.now() - t0)} 毫秒后出声）`, 'ok'));
+    a.addEventListener('ended', () => status(f.id, '播放完了', 'ok'));
+    a.addEventListener('error', () => status(f.id, '放不了：格式不支持或文件没加载到', 'bad'));
+    a.play().catch(e => status(f.id, '放不了：' + e.name, 'bad'));
+  });
+  ['y', 'n'].forEach(k => document.getElementById(k + '-' + f.id).addEventListener('click', ev => {
+    ['y', 'n'].forEach(j => document.getElementById(j + '-' + f.id).setAttribute('aria-pressed', String(j === k)));
+  }));
+});
+['z', 'e'].forEach(k => document.getElementById('l' + k).addEventListener('click', () => {
+  lang = k === 'z' ? 'zh' : 'en'; stopAll();
+  document.getElementById('lz').setAttribute('aria-pressed', String(lang === 'zh'));
+  document.getElementById('le').setAttribute('aria-pressed', String(lang === 'en'));
+}));
+document.getElementById('ua').textContent = '设备：' + navigator.userAgent;
+</script>
