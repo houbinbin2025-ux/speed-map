@@ -391,9 +391,10 @@
   //   全类样本不够、这个技能自己够 8 条：自己的中位数 × 1.2（0.5–1）。
   // 要想好几步的类（读题题、三四年级算式、多位笔算）：这个技能够 8 条，自己的中位数 × 1.2，倍数 1–1.5——只松不紧（估计偏紧的放宽；比估计快的照旧，不追着收紧）。
   // 都再夹住：不低于估计的一半（想的部分至少 1 秒），见 lineCoreMs。
-  // 闪电线 = 读题写字 + 估计 × 这个技能自己的第 25 百分位（够 8 条才有），不低于秒答线 × 0.35、不高于秒答线（C 11-09 对齐）；不够 = 秒答线 × BOLT。
+  // 闪电线 = 写字 + 估计的读题和想 × 这个技能自己的第 25 百分位（够 8 条才有），这部分夹在个人线（读题 + 想）的 0.35 到 BOLT 倍之间（C 11-09 对齐；上限审查 R1 收紧）；
+  //   技能自己不够 8 条但有类尺子：写字 + 个人线 × BOLT；没有任何个人数据：秒答线 × BOLT（照旧）。
   // 样本是这次作答之前的（判完才记进去）。
-  const FT_MIN = 8, FT_K = 1.2, FT_LO = 0.5, THINK_FLOOR = 1000, BOLT_FLOOR = 0.35, POOL_MIN = 20, POOL_K = 2;
+  const TOO_FAST = 500, FT_MIN = 8, FT_K = 1.2, FT_LO = 0.5, THINK_FLOOR = 1000, BOLT_FLOOR = 0.35, POOL_MIN = 20, POOL_K = 2;
   const FT = {boltQ: +((typeof process !== 'undefined' && process.env && process.env.BOLT_Q) || 0.25)};   // 闪电分位数（模拟可用 BOLT_Q 环境变量试）
   const FT_HI = {card: 1, short: 1, pick: 1, line: 1, word: 1.5, multi: 1.5, column: 1.5};   // 难类最多放宽到 1.5 倍：再慢就是还没熟（模拟：2 倍时用时 2.2 倍的孩子也有 41% 秒答）
   const okRatio = v => typeof v === 'number' && isFinite(v) && v > 0 && v <= 10;
@@ -407,7 +408,7 @@
   function poolOf(cls, ft) {
     let all = [], k = 0;
     Object.keys(ft).forEach(sk => { if (BY[sk] && skClass(sk) === cls) { const a = samples(ft, sk); if (a.length) { k++; all = all.concat(a); } } });
-    return all.length >= POOL_MIN && k >= 2 ? {n: all.length, p25: quant(all, 0.25)} : null;
+    return all.length >= POOL_MIN && k >= 2 ? {n: all.length, p25: quant(all, 0.25)} : null;   // 每技能最多 10 条，20 条必然来自 ≥ 2 个技能；k 留着防以后改条数
   }
   // 这一题的个人倍数：{n, by: '类' | '技能', line: 秒答线倍数, bolt: 闪电倍数或 null}；没有个人数据返回 null
   function ftOf(id, ft) {
@@ -436,19 +437,21 @@
   // 闪电线（毫秒）：rate = gems.js 的 BOLT（样本不够时用）
   function boltMs(inst, o, rate) {
     o = o || {};
-    const full = fastMs(inst, o), p = ftOf(inst.id, o.ft);
-    if (!p || p.bolt === null) return full * rate;
-    return clamp(writeMs(inst, o) + (thinkMs(inst) + readMs(inst, o)) * p.bolt, full * BOLT_FLOOR, full);
+    const p = ftOf(inst.id, o.ft); if (!p) return fastMs(inst, o) * rate;   // 没有任何个人数据：照旧
+    // 有个人线：上下限只作用在「读题 + 想」那部分（口算卡的线大半是写字，整条线 × 0.6 会把想的部分压到 0.2 秒，审查 R1 后实测）
+    const line = lineCoreMs(inst, o), core = thinkMs(inst) + readMs(inst, o);
+    return writeMs(inst, o) + clamp(p.bolt === null ? Infinity : core * p.bolt, line * BOLT_FLOOR, line * rate);
   }
   // 题库页：个人线说明（样本够才有）
   const ftNote = (id, ft) => { const p = ftOf(id, ft); return p ? {n: p.n, by: p.by, line: Math.round(p.line * 100) / 100} : null; };
   // 逐题用时（秒答校准，中控 11-09）：(实际用时 − 写字) ÷ 估计的「读题 + 想」，两位小数。写字按当时测到的写字速度扣掉（和 fastMs 同一组参数）；
   // 读题算进来，因为读题题的秒答线大头是读题时间，只量「想」的话读得快慢永远调不到。
-  // 分母永远是估计值，不随个人线变（o.ft 不参与）。比写字还快记 0.05（写字速度估慢了）；超过 10 倍（走神）或不是数返回 null，不记
+  // 分母永远是估计值，不随个人线变（o.ft 不参与）。去掉写字不到 0.5 秒、超过 10 倍（走神）或不是数返回 null，不记
   function thinkRatio(inst, usedMs, o) {
     const core = thinkMs(inst) + readMs(inst, o); if (!(core > 0) || !isFinite(usedMs)) return null;
-    const r = (usedMs - writeMs(inst, o)) / core;
-    return r > 10 ? null : Math.max(0.05, Math.round(r * 100) / 100);
+    const t = usedMs - writeMs(inst, o), r = t / core;
+    if (t < TOO_FAST) return null;   // 去掉写字不到 0.5 秒：点选乱点、写字速度测慢了，记进去会把全类尺子拉到底（审查 R1）
+    return r > 10 ? null : Math.round(r * 100) / 100;
   }
   // 题库页：这个题型想的时间（按题算的写范围）
   const LB = {};
@@ -470,6 +473,6 @@
   }
 
   HARD.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 高级题的前置也只留登记了的（关掉的趣味技能不登记，写进前置会让 ready() 查不到而崩，审查 R1）
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, thinkRatio, fastLabel, boltMs, restMs, readMs, writeMs, ftOf, ftNote, FT_MIN, FT_HI, BOLT_FLOOR, POOL_MIN, POOL_K, THINK_FLOOR, FT,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, thinkRatio, fastLabel, boltMs, restMs, readMs, writeMs, ftOf, ftNote, FT_MIN, FT_HI, BOLT_FLOOR, POOL_MIN, POOL_K, THINK_FLOOR, FT, TOO_FAST,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

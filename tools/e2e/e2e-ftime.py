@@ -13,7 +13,7 @@ with sync_playwright() as p:
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); {NODEMO}"); pg.reload(); pg.wait_for_timeout(500)
     # 手机写字板写对
     it = pick(pg, 'speed:g12:dec', 1, 143); sk = pg.evaluate(f"__sm.K.ITEM['speed:g12:dec'].skill")
-    go(pg, [it]); pad_write(pg, f"{it['ans'] / 10:.1f}"); pg.wait_for_timeout(2600)
+    go(pg, [it]); pg.wait_for_timeout(1500); pad_write(pg, f"{it['ans'] / 10:.1f}"); pg.wait_for_timeout(2600)   # 先停 1.5 秒：机器人写字极快，去掉写字不到 0.5 秒的不记（审查 R1）
     if not pg.locator('#qConfirm').is_hidden(): pg.click('#qcA'); pg.wait_for_timeout(400)
     a = ft(pg, sk); check(len(a) == 1 and 0.05 <= a[0] <= 10 and round(a[0], 2) == a[0], f'写字板写对：记一条两位小数的倍数 {a}')
     # 点选题点对

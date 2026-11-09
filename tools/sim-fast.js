@@ -74,10 +74,13 @@ function spot() {
   const draw = m => m * Math.exp(SIGMA * gauss(rnd) - SIGMA * SIGMA / 2);
   console.log('\n## 一、定点对比（每类 400 题，答对的里面）');
   console.log('情形 | 类 | 改前秒答率 | 改后秒答率 | 改前闪电率 | 改后闪电率');
-  cases.forEach(([label, classes, m]) => classes.forEach(cls => {
+  // 中控点名的两类（10 以内口算卡、分与合）单独列：[情形, 类, 倍数, 被测技能]
+  const named = [['10 以内口算卡 · 已熟', 'card', 0.35, 'speed:L1:3'], ['10 以内口算卡 · 只是会', 'card', 0.8, 'speed:L1:3'], ['分与合（6–9）· 已熟', 'short', 0.35, 'bond2'], ['分与合（6–9）· 只是会', 'short', 0.8, 'bond2']];
+  const all = named.concat([].concat(...cases.map(([label, classes, m]) => classes.map(cls => [label, cls, m, null]))));
+  all.forEach(([label, cls, m, tid]) => {
     const of = s => s.items.filter(it => K.fastClass(it.id) === cls), sks = K.SKILLS.concat(K.HARD).filter(s => of(s).length);
     if (sks.length < 2) return;
-    const T = sks[sks.length >> 1], ft = {}; sks.filter(s => s !== T).slice(0, 3).forEach(s => { ft[s.id] = Array.from({length: 10}, () => Math.round(draw(0.35) * 100) / 100); });
+    const T = tid ? K.BY[tid] : sks[sks.length >> 1], ft = {}; sks.filter(s => s !== T).slice(0, 3).forEach(s => { ft[s.id] = Array.from({length: 10}, () => Math.round(draw(0.35) * 100) / 100); });
     ft[T.id] = Array.from({length: 10}, () => Math.round(draw(m) * 100) / 100);
     const n = {fb: 0, fa: 0, bb: 0, ba: 0};
     for (let i = 0; i < 400; i++) {
@@ -89,7 +92,7 @@ function spot() {
     }
     const P = k => Math.round(n[k] / 4) + '%';
     console.log([label, K.FAST_CLASS[cls].name.replace(/（.*/, ''), P('fb'), P('fa'), P('bb'), P('ba')].join(' | '));
-  }));
+  });
 }
 if (process.env.SPOT !== '0') spot();
 if (process.env.SPOT === '1') process.exit(0);

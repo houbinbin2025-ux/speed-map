@@ -13,13 +13,15 @@ function run(S, day, group, fn, n = 40) {
   return xs;
 }
 
-test('thinkRatio：用时正好等于秒答线 → 1；少一半想的时间 → 0.5；想得极快 → 0.05；离谱慢（> 10 倍）→ null', () => {
+test('thinkRatio：用时正好等于秒答线 → 1；少一半读题加想的时间 → 0.5；去掉写字不到 0.5 秒 → null（乱点、写字估慢）；离谱慢（> 10 倍）→ null', () => {
   const id = Object.keys(K.ITEM).find(i => K.fastClass(i) === 'short' && K.BY[K.ITEM[i].skill].input === 'write');
   const inst = K.make(id, seeded(5)), o = {speed: 900};
-  const lim = K.fastMs(inst, o), th = K.thinkMs(inst);
+  const lim = K.fastMs(inst, o), th = K.thinkMs(inst) + K.readMs(inst, o), wr = K.writeMs(inst, o);
   assert.equal(K.thinkRatio(inst, lim, o), 1);
   assert.equal(K.thinkRatio(inst, lim - th / 2, o), 0.5);
-  assert.equal(K.thinkRatio(inst, 1, o), 0.05);
+  assert.equal(K.thinkRatio(inst, 1, o), null);
+  assert.equal(K.thinkRatio(inst, wr + 499, o), null);
+  assert.equal(K.thinkRatio(inst, wr + 500, o), Math.round(500 / th * 100) / 100);
   assert.equal(K.thinkRatio(inst, lim + th * 10, o), null);
   assert.equal(K.thinkRatio(inst, NaN, o), null);
 });
@@ -68,7 +70,7 @@ test('迁移 1：同一份存档、同一道题，带不带 think 结算结果�
   assert.ok(n > 10, `有 ${n} 道题记了用时`);
 });
 
-test('迁移 2：秒答线只看估计值——有没有 ftime、样本多少，K.fastMs 都不变（第一步不改判断）', () => {
+test('迁移 2：不传 ft（排课估时间、题库页、老流程）时秒答线只看估计值——S.ftime 里样本多少都不影响', () => {
   const ids = Object.keys(K.ITEM).filter((_, i) => i % 7 === 0);
   const insts = ids.map(id => K.make(id, seeded(9))), before = insts.map(x => K.fastMs(x, {speed: 800}));
   const S = C.blank(); ids.forEach(id => { for (let i = 0; i < 12; i++) E.noteThink(S, K.ITEM[id].skill, 0.1); });
