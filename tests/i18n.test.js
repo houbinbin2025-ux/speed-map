@@ -181,3 +181,5 @@ test('思维地点每档的建议级别（中控 11-08）有英文', () => {
   assert.equal(txt('建议第 3 级起'), 'Level 3+');
   assert.equal(txt('建议第 13 级起'), 'Level 13+');
 });
+
+test('分级同步：秒答高塔「去挑战」有英文（审查 11-09）', () => { assert.equal(txt('去挑战'), 'Go to challenge'); });

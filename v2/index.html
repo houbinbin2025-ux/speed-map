@@ -199,12 +199,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .w-lead .muted{font-size:12px;line-height:1.4}
 .w-lead .startbtn{height:64px;font-size:23px}
 .w-lead .startbtn.busy{opacity:.6}
-.w-sheet{position:absolute;z-index:6;left:50%;bottom:0;width:min(600px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:12px 16px 14px}
+.w-sheet{position:absolute;z-index:6;left:50%;bottom:0;width:min(600px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:12px 16px 14px;max-height:calc(100% - 6px);display:flex;flex-direction:column}
 .w-sheet.open{transform:translate(-50%,0)}
 .w-sheet h2{margin:0;font-size:22px;font-weight:900;display:flex;align-items:center;gap:10px}
 .w-sheet h2 small{font-size:13px;color:var(--mute);font-weight:700}
 .w-sheet .x{position:absolute;right:8px;top:8px;width:44px;height:44px;font-size:22px;color:var(--mute);background:none;border:0}
-.zskills{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+.zskills{display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;margin:10px 0 12px;min-height:0;overflow-y:auto}   /* 技能多（三四年级）时在卡片里滚，地名和 ✕ 留在屏内（审查 11-09） */
+.w-sheet h2,.w-sheet .btns{flex:none}
 .zsk{display:flex;align-items:center;gap:6px;height:28px;padding:0 4px 0 0;font-size:14px;font-weight:700;color:var(--mute)}
 .zsk i{width:14px;height:14px;border:2px solid #000;background:var(--lv0)}
 .w-sheet .btns{display:flex;gap:10px}.w-sheet .btns .gobig{height:56px;padding:0 22px;font-size:19px}.w-sheet .btns .btn{min-height:56px}
@@ -954,7 +955,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v133:3b3a9f34706b -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v134:2206a0a3ccb9 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -964,25 +965,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=133"></script>
-<script src="i18n.js?v=133"></script>
-<script src="bank.js?v=133"></script>
-<script src="hardbank.js?v=133"></script>
-<script src="placebank.js?v=133"></script>
-<script src="core.js?v=133"></script>
-<script src="ink.js?v=133"></script>
-<script src="skills.js?v=133"></script>
-<script src="engine.js?v=133"></script>
-<script src="render.js?v=133"></script>
-<script src="world.js?v=133"></script>
-<script src="home.js?v=133"></script>
-<script src="puzzles.js?v=133"></script>
-<script src="thinking.js?v=133"></script>
-<script src="house.js?v=133"></script>
-<script src="kongmine.js?v=133"></script>
-<script src="gems.js?v=133"></script>
-<script src="gemui.js?v=133"></script>
-<script src="vert.js?v=133"></script>
+<script src="touchfix.js?v=134"></script>
+<script src="i18n.js?v=134"></script>
+<script src="bank.js?v=134"></script>
+<script src="hardbank.js?v=134"></script>
+<script src="placebank.js?v=134"></script>
+<script src="core.js?v=134"></script>
+<script src="ink.js?v=134"></script>
+<script src="skills.js?v=134"></script>
+<script src="engine.js?v=134"></script>
+<script src="render.js?v=134"></script>
+<script src="world.js?v=134"></script>
+<script src="home.js?v=134"></script>
+<script src="puzzles.js?v=134"></script>
+<script src="thinking.js?v=134"></script>
+<script src="house.js?v=134"></script>
+<script src="kongmine.js?v=134"></script>
+<script src="gems.js?v=134"></script>
+<script src="gemui.js?v=134"></script>
+<script src="vert.js?v=134"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1105,7 +1106,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   // ---------- 岛世界：木牌按真实进度上色（一个技能一格 = 这个技能里至少 1/3 的格子到了的那一档，练了就看得见；秒答按 4 级） ----------
   const third = a => { const s = a.slice().sort((x, y) => y - x); return s.length ? s[Math.ceil(s.length / 3) - 1] : 0; };
-  const zoneSkills = g => g === 'speed' ? C.LEVELS.map((LV, L) => ({name: LV.name, items: K.speed.filter(s => s.L === L).flatMap(s => s.items)})) : R.skillsOf(S, g);   // 老技能 + 这一级开放的三四年级技能（和技能地图同一口径，分级同步 11-09）
+  const zoneSkills = g => g === 'speed' && !anyMap() ? R.skillsOf(S, 'speedH') : g === 'speed' ? C.LEVELS.map((LV, L) => ({name: LV.name, items: K.speed.filter(s => s.L === L).flatMap(s => s.items)})) : R.skillsOf(S, g);   // 老技能 + 这一级开放的三四年级技能（和技能地图同一口径，分级同步 11-09）
+  const zoneKey = g => (g === 'speed' && !anyMap() ? 'speedH' : g);   // 秒答地图 4 张图都没题时，高塔卡片按「挑战」列技能、算格子
   const zoneSq = g => zoneSkills(g).map(s => third(s.items.map(it => E.lv(S, it.id) || 0)));
   const zoneName = g => (WORLD.ZONES.find(z => z.id === g) || {}).name || '';
   // 今天先去哪：今天练完了 → 没有；还没摸底 → 看数草原；否则 = "学新的"会先学的那个技能所在的地方
@@ -1130,7 +1132,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       return;
     }
     $('zMist').hidden = false;
-    zCur = z.id; const st = R.groupStat(S, z.id), sq = zoneSq(z.id);
+    zCur = z.id; const st = R.groupStat(S, zoneKey(z.id)), sq = zoneSq(z.id);
     $('zName').textContent = z.name; $('zCt').textContent = `亮了 ${st.lit} / ${st.total} 格`;
     $('zSkills').innerHTML = zoneSkills(z.id).map((s, i) => `<span class="zsk"><i class="l${sq[i]}"></i>${s.name}</span>`).join('');
     const zNone = z.id !== 'speed' && E.groupEmpty(S, z.id), zOut = z.id !== 'speed' && !zNone && E.groupOut(S, z.id, today());
@@ -1157,7 +1159,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       HOME.ensure(S).go++; save(); goIsland();
       const sk = r && r.skill, g = r && (r.place || (sk && (sk.speed ? 'speed:L' + (sk.L + 1) : sk.group)));
       if (!g) { if (!isDone()) $('btnStart').click(); return; }
-      if (g.startsWith('speed')) { S.level = +g.slice(-1) - 1; renderSpeed(); show('home'); return; }
+      if (g.startsWith('speed') && !anyMap()) { Zone = 'speed'; WD.go('speed', () => begin(() => startQ('free', {group: 'speedH'}), goIsland)); return; }   // 这个难度只在挑战里有题
+      if (g.startsWith('speed')) { S.level = +g.slice(-1) - 1; fixSpeedMap(); renderSpeed(); show('home'); return; }
       Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
     },
   });
