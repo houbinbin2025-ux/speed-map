@@ -121,7 +121,7 @@ def drive(prof, lang, outjson, script, args):
     dump()
 
 # 导游：脚本名 + 参数（{root} {out} 会替换）；超时秒数
-SHOT_WAIT = {'demofit.py'}   # 截图前要停一下才量得到的导游（见 drive）
+SHOT_WAIT = {'demofit.py', 'e2e-qsum.py'}   # 截图前要停一下才量得到的导游（见 drive）
 GUIDES = [   # 脚本、参数、只走哪种设备（None = 都走）、必须量到的页面（缺一个 = 导游走偏，判不通过，审查 R2）
     ('e2e-en.py', ['{root}', '{out}'], None, '#island #qplay #demo #qsum #home #house'),   # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、技能地图、秒答地图和练习、家、图鉴、奖状
     ('e2e.py', ['{root}', '{out}'], None, '#qplay #demo #placeResult'),                 # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
@@ -172,6 +172,7 @@ def main():
     root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
     only = next((a.split('=', 1)[1] if '=' in a else sys.argv[sys.argv.index(a) + 1] for a in sys.argv if a.startswith('--only')), 'phone-zh,phone-en,ipad-zh,ipad-en').split(',')
     rows, broken, cover, guide_fail = [], [], {}, {}
+    GONLY = next((x.split('=', 1)[1].split(',') for x in sys.argv if x.startswith('--guides=')), None)
     for combo in only:
         prof, lang = combo.split('-')
         if '--skip-a' not in sys.argv:
@@ -180,6 +181,7 @@ def main():
             rows += a; print(f'{combo} 题型 量了 {len(a)} 种 · {time.time() - t0:.0f}s', flush=True)
         if '--skip-b' not in sys.argv:
             for g, args, only_prof, must in GUIDES:
+                if GONLY and g not in GONLY: continue   # --guides=a.py,b.py 只走这几个导游（补量用）
                 if only_prof and only_prof != prof: continue   # 这个导游只走得通某种设备
                 f = out / f'raw-{combo}-{g}.json'; shots = out / 'shots' / combo / g.replace('.py', ''); shots.mkdir(parents=True, exist_ok=True)
                 cmd = [sys.executable, str(HERE / 'fontsize.py'), '--drive', prof, lang, str(f), g] + [s.replace('{root}', str(root)).replace('{out}', str(shots)) for s in args]
