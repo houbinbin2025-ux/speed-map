@@ -165,8 +165,8 @@
     // 结算
     本次总结: 'Summary', 错题复习: 'Mistake review', 先练到这里: "That's all for now", 练完啦: 'All done', 这次升级的方块: 'Squares leveled up', 这次没有方块升级: 'No squares leveled up this time', 去看看: 'Take a look', '这几个写对了，还不够快': 'These were right, but not fast enough yet', 回家打开: 'Open at home', 回到地图: 'Back to map', 'Boss 被打败了！': 'Boss defeated!',
     这一组练完啦: 'Set complete', 复习完啦: 'Review complete', '这次没挖到矿石，明天再来': 'No ore this time. Try again tomorrow', 分钟: 'Min', 格点亮了: 'Squares lit', 道错题过关: 'Mistakes fixed', 道题: 'Questions', 今天点亮的: 'Lit up today', '这次没有新点亮的格子，明天接着来': 'No new squares this time. Keep going tomorrow', '家门口有 1 个战利品箱': 'A Loot Chest is at your door', 再来一组: 'Another set',
-    明天: 'tomorrow', 后天: 'in 2 days', 今天没有要复习的: 'Nothing to review today', 复习这一组: 'Review this set', 还没有错题: 'No mistakes yet',
-    今天要复习: 'To review today', '写错的题会隔 1、2、4、7、15 天回来，每次都做对就过 1 次复习；过完 5 次就算真的会了。每天的练习会自动带上它们。': 'Missed questions come back after 1, 2, 4, 7, and 15 days. Get one right to pass a review. Pass 5 reviews and you really know it. Daily practice brings them back automatically.',
+    明天: 'tomorrow', 后天: 'in 2 days', 今天没有要复习的: 'Nothing to review today',
+    今天要复习: 'To review today', 回到错题宝箱: 'Back to Mistake Chest',
     // 异常、竖屏
     把屏幕横过来: 'Turn the screen sideways', '把屏幕从竖着转成横着': 'Turn the screen from upright to sideways', '横着放，右边有地方写字': 'Hold it sideways so you have room to write on the right', '休息好了吗？': 'Ready to keep going?', '计时停住了，回来接着练': 'The timer stopped. Come back and keep practicing', 另一个页面也开着: 'Another page is open', '这一页先停一下，免得两个页面把进度弄乱。': 'This page has paused so the two pages don\'t mix up your progress.', '请先把另一个页面关掉，再点下面的按钮': 'Close the other page, then tap the button below', 在这里继续: 'Continue here', '点了会读取最新的进度，回到首页': 'This loads your latest progress and goes back to the start', 新版已经上线了: 'A new version is here', 这个旧页面不再保存进度: 'This old page no longer saves progress', 去新版: 'Go to new version',
     // 家
@@ -423,7 +423,7 @@
     // 摸底结果
     [/^亮了 (\d+) 格$/, (m, a) => `${pl(a, 'square')} lit`], [/^(.+) 会了$/, (m, l) => { const a = l.split(/(?<!\d)、|、(?!\d)/).map(one); return a.includes(null) ? null : `Got it: ${a.join(', ')}`; }], [/^还有 (\d+) 分钟，接着练今天的$/, (m, a) => `${pl(a, 'minute')} left. Keep going with today's practice`],
     // 技能地图、错题
-    [/^最近 (\d+) 次秒答 (\d+) 次$/, (m, a, b) => `${b} fast of the last ${a}`], [/^(\d+) 天后$/, (m, a) => `in ${a} days`], [/^今天 (\d+)$/, (m, a) => `Today ${a}`], [/^复习中 (\d+)$/, (m, a) => `Reviewing ${a}`], [/^会了 (\d+)$/, (m, a) => `Learned ${a}`], [/^还有 (\d+) 道$/, (m, a) => `${a} more`],
+    [/^最近 (\d+) 次秒答 (\d+) 次$/, (m, a, b) => `${b} fast of the last ${a}`], [/^(\d+) 天后$/, (m, a) => `in ${a} days`], [/^第 (\d+) \/ (\d+)$/, (m, a, b) => `${a} / ${b}`], [/^还有 (\d+) 道$/, (m, a) => `${a} more`],
     // 家
     [/^已完成 (\d+) \/ (\d+)$/, (m, a, b) => `Done ${a} / ${b}`], [/^盔甲件数：(\d+) \/ (\d+)$/, (m, a, b) => `Armor pieces: ${a} / ${b}`], [/^得到日期：(.+)$/, (m, d) => { const t = one(d); return t === null ? null : `Earned: ${t}`; }], [/^已复习做对 (\d+) 道错题$/, (m, a) => `${pl(a, 'mistake')} fixed on review`], [/^已选择 (.+)，点一个位置$/, (m, a) => { const t = one(a); return t === null ? null : `${t} selected. Tap a spot`; }], [/^学会「(.+)」后解锁$/, (m, a) => { const t = one(a); return t === null ? null : `Learn "${t}" to unlock`; }], [/^学会了「(.+)」(?:，全部隔 3 天还做对)?$/, (m, a) => { const t = one(a); return t === null ? null : `Learned "${t}"${m.includes('隔') ? ', still right 3 days later' : ''}`; }], [/^，全部隔 3 天还做对$/, () => ', still right 3 days later'],
     // 奖状和道具
@@ -619,7 +619,7 @@
   const RAW = { '挑战 · 大碎片': 'Challenge · Big shard', '再练一会 · 得 1 张挑战券': 'Practice more · Earn 1 challenge ticket',
     '比 ': 'Start at ', ' 多 ': ', count on ', ' 少 ': ', count back ', '是 ': 'You land on ', '把旗子插到 ': 'Put the flag on ', ' 的位置': '', ' 里有几个十？': ': how many tens?', ' 里有几个一？': ': how many ones?',
     ' 分钟 · 点亮 ': ' min · lit ', '练了 ': 'Practiced ', '新放进 ': 'Added: ', ' 道 · 今天复习过关 ': ' · Passed review today: ', ' 道': '', '点亮了 ': 'Lit ', '已解锁 ': 'Unlocked ', ' 块': '', '矿石 ': 'Ore ', '奖状 ': 'Awards ', '伙伴 ': 'Pals ', '钻石 ': 'Diamonds ',
-    ' ？': '?', '你写的是 ': 'You wrote ', '今天要复习 ': 'To review today: ', ' 点': " o'clock", ' 更大': ' is bigger', '，全部隔 3 天还做对': ', still right 3 days later', ' · 附魔': ' · Enchanted',
+    ' ？': '?', '你写的是 ': 'You wrote ', ' 点': " o'clock", ' 更大': ' is bigger', '，全部隔 3 天还做对': ', still right 3 days later', ' · 附魔': ' · Enchanted',
   };
   const RAWP = [
     [/^ 多 (\d+)( 是 )?$/, (m, a, b) => ` plus ${a}${b ? ' is ' : ''}`], [/^ 少 (\d+)( 是 )?$/, (m, a, b) => ` minus ${a}${b ? ' is ' : ''}`],

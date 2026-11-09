@@ -1721,8 +1721,8 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
   function qBar() {
     if (!Q) return;
     const run = Q.phase === 'q' && !Q.paused ? (performance.now() - Q.shownAt) / 1000 : 0;
-    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? (Q.n - Q.retries) / 12 : Q.kind === 'challenge' ? Q.n / 5 : 0;   // 自由加练：12 题，当场再来一次不算
-    [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
+    const f = Q.kind === 'today' || Q.kind === 'place' ? ((S.daily && S.daily.day === Q.day ? S.daily.sec : 0) + Math.min(run, SEC_CAP)) / ((S.daily && S.daily.budget) || 600) : Q.kind === 'free' ? (Q.n - Q.retries) / 12 : Q.kind === 'challenge' ? Q.n / 5 : Q.kind === 'review' && Q.sess.total ? Q.sess.pos / Q.sess.total : 0;   // 自由加练：12 题，当场再来一次不算
+    [$('qBar'), $('dBar')].forEach(b => { b.style.visibility = Q.kind === 'review' && !Q.sess.total ? 'hidden' : ''; b.firstChild.style.width = Math.min(100, f * 100) + '%'; });
   }
   // 题面区兜底：内容比左栏宽 / 高就整体缩小，不钻到写字板下面
   // 孩子看到的字的下限（docs/视觉规范.md 2.3，和 tools/e2e/fontsize.py 同一口径）：讲解、题干、提示这些「说话」的地方一律按正文 17；
@@ -2239,6 +2239,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
         </div>
         <div style="display:flex;gap:12px;flex:none">
           ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
+          ${q.kind === 'review' ? `<button class="btn" id="qsMist" style="min-height:72px;flex:1;font-size:18px">回到错题宝箱</button>` : ''}
           ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">回到岛上</button>
         </div>
       </div>`;
@@ -2249,6 +2250,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
     $('qsHome').addEventListener('click', () => { goIsland(); q.ups.forEach(id => { const s = K.BY[K.ITEM[id].skill], g = s.group === 'speedH' ? 'speed' : s.group, i = s.speed ? s.L : zoneSkills(g).indexOf(s); if (i >= 0) WD.pulse(g, i); }); });   // 挑战（speedH）的技能闪在高塔木牌上（4 张图都没题时木牌列的是挑战）
     if (box) $('qsHouse').addEventListener('click', () => HS.enter());
     if (q.kind === 'free') $('qsAgain').addEventListener('click', () => begin(() => startQ('free', q.opts)));
+    if (q.kind === 'review') $('qsMist').addEventListener('click', () => openMist(q.opts.group));
   }
   function showPlaceResult(q, quit) {
     const lit = R.GROUPS.filter(g => E.GROUPS.includes(g.id)).map(g => ({g, now: R.groupStat(S, g.id), was: q.before[g.id]}));
@@ -2315,9 +2317,12 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
       <div class="mshelf done"><b>已经学会</b><div class="mrow">${chipsOf(sh.done) || '<span class="muted">还没有</span>'}</div></div>`;
   }
   // 开始复习：把要看的各组的「复习这一组」依次接起来（引擎按组出到期错题，出完就停）
+  // 一次最多出 MIST_REVIEW_MAX 道（中控 11-09，可调），剩下的留到下一次「开始复习」；pos = 已出到第几道（不算示范和「再来一次」）
+  const MIST_REVIEW_MAX = 15;
   function reviewSess() {
-    const day = today(), ss = mistGroups().map(g => E.review(S, day, g.id)); let i = 0, cur = null;
-    return {next: () => { while (i < ss.length) { const x = ss[i].next(); if (x) { cur = ss[i]; return x; } i++; } return null; },
+    const day = today(), ss = mistGroups().map(g => E.review(S, day, g.id)), total = Math.min(MIST_REVIEW_MAX, shelvesOf(S, day).today.length); let i = 0, cur = null, pos = 0;
+    return {total, get pos() { return pos; },
+      next: () => { if (pos >= total) return null; while (i < ss.length) { const x = ss[i].next(); if (x) { cur = ss[i]; if (x.kind === 'q' && !x.retry) pos++; return x; } i++; } return null; },
       answer: r => cur.answer(r), demoTime: s => cur && cur.demoTime && cur.demoTime(s)};
   }
   $('mistGo').addEventListener('click', () => { if ($('mistGo').disabled) return; const f = mistFocus; begin(() => startQ('review', {sess: reviewSess(), group: f || undefined}), () => openMist(f)); });
