@@ -203,7 +203,7 @@ test('结论和建议的文字：错题都在好转；较上周少 / 多；三�
 test('ansOf 覆盖全部选择题型：和记录侧 pickTyped（index.html）同一规则，没有「--」、HTML 标签', () => {
   // pickTyped(n)：choice 题 = opts[n]；有 pickAria = pickAria[i]；有 pickText = 按钮文字；否则 String(n)
   const rule = (inst, n) => { const q = inst.q, v = R.question(inst), i = v.pick.indexOf(n);
-    return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : v.pickText ? String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() : String(n); };
+    return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : v.pickText ? String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() || String(n) : String(n); };
   const pickIds = Object.keys(K.ITEM).filter(id => (K.BY[K.ITEM[id].skill] || {}).input === 'pick');
   const types = [...new Set(pickIds.map(id => K.ITEM[id].skill))];
   assert.ok(types.length >= 10, `选择题技能 ${types.length} 个`);
@@ -212,6 +212,7 @@ test('ansOf 覆盖全部选择题型：和记录侧 pickTyped（index.html）同
     const inst = K.make(it.id, rnd(r)), m = {src: K.BY[sk].group, uid: it.id, q: inst.q, ans: inst.ans};
     const got = MV.ansOf(m, R); n++;
     assert.equal(got, rule(inst, inst.ans), it.id); assert.notEqual(got, '--', it.id); assert.doesNotMatch(got, /</, it.id);
+    assert.doesNotMatch(got, /&[a-z#0-9]+;/i, it.id);   // 选项里出现转义符时，按钮文字（解码后）和这里会对不上：先拦住
   }
   assert.ok(n > 30);
 });

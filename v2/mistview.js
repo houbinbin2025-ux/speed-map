@@ -29,7 +29,7 @@
   // 每道错题的状态：due 今日复习（= E.dueMistakes，孩子今天真的会做到的）/ doing 复习中 / paused 暂停（难度设置或趣味题关掉）/ done 已学会
   function stateOf(S, m, day, due) {
     if (m.due === null) return 'done';
-    if (due ? due.has(m) : (m.due <= day && E.mistOn(S, m))) return 'due';
+    if (due ? due.has(m) : (m.due <= day && E.mistOn(S, m) && !funOff(m))) return 'due';
     if (!E.mistOn(S, m) || funOff(m) || m.due <= day) return 'paused';
     return 'doing';
   }
