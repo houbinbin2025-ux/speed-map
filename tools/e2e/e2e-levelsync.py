@@ -15,7 +15,7 @@ SEED = """([lv, en]) => { const S = {v: 2, savedAt: 0, cards: {}, boss: {}, log:
 cur = lambda pg: pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]")
 GROUPS = ['look', 'bond', 'place', 'cmp', 'line', 'garden', 'market', 'dock']
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     RUNS = [(W, H, lv, False) for W, H in [(667, 375), (844, 390), (874, 297), (1194, 834)] for lv in [[], [1], [2], [4], [5], [8], [9], [12], list(range(3, 9)), list(range(9, 13)), list(range(1, 16))]]
     RUNS += [(W, H, lv, True) for W, H in [(667, 375), (874, 297)] for lv in [[9], list(range(1, 16))]]   # 英文日：字长，卡片更高
     for W, H, lv, en in RUNS:
