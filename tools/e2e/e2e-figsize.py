@@ -5,7 +5,8 @@ import sys, json, pathlib
 src = pathlib.Path(__file__).with_name('e2e-vert.py').read_text().split('\nwith sync_playwright()')[0]
 exec(src)
 IDS = ['dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum',
-       'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv']
+       'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv',
+       'garden:g4:pyr', 'garden:g7:pyr2', 'garden:g7:magic', 'dock:g5:tree', 'dock:g5:saw', 'dock:g7:tree2', 'dock:g9:tree3', 'dock:g7:cipher', 'dock:g7:riddle', 'dock:g9:riddle2']   # 第三批趣味题
 NODEMO = "localStorage.setItem('speedmap.test.vertdemo', JSON.stringify({add: 1, sub: 1, mul: 1, div: 1, law: 1}))"
 # 题干字高：文字那一行的实际高度 ÷ 行高（像素）= 一路缩放下来的倍数，再乘字号
 MEAS = """(k) => { const q = document.querySelector('.vbq'), el = q.querySelector('.nbsay span, .say2, .eq') || q;
@@ -28,7 +29,7 @@ with sync_playwright() as p:
             check(m['cell'] >= 60, f'{name} {id} 答案格 {m["cell"]} 点（≥ 60）')
             check(m['font'] >= 24, f'{name} {id} 题干 {m["font"]} 点（≥ 24）')
             check(fit_ok(pg), f'{name} {id} 整块放得下')
-            if id in ('dock:g8:chart', 'dock:g7:bar', 'dock:g11:fracbar'): pg.screenshot(path=str(out / f'{name}-{id.replace(":", "_")}.png'))
+            if id in ('dock:g8:chart', 'dock:g7:bar', 'dock:g11:fracbar', 'garden:g4:pyr', 'garden:g7:magic', 'dock:g5:tree', 'dock:g7:cipher', 'dock:g7:riddle'): pg.screenshot(path=str(out / f'{name}-{id.replace(":", "_")}.png'))
         pg.close()
     b.close()
 print('错误', errs or '无'); print('不通过', fails or '无')

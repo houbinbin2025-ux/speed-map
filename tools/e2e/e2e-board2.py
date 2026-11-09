@@ -5,6 +5,7 @@ import sys, json, pathlib
 src = pathlib.Path(__file__).with_name('e2e-vert.py').read_text().split('\nwith sync_playwright()')[0]
 exec(src)   # 复用 e2e-vert 的标准笔画、写数字、SETUP、hit()、fit_ok() 等
 FRAC = ['dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv']
+FUNB = ['garden:g4:pyr', 'garden:g7:pyr2', 'garden:g7:magic', 'dock:g5:tree', 'dock:g5:saw', 'dock:g7:tree2', 'dock:g9:tree3', 'dock:g7:cipher', 'dock:g7:riddle', 'dock:g9:riddle2']   # 第三批趣味题（中控 11-09）
 FIG = ['dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum']
 NODEMO = "localStorage.setItem('speedmap.test.vertdemo', JSON.stringify({add: 1, sub: 1, mul: 1, div: 1, law: 1}))"
 def go(pg, items):
@@ -24,7 +25,7 @@ with sync_playwright() as p:
             pg = b.new_page(has_touch=True, **kw); pg.on('pageerror', lambda e: errs.append(str(e)))
             pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); {NODEMO}"); pg.reload(); pg.wait_for_timeout(500)
             if en: pg.evaluate("__sm.S.testDays = I18N.isEn({}, SM.dayOf(Date.now(), 0)) ? 0 : 1; __sm.S.settings.bilingual = true; I18N.set(I18N.isEn(__sm.S.settings, __sm.today()))")
-            for id in FRAC + FIG:
+            for id in FRAC + FIG + FUNB:
                 it = first(pg, id); go(pg, [it, it]); tag = f'{tag0} {id}'
                 check(pg.evaluate("__sm.Q.v.input") == 'vert' and pg.locator('.vboard').count() == 1, f'{tag} 是蓝框版面')
                 qf = pg.evaluate(QFIT); check(qf['n'] > 0 and qf['inside'] and fit_ok(pg), f'{tag} 题面（图 / 分数）在上方、整块放得下：{qf}')

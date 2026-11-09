@@ -17,8 +17,10 @@
     'dock:g14:avg', 'dock:g14:meet', 'dock:g14:tri', 'market:g14:unit', 'place:g15:lcm', 'place:g15:gcd', 'dock:g15:three', 'dock:g15:sumdiff', 'dock:g15:timessum', 'dock:g15:legs', 'dock:g15:age',
     // 中控 11-08：2a 看图题（线段图、条形图、长方形）和 2b-1 分数手写题也用蓝框，统一点「写好了」交卷；题面的图 / 上下结构分数放在版面上方
     'dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum',
-    'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv'];
-  const FIG = ['bar', 'chart', 'rect'];   // 看图题：正确写法不重复题面（讲解里有算式）
+    'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv',
+    // 第三批趣味题（中控 11-09）：数塔、幻方、植树 / 锯木头（题面有图）、算式谜（方框夹在数字里，一格）、猜数（纯文字，同应用题）
+    'garden:g4:pyr', 'garden:g7:pyr2', 'garden:g7:magic', 'dock:g5:tree', 'dock:g5:saw', 'dock:g7:tree2', 'dock:g9:tree3', 'dock:g7:cipher', 'dock:g7:riddle', 'dock:g9:riddle2'];
+  const FIG = ['bar', 'chart', 'rect', 'pyr', 'magic', 'trees'], WORD = ['story', 'riddle'];   // 看图题：正确写法不重复题面（讲解里有算式）
   const OPS = {'+': '+', '−': '-', '-': '-', '×': '×', '÷': '÷'};
   // 答案格数：方框夹在数字中间（2.□、11.□8）就一格；否则比答案多一格（不泄露位数到个位）
   // maxLen：这个题型里最长的答案有几位（页面从题库算好传进来），格数按它定，不随这道题变，免得格子数泄露位数
@@ -27,7 +29,7 @@
     if (!Number.isInteger(ans) || ans < 0) return null;
     // 小数加减写完整得数（q.dp = 小数位数，ans 是去掉小数点的整数）：答案格里印一个固定小数点，孩子不写点
     const dp = q.dp > 0 ? q.dp : 0, inNum = !dp && /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
-    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : FIG.includes(q.view) ? 'fig' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
+    return {kind: STEP.includes(inst.id) ? 'step' : WORD.includes(q.view) ? 'word' : FIG.includes(q.view) ? 'fig' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
   }
   const TAP_MS = 1500;   // 点「写好了」的时间，不算进用时
   function parse(inst, maxLen) {
@@ -326,7 +328,7 @@
 .vboard{width:1000px;display:flex;flex-direction:column;gap:14px}
 .vboard .vbq{font-size:30px;line-height:1.4;color:#f3f1ea;zoom:1.25}
 .vboard.vb-word .vbq{zoom:1.75}.vboard.vb-word .vgrid{height:220px}
-.vboard:has(.fig2w) .vbq .nbsay{font-size:25px}.vboard:has(.fig2w) .vbq .spk{transform:scale(1.3)}.vboard:has(.fig2w) .fig2w{text-align:center}.vboard:has(.fig2w) .fig2{max-height:270px;width:auto;max-width:100%}.vboard:has(.fig2w) .vgrid{height:130px}.vboard:has(.fig2w) .vbq .eq{text-align:center;justify-content:center}   /* .eq 是 flex，居中要 justify-content； 看图题（题面有图）：图限高、题干和应用题一样大、草稿区矮一点，整块不再缩到答案格 < 60 点（A 方案，中控 11-09） */
+.vboard:has(.fig2w) .vbq .nbsay{font-size:25px}.vboard:has(.fig2w) .vbq .spk{transform:scale(1.3)}.vboard:has(.fig2w) .fig2w{text-align:center}.vboard:has(.fig2w) .fig2{max-height:270px;width:auto;max-width:100%}.vboard:has(.fig2w) .vgrid{height:130px}.vboard:has(.fig2w) .vbq .eq{text-align:center;justify-content:center}.vboard.vb-fill .vbq .nbsay{font-size:25px;justify-content:center}.vboard.vb-fill .vbq .eq{justify-content:center}   /* .eq 是 flex，居中要 justify-content； 看图题（题面有图）：图限高、题干和应用题一样大、草稿区矮一点，整块不再缩到答案格 < 60 点（A 方案，中控 11-09） */
 .vboard .vcard{padding:14px 24px}.vdotc{align-self:end;justify-self:center;width:16px;height:16px;border-radius:50%;background:#2b2920;margin-bottom:14px}.vboard .vlab{font-size:22px}
 .vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
 .vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}

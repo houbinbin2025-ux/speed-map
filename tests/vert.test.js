@@ -80,7 +80,7 @@ test('三四年级手写题（含 2a 看图题、2b-1 分数题，11-08 起）�
   BALL.forEach(i => {
     const p = V.parse(i, maxLen(i.id)); assert.ok(p, i.id);
     assert.equal(seen[i.id] = seen[i.id] || p.n, p.n, i.id + ' 格数随题变了');
-    assert.equal(p.kind, ['speed:g13:order', 'speed:g14:law'].includes(i.id) ? 'step' : i.q.view === 'story' ? 'word' : ['bar', 'chart', 'rect'].includes(i.q.view) ? 'fig' : 'fill', i.id);
+    assert.equal(p.kind, ['speed:g13:order', 'speed:g14:law'].includes(i.id) ? 'step' : ['story', 'riddle'].includes(i.q.view) ? 'word' : ['bar', 'chart', 'rect', 'pyr', 'magic', 'trees'].includes(i.q.view) ? 'fig' : 'fill', i.id);
     assert.equal(p.n, /[\d.]□|□[\d.]/.test(i.q.text) ? 1 : maxLen(i.id) + 1, i.q.text);
     assert.ok(p.n >= String(i.ans).length);
     const h = V.layout(p, true); assert.equal((h.match(/class="vcell"/g) || []).length, p.n);
