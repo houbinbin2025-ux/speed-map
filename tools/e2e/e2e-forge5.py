@@ -29,6 +29,7 @@ with sync_playwright() as p:
             check(cur(pg) == 'forge' and toast(pg) == want, f'{name} 第 {i} 次进锻造室，提示「{toast(pg)}」')
             check(side == (f'今天还可进入 {left} 次' if left else '今天最后一次进入') and sb and sb['y'] + sb['height'] <= H and sb['x'] + sb['width'] <= W, f'{name} 侧栏「{side}」在屏幕内 {sb}')
             if i == 1: pg.screenshot(path=str(out / f'forge-in-{name}.png'))
+            if i == 1: pg.wait_for_timeout(1300); check(toast(pg) == '', f'{name} 锻造室里的提示 1.5 秒后消失（不挡放碎片）')
             pg.click('#forgeBack'); pg.wait_for_timeout(500)
         check(pg.evaluate("document.getElementById('btnForge').classList.contains('spent')"), f'{name} 5 次用完，岛上锻造按钮变暗')
         pg.click('#btnForge'); pg.wait_for_timeout(400)
@@ -39,8 +40,13 @@ with sync_playwright() as p:
         # 结算页「去锻造」也走同一个入口：用完后点了不进门（GEMUI.openForge 就是那个按钮调的）
         pg.evaluate("GEMUI.openForge('island')"); pg.wait_for_timeout(300)
         check(cur(pg) == 'island', f'{name} 其他入口用完后也进不去')
+        # 结算页的「去锻造」用完后是灰的、点不了；家里熔炉先问 forgeBlocked，用完了留在家里提示（审查建议 1、2）
+        btn = pg.evaluate("(()=>{const d=document.createElement('div');d.innerHTML=GEMUI.summary({kind:'free',gem:{}},__sm.today());const b=d.querySelector('[data-gem=forge]');return b?{t:b.textContent,dis:b.disabled}:null})()")
+        check(btn == {'t': '今天锻造次数已用完', 'dis': True}, f'{name} 结算页锻造按钮用完后变灰：{btn}')
+        check(pg.evaluate("GEMUI.forgeBlocked()") == '今天的 5 次锻造已用完，明天再来', f'{name} 家里熔炉拿得到「用完」的提示')
         # 第二天重新有 5 次（把当天记录挪到昨天）
         pg.evaluate("(()=>{const st=GEMUI.state(),t=__sm.today(),D=st.days[t];const y=new Date(t+'T12:00:00Z');y.setUTCDate(y.getUTCDate()-1);st.days[y.toISOString().slice(0,10)]=D;delete st.days[t];GEMUI.islandBtn();})()")
+        check(pg.evaluate("GEMUI.forgeBlocked()") == '', f'{name} 第二天家里熔炉不拦')
         pg.click('#btnForge'); pg.wait_for_timeout(500)
         check(cur(pg) == 'forge' and toast(pg) == '今天还可进入锻造室 4 次', f'{name} 第二天重新有 5 次：「{toast(pg)}」')
         ctx.close()
