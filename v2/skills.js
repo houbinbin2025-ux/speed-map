@@ -144,6 +144,8 @@
   // 第二批 2b-1 分数：只问一个整数（说明书-到四年级第二批 §2b-1）
   g2('dock', '分数读图', ['dock:g11:fracbar'], 'frac'); g2('speedH', '同分母加减', ['speed:g12:fracadd'], 'fracadd'); g2('cmp', '分数比大小', ['cmp:g12:fraccmp'], 'fraccmp', {input: 'pick'});
   g2('cmp', '同分子比大小', ['cmp:g15:fraccmp2'], 'fraccmp2', {input: 'pick'}); g2('speedH', '等值分数', ['speed:g15:equiv'], 'equiv');
+  // 第二批 2b-2 分步作答（一题两个空）：ans 是各格拼起来的整数，q.cells 记每格几位；多格作答界面归 B（docs/方案-2b-2多格作答.md）
+  g2('speedH', '商和余数', ['speed:g10:divrem2'], 'rem'); g2('speedH', '假分数化带分数', ['speed:g15:mixed'], 'mixed');
   // 第三批 3a 趣味题（说明书-第三批 §四）：fun = 趣味题，排课走单独的插入通道（B），挑战不选（C）；fastClass = 秒答类别「读题题」（B 的 fastClass() 先看它）
   const fun = (group, name, id, pre, concept, o) => g2(group, name, [id], concept, Object.assign({fun: true, fastClass: 'word', pre}, o));
   fun('garden', '数塔', 'garden:g4:pyr', ['bondH3', 'speed:L2:1', 'speed:L2:4']); fun('garden', '数塔（两位数）', 'garden:g7:pyr2', ['speedH2']); fun('garden', '幻方', 'garden:g7:magic', ['speedH2']);
@@ -172,7 +174,7 @@
     ['两位数乘法与小数入门', ['两位数乘两位数', '一位小数', '小数比大小', '面积', '数方格求面积', '单价', '24 时', '年月日', '同分母加减', '分数比大小']],
     ['多位数乘除与四则混合', ['三位数乘两位数', '两位除数', '四则混合', '取整', '归一', '路程', '平均分']],
     ['运算律与两位小数', ['简便算', '两位小数', '两位小数比大小', '小数点移动', '小数换算', '平均数', '相遇', '内角和']],
-    ['综合应用', ['公倍数', '公因数', '多步应用题', '和差', '和倍差倍', '和差线段图', '鸡兔同笼', '年龄', '同分子比大小', '等值分数']],
+    ['综合应用', ['公倍数', '公因数', '多步应用题', '和差', '和倍差倍', '和差线段图', '鸡兔同笼', '年龄', '同分子比大小', '等值分数', '带分数']],
   ];
   let LEVELS = [];   // 在 TOPIC 之后算（要知道哪些内容词只属于趣味技能）
   // 技能 → 内容词。秒答地图的世界按所在级别统一写
@@ -193,7 +195,7 @@
     'g34:g11:perim2': '看图求周长', 'g34:g12:area2': '数方格求面积', 'g34:g12:deccmp': '小数比大小', 'g34:g14:deccmp': '两位小数比大小', 'g34:g15:barsum': '和差线段图',
     'g34:g4:pyr': '数塔', 'g34:g7:pyr2': '数塔', 'g34:g7:magic': '幻方', 'g34:g5:tree': '植树', 'g34:g7:tree2': '植树', 'g34:g9:tree3': '植树', 'g34:g5:saw': '锯木头', 'g34:g5:order': '排顺序',
     'g34:g7:riddle': '猜数', 'g34:g9:riddle2': '猜数', 'g34:g7:cipher': '算式谜',
-    'g34:g11:fracbar': '分数读图', 'g34:g12:fracadd': '同分母加减', 'g34:g12:fraccmp': '分数比大小', 'g34:g15:fraccmp2': '同分子比大小', 'g34:g15:equiv': '等值分数',
+    'g34:g11:fracbar': '分数读图', 'g34:g12:fracadd': '同分母加减', 'g34:g12:fraccmp': '分数比大小', 'g34:g15:fraccmp2': '同分子比大小', 'g34:g15:equiv': '等值分数', 'g34:g10:divrem2': '余数', 'g34:g15:mixed': '带分数',
   };
   // 秒答地图（speed:Lx:y）按级别：第 1–2 级「10 以内秒答」，第 3 级十几加减几，第 4 级过十加减，第 6–7 级进退位加减
   const SPEED_TOPIC = {1: '10 以内秒答', 2: '10 以内秒答', 3: '十几加减几', 4: '过十加减', 6: '进退位加减', 7: '进退位加减'};
@@ -215,11 +217,11 @@
     ['两位数的数位', ['place1', 'place2']], ['百、千的数位', ['placeH1', 'placeH2', 'g34:g10:thou']], ['取整（四舍五入）', ['g34:g13:round']],
     ['找规律', ['gardenA', 'gardenC']], ['跳着数', ['gardenB', 'gardenH1', 'gardenH2']],
     ['认钟', ['clockA', 'clockB', 'marketH3']], ['时间计算', ['g34:g10:span', 'g34:g12:24', 'g34:g12:year']], ['付钱和找零', ['money1', 'money2', 'marketH1', 'marketH2']], ['单位换算', ['g34:g10:conv', 'g34:g14:unit']],
-    ['表内乘除', ['speedH3', 'speedH4', 'speedH5']], ['有余数除法', ['g34:g10:rem', 'g34:g10:remain']],
+    ['表内乘除', ['speedH3', 'speedH4', 'speedH5']], ['有余数除法', ['g34:g10:rem', 'g34:g10:remain', 'g34:g10:divrem2']],
     ['三位数加减', ['g34:g10:add3']], ['多位数乘法', ['g34:g11:mul', 'g34:g12:mul2', 'g34:g13:mul3']], ['多位数除法', ['g34:g11:div', 'g34:g13:div2']],
     ['四则混合运算', ['g34:g13:order']], ['简便运算', ['g34:g14:law']],
     ['小数加减', ['g34:g12:dec', 'g34:g14:dec2']], ['小数比大小', ['g34:g12:deccmp', 'g34:g14:deccmp']], ['小数点移动', ['g34:g14:move']],
-    ['认识分数', ['g34:g11:fracbar', 'g34:g11:part']], ['分数加减', ['g34:g12:fracadd']], ['分数比大小', ['g34:g12:fraccmp', 'g34:g15:fraccmp2']], ['等值分数', ['g34:g15:equiv']],
+    ['认识分数', ['g34:g11:fracbar', 'g34:g11:part']], ['分数加减', ['g34:g12:fracadd']], ['分数比大小', ['g34:g12:fraccmp', 'g34:g15:fraccmp2']], ['等值分数', ['g34:g15:equiv']], ['带分数', ['g34:g15:mixed']],
     ['加减应用题', ['dockA', 'dockB', 'dockC', 'dockD', 'dockH1', 'dockH2', 'dockH3']], ['乘除应用题', ['dockH4', 'dockH5', 'dockH6']],
     ['两步、多步应用题', ['g34:g10:two', 'g34:g11:two', 'g34:g15:three']], ['线段图应用题', ['g34:g7:bar']], ['倍', ['g34:g9:times', 'g34:g11:times']],
     ['和倍差倍', ['g34:g9:sumtimes', 'g34:g15:timessum']], ['和差', ['g34:g15:sumdiff', 'g34:g15:barsum']],
@@ -311,6 +313,7 @@
     'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 12, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
     'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
     'dock:g11:fracbar': 6, 'speed:g12:fracadd': 6, 'cmp:g12:fraccmp': 5, 'cmp:g15:fraccmp2': 5, 'speed:g15:equiv': 8,   // 2b-1 分数：A 估计值，B 按真实用时定
+    'speed:g10:divrem2': 8, 'speed:g15:mixed': 10,   // 2b-2 分步作答：A 估计值（同 divrem 8 秒；带分数多一步除法），换格时间由 B 在 fastMs 里另加
     'garden:g4:pyr': 4, 'garden:g7:pyr2': 6, 'garden:g7:magic': 6, 'dock:g5:tree': 8, 'dock:g5:saw': 8, 'dock:g7:tree2': 8, 'dock:g9:tree3': 13, 'dock:g5:order': 8, 'dock:g7:riddle': 12, 'dock:g9:riddle2': 15, 'dock:g7:cipher': 10,   // 第三批趣味题：A 估计值，门 5 真人试后回填
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };
