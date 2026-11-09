@@ -93,7 +93,7 @@ def flow_en(pg, tag):
     pg.screenshot(path=str(out / f'{tag}-3-英文.png'))
 
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)   # 统一启动方式（tests/e2e-quiet.test.js）
     for tag, vw in [('se', (667, 375)), ('iphone', (844, 390)), ('max', (932, 430)), ('ipad', (1194, 834)), ('ipad13', (1366, 1024))]:   # 竖屏整页被「把屏幕横过来」盖住（index.html .w-turn），不测
         pg = b.new_page(viewport={'width': vw[0], 'height': vw[1]}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
         flow(pg, tag)
