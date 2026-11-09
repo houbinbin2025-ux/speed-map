@@ -31,8 +31,11 @@ with sync_playwright() as p:
         check(bool(got and got.get('got')) and total(pg) > t0, f'{k} 答对给碎片：{(got or {}).get("got")}')
     check(pg.evaluate("GEMUI.summary({kind: 'boss', gem: {}}, __sm.today()) !== ''"), 'Boss 结算页也显示碎片')
     # 老流程（秒答区加法练习）口答：真点「看答案」→「下一题」（审查 11-08：原来口答绕开发碎片那一步）
-    pg.evaluate("__sm.S.oral = true"); pg.evaluate("(() => { const b = [...document.querySelectorAll('button')].find(x => x.offsetParent && /返回|回到/.test(x.textContent)); if (b) b.click(); })()"); pg.wait_for_timeout(600)
-    pg.evaluate("__sm.S.oral = true"); pg.reload(); pg.wait_for_timeout(800)
+    # 口答开关在打开页面前写进存档（运行中改再刷新，可能被关页时的自动保存盖回去，走查不稳）
+    pg.close(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
+    oral = dict(fresh, placedAt=1, oral=True)
+    pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(oral))}); localStorage.setItem('speedmap.ink.test', {json.dumps(json.dumps(ink))})"); pg.reload(); pg.wait_for_timeout(800)
+    check(pg.evaluate("__sm.S.oral === true"), '口答模式已打开')
     started = pg.evaluate("(() => { const b = document.querySelector('[data-series=add]'); if (!b) return false; b.click(); return true; })()"); pg.wait_for_timeout(1500)
     t0 = total(pg); n = 0
     for _ in range(3):
