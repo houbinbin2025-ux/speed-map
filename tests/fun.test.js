@@ -37,3 +37,26 @@ test('关掉时前置里写了趣味技能也不崩：所有技能（含高级�
 test('测试开关：环境变量 FUN_SEC 只在 node 里生效（npm test 时 FUN_SEC=90 可以提前跑打开后的路径），网页里永远按代码里的常量', () => {
   assert.equal(K.FUN_SEC, Number(process.env.FUN_SEC) > 0 ? Number(process.env.FUN_SEC) : 0);
 });
+
+// 第三批存档字段（B 写记录一侧；合并、清洗归 F，见交接 F-审-第三批存档字段合并规则.md）：S.stats[日].funSec、S.stats[日].fun = {题型: [作答, 不会]}，和习惯记录 h 并列
+test('趣味题作答记录：funSec 累加实际用时（再来一次也算，管 90 秒）；fun[题型] 记作答数和「不会」数（再来一次、看过提示不算）', () => {
+  const real = K.ITEM['dock:g7:bar'].skill;   // 借一个真题型的题面，临时把它的技能标成趣味技能
+  const sk = K.BY[real], was = sk.fun; sk.fun = true;
+  try {
+    const S = C.blank(); S.placedAt = 1; const day = '2026-11-03';
+    const inst = K.make('dock:g7:bar', () => 0.3), x = {kind: 'q', seg: 'new', inst};
+    E.settle(S, x, {ok: true, fast: true, secs: 14.2}, day);
+    E.settle(S, x, {ok: false, dunno: true, secs: 3}, day);
+    E.settle(S, Object.assign({}, x, {retry: 1}), {ok: true, fast: false, secs: 20, peeked: true}, day);
+    E.settle(S, x, {ok: false, fast: false, secs: 6, peeked: true}, day);
+    const st = S.stats[day];
+    assert.equal(st.funSec, 43.2, '四次都算时间');
+    assert.deepEqual(st.fun, {[real]: [2, 1]}, '再来一次、看过提示的不算作答');
+    assert.ok(!st.h || !('funSec' in st.h || 'fun' in st.h), '不放进习惯记录 h');
+  } finally { sk.fun = was; }
+});
+test('不是趣味题：不写 funSec / fun（旧存档、计算题照旧）', () => {
+  const S = C.blank(); S.placedAt = 1; const day = '2026-11-03', inst = K.make('dock:g7:bar', () => 0.3);
+  E.settle(S, {kind: 'q', seg: 'new', inst}, {ok: true, fast: true, secs: 5}, day);
+  assert.ok(!('funSec' in S.stats[day]) && !('fun' in S.stats[day]));
+});

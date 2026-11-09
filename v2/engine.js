@@ -300,6 +300,10 @@
       if (note) C.noteMistake(S, key, ev(res.dunno ? 'd' : 'w', fresh), day);
     }
     const st = stat(S, day); st.sec += res.secs || 0; st.n++; if (out.up) st.ups++;
+    if (K.BY[skill] && K.BY[skill].fun) {   // 第三批趣味题（说明书-第三批 §4.3）：和习惯记录 h 并列，合并、清洗归 F（core.importMerge）
+      st.funSec = Math.round(((st.funSec || 0) + (res.secs || 0)) * 10) / 10;   // 实际用时，再来一次也算：管每天 90 秒
+      if (note) { st.fun = st.fun || {}; const a = st.fun[skill] = Array.isArray(st.fun[skill]) ? st.fun[skill] : [0, 0]; a[0]++; if (res.dunno) a[1]++; }   // 按题型的作答数、「不会」数（不会率）；再来一次、看过提示不算，同能力观察口径
+    }
     st.over = dueCount(S, day); st.gap = gapNow(S, day);
     if (onTime) onTime(res.secs || 0);
     return out;
