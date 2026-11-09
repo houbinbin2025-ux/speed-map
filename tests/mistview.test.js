@@ -227,3 +227,8 @@ test('趣味题关掉时，没到期的趣味错题算暂停，不进「过几�
   assert.equal(sh.later.some(m => m.key === key), !off);
   assert.equal(MV.stateOf(S, S.mistakes[key], T, null), off ? 'paused' : 'doing');
 });
+
+test('2b-2 多格题：错题分析的「正确」一栏按格显示（「2 余 4」「5 又 1/9」），不是拼起来的数字（审查 R2）', () => {
+  assert.equal(MV.ansOf({uid: 'speed:g10:divrem2', src: 'speedH', q: {text: '20 ÷ 8 = □ 余 □', cells: [1, 1]}, ans: 24}, R), '2 余 4');
+  assert.equal(MV.ansOf({uid: 'speed:g15:mixed', src: 'speedH', q: {text: '46/9 = □ 又 □/9', cells: [1, 1]}, ans: 51}, R), '5 又 1/9');
+});

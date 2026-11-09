@@ -49,7 +49,7 @@ test('附魔奖状只看全部深红；淡红不算', () => {
 test('每张奖状都有称号、画面、说明；编号不重复；全部能拿到', () => {
   const S = C.blank(); K.SKILLS.concat(K.HARD).forEach(s => lit(S, s.id, 3));
   S.stats = {}; for (let i = 0; i < 200; i++) S.stats[D(-i)] = {sec: 700, n: 5};
-  S.mistakes = {}; for (let i = 0; i < 60; i++) S.mistakes['x' + i] = {key: 'x' + i, uid: 'x', due: null, passes: 5};
+  S.mistakes = {}; for (let i = 0; i < 400; i++) S.mistakes['x' + i]   /* 方案 4 乙：最高一档 400 道 */ = {key: 'x' + i, uid: 'x', due: null, passes: 5};
   H.sync(S, D(0)); const e = H.earned(S), t = e.t;
   assert.equal(e.certs.length, H.CERTS.length); assert.equal(e.items.length, H.ITEMS.length); assert.equal(e.medals.length, H.MEDALS.length);
   H.CERTS.forEach(c => { assert.ok(c.title && c.scene && c.text && c.say(t), c.id); });

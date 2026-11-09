@@ -4,6 +4,10 @@
   'use strict';
   const G = window.GEMS, KM = window.KM;
   const NAME = {a: '小碎片', b: '金色小碎片', p: '小碎片', g: '小碎片（4）', s: '中碎片', m: '金色中碎片', h: '大碎片', l: '金色大碎片'};
+  // 谜题水晶和趣味题徽章（方案 7）：徽章名是 A 定的（A-趣味题徽章名和前置评估.md），图标是临时的紫色水晶，正式画面由 E 画
+  const PUZZLE_NAME = {'g34:g4:pyr': '数塔', 'g34:g7:pyr2': '大数塔', 'g34:g7:magic': '幻方', 'g34:g5:tree': '植树', 'g34:g7:tree2': '三种种法', 'g34:g9:tree3': '量路种树', 'g34:g5:saw': '锯木头', 'g34:g5:order': '排顺序', 'g34:g7:riddle': '猜数', 'g34:g9:riddle2': '乘除猜数', 'g34:g7:cipher': '算式谜'};
+  const CRYSTAL = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><path d="M8 1 14 6 8 15 2 6z" fill="#9b5de5" stroke="#000" stroke-width="1"/><path d="M8 1 10 6 8 15 6 6z" fill="#c9a7f5"/><path d="M2 6h12" stroke="#000" stroke-width="1"/></svg>');
+  const funSkill = id => { const K = window.SKILLS, it = K && K.ITEM && K.ITEM[id], s = it && K.BY[it.skill]; return s && s.fun ? s.id : null; };
   let c = null, st = null, on = false, slots = [], back = 'island', msg = '', mode = 'gem';   // mode：gem 炼宝石（凑 100），big 炼大碎片（凑准 50）
 
   function save() { if (!on || !c.canWrite()) return; try { c.store.setItem(c.key, JSON.stringify(st)); } catch (e) {} }
@@ -84,6 +88,9 @@
       const mult = fx ? 1 + (fx.F.lit ? 1 : 0) + (G.critOn(fx.C, now) ? 1 : 0) : undefined;   // 火苗只在今日练习、练这一块、复习里有；其他练习按金色算
       got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand, mult});
       credit(q, got);
+      const fsid = r.ok && !r.dunno && !q.peeked && !x.retry ? funSkill(x.inst.id) : null;   // 趣味题答对：1 颗谜题水晶（不进锻造）；答错后的再来一次、看过提示、点「不会」不给
+      const pz = fsid ? G.puzzleAnswer(st, fsid, q.day) : null;   // 当天 10 颗满了返回 null：不飞水晶、结算页不显示这一行
+      if (pz) { q.puzzle = (q.puzzle || 0) + 1; if (pz.badge) q.badges = (q.badges || []).concat(fsid); flyCrystal(); }
       if (got && !got.rep && r.fast && !S().oral) { more = G.speedBonus(st, q.day, r.bolt, mult); credit(q, more.extra, got.length); }
       if (fx) afterAnswer(q, x, r, got, now, !!(got && got.rep));
     }
@@ -298,7 +305,7 @@
     const more = opts.todayRun && S().daily && S().daily.done && c.E.hasMore(S(), c.today());
     return `<div class="gemsum">
       <b>这次的碎片</b>
-      <div class="gemline">${allChips(g, '+') || '<span>没有新碎片</span>'}${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
+      <div class="gemline">${allChips(g, '+') || '<span>没有新碎片</span>'}${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}${run.puzzle ? `<span class="pzline"><img src="${CRYSTAL}" alt="">谜题水晶 +${run.puzzle}</span>` : ''}${(run.badges || []).map(sid => `<span class="pzline">新徽章 ${PUZZLE_NAME[sid] || ''}</span>`).join('')}</div>
       <div class="gemline muted"><span>背包</span>${allChips(st.inv, '')}<span>挑战券 ${st.tickets}</span></div>
       ${pct !== null || run.effSec || run.crit || run.qcWon ? `<div class="gemline">${pct !== null ? `<span>这次专注 ${pct}%</span>` : ''}${run.effSec ? `<span>有效答题 ${mins(run.effSec)}</span>` : ''}${run.crit ? `<span>暴击 ${run.crit} 次</span>` : ''}${run.qcWon ? `<span>限时挑战宝石 +${run.qcWon}</span>` : ''}</div>` : ''}
       <div class="gembtns">${forgeBtn('data-gem="forge"')}${more ? `<button class="btn" data-gem="more">${S().oral ? '再练一会' : '再练一会 · 得 1 张挑战券'}</button>` : ''}${st.tickets > 0 && !S().oral ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
@@ -568,12 +575,21 @@
   // 答题时碎片从屏幕中间飞向顶部
   function floatShard(t, i) { setTimeout(() => floatNow(t), (i || 0) * 160); }
   // 碎片飞到练习页的计数；思维地点飞到矿石数字正中（审查 11-08：原偏移按练习页宽计数定，在矿石数字上会落到右边、窄屏出界）
+  // 给家里画徽章册用（E）：n = 累计水晶；badges 每个题型一枚：got = 答对满 3 道，shiny = 这个题型的格子全部深红（闪光徽章）；master = 11 枚都拿到（奖状「解谜大师」）
+  function puzzleState() {
+    if (!on || !st) return null;
+    const K = window.SKILLS, lv = id => (c.E && c.E.lv ? c.E.lv(S(), id) || 0 : 0);
+    const badges = G.puzzleBadges(st, Object.keys(PUZZLE_NAME)).map(b => { const sk = K && K.BY && K.BY[b.sid]; return Object.assign(b, {name: PUZZLE_NAME[b.sid], shiny: b.got && !!(sk && sk.items.length && sk.items.every(it => lv(it.id) >= 3))}); });   // 闪光要先有普通徽章（审查建议 1：旧进度格子已深红、水晶不补发时不会只闪光没徽章）
+    return {n: G.puzzleCount(st), badges, master: badges.every(b => b.got)};
+  }
+  // 水晶从题目飞到左上角矿石数那里（和碎片同一套飞入），声音高一点和碎片区分
+  function flyCrystal() { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), to = q && q.width ? [q.left + q.width / 2, q.top + q.height / 2] : [innerWidth * 0.3, 20]; flyImg(CRYSTAL, [innerWidth * 0.32, innerHeight * 0.45], to, 26, 520, 30); blip([[988, 0, 0.05], [1318, 0.06, 0.09]]); } catch (e) {} }
   function floatNow(t) { try { const q = c.$('qMined') && c.$('qMined').getBoundingClientRect(), th = document.querySelector('#think:not([hidden]) #oreN'), to = q && q.width ? q : th ? th.getBoundingClientRect() : c.$('pCount') && c.$('pCount').getBoundingClientRect(); flyImg(shardURL(t), [innerWidth * 0.32, innerHeight * 0.45], th && !(q && q.width) ? [to.left + to.width / 2, to.top + to.height / 2] : [to && to.width ? to.left + 20 : innerWidth * 0.3, to && to.height ? to.top + 10 : 20], (G.VALUE[t] || 0) >= 10 ? 28 : 20, 480, 30); if ((G.VALUE[t] || 0) >= 10) blip([[784, 0, 0.05], [1046, 0.05, 0.08]]); } catch (e) {} }
 
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
   // api.total：碎片个数（家长一键同步的结果用；按个数和孩子看到的对得上）
-  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), forgeBlocked: safe(forgeBlocked, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), puzzle: safe(puzzleState, null), puzzleNames: () => Object.assign({}, PUZZLE_NAME), forgeBlocked: safe(forgeBlocked, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();

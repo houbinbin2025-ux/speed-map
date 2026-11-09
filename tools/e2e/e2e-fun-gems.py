@@ -1,4 +1,5 @@
 # 趣味题打开后的碎片（C 对中控的承诺，Ben 11-09「先打开，补完再升级」）：真页面里 11 个趣味题型各答对一题给碎片、答错不给；页面里两种挑战选题没有趣味题
+# 方案 7：答对 1 道给 1 颗谜题水晶（答错不给），结算页有「谜题水晶 +1」；同一题型第 3 道答对，结算页出「新徽章 <名字>」，GEMUI.puzzle() 里这个徽章拿到了
 # 用法：python3 tools/e2e/e2e-fun-gems.py <项目根> <截图目录>。开关 K.FUN_SEC 还是 0 时只打印「跳过」并退出 0（打开那次上线起自动生效）
 import sys, json, pathlib
 from playwright.sync_api import sync_playwright
@@ -28,13 +29,51 @@ with sync_playwright() as p:
                 if pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]") == 'demo':
                     pg.evaluate("(()=>{const a=document.getElementById('ack');a.disabled=false;a.click()})()")
                 pg.wait_for_timeout(300)
-            t0 = pg.evaluate(total); kind = pg.evaluate("__sm.Q && __sm.Q.x && __sm.Q.x.inst.id")
+            pg.evaluate("(()=>{const D=GEMUI.state().days[__sm.today()];if(D)D.pz=0;})()")   # 每天 10 颗上限另测，这里逐题清零
+            t0 = pg.evaluate(total); kind = pg.evaluate("__sm.Q && __sm.Q.x && __sm.Q.x.inst.id"); z0 = pg.evaluate("GEMUI.puzzle().n")
             pg.evaluate(f"__sm.Q.t0 = performance.now(); __sm.Q.ms = 4000; __sm.resolve({{ok: {'true' if ok else 'false'}, fast: true}})"); pg.wait_for_timeout(250)
             t1 = pg.evaluate(total)
-            if ok: check(kind == id and t1 > t0, f'{id} 答对给碎片 {t0}→{t1}')
-            else: check(t1 == t0, f'{id} 答错不给 {t0}→{t1}')
+            z1 = pg.evaluate("GEMUI.puzzle().n")
+            if ok: check(kind == id and t1 > t0 and z1 == z0 + 1, f'{id} 答对给碎片 {t0}→{t1}、谜题水晶 {z0}→{z1}')
+            else: check(t1 == t0 and z1 == z0, f'{id} 答错不给 碎片 {t0}→{t1}、水晶 {z0}→{z1}')
             if i == 0 and ok: pg.screenshot(path=str(out / 'fun-ok.png'))
             pg.wait_for_timeout(1500); pg.evaluate("(()=>{const b=document.getElementById('qNext');b&&!b.hidden&&b.click()})()"); pg.wait_for_timeout(600)
+            if i == 0 and ok:
+                qs = pg.evaluate("(()=>{const e=document.getElementById('qsum');return e&&!e.hidden?e.innerText:''})()")
+                check('谜题水晶 +1' in qs, f'结算页有「谜题水晶 +1」：{qs[-120:]!r}')
+                if '谜题水晶' in qs: pg.screenshot(path=str(out / 'fun-qsum.png'))
+    # 同一题型再答对 2 道（第 1 个题型前面已答对 1 道）：第 3 道的结算页出「新徽章」
+    first = ids[0]; name = pg.evaluate(f"GEMUI.puzzle().badges.find(b => b.sid === __sm.K.ITEM['{first}'].skill).name")
+    for k in range(2):
+        pg.evaluate(START, first); pg.wait_for_timeout(400)
+        for _ in range(30):
+            if pg.evaluate("!!(__sm.Q && __sm.Q.phase === 'q')"): break
+            if pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]") == 'demo':
+                pg.evaluate("(()=>{const a=document.getElementById('ack');a.disabled=false;a.click()})()")
+            pg.wait_for_timeout(300)
+        pg.evaluate("(()=>{const D=GEMUI.state().days[__sm.today()];if(D)D.pz=0;})()")
+        pg.evaluate("__sm.Q.t0 = performance.now(); __sm.Q.ms = 4000; __sm.resolve({ok: true, fast: true})"); pg.wait_for_timeout(1500)
+        pg.evaluate("(()=>{const b=document.getElementById('qNext');b&&!b.hidden&&b.click()})()"); pg.wait_for_timeout(700)
+    qs = pg.evaluate("(()=>{const e=document.getElementById('qsum');return e&&!e.hidden?e.innerText:''})()")
+    got = pg.evaluate(f"GEMUI.puzzle().badges.find(b => b.sid === __sm.K.ITEM['{first}'].skill)")
+    check(f'新徽章 {name}' in qs and got['got'] and got['n'] == 3, f'第 3 道答对：结算页「新徽章 {name}」、徽章拿到 {got}')
+    pg.screenshot(path=str(out / 'fun-badge.png'))
+    pz = pg.evaluate("GEMUI.puzzle()")
+    # 中控 11-09：每天最多 10 颗。当天已满时答对：碎片照常、水晶不涨、结算页没有水晶这一行
+    pg.evaluate("(()=>{const st=GEMUI.state(),t=__sm.today();st.days[t]=st.days[t]||{ok:0,bad:0,n:0,m:0,paid:0,forged:0,waste:0};st.days[t].pz=10;})()")
+    pg.evaluate(START, ids[1]); pg.wait_for_timeout(400)
+    for _ in range(30):
+        if pg.evaluate("!!(__sm.Q && __sm.Q.phase === 'q')"): break
+        if pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!e.hidden).map(e=>e.id)[0]") == 'demo':
+            pg.evaluate("(()=>{const a=document.getElementById('ack');a.disabled=false;a.click()})()")
+        pg.wait_for_timeout(300)
+    t0, z0 = pg.evaluate(total), pg.evaluate("GEMUI.puzzle().n")
+    pg.evaluate("__sm.Q.t0 = performance.now(); __sm.Q.ms = 4000; __sm.resolve({ok: true, fast: true})"); pg.wait_for_timeout(1500)
+    t1, z1 = pg.evaluate(total), pg.evaluate("GEMUI.puzzle().n")
+    pg.evaluate("(()=>{const b=document.getElementById('qNext');b&&!b.hidden&&b.click()})()"); pg.wait_for_timeout(700)
+    qs = pg.evaluate("(()=>{const e=document.getElementById('qsum');return e&&!e.hidden?e.innerText:''})()")
+    check(t1 > t0 and z1 == z0 and '谜题水晶' not in qs, f'当天 10 颗已满：碎片 {t0}→{t1}、水晶 {z0}→{z1}、结算页没有水晶行')
+    check(len(pz['badges']) == 11 and pz['n'] == 13 and not pz['master'] and sum(b['got'] for b in pz['badges']) == 1 and all('shiny' in b for b in pz['badges']), f'家里徽章册的数据：水晶 {pz["n"]}、得到 {sum(b["got"] for b in pz["badges"])} 枚、解谜大师 {pz["master"]}')
     leak = pg.evaluate("""(() => { const {K, S} = window.__sm, G = window.GEMS, fun = new Set(K.FUN.flatMap(s => s.items.map(i => i.id))); let n = 0, bad = [];
       for (let top = 0; top <= 15; top++) for (let k = 0; k < 5; k++) { const st = G.blank(); const qs = G.pickChallenge(S, top, Math.random, st).concat(G.pickEv(S, st, 14, top, Math.random)); n += qs.length; qs.forEach(q => fun.has(q.id) && bad.push(q.id)); }
       return {n, bad}; })()""")
@@ -42,4 +81,4 @@ with sync_playwright() as p:
     b.close()
 print('页面报错:', errs[:3])
 if fails or errs: print('FAIL', len(fails)); sys.exit(1)
-print('PASS 开关打开：趣味题答对给碎片、挑战不出趣味题')
+print('PASS 开关打开：趣味题答对给碎片和谜题水晶、第 3 道得徽章、挑战不出趣味题')

@@ -1,6 +1,7 @@
 # 习惯记录和能力观察页（docs/说明书-习惯记录.md）：真实手写作答 → 有记录；6 种尺寸不溢出；题面页没有多出东西
 # 用法：python3 tools/e2e/e2e12.py <项目根> <截图目录>
 import pathlib
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)
 fails = []
@@ -8,7 +9,7 @@ def check(ok, msg):
     if not ok: fails.append(msg)
 SIZES = [(956, 440), (932, 430), (852, 393), (844, 390), (812, 375), (667, 375)]
 def parent(pg):
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300); PIN(pg)
 with sync_playwright() as p:
     b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)

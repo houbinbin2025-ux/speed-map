@@ -1,6 +1,7 @@
 # 15 级难度（说明书-难度分级）：家长区真实点选 → 今日练习、练这一块、秒答地图只出选中的级；各种新题面截图；改回自动；刷新后还在
 # 用法：python3 tools/e2e/e2e11.py <项目根> <截图目录> [宽 高]
 import pathlib
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)
 fails = []
@@ -9,7 +10,7 @@ def check(ok, msg):
 W = int(sys.argv[3]) if len(sys.argv) > 3 else 844; H = int(sys.argv[4]) if len(sys.argv) > 4 else 390
 LV = "(()=>{const Q=__sm.Q;return Q&&Q.x&&Q.x.kind==='q'?__sm.K.levelOf(Q.x.inst):null})()"
 def parent(pg):
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300); PIN(pg)
 def choose(pg, lvs):
     parent(pg)
     pg.locator('#lvBoxes [data-lv="0"]').scroll_into_view_if_needed(); pg.click('#lvBoxes [data-lv="0"]')

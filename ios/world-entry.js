@@ -71,29 +71,12 @@
     var b = document.createElement('button');
     b.id = 'worldEntry';
     b.setAttribute('aria-label', 'World');
-    b.style.cssText = 'position:absolute;left:14px;top:66px;z-index:40;width:68px;height:68px;padding:0;border:3px solid #4d3a2a;background:#f3ecd8;box-shadow:0 4px 0 #4d3a2a;cursor:pointer';
+    // 入口淡 50%、不招人（Ben 11-09：「可以点击，但是不容易查看到，不引诱空空一直进入」）：照常能点、热区 68×68 不变；
+    // 去掉立体阴影，旁边不再挂「可玩 N 分钟 / 再练 N 分钟」状态条；时长规则不变（status() 留着给家长区用）
+    b.style.cssText = 'position:absolute;left:14px;top:66px;z-index:40;width:68px;height:68px;padding:0;border:3px solid #4d3a2a;background:#f3ecd8;cursor:pointer;opacity:.5;animation:none;transition:none';
     b.innerHTML = '<svg viewBox="0 0 32 32" width="52" height="52" shape-rendering="crispEdges"><path fill="#79c48f" d="M16 3 29 10 16 17 3 10z"/><path fill="#b9774d" d="M3 10 16 17V30L3 23z"/><path fill="#8f5834" d="M29 10 16 17V30L29 23z"/><path fill="#5fae7a" d="M3 10 16 17 29 10V13L16 20 3 13z"/></svg>';
     b.addEventListener('click', function (e) { e.stopPropagation(); location.href = 'world/index.html'; });
     host.appendChild(b);
-    // 入口旁的状态条：告诉孩子还差多少才能玩、还能玩多久（单日英文跟岛上的 lang 走，自己翻，不进 i18n）
-    var chip = document.createElement('div');
-    chip.id = 'worldChip'; chip.setAttribute('data-i18n-skip', '');
-    chip.style.cssText = 'position:absolute;left:90px;top:84px;z-index:40;padding:6px 10px;border:2px solid #4d3a2a;background:#f3ecd8;color:#4d3a2a;font-size:15px;font-weight:700;line-height:1.3;pointer-events:none;white-space:nowrap';
-    host.appendChild(chip);
-    function paint() {
-      var t = status(), en = document.documentElement.lang === 'en', parts = [];
-      if (!t.met) {
-        var mm = Math.ceil(Math.max(0, MATH_SEC - t.m.sec) / 60), nn = Math.max(0, MATH_N - t.m.n);
-        if (mm) parts.push(en ? mm + ' more min' : '再练 ' + mm + ' 分钟');
-        if (nn) parts.push(en ? nn + ' more answers' : '再答 ' + nn + ' 题');
-        chip.textContent = parts.join(' · ');
-      } else if (t.left > 0) chip.textContent = en ? Math.ceil(t.left / 60) + ' min to play' : '可玩 ' + Math.ceil(t.left / 60) + ' 分钟';
-      else chip.textContent = en ? 'Done for today' : '今天已玩完';
-    }
-    paint();
-    setInterval(function () { if (!host.hidden) paint(); }, 3000);
-    new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-    new MutationObserver(function () { if (!host.hidden) paint(); }).observe(host, { attributes: true, attributeFilter: ['hidden'] });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', add); else add();
 })();
