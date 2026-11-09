@@ -245,7 +245,10 @@
   // ---------- 题面 ----------
   // 返回 {input:'write'|'pick'|'line', tag, html（左栏题目）, note（左栏底部小字）, flash（看数：要闪现的部分）, pick:[a,b], line:{max, target, mid}}
   // 挑战题的图：点阵、百格、百十个、算式
+  // 小数加减（捣蛋鬼 1-4）：答案存成去掉小数点的整数，q.dp 是小数位数；显示答案一律走这里（index.html 的答案行、描红、口答也要用，B）
+  const ansText = (q, a) => q && q.dp ? (a / 10 ** q.dp).toFixed(q.dp) : String(a);
   const hardFig = (q, a) => {
+    if (q.dp && a !== undefined) a = ansText(q, a);
     if (q.view === 'grid') return `<div class="hgrid" style="grid-template-columns:repeat(${q.cols},26px)">${dot().repeat(q.rows * q.cols)}</div>`;
     if (q.view === 'h100') return `<div class="h100">${Array.from({length: 100}, (_, i) => `<i${i < q.n ? ' class="on"' : ''}></i>`).join('')}</div>`;
     if (q.view === 'hto') return `<div class="hto"><div class="hsqs">${'<i class="hsq"></i>'.repeat(q.h)}</div>${rods(q.t, q.o)}</div>`;
@@ -523,5 +526,5 @@
     return `数线 · ${q.target}`;
   }
 
-  return {gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
+  return {ansText, fr, hasFr, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });

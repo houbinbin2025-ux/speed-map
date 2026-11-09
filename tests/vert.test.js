@@ -51,9 +51,9 @@ test('两位除数：从前几位够除的地方起商', () => {
 test('判：前面空格不算；中间空着、一格两个数、最高位写 0 都错；认不出要重写；没写要提示', () => {
   const p = {kind: 'vert', ans: 179};
   assert.deepEqual(V.judge(['', '1', '7', '9'], p), {ok: true, text: '179', tip: ''});
-  assert.equal(V.judge(['1', '', '9'], p).ok, false);
+  assert.deepEqual(V.judge(['1', '', '9'], p), {ok: false, text: '1□9', tip: '中间空了一格'}, '中间空格显示成空框，提示说清楚（捣蛋鬼第 1 轮第 18 条）');
   assert.equal(V.judge(['0', '1', '7', '9'], p).tip, '最高位不写 0');
-  assert.deepEqual(V.judge(['两17', '', '9'], p), {ok: false, text: '17_9', tip: '一格只写一个数'});
+  assert.deepEqual(V.judge(['两17', '', '9'], p), {ok: false, text: '17□9', tip: '一格只写一个数'});
   assert.deepEqual(V.judge(['1', '7', '9', ''], p), {ok: false, text: '179', tip: '个位写在最右边的格子里'});
   assert.deepEqual(V.judge(['1', '?', '9'], p), {retry: true});
   assert.deepEqual(V.judge(['', '', ''], p), {empty: true});
@@ -74,13 +74,13 @@ test('版面和示范的文字中英都有；答案格数由题目定（不随�
 // 递等式 / 填空 / 应用题（Ben 11-08「做完上线」）
 const BALL = V.BOARD.flatMap(poolOf);
 const maxLen = id => Math.max(...poolOf(id).map(x => String(x.ans).length));
-test('38 个三四年级手写题都用 iPad 版面；格数：方框夹在数字里一格，否则按这个题型最长答案多一格（同一题型格数不变）', () => {
+test('三四年级手写题（含 2a 看图题、2b-1 分数题，11-08 起）都用 iPad 版面；格数：方框夹在数字里一格，否则按这个题型最长答案多一格（同一题型格数不变）', () => {
   V.BOARD.forEach(id => assert.ok(poolOf(id).length > 10, id));
   const seen = {};
   BALL.forEach(i => {
     const p = V.parse(i, maxLen(i.id)); assert.ok(p, i.id);
     assert.equal(seen[i.id] = seen[i.id] || p.n, p.n, i.id + ' 格数随题变了');
-    assert.equal(p.kind, ['speed:g13:order', 'speed:g14:law'].includes(i.id) ? 'step' : i.q.view === 'story' ? 'word' : 'fill', i.id);
+    assert.equal(p.kind, ['speed:g13:order', 'speed:g14:law'].includes(i.id) ? 'step' : i.q.view === 'story' ? 'word' : ['bar', 'chart', 'rect'].includes(i.q.view) ? 'fig' : 'fill', i.id);
     assert.equal(p.n, /[\d.]□|□[\d.]/.test(i.q.text) ? 1 : maxLen(i.id) + 1, i.q.text);
     assert.ok(p.n >= String(i.ans).length);
     const h = V.layout(p, true); assert.equal((h.match(/class="vcell"/g) || []).length, p.n);
@@ -113,4 +113,63 @@ test('蓝框题（递等式 / 填空 / 应用题）靠左写也判对；竖式�
   assert.equal(V.judge(['', '5', '8', '1'], {kind: 'word', ans: 581}).ok, true);
   assert.equal(V.judge(['5', '', '1', ''], {kind: 'word', ans: 51}).ok, false, '中间空格仍算错');
   assert.equal(V.judge(['1', '7', '9', ''], {kind: 'vert', ans: 179}).tip, '个位写在最右边的格子里');
+});
+
+test('加法竖式的进位格只写「进位」，减法只写「退位」（捣蛋鬼第 1 轮第 13 条）', () => {
+  const add = V.layout({kind: 'vert', a: 360, op: '+', b: 268, ans: 628}, false), sub = V.layout({kind: 'vert', a: 802, op: '-', b: 468, ans: 334}, false);
+  assert.ok(add.includes('>进位<') && !add.includes('退位'), '加法');
+  assert.ok(sub.includes('>退位<') && !sub.includes('进位'), '减法');
+  assert.ok(V.layout({kind: 'vert', a: 360, op: '+', b: 268, ans: 628}, true).includes('>Carry<'));
+});
+
+// 小数加减写完整得数（A 9afb562，捣蛋鬼 1-4）：ans 存去掉小数点的整数 + q.dp；iPad 蓝框答案格印一个固定小数点，孩子不写点
+test('小数蓝框：小数点印在倒数第 dp 格前，格数 = 最长答案 + 1，正确写法带小数点', () => {
+  const K = require('../v2/skills.js');
+  [['speed:g12:dec', 1], ['speed:g14:dec2', 2]].forEach(([id, dp]) => {
+    const pool = K.rawPool(id), max = Math.max(...pool.map(x => String(x.ans).length));
+    pool.slice(0, 40).forEach(x => {
+      const p = V.parse({id, q: x.q, ans: x.ans}, max);
+      assert.ok(p && p.kind === 'fill' && p.dp === dp && p.n === max + 1 && !p.inNum, id + ' ' + x.q.text);
+      const html = V.layout(Object.assign({qhtml: ''}, p), false);
+      const before = html.split('vdotc')[0].split('class="vcell"').length - 1, after = html.split('vdotc')[1].split('class="vcell"').length - 1;
+      assert.equal(after, dp, '小数点后面 dp 格'); assert.equal(before, p.n - dp, '小数点前面其余的格');
+      assert.ok(V.worked(p, false).includes((x.ans / 10 ** dp).toFixed(dp)), '正确写法带小数点：' + x.q.text);
+    });
+  });
+});
+test('小数蓝框判题：整数部分靠着小数点写、小数部分写满才对；小数部分没写到最右提示写在小数点后面', () => {
+  const p = {kind: 'fill', ans: 143, dp: 1, n: 4};
+  assert.deepEqual(V.judge(['', '1', '4', '3'], p), {ok: true, text: '143', tip: ''});
+  assert.deepEqual(V.judge(['', '', '2', '7'], {kind: 'fill', ans: 27, dp: 1, n: 4}), {ok: true, text: '27', tip: ''});
+  const left = V.judge(['1', '4', '3', ''], p);
+  assert.equal(left.ok, false); assert.equal(left.tip, '小数部分写在小数点后面的格子里');
+  assert.equal(V.judge(['1', '4', '3', ''], p, true).tip, 'Write the decimal part in the boxes after the point');
+  assert.equal(V.judge(['2', '', '', '7'], {kind: 'fill', ans: 27, dp: 1, n: 4}).ok, false, '整数部分要靠着小数点');
+  // 没有小数的蓝框照旧靠左写也对（v112 热修）
+  assert.equal(V.judge(['5', '1', '', ''], {kind: 'fill', ans: 51, n: 4}).ok, true);
+});
+
+// 2b-1 分数和 2a 看图题进 iPad 蓝框（中控 11-08）：统一点「写好了」交卷
+test('分数题和看图题都进蓝框：分数按填空、看图题按看图版面；格数 = 最长答案 + 1', () => {
+  const K = require('../v2/skills.js'), R = require('../v2/render.js');
+  const FRAC = ['dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv'];
+  const FIG = ['dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum'];
+  FRAC.concat(FIG).forEach(id => {
+    assert.ok(V.BOARD.includes(id), id + ' 登记进 BOARD');
+    const pool = K.rawPool(id), max = Math.max(...pool.map(x => String(x.ans).length));
+    pool.slice(0, 30).forEach(x => {
+      const p = V.parse({id, q: x.q, ans: x.ans}, max);
+      assert.ok(p, id + ' 能解析'); assert.equal(p.n, max + 1, id + ' 格数'); assert.ok(!p.inNum, id + ' 不是夹在数字中间的一格');
+      assert.equal(p.kind, FRAC.includes(id) ? 'fill' : 'fig', id);
+      const html = V.layout(Object.assign({qhtml: '<i class="q"></i>'}, p), false);
+      assert.ok(html.includes('class="q"') && (html.match(/class="vcell"/g) || []).length === p.n, id + ' 题面在上、答案格对');
+    });
+  });
+  // 看图题：正确写法不重复（讲解里有算式）；分数题：正确写法用页面传进来的上下结构整式
+  const f = V.parse({id: 'dock:g7:bar', q: K.rawPool('dock:g7:bar')[0].q, ans: K.rawPool('dock:g7:bar')[0].ans}, 2);
+  assert.equal(V.worked(f, false), '');
+  const x = K.rawPool('speed:g12:fracadd')[0], p = V.parse({id: 'speed:g12:fracadd', q: x.q, ans: x.ans}, 2);
+  p.ahtml = R.fr(x.q.text, `<b>${x.ans}</b>`);
+  const w = V.worked(p, false); assert.ok(w.includes('class="frac"') && w.includes(`<b>${x.ans}</b>`), '正确写法是上下结构的整式');
+  assert.ok(R.hasFr('2/4 − 1/4 = □/4') && !R.hasFr('3 / 10 题'));
 });

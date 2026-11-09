@@ -51,7 +51,13 @@ fill('dock:g11:speed', 117, 90, r => { const v = int(r, 12, 90), t = int(r, 2, 9
 fill('dock:g11:part', 118, 90, r => { const half = r() < .5, d = half ? 2 : 4, n = int(r, 4, 240) * d, [th, u] = pick(THINGS, r); return st(`f${d}-${n}-${th}`, `${n} ${u}${th}的${half ? '一半' : '四分之一'}是几${u}？`, n / d, `${n} ÷ ${d} = ${n / d}`, `${n}/${d}`); });
 // ---------- 第 12 级 ----------
 fill('speed:g12:mul2', 121, 220, r => { const a = int(r, 12, 99), b = int(r, 12, 99); if (a % 10 === 0 || b % 10 === 0) return null; return eq(`${a}x${b}`, `${a} × ${b} =`, a * b, `拆开 ${b} 分两步乘，再相加，是 ${a * b}`); });
-fill('speed:g12:dec', 122, 180, r => { const add = r() < .5, A = int(r, 12, 89), B = int(r, 12, 89), f = x => (x / 10).toFixed(1), s = add ? A + B : A - B; if (s <= 10 || s % 10 === 0) return null; const whole = Math.floor(s / 10), d = s % 10; return add ? eq(`${A}+${B}`, `${f(A)} + ${f(B)} = ${whole}.□`, d, `小数点对齐，十分位算到 ${d}，是 ${f(s)}`) : eq(`${A}-${B}`, `${f(A)} − ${f(B)} = ${whole}.□`, d, `小数点对齐，十分位算到 ${d}，是 ${f(s)}`); });
+// 小数加减写完整得数（捣蛋鬼 1-4，docs/说明书-小数加减写完整得数.md）：ans 存去掉小数点的整数，q.dp = 小数位数；至少一半过整数（进位 / 借位跨小数点）
+const decq = (r, dp, lo, hi) => { const add = r() < .5, A0 = int(r, lo, hi), B0 = int(r, lo, hi), A = add ? A0 : Math.max(A0, B0), B = add ? B0 : Math.min(A0, B0), u = 10 ** dp, f = x => (x / u).toFixed(dp), s = add ? A + B : A - B;
+  if (A % 10 === 0 || B % 10 === 0 || s <= u || s % 10 === 0) return null;
+  const cross = add ? A % u + B % u >= u : A % u < B % u; if (!cross && r() < .5) return null;
+  const op = add ? '+' : '−', k = `${A}${add ? "+" : "-"}${B}`;
+  return {q: {view: 'eq', text: `${f(A)} ${op} ${f(B)} =`, qk: k, dp, why: `小数点对齐：${f(A)} ${op} ${f(B)} = ${f(s)}`}, ans: s}; };
+fill('speed:g12:dec', 122, 180, r => decq(r, 1, 11, 89));
 fill('dock:g12:area', 123, 150, r => { const sq = r() < .25; if (sq) { const a = int(r, 6, 40); return st(`sq${a}`, `正方形边长 ${a} 米。面积几平方米？`, a * a, `${a} × ${a} = ${a * a}`, `${a}*${a}`); } const a = int(r, 8, 60), b = int(r, 3, a - 1); if (r() < .3) { const L = int(r, 3, 9), W = int(r, 11, 60); return st(`w${L * W}-${L}`, `长方形面积 ${L * W} 平方厘米，宽 ${L} 厘米。长几厘米？`, W, `${L * W} ÷ ${L} = ${W}`, `${L * W}/${L}`); } return st(`re${a}-${b}`, `长方形长 ${a} 厘米，宽 ${b} 厘米。面积几平方厘米？`, a * b, `${a} × ${b} = ${a * b}`, `${a}*${b}`); });
 fill('dock:g12:price', 124, 150, r => { const [th, u] = pick(SHOP, r), p = int(r, 3, 30), n = int(r, 11, 60), pay = r() < .35; if (pay) { const c = int(r, 3, 9), m = (Math.floor(p * c / 100) + 1) * 100; return st(`pay${p}-${c}-${th}`, `${th}每${u} ${p} 元，买 ${c} ${u}，付 ${m} 元。找回几元？`, m - p * c, `${c} × ${p} = ${p * c}，${m} − ${p * c} = ${m - p * c}`, `${m}-${c}*${p}`); } return st(`to${p}-${n}-${th}`, `${th}每${u} ${p} 元，买 ${n} ${u}。一共几元？`, p * n, `${p} × ${n} = ${p * n}`, `${p}*${n}`); });
 P['market:g12:24'] = Array.from({length: 11}, (_, i) => i + 1).flatMap(h => [
@@ -84,7 +90,7 @@ fill('speed:g14:lawfill', 142, 120, r => { const kind = int(r, 0, 3), a = int(r,
   if (kind === 1) return eq(`f1-${a}-${b}`, `${a} × □ = ${b} × ${a}`, b, `乘法交换律，两个因数换位置，是 ${b}`);
   if (kind === 2) return eq(`f2-${a}-${b}-${c}`, `(${a} + ${b}) + ${c} = ${a} + (${b} + □)`, c, `加法结合律，换括号，得数不变，是 ${c}`);
   return eq(`f3-${a}-${b}-${c}`, `${a} × ${c} + ${b} × ${c} = (${a} + □) × ${c}`, b, `乘法分配律，相同的 ${c} 提出来，是 ${b}`); });
-fill('speed:g14:dec2', 143, 180, r => { const add = r() < .5, A = int(r, 102, 899), B = int(r, 102, 899), f = x => (x / 100).toFixed(2), s = add ? A + B : A - B; if (s < 100 || s % 100 < 10) return null; const hd = Math.floor(s / 10) % 10, tail = s % 10, whole = Math.floor(s / 100); if (!tail) return null; return eq(`${A}${add ? '+' : '-'}${B}`, `${f(A)} ${add ? '+' : '−'} ${f(B)} = ${whole}.□${tail}`, hd, `小数点对齐，十分位算到 ${hd}，是 ${f(s)}`); });
+fill('speed:g14:dec2', 143, 180, r => decq(r, 2, 102, 899));
 fill('speed:g14:move', 144, 100, r => { const n = int(r, 12, 98), big = r() < .5; if (n % 10 === 0) return null; const dec = (n / (big ? 100 : 10)).toFixed(big ? 2 : 1); return eq(`m${dec}`, `${dec} × ${big ? 100 : 10} =`, n, `乘 ${big ? 100 : 10}，小数点右移 ${big ? 2 : 1} 位，是 ${n}`); });
 fill('dock:g14:avg', 145, 150, r => { const n = int(r, 3, 5), m = int(r, 12, 95), l = Array.from({length: n}, () => m); for (let i = 0; i + 1 < n; i += 2) { const d = int(r, 1, 6); l[i] += d; l[i + 1] -= d; } const s = l.join('、'); return st(`a${s}`, `${n} 次成绩是 ${s}。平均每次多少？`, m, `(${l.join(' + ')}) ÷ ${n} = ${m}`, `(${l.join('+')})/${n}`); });
 fill('dock:g14:meet', 146, 90, r => { const a = int(r, 10, 60), b = int(r, 10, 60), t = int(r, 2, 8); if (a === b) return null; return st(`m${a}-${b}-${t}`, `甲每小时行 ${a} 千米，乙每小时行 ${b} 千米，相向走 ${t} 小时相遇。全程几千米？`, (a + b) * t, `(${a} + ${b}) × ${t} = ${(a + b) * t}`, `(${a}+${b})*${t}`); });

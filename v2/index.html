@@ -915,7 +915,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 <div class="w-fade"></div>
 <div id="restOv" hidden><div class="fwcard"><h2>休息时间</h2><b class="num"></b><span>连续练了 30 分钟，休息 5 分钟后再来</span></div></div>
-<div class="w-turn"><span style="font-size:54px">↻</span>把手机横过来</div>
+<div class="w-turn"><span style="font-size:54px">↻</span>把屏幕横过来</div>
 
 <!-- 12 异常 -->
 <div class="ovl" id="ovPause" hidden><div class="card">
@@ -936,18 +936,18 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 
 <!-- 竖屏提示 -->
 <div id="rotate">
-  <svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="把手机从竖着转成横着">
+  <svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="把屏幕从竖着转成横着">
     <rect x="70" y="30" width="60" height="110" rx="10" fill="none" stroke="#9a9ca6" stroke-width="5" stroke-dasharray="8 6"></rect>
     <rect x="30" y="120" width="140" height="66" rx="12" fill="#2a2d34" stroke="#ecebe4" stroke-width="6"></rect>
     <rect x="62" y="132" width="98" height="42" rx="4" fill="#f4ecd8"></rect>
     <path d="M150 52 C178 70 182 98 168 116" fill="none" stroke="#f2c14e" stroke-width="6" stroke-linecap="round"></path>
     <path d="M156 110 L168 118 L176 104" fill="none" stroke="#f2c14e" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path>
   </svg>
-  <div style="font-size:32px;font-weight:900">把手机横过来</div>
+  <div style="font-size:32px;font-weight:900">把屏幕横过来</div>
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v129:184598a090f1 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v130:e807f3d70b05 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -957,25 +957,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=129"></script>
-<script src="i18n.js?v=129"></script>
-<script src="bank.js?v=129"></script>
-<script src="hardbank.js?v=129"></script>
-<script src="placebank.js?v=129"></script>
-<script src="core.js?v=129"></script>
-<script src="ink.js?v=129"></script>
-<script src="skills.js?v=129"></script>
-<script src="engine.js?v=129"></script>
-<script src="render.js?v=129"></script>
-<script src="world.js?v=129"></script>
-<script src="home.js?v=129"></script>
-<script src="puzzles.js?v=129"></script>
-<script src="thinking.js?v=129"></script>
-<script src="house.js?v=129"></script>
-<script src="kongmine.js?v=129"></script>
-<script src="gems.js?v=129"></script>
-<script src="gemui.js?v=129"></script>
-<script src="vert.js?v=129"></script>
+<script src="touchfix.js?v=130"></script>
+<script src="i18n.js?v=130"></script>
+<script src="bank.js?v=130"></script>
+<script src="hardbank.js?v=130"></script>
+<script src="placebank.js?v=130"></script>
+<script src="core.js?v=130"></script>
+<script src="ink.js?v=130"></script>
+<script src="skills.js?v=130"></script>
+<script src="engine.js?v=130"></script>
+<script src="render.js?v=130"></script>
+<script src="world.js?v=130"></script>
+<script src="home.js?v=130"></script>
+<script src="puzzles.js?v=130"></script>
+<script src="thinking.js?v=130"></script>
+<script src="house.js?v=130"></script>
+<script src="kongmine.js?v=130"></script>
+<script src="gems.js?v=130"></script>
+<script src="gemui.js?v=130"></script>
+<script src="vert.js?v=130"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1003,7 +1003,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (!ok && !S.readOnly && !S.stopped && canSave) { canSave = false; banners(); }
     return ok;
   };
-  const loadInk = () => { try { return Object.assign(I.blankStore(), JSON.parse(store.getItem(KEYS.ink) || 'null') || {}); } catch (e) { return I.blankStore(); } };
+  // 笔迹存档读坏了：先把原值另存一份再用空白（存不下就这次不写）；读的时候报错：这次不写，免得把原来的覆盖掉（ink.js loadStore）
+  let inkLock = false;
+  const loadInk = () => {
+    let raw = null, err = false; try { raw = localStorage.getItem(KEYS.ink); } catch (e) { err = true; }
+    const r = I.loadStore(raw, err); inkLock = r.lock;
+    if (r.backup !== null) try { store.setItem(I.brokenKey(KEYS.ink, r.backup), r.backup); } catch (e) { inkLock = true; }
+    return r.store;
+  };
   let INKS = loadInk();
   // 习惯记录：定案后记这次写的字和评分（只记录，出错也不影响作答）。摸底、Boss、再来一次、看过提示的不计，和作答统计同一口径
   const NO_HABIT = {scan: 1, boss: 1};
@@ -1015,7 +1022,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       saveInk();
     } catch (e) {}
   }
-  const saveInk = () => { if (!frozen && !S.readOnly && !S.stopped) try { store.setItem(KEYS.ink, JSON.stringify(INKS)); } catch (e) {} };
+  const saveInk = () => { if (!frozen && !inkLock && !S.readOnly && !S.stopped) try { store.setItem(KEYS.ink, JSON.stringify(INKS)); } catch (e) {} };
   const calibrated = () => INKS.done === true;
   let persisted = null;
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist().then(v => { persisted = v; }).catch(() => {}); } catch (e) {}
@@ -1054,7 +1061,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const isDone = () => !!(S.daily && S.daily.day === today() && S.daily.done);
   function renderIsland() {
     applyLang();
-    E.sweep(S);
+    E.sweep(S, today());
     if (HOME.sync(S, today()).length) save();   // 新达成的奖励放进战利品箱，岛上的家亮旗子
     const t = today(), d = dueAll(), first = !S.placedAt && !S.placement && !E.chosen(S), done = isDone();
     $('mistDot').hidden = !d; $('mistDot').textContent = Math.min(d, E.MIST_DAY);
@@ -1267,7 +1274,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     calPad.clear();
     if (++CAL.k >= REPS) { CAL.k = 0; CAL.d++; }
     if (CAL.d > 9) {
-      INKS.speed = I.medianSpeed(CAL.speeds); INKS.samples = CAL.speeds; INKS.done = true; saveInk();
+      INKS.speed = I.medianSpeed(CAL.speeds); INKS.samples = CAL.speeds; INKS.done = true; inkLock = false; saveInk();   // 重新校准完 = 主动覆盖，读坏时的锁解开
       E.addTime(S, today(), Math.min(600, Math.round((Date.now() - CAL.t0) / 1000))); save();   // 校准时间计入当天 10 分钟
       const then = CAL.then; CAL = null; then ? then() : goIsland();
       return;
@@ -1464,12 +1471,23 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       if (c.gen) { if (st.fday !== t) { st.fday = t; st.fn = 0; } st.fn++; if (st.fn >= C.TYPE_NEED) up = C.tryUp(S, c.id, t); }
       else up = C.tryUp(S, c.id, t);
     }
-    if (fast) { if (E.addFast(S, asInst(c), t, lv0)) up = true; E.sweep(S); }
+    if (fast) { if (E.addFast(S, asInst(c), t, lv0)) up = true; E.sweep(S, t); }
     if (up) { P.ups.push(c.id); const Lg = (S.log[t] = S.log[t] || {ups: [], n: 0}); if (!Lg.ups.includes(c.id)) Lg.ups.push(c.id); }
     (S.log[t] = S.log[t] || {ups: [], n: 0}).n++;
     // 错题本：复习题按结果过关 / 留档 / 回第 1 关；新错题进本
-    if (c.mkey && S.mistakes[c.mkey] && S.mistakes[c.mkey].due !== null && S.mistakes[c.mkey].due <= t) { C.reviewMistake(S, c.mkey, r, t); if (fast) P.passed++; }
-    else if (r === 'wrong') { const isNew = !S.mistakes[C.mkeyOf(c)] || S.mistakes[C.mkeyOf(c)].due === null; C.addMistake(S, c, t); if (isNew) P.newMist++; }
+    // 错题记录（docs/方案-错题数据字段.md §6）：只记录；摸底、Boss 不记（同能力观察）
+    const noteOk = !NO_HABIT[P.kind], skillId = K.ITEM[c.id] ? K.ITEM[c.id].skill : null;
+    const ev = (k, fresh) => ({k, w: k === 'd' || S.oral || !P.typed ? null : P.typed, s: (P.ms || 0) / 1000, o: S.oral ? 1 : 0, skill: skillId, fresh});
+    if (c.mkey && S.mistakes[c.mkey] && S.mistakes[c.mkey].due !== null && S.mistakes[c.mkey].due <= t) {
+      C.reviewMistake(S, c.mkey, r, t); if (fast) P.passed++;
+      if (noteOk && r !== 'fast') C.noteMistake(S, c.mkey, ev(r === 'slow' ? 's' : P.dunno ? 'd' : 'w', false), t);
+      if (S.mistakes[c.mkey].due === null) C.notePassed(S, c.mkey, t, skillId);
+    } else if (r === 'wrong') {
+      const isNew = !S.mistakes[C.mkeyOf(c)] || S.mistakes[C.mkeyOf(c)].due === null, key = C.addMistake(S, c, t);
+      delete S.mistakes[key].out;   // 秒答下架过的题又错了：重新进本
+      if (noteOk) C.noteMistake(S, key, ev(P.dunno ? 'd' : 'w', isNew), t);
+      if (isNew) P.newMist++;
+    }
     P.results[P.i] = {id: c.id, fast, wrong: r === 'wrong', slow: r === 'slow', ms: P.ms, c};
     P.wrongRun = r === 'wrong' ? P.wrongRun + 1 : 0; P.dunno = false;
     save();
@@ -1624,7 +1642,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('qPad').hidden = !!S.oral; $('qOral').hidden = !S.oral; $('qOral').textContent = '说出答案后，点这里看答案';
     if (v.input === 'write') { qPad.fit(); qPad.clear(); qPad.enabled = !S.oral; }
     if (v.input === 'pick') showPick(v);
-    if (v.input === 'line') showLine(v);
+    if (v.input === 'line') { showLine(v); $('qNextCol').append($('qDunno'), $('qNote')); }   // 数线（宽版，右栏收起）：「不会」和提示放到题目右边（同答错时「继续」的排法，不加高），提示不再压在刻度「0」上（捣蛋鬼第 1 轮第 10 条）
+    else $('qplay').querySelector('.qfoot').insertBefore($('qDunno'), $('qNext'));
     if (v.input === 'vert') showVert(v);
     if (v.flash) flashLook();
     // 画面刷新后再校准起点；已经落笔就不再挪
@@ -1640,7 +1659,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function showVert(v) {
     $('qBody').innerHTML = '';
     const q0 = Q;
-    v.vp.qhtml = v.html;   // 递等式 / 填空 / 应用题：题面照原样放在版面上方（喇叭、翻译都沿用）
+    v.vp.qhtml = v.html;   // 递等式 / 填空 / 应用题 / 看图题 / 分数题：题面照原样放在版面上方（喇叭、翻译都沿用）
+    if (R.hasFr(Q.x.inst.q.text)) v.vp.ahtml = R.fr(Q.x.inst.q.text, `<b class="vfillv">${Q.x.inst.ans}</b>`);   // 分数题的正确写法：上下结构的整式
     Q.vc = VERT.mount($('qWide'), v.vp, {
       can: () => Q === q0 && Q.phase === 'q' && !Q.vdemo,
       onDone: vertDone,
@@ -1724,7 +1744,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     Q.x.asked = true;   // 弹过确认，这道题就不算免确认
     Q.phase = 'confirm'; qPad.enabled = false;
     const i = Q.unsure[0], d = Q.rec.digits[i];
-    $('qcShown').innerHTML = Q.picked.map((x, k) => k === i ? '<span class="slot"></span>' : x).join('');
+    const dp = Q.x.inst.q && Q.x.inst.q.dp, np = Q.picked.length;   // 小数题：确认时也带小数点（写字板不记点）
+    $('qcShown').innerHTML = Q.picked.map((x, k) => (dp && np > dp && k === np - dp ? '.' : '') + (k === i ? '<span class="slot"></span>' : x)).join('');
     $('qcA').textContent = d.cands[0].d; $('qcB').textContent = d.cands[1].d;
     $('qConfirm').hidden = false;
   }
@@ -1746,10 +1767,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('qOral').addEventListener('click', () => {
     if (!Q || Q.phase !== 'q' || !S.oral || Q.v.input !== 'write') return;
     Q.ms = performance.now() - Q.t0; Q.phase = 'oral';
-    $('qOral').textContent = '答案是 ' + Q.x.inst.ans; $('qOralWrong').hidden = false; $('qOralNext').hidden = false; $('qOralWrong').textContent = '答错了'; $('qDunno').hidden = true;
+    $('qOral').textContent = '答案是 ' + R.ansText(Q.x.inst.q, Q.x.inst.ans); $('qOralWrong').hidden = false; $('qOralNext').hidden = false; $('qOralWrong').textContent = '答错了'; $('qDunno').hidden = true;   // 小数题 ans 存去掉小数点的整数，显示按 q.dp 加回
   });
   $('qOralWrong').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.oralWrong = !Q.oralWrong; $('qOralWrong').textContent = Q.oralWrong ? '其实答对了' : '答错了'; });
-  $('qOralNext').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.phase = 'q'; resolve({ok: !Q.oralWrong, fast: !Q.oralWrong && Q.ms <= qLimit(Q.x.inst)}); });
+  $('qOralNext').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.phase = 'q'; resolve({ok: !Q.oralWrong, fast: !Q.oralWrong && Q.ms <= qLimit(Q.x.inst), oral: true}); });
 
   // 比大小 · 点选：两张大卡片直接点大的；乱点后数字出现 1 秒才能点，2 秒限时从能点那一刻算
   function showPick(v) {
@@ -1766,7 +1787,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (!Q.pickDelay && ((last5.length >= 5 && last5.filter(p => !p.ok).length >= 3) || (last3.length >= 3 && last3.every(p => p.ms < 400)))) {
       Q.pickDelay = 1000; $('calm').hidden = false; setTimeout(() => { $('calm').hidden = true; }, 2000);
     }
-    resolve({ok, fast: ok && ms <= qLimit(Q.x.inst)});
+    resolve({ok, fast: ok && ms <= qLimit(Q.x.inst), typed: pickTyped(n, b)});   // 错题记录「写了什么」= 点的选项
   });
 
   // 数线：手指在线上下 60 点内按下出现蓝旗（画在手指上方），可拖动，抬手停 1.2 秒自动提交；屏幕左右边缘 20 点内不接收
@@ -1794,7 +1815,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const inst = Q.x.inst, j = K.judge(K.ITEM[inst.id], inst, Q.val, S.settings);
     const key = inst.q.any ? inst.q.max + 'a' : String(inst.q.max);
     S.lineErr = S.lineErr || {}; S.lineErr[key] = (S.lineErr[key] || []).concat(Math.round(j.err * 10) / 10).slice(-20);
-    resolve({ok: j.ok, fast: j.ok && performance.now() - Q.t0 <= qLimit(inst) + LINE_WAIT});
+    resolve({ok: j.ok, fast: j.ok && performance.now() - Q.t0 <= qLimit(inst) + LINE_WAIT, typed: String(Math.round(Q.val * 10) / 10)});   // 错题记录：插旗的位置（一位小数）
   }
 
   // ---------- 4 反馈：答对 0.8 秒自动下一题；答错 / 不会：图解停住，点「继续」才下一题（Ben 10-31） ----------
@@ -1807,7 +1828,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const used = Q.v.input === 'write' || Q.v.input === 'vert' ? Q.ms : Q.v.input === 'line' ? performance.now() - Q.t0 - LINE_WAIT : performance.now() - Q.t0;
     r.bolt = !!r.fast && used <= qLimit(inst) * GEMS.BOLT;
     const gain = GM.answerQ(Q, x, r, secs, qLimit(inst));
-    const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
+    // 错题记录「孩子写了什么」（docs/方案-错题数据字段.md §2.1）：写字板 = 识别结果、蓝框 = 格子里的数、选择题 = 点的选项、数线 = 插旗的数；小数题加回小数点
+    const typed = r.dunno || r.oral || r.typed == null ? undefined : Q.v.input === 'vert' && Q.vtip ? String(r.typed) : typedText(inst.q, String(r.typed));
+    const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, typed, oral: !!r.oral, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++; if (out.pass) Q.fastN++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
     if (x.seg === 'review' && out.pass) Q.passed++;
@@ -1832,12 +1855,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const inBox = Object.values(S.mistakes || {}).some(m => m.uid === inst.id && m.due !== null && m.due > Q.day);   // 用这次练习的日子：练到过了午夜也不写错
     $('qNote').textContent = out.again ? '已放进错题宝箱，一会儿再来' : inBox ? '已放进错题宝箱，明天再来' : '记住它，下次再来';
     const bad = r.dunno ? '<div class="badline">没关系，记住它</div>'
-      : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${r.typed}</s></div>`
+      : r.typed ? `<div class="badline">✗ 你写的是 <s class="num">${v.input === 'vert' && Q.vtip ? r.typed : typedText(inst.q, r.typed)}</s></div>`
       : v.input === 'pick' && Q.pickedN != null ? `<div class="badline">✗ 你点的是 <s class="num">${v.pickText ? v.pickText[v.pick.indexOf(Q.pickedN)] : Q.pickedN}</s></div>`
       : v.input === 'line' ? '' : '<div class="badline">✗ 这题答错了</div>';
     if (v.input === 'line') {
       drawTarget(false);
-      $('qBody').innerHTML = `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
+      $('qBody').innerHTML = Q.val === null   // 没插旗就点「不会」：没有蓝旗，不说往左往右
+        ? `<div class="say2">${inst.q.target} 在绿旗这里</div><div class="muted">没关系，记住它</div>`
+        : `<div class="say2">${R.lineHint(inst.q.target, Q.val, K.tolOf(inst.q, S.settings))}</div><div class="muted">蓝旗是你插的，绿旗是 ${inst.q.target} 的位置</div>`;
       return waitNext();
     }
     if (v.input === 'pick') { $('qBody').innerHTML = bad; $('qWide').innerHTML = R.explain(inst); return waitNext(); }
@@ -1851,18 +1876,24 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (S.oral) return waitNext();
     // 手写题：照着描一遍，描完点「继续」
     qPad.clear();
-    const g = $('qGhost'); ghostInk(g, inst.ans, $('qPad')); g.hidden = false;
+    const g = $('qGhost'); ghostInk(g, R.ansText(inst.q, inst.ans), $('qPad')); g.hidden = false;   // 小数描红带小数点
     $('qPadTip').hidden = false; $('qFootNote').textContent = '描完点「继续」'; $('qClear').hidden = false;
     qPad.enabled = true; waitNext('trace');
   }
   // 「继续」放在看得见的那一栏：点选、数线是宽版，右栏（写字板和底部按钮）整个收起，按钮挪到左栏讲解标题右边
-  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
+  function waitNext(phase) { Q.phase = phase || 'wait'; const btn = $('qNext'); if (Q.v && Q.v.input === 'vert' && Q.vfoot) { Q.vfoot.append($('qNote'), btn); btn.hidden = false; Q.vc.refit(); return; } if ($('qplay').classList.contains('wide')) $('qNextCol').append(btn, $('qNote')); else $('qplay').querySelector('.qfoot').appendChild(btn); btn.hidden = false; }
   $('qNext').addEventListener('click', () => { if (!Q || !['wait', 'trace'].includes(Q.phase)) return; tapGuard = performance.now() + 500; $('qNext').hidden = true; nextQ(); });
   // 答对后左边显示完整的题（看数 → 数字）
+  // 点选题记哪个选项：选择题记原始选项（分数记「1/2」）；图案选项记读法；其他记显示的字，取不到记编号（审查 R1）
+  const pickTyped = (n, b) => { const v = Q.v, q = Q.x.inst.q, i = v.pick.indexOf(n);
+    return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : (v.pickText && b.textContent.trim()) || String(n); };
+  // 孩子写的数按题目的小数位数加回小数点（小数点写不写都认，写字板不记它）；蓝框的 □ 等非数字原样
+  const typedText = (q, t) => q && q.dp && /^\d+$/.test(t) && t.length > q.dp ? t.slice(0, -q.dp) + '.' + t.slice(-q.dp) : t;
   function answerLine(inst) {
     const s = K.BY[K.ITEM[inst.id].skill], q = inst.q;
-    if (s.speed) return `${q.a} ${q.op === '+' ? '+' : '−'} ${q.b} = <span class="ansv">${inst.ans}</span>`;
-    return `<span class="ansv">${inst.ans}</span>`;
+    if (R.hasFr(q.text)) return R.fr(q.text, `<span class="ansv">${inst.ans}</span>`);   // 分数题：答对后整道式子，上下结构（中控转 A 11-08）
+    if (s.speed) return `${q.a} ${q.op === '+' ? '+' : '−'} ${q.b} = <span class="ansv">${R.ansText(q, inst.ans)}</span>`;
+    return `<span class="ansv">${R.ansText(q, inst.ans)}</span>`;
   }
   // 数线：正确位置插绿旗，蓝旗到绿旗画箭头
   function drawTarget(ok) {
@@ -1872,7 +1903,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     g.style.cssText = `position:absolute;top:0;left:${fT * 100}%;width:0`; g.innerHTML = flagSvg('ok');
     box.appendChild(g);
     const lab = document.createElement('span'); lab.className = 'lab'; lab.style.cssText = `left:${fT * 100}%;color:var(--ok)`; lab.textContent = L.target; box.appendChild(lab);
-    if (!ok) {
+    if (!ok && Q.val !== null) {   // 没插旗（点了「不会」）不画箭头
       const a = document.createElement('div'), lo = Math.min(fT, fV), hi = Math.max(fT, fV), right = fT > fV;
       a.innerHTML = `<svg class="gap-arrow" style="left:${lo * 100 + 1}%;width:${Math.max(1, (hi - lo) * 100 - 2)}%" viewBox="0 0 200 22" preserveAspectRatio="none" aria-hidden="true"><path d="${right ? 'M2 11 H190 M180 3 L192 11 L180 19' : 'M198 11 H10 M20 3 L8 11 L20 19'}" vector-effect="non-scaling-stroke"></path></svg>`;
       box.appendChild(a.firstChild);
@@ -2160,7 +2191,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
           const win = kind === 'day5' ? (p.fday === t0 ? `今天合格 ${p.fn || 0} / 5 次` : p.seen ? '今天还没合格' : '还没练过')
             : p.win && p.win.length ? `最近 ${p.win.length} 次秒答 ${p.win.reduce((a, b) => a + b, 0)} 次` : p.seen ? '刚升级，重新数' : '还没练过';
           const can = s.speed ? BK.speedPools[it.id].all : BK.meta.all[it.id] || all.length;
-          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · 秒答时间 ${K.fastThink(it.id)} 秒（另加读题、写字）· 秒答满 ${E.FAST_OUT} 次不再出：${E.spentCount(S, it.id)} 道 · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
+          const head = `${s.speed ? C.BYID[it.id].name : R.TYPE_LABEL[it.id] || s.name} · 能出 ${can} 种，题库${can > all.length ? '收 ' + all.length + ' 道' : '全收'} · 秒答时间 ${K.fastLabel(it.id)}（另加读题、写字）· 秒答满 ${E.FAST_OUT} 次不再出：${E.spentCount(S, it.id)} 道 · 现在${LVN[E.lv(S, it.id) || 0]} · ${win}`;
           const tags = [...new Set(all.map(x => x.tag || ''))];
           tags.forEach(tg => sets.push({title: tg ? `${head} · ${tg}（${all.filter(x => (x.tag || '') === tg).length}）` : head, list: all.filter(x => (x.tag || '') === tg).map(inst => ({inst}))}));
           // 不在题库里的旧错题（题库建好以前随机出的数），单列出来
@@ -2183,7 +2214,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const o = e.target.closest('[data-bo]'); if (o) { bankOpen[o.dataset.bo] = !bankOpen[o.dataset.bo]; const y = $('bankList').scrollTop; renderBank(); $('bankList').scrollTop = y; return; }
     const b = e.target.closest('[data-bq]'); if (!b) return;
     const inst = BQ[+b.dataset.bq], q = R.question(inst);
-    $('qpTag').textContent = q.tag; $('qpAns').innerHTML = '答案：' + (q.pickText ? (q.pickAria || q.pickText)[q.pick.indexOf(inst.ans)] : inst.ans);
+    $('qpTag').textContent = q.tag; $('qpAns').innerHTML = '答案：' + (q.pickText ? (q.pickAria || q.pickText)[q.pick.indexOf(inst.ans)] : R.ansText(inst.q, inst.ans));
     $('qpQ').innerHTML = q.input === 'pick' ? `${q.html}<div style="display:flex;gap:16px;margin-top:10px">${q.pick.map((n, i) => `<span class="mq" style="font-size:${q.pickText ? 24 : 40}px;padding:10px 26px">${q.pickText ? q.pickText[i] : n}</span>`).join('')}</div>`
       : q.input === 'line' ? `${q.html}<div class="muted" style="font-size:16px;margin-top:8px">在 0—${q.line.max} 的线上插旗</div>` : q.html + (q.note ? `<div class="muted" style="font-size:16px;margin-top:8px">${q.note}</div>` : '');
     $('qpE').innerHTML = R.explain(inst); $('ovQ').hidden = false;
@@ -2227,7 +2258,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       speechSynthesis.speak(u);
     } catch (err) { sayEnd(); }
   }
-  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') { E.noteSay(S, today()); if (Q && Q.phase === 'q' && Q.x && (Q.v.input !== 'write' || !qPad.strokes().length)) Q.t0 = performance.now(); } sayIt(b); });   // 听题不算想题的时间
+  document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.spk'); if (!b) return; if (cur === 'qplay') { E.noteSay(S, today()); if (Q && Q.phase === 'q' && Q.x && (Q.v.input === 'write' ? !qPad.strokes().length : Q.v.input === 'vert' ? !(Q.vc && Q.vc.touched()) : true)) Q.t0 = performance.now(); } sayIt(b); });   // 听题不算想题的时间；已经落笔（写字板、蓝框）再点喇叭不重新计时，免得写完点一下就算秒答
   R.setSprite(ART.spriteURL);
   function renderBi() { $('biBox').checked = S.settings.bilingual !== false; $('biToday').textContent = I18N.isEn(S.settings, today()) ? '英文' : '中文'; }
   $('biBox').addEventListener('change', e => { S.settings.bilingual = e.target.checked; save(); applyLang(); renderBi(); });
@@ -2271,7 +2302,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     try {
       if (ioKind === 'inkin') {
         const v = JSON.parse($('ioText').value); if (!v || typeof v.t !== 'object' || v.t === null) throw 0;
-        INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); saveInk();
+        INKS = Object.assign(I.blankStore(), {recent: INKS.recent}, v); inkLock = false; saveInk();   // 家长主动导入 = 覆盖，读坏时的锁解开
       } else {
         const r = mergeText($('ioText').value, ioKind === 'all');
         if (r === 'nosave') { renderParent(); $('ioPanel').hidden = false; $('ioMsg').textContent = '这次存不下来：请先看「存储」那一栏'; return; }
@@ -2320,7 +2351,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // 12a 暂停：切后台 / 来电 / 锁屏 / 竖过来。还没作答的题不记录，继续后原题重出（看数重新闪）；已判完的，继续后出下一题
   function pauseQ() {
     if (!Q || Q.paused || !['qplay', 'demo'].includes(cur)) return;
-    Q.paused = true; Q.redo = ['q', 'confirm', 'oral'].includes(Q.phase); Q.wasDemo = Q.phase === 'demo';
+    Q.paused = true; Q.redo = ['q', 'confirm', 'oral'].includes(Q.phase); Q.wasDemo = Q.phase === 'demo'; Q.pausedAt = performance.now();
     timers();
   }
   const portrait = () => window.matchMedia('(orientation: portrait) and (max-width: 700px)').matches;
@@ -2328,6 +2359,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('pauseGo').addEventListener('click', () => {
     $('ovPause').hidden = true; if (!Q) return;
     Q.paused = false;
+    // 竖式 / 蓝框题写到一半：格子和草稿原样留着，暂停这段不算用时（捣蛋鬼第 1 轮第 9 条）；正在看示范的照旧重出
+    if (Q.redo && Q.phase === 'q' && Q.v && Q.v.input === 'vert' && Q.vc && !Q.vdemo) { const d = performance.now() - (Q.pausedAt || performance.now()); Q.t0 += d; Q.shownAt += d; return; }
     if (Q.wasDemo) showDemo(Q.x);
     else if (Q.redo) showQuestion(Q.x);
     else nextQ();
@@ -2392,7 +2425,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   GM.init({finishQ, goIsland, qLimit: inst => qLimit(inst), curQ: () => Q, leaveQ: () => { timers(); clearInterval(Q.tick); try { Q.lock && Q.lock.release(); } catch (e) {} const q = Q; Q = null; save(); return q; }, enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
     canWrite: () => !frozen && !S.readOnly && !S.stopped});
   GM.islandBtn(); $('btnForge').addEventListener('click', () => { if (!WD.entering) GM.openForge('island'); });
-  window.__sm = {TH, today, resolve: r => resolve(r), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad, startQ: (k, o) => startQ(k, o)}; // 调试 / 测试用
+  window.__sm = {TH, today, resolve: r => resolve(r), startP: (k, t, picks, extra) => start(k, t, picks, extra), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad, startQ: (k, o) => startQ(k, o)}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;
   goIsland();
 })();

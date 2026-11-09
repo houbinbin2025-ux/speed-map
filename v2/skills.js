@@ -106,7 +106,7 @@
   hard({id: 'speedH2', group: 'speedH', name: '两位数加减两位数', pre: ['speedH1'], ids: ['speed:h:two']});
   hard({id: 'speedH3', group: 'speedH', name: '乘法 2、5、10', pre: ['speedH2'], ids: ['speed:h:mul']});
   // 11-06 分 15 级补的题（说明书-难度分级）；旧的挑战题也并进分级，家长选难度才出或自动开放
-  hard({id: 'bondH3', group: 'bond', name: '20 以内分合', ids: ['bond:h:20']});
+  hard({id: 'bondH3', group: 'bond', name: '20 以内分合', pre: ['bond3'], ids: ['bond:h:20']});   // 先会凑十再练 20 以内分合（捣蛋鬼第 1 轮第 6 条）
   hard({id: 'dockH1', group: 'dock', name: '20 以内应用题', ids: ['dock:h:20']});
   hard({id: 'dockH2', group: 'dock', name: '50 以内应用题', pre: ['dockH1'], ids: ['dock:h:50']});
   hard({id: 'dockH3', group: 'dock', name: '100 以内应用题', pre: ['dockH2'], ids: ['dock:h:100']});
@@ -289,20 +289,82 @@
     dockA: 3, dockB: 3, dockC: 4, dockD: 4, dockH1: 4, dockH2: 5, dockH3: 6, dockH4: 4, dockH5: 4, dockH6: 5,
     'speed:g10:rem': 5, 'speed:g10:quo': 5, 'speed:g10:add3': 12, 'speed:g10:sub3': 12, 'place:g10:thou': 4, 'market:g10:conv': 6, 'market:g10:span': 6, 'dock:g10:remain': 6, 'dock:g10:two': 20,
     'speed:g11:mul': 15, 'speed:g11:div': 20, 'speed:g11:divrem': 8, 'dock:g11:perim': 10, 'dock:g11:times': 15, 'dock:g11:two': 15, 'dock:g11:speed': 10, 'dock:g11:part': 15,
-    'speed:g12:mul2': 30, 'speed:g12:dec': 6, 'dock:g12:area': 25, 'dock:g12:price': 30, 'market:g12:24': 4, 'market:g12:year': 15,
+    'speed:g12:mul2': 30, 'speed:g12:dec': 8,   /* 小数加减写完整得数（11-08）：整数部分也要算，一位 8 秒、两位 12 秒 */ 'dock:g12:area': 25, 'dock:g12:price': 30, 'market:g12:24': 4, 'market:g12:year': 15,
     'speed:g13:mul3': 45, 'speed:g13:div2': 25, 'speed:g13:order': 20, 'place:g13:round': 5, 'dock:g13:unit': 25, 'dock:g13:speed': 25, 'dock:g13:share': 25,
-    'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 8, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
+    'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 12, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
     'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
     'dock:g11:fracbar': 6, 'speed:g12:fracadd': 6, 'cmp:g12:fraccmp': 5, 'cmp:g15:fraccmp2': 5, 'speed:g15:equiv': 8,   // 2b-1 分数：A 估计值，B 按真实用时定
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };
   const READ_MS = 400, EN_READ = 1.5;   // 题面每个汉字；英文日读得慢，多给一半（按中文字数估）
   const fastThink = id => (C.BYID[id] ? C.BYID[id].fast / 1000 : FAST_THINK[id] || FAST_THINK[ITEM[id].skill]);
-  // o = {oral, speed}：speed 是测到的写一个数字的用时
+
+  // ---------- 秒答时间分类（Ben 11-08：难题和简单题的秒答时间不同；说明书-秒答时间 §分类） ----------
+  // 每个题型归一类；lo / hi 是这一类「想的时间」的合理范围（秒），新题型定的时间不在范围里 tests/fastclass.test.js 会拦
+  // 秒答卡和多位笔算按这一道题现算（进退位、位数），其他类按 FAST_THINK 的题型时间（已按步骤数定）+ 读题 + 写字
+  const FAST_CLASS = {
+    card:   {name: '口算卡', lo: 2, hi: 6, how: '10 / 20 以内一步 2–3 秒；两位数不进退位 3–4 秒、进退位 5–6 秒（两个两位数多 1 秒）'},
+    short:  {name: '短题（看图数数、分与合、数位、一步口诀）', lo: 3, hi: 6, how: '一步想出 3 秒，要换算或两步的 4–6 秒'},
+    pick:   {name: '点选（比大小、钟面、找规律）', lo: 2, hi: 8, how: '比大小 2 秒，要先算的 3–5 秒，三四年级小数比大小（先对齐数位）6–8 秒；不写字'},
+    line:   {name: '数线估位', lo: 4, hi: 6, how: '拖到大概位置，100 以内 4–5 秒，1000 以内 5–6 秒'},
+    word:   {name: '读题题（应用题、钟面、钱币、规律口述）', lo: 3, hi: 30, how: '按步骤数 3–30 秒，另按题面字数加读题时间'},
+    multi:  {name: '三四年级算式（递等式、简便算、小数、余数）', lo: 4, hi: 20, how: '按步骤数 4–20 秒'},
+    column: {name: '多位笔算（竖式加减乘除）', lo: 6, hi: 60, how: '按这道题现算：每位 2.5 秒、每次进退位 1.5 秒；乘法每次一位乘一位 3.5 秒；除法商每位 6 秒（除数两位 11 秒）；中间写的积和余数算写字'},
+  };
+  const COLUMN = ['speed:g10:add3', 'speed:g10:sub3', 'speed:g11:mul', 'speed:g12:mul2', 'speed:g13:mul3', 'speed:g11:div', 'speed:g13:div2'];   // 和 vert.js 的竖式题型同一批
+  const CLS = {};
+  function fastClass(id) {
+    if (CLS[id]) return CLS[id];
+    const s = BY[ITEM[id].skill];
+    let c;
+    if (C.BYID[id]) c = 'card';
+    else if (COLUMN.includes(id)) c = 'column';
+    else if (s.input === 'line') c = 'line';
+    else if (s.input === 'pick') c = 'pick';
+    else { const q = example(id).q || {}; c = q.say ? 'word' : /:g\d+:/.test(id) ? 'multi' : 'short'; }
+    return (CLS[id] = c);
+  }
+  // 多位笔算：按数字算想的时间（秒）和中间要写的位数（进位、积、余数；答案另算）
+  const nd = n => String(n).length, dg = (n, i) => Math.floor(n / Math.pow(10, i)) % 10;
+  function carries(a, op, b) {
+    let c = 0, k = 0;
+    for (let i = 0, n = Math.max(nd(a), nd(b)); i < n; i++) { const v = op === '+' ? dg(a, i) + dg(b, i) + c : dg(a, i) - dg(b, i) - c; c = op === '+' ? (v >= 10 ? 1 : 0) : (v < 0 ? 1 : 0); k += c; }
+    return k;
+  }
+  function column(inst) {
+    const m = String((inst.q || {}).text || '').match(/^(\d+) ([+−×÷-]) (\d+) =$/); if (!m) return null;
+    const a = +m[1], op = m[2] === '−' ? '-' : m[2], b = +m[3];
+    if (op === '+' || op === '-') { const k = carries(a, op, b); return {think: 2 + 2.5 * Math.max(nd(a), nd(b)) + 1.5 * k, work: k}; }
+    if (op === '×') {
+      let t = 2, work = 0; const parts = [];
+      for (let j = 0; j < nd(b); j++) { let c = 0; for (let i = 0; i < nd(a); i++) { c = Math.floor((dg(a, i) * dg(b, j) + c) / 10); t += 3.5 + (c ? 1 : 0); } parts.push(a * dg(b, j)); }
+      if (parts.length > 1) { parts.forEach(p => { work += nd(p); }); t += 2.5 * nd(inst.ans) + 1.5 * carries(parts[0], '+', parts[1] * 10); }
+      return {think: t, work};
+    }
+    const qd = nd(inst.ans); return {think: 2 + (b < 10 ? 6 : 11) * qd, work: 2 * qd * nd(b)};   // 除法：每位商 试商、乘、减（写乘积和余数）
+  }
+  // 想的时间（毫秒）：秒答卡按卡、多位笔算按这道题、其他按题型
+  function thinkMs(inst) {
+    const col = fastClass(inst.id) === 'column' && column(inst);
+    return (col ? col.think : fastThink(inst.id) || 5) * 1000;
+  }
+  // o = {oral, speed, en}：speed 是测到的写一个数字的用时（INKS.speed），en 英文日
   function fastMs(inst, o) {
     o = o || {};
     const s = BY[ITEM[inst.id].skill], q = inst.q || {}, read = (String(q.say || q.text || '').match(/[\u4e00-\u9fff]/g) || []).length * READ_MS * (o.en ? EN_READ : 1);
-    return (fastThink(inst.id) || 5) * 1000 + read + (s.input === 'write' && !o.oral ? (o.speed || 1000) * C.digits(inst.ans) : 0);
+    const col = fastClass(inst.id) === 'column' && column(inst), sp = o.speed || 1000;
+    // 竖式中间的数（积、余数、进位）口答也得算出来记住，照样给时间；答案本身口答不用写
+    const write = s.input === 'write' ? (o.oral ? 0 : sp * C.digits(inst.ans)) + (col ? sp * col.work : 0) : 0;
+    return thinkMs(inst) + read + write;
+  }
+  // 题库页：这个题型想的时间（按题算的写范围）
+  const LB = {};
+  function fastLabel(id) {
+    if (LB[id]) return LB[id];
+    if (fastClass(id) !== 'column') return (LB[id] = fastThink(id) + ' 秒');
+    const ts = (rawPool(id) || []).map(x => thinkMs({id, q: x.q, ans: x.ans}) / 1000);
+    const lo = Math.min(...ts), hi = Math.max(...ts);
+    return (LB[id] = ts.length ? (lo === hi ? lo : lo + '–' + hi) + ' 秒，按进位和位数' : fastThink(id) + ' 秒');
   }
   // 三四年级多位计算和文字题：写到一半会停下想，不算写完
   const slowWrite = inst => /:g\d+:/.test(inst.id);
@@ -314,6 +376,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, thinkMs, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });
