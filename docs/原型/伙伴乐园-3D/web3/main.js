@@ -1,0 +1,694 @@
+// 小伙伴乐园 · 大场景：模型来自 Blender（park2），网页负责地面、草树、路、灯光后期、界面和动作。
+// 动作照原帖：开场镜头俯冲 → 名牌依次弹出 → 镜头缓慢漂移；倒粮时爆炸框 → 粮箱上传送带 → 镜头跟拍 → 跳进食盆 → 伙伴蹦一下冒爱心；看一天 = 延时昼夜。
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const Q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const rnd = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
+const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const backOut = t => { const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- 渲染器 ----------
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+const DPR = Math.min(devicePixelRatio || 1, Number(Q.get('dpr')) || 2);
+renderer.setPixelRatio(DPR); renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, .1, 500);
+const ctl = new OrbitControls(cam, renderer.domElement);
+ctl.enableDamping = true; ctl.enablePan = false; ctl.minPolarAngle = .35; ctl.maxPolarAngle = 1.2; ctl.minDistance = 6; ctl.maxDistance = 75;
+ctl.autoRotateSpeed = .12;                                   // 待机：镜头缓慢漂移（原帖镜头从不静止）
+const HOME = { pos: V3(0, 30, 38), tgt: V3(0, 0, -6) };
+const TOP = { pos: V3(0, 72, -5.9), tgt: V3(0, 0, -6) };
+cam.position.copy(Q.get('intro') === '0' ? HOME.pos : TOP.pos); ctl.target.copy(HOME.tgt);
+
+// ---------- 天、光 ----------
+const skyU = { top: { value: new THREE.Color() }, mid: { value: new THREE.Color() }, bot: { value: new THREE.Color() } };
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
+  vertexShader: 'varying vec3 vp; void main(){ vp = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: 'uniform vec3 top, mid, bot; varying vec3 vp; void main(){ float h = vp.y; vec3 c = h > .1 ? mix(mid, top, smoothstep(.1, .7, h)) : mix(bot, mid, smoothstep(-.1, .1, h)); gl_FragColor = vec4(c, 1.); }' })));
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture;
+const hemi = new THREE.HemisphereLight(0xd6ecff, 0x5d7a3a, .75); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffe9c8, 3.6); sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, near: 1, far: 140 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .04;
+sun.target.position.set(0, 0, -6); scene.add(sun, sun.target);
+const nightLights = [];
+
+// ---------- 地：草岛、步道、池塘、树 ----------
+const clay = o => new THREE.MeshStandardMaterial({ roughness: .85, metalness: 0, ...o });
+const IC = V3(0, 0, -4), IR = 27;
+{ const top = new THREE.Mesh(new THREE.CylinderGeometry(IR, IR + .2, .3, 96), clay({ color: 0x5c9d3c })); top.position.set(IC.x, -.15, IC.z); top.receiveShadow = true; scene.add(top);
+  const dirt = new THREE.Mesh(new THREE.CylinderGeometry(IR + .2, IR - 2, 2.4, 96), clay({ color: 0x9a6c45 })); dirt.position.set(IC.x, -1.5, IC.z); scene.add(dirt);
+  const water = new THREE.Mesh(new THREE.CircleGeometry(220, 48), new THREE.MeshStandardMaterial({ color: 0x79c6dc, roughness: .12 })); water.rotation.x = -Math.PI / 2; water.position.y = -2.2; scene.add(water); }
+
+const layout = await (await fetch('./layout.json')).json();
+const SAND = clay({ color: 0xe8dcbf, roughness: .95 });
+const flat = (geo, m, y = .015) => { const o = new THREE.Mesh(geo, m); o.rotation.x = -Math.PI / 2; o.position.y = y; o.receiveShadow = true; scene.add(o); return o; };
+flat(new THREE.RingGeometry(5.4, 7.0, 96), SAND);                                   // 广场外一圈步道
+const walks = [];
+for (const p of layout.plots) {                                                     // 通往各家的小路（偏开传送带一点）
+  const t = p.angle * Math.PI / 180, dir = V3(Math.cos(t), 0, -Math.sin(t)), side = V3(-dir.z, 0, dir.x);
+  const a = dir.clone().multiplyScalar(6.8).addScaledVector(side, -1.1), b = dir.clone().multiplyScalar(11.8).addScaledVector(side, -1.1);
+  const L = a.distanceTo(b), m = flat(new THREE.PlaneGeometry(L, 1.4), SAND, .02); m.position.x = (a.x + b.x) / 2; m.position.z = (a.z + b.z) / 2; m.rotation.z = Math.atan2(-(b.z - a.z), b.x - a.x);
+  walks.push([a, b]);
+}
+const POND = { x: -8.5, z: 13, r: 3.0 };
+flat(new THREE.CircleGeometry(POND.r + .35, 48), clay({ color: 0xa99d8a }), .02);
+flat(new THREE.CircleGeometry(POND.r, 48), new THREE.MeshStandardMaterial({ color: 0x4eb4d2, roughness: .06, envMapIntensity: 1.4 }), .05).position.set(POND.x, .05, POND.z);
+scene.children.slice(-2).forEach(o => o.position.set(POND.x, o.position.y, POND.z));
+{ const R = rnd(5); for (let i = 0; i < 9; i++) { const a = R() * 6.28, d = R() * (POND.r - .6); const pad = new THREE.Mesh(new THREE.CylinderGeometry(.3 + R() * .25, .3, .04, 20), clay({ color: 0x62b35a, roughness: .6 })); pad.position.set(POND.x + Math.cos(a) * d, .09, POND.z + Math.sin(a) * d); scene.add(pad);
+  if (i % 3 === 0) { const f = new THREE.Mesh(new THREE.SphereGeometry(.12, 12, 8), clay({ color: 0xff9dc2, roughness: .5 })); f.position.copy(pad.position).add(V3(0, .1, 0)); scene.add(f); } } }
+// 草地要让开的地方：广场、各家地块、小路、池塘
+function plotLocal(p, x, z) { const cx = p.center[0], cy = -p.center[2], dx = x - cx, dy = -z - cy, c = Math.cos(p.rot), s = Math.sin(p.rot); return [c * dx + s * dy, -s * dx + c * dy]; }
+const segDist = (P, A, B) => { const ab = B.clone().sub(A), t = Math.max(0, Math.min(1, P.clone().sub(A).dot(ab) / ab.lengthSq())); return P.distanceTo(A.clone().addScaledVector(ab, t)); };
+function clear(x, z) {
+  if (Math.hypot(x, z) < 7.2) return true;
+  if (Math.hypot(x - POND.x, z - POND.z) < POND.r + .5) return true;
+  for (const p of layout.plots) { const [lx, ly] = plotLocal(p, x, z); if (p.who ? (lx > -3.5 && lx < 3.5 && ly > -4.8 && ly < 2.7) : (Math.abs(lx) < .35 && Math.abs(ly + 2.6) < .35)) return true; }   // 空地里照样长草，只让开牌子
+  const P = V3(x, 0, z); for (const [a, b] of walks) if (segDist(P, a, b) < .85) return true;
+  return false;
+}
+const grassU = { time: { value: 0 } };
+{ const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([-.026, 0, 0, .026, 0, 0, -.017, .085, 0, .017, .085, 0, 0, .2, 0], 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, .3, 0, 1, .3, 0, 1, .3, 0, 1, .3, 0, 1, .2], 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute([.35, .35, .35, .35, .35, .35, .8, .8, .8, .8, .8, .8, 1.15, 1.15, 1.1], 3));
+  g.setIndex([0, 1, 3, 0, 3, 2, 2, 3, 4]);
+  const m = new THREE.MeshStandardMaterial({ roughness: .8, side: THREE.DoubleSide, vertexColors: true });
+  m.onBeforeCompile = sh => { sh.uniforms.time = grassU.time; sh.vertexShader = 'uniform float time;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+    vec4 wp = instanceMatrix * vec4(0.,0.,0.,1.); float sw = sin(time*1.6 + wp.x*.7 + wp.z*.5)*.5 + sin(time*2.7 + wp.x*1.9)*.25; transformed.x += sw*position.y*.55; transformed.z += sw*position.y*.25;`); };
+  const N = Number(Q.get('grass')) || 110000, im = new THREE.InstancedMesh(g, m, N), o = new THREE.Object3D(), c = new THREE.Color(), R = rnd(7); let k = 0, guard = 0;
+  while (k < N && guard++ < N * 4) { const a = R() * 6.283, r = Math.sqrt(R()) * (IR - .3), x = IC.x + Math.cos(a) * r, z = IC.z + Math.sin(a) * r; if (clear(x, z)) continue;
+    o.position.set(x, 0, z); o.rotation.y = R() * 3.14; const s = .8 + R() * 1.0; o.scale.set(s, s * (.8 + R() * .8), s); o.updateMatrix(); im.setMatrixAt(k, o.matrix); im.setColorAt(k, c.setHSL(.25 + R() * .07, .62 + R() * .2, .36 + R() * .14)); k++; }
+  im.count = k; im.receiveShadow = true; scene.add(im);
+  const NF = 2200, fl = new THREE.InstancedMesh(new THREE.SphereGeometry(.04, 8, 6), clay({ roughness: .6 }), NF), cols = ['#ffffff', '#ffd6e6', '#fff1a8', '#d9c8ff', '#b9a3ff'], R2 = rnd(99); k = 0; guard = 0;
+  while (k < NF && guard++ < NF * 5) { const a = R2() * 6.28, r = Math.sqrt(R2()) * (IR - .5), x = IC.x + Math.cos(a) * r, z = IC.z + Math.sin(a) * r; if (clear(x, z)) continue; o.position.set(x, .14 + R2() * .05, z); o.rotation.set(0, 0, 0); o.scale.setScalar(1); o.updateMatrix(); fl.setMatrixAt(k, o.matrix); fl.setColorAt(k, c.set(cols[k % 5])); k++; }
+  fl.count = k; scene.add(fl); }
+const TREES = [];
+// 蓬蓬树：一圈围住岛，前方镜头一侧留空（同色的球合并成一块，省绘制次数）
+{ const R = rnd(31), PAL = [[.27, .36], [.28, .42], [.30, .40], [.29, .33], [.12, .40], [.13, .47]].map(([h, l]) => clay({ color: new THREE.Color().setHSL(h, .58, l), roughness: .9 }));
+  const trunkM = clay({ color: 0x8a5a36 }), bins = PAL.map(() => []), trunks = [], tmp = new THREE.Object3D();
+  const pts = []; for (let i = 0; i < 70; i++) { const a = R() * 6.283, r = IR - 1.2 - R() * 4.5, x = IC.x + Math.cos(a) * r, z = IC.z + Math.sin(a) * r; if (z > 6 && Math.abs(x) < 15) continue; if (Math.hypot(x - POND.x, z - POND.z) < POND.r + 1.5) continue; if (clear(x, z)) continue; if (pts.some(([u, v]) => Math.hypot(u - x, v - z) < 2.2)) continue; pts.push([x, z]); }
+  pts.forEach(([x, z]) => { const s = .8 + R() * .7, autumn = R() < .18; TREES.push([x, z, s]);
+    const tg = new THREE.CylinderGeometry(.16 * s, .24 * s, 1.6 * s, 10); tg.translate(x, .8 * s, z); trunks.push(tg);
+    for (let j = 0; j < 8; j++) { const r = (.5 + R() * .45) * s, a = R() * 6.28, d = R() * .7 * s, g = new THREE.IcosahedronGeometry(r, 3);
+      g.translate(x + Math.cos(a) * d, 1.8 * s + R() * 1.1 * s, z + Math.sin(a) * d); bins[autumn ? 4 + (j % 2) : j % 4].push(g); } });
+  const add = (gs, m) => { if (!gs.length) return; const mesh = new THREE.Mesh(mergeGeometries(gs, false), m); mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); };
+  add(trunks, trunkM); bins.forEach((gs, k) => add(gs, PAL[k])); }
+// 路灯：沿广场步道
+{ const pm = clay({ color: 0x4c3f35, roughness: .5 }), lm = new THREE.MeshStandardMaterial({ color: 0xfff1c8, emissive: 0xffc46b, emissiveIntensity: 0 });
+  for (let i = 0; i < 10; i++) { const a = i / 10 * 6.283 + .3, x = Math.cos(a) * 7.4, z = Math.sin(a) * 7.4; if (z < -4 && Math.abs(x) < 3) continue;
+    const p = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, 1.7, 8), pm); p.position.set(x, .85, z); p.castShadow = true; scene.add(p);
+    const l = new THREE.Mesh(new THREE.BoxGeometry(.26, .3, .26), lm); l.position.set(x, 1.8, z); scene.add(l); }
+  nightLights.push(lm); }
+
+// ---------- 后期 ----------
+const rt = new THREE.WebGLRenderTarget(innerWidth * DPR, innerHeight * DPR, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt); composer.setPixelRatio(DPR); composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, cam));
+const ao = new GTAOPass(scene, cam, innerWidth, innerHeight); ao.updateGtaoMaterial({ radius: .6, distanceExponent: 1.4, thickness: 1.2, scale: 1.1, samples: 16 }); composer.addPass(ao);
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .16, .45, .9); composer.addPass(bloom);
+const dof = new BokehPass(scene, cam, { focus: 40, aperture: .0008, maxblur: .006 }); composer.addPass(dof);
+composer.addPass(new OutputPass());
+const fx = new THREE.Scene();                                   // 爱心、烟单独一层：精灵贴片进主场景会被 AO 画成黑块
+
+// ---------- 模型 ----------
+async function loadPark(url) {
+  const res = await fetch(url); if (!res.ok) throw new Error('模型文件读取失败 ' + res.status);
+  if (!url.endsWith('.json')) return new GLTFLoader().parseAsync(await res.arrayBuffer(), './');
+  const js = await res.json(), uri = js.buffers[0].uri, raw = atob(uri.slice(uri.indexOf(',') + 1));
+  const bin = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i);
+  delete js.buffers[0].uri;
+  const jb = new TextEncoder().encode(JSON.stringify(js)), pad4 = n => (n + 3) & ~3, jl = pad4(jb.length), bl = pad4(bin.length);
+  const out = new Uint8Array(28 + jl + bl), dv = new DataView(out.buffer);
+  dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, out.length, true);
+  dv.setUint32(12, jl, true); dv.setUint32(16, 0x4E4F534A, true); out.fill(0x20, 20, 20 + jl); out.set(jb, 20);
+  dv.setUint32(20 + jl, bl, true); dv.setUint32(24 + jl, 0x004E4942, true); out.set(bin, 28 + jl);
+  return new GLTFLoader().parseAsync(out.buffer, './');
+}
+const gltf = await loadPark(Q.get('glb') || './park2.glb');
+scene.add(gltf.scene);
+const N = {}, glass = [], lampMats = [];
+gltf.scene.traverse(o => {
+  if (o.isMesh) { o.castShadow = o.receiveShadow = true; const n = o.material.name;
+    if (n === '玻璃') { glass.push(o.material); o.material.roughness = .05; o.material.envMapIntensity = 1.6; }
+    if (n === '灯芯' || n === '传送门光') lampMats.push(o.material); }
+  if (!N[o.name]) N[o.name] = o;
+});
+const bbCenter = o => new THREE.Box3().setFromObject(o).getCenter(V3());
+// 不会动的零件按材质合并：3000 多个零件 → 几十次绘制（画面不变，只是画得少）
+function mergeStatic() {
+  const keep = new Set();
+  for (const id of ['小狼', '熊猫', '美西螈']) for (const n of ['', '狗粮', '水', '食盆', '水槽']) { const o = N[id + n] || N[id + '/' + n] || (n && id === '小狼' ? N[n] : null); if (o) o.traverse(c => keep.add(c)); }
+  gltf.scene.updateMatrixWorld(true);
+  const groups = new Map(), drop = [];
+  gltf.scene.traverse(o => { if (!o.isMesh || keep.has(o) || o.material.transparent) return;
+    const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); g.applyMatrix4(o.matrixWorld);
+    for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);
+    const key = o.material.uuid; if (!groups.has(key)) groups.set(key, { m: o.material, gs: [] }); groups.get(key).gs.push(g); drop.push(o); });
+  for (const o of drop) o.parent.remove(o);
+  for (const { m, gs } of groups.values()) { const mg = mergeGeometries(gs, false); if (!mg) continue; const mesh = new THREE.Mesh(mg, m); mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); }
+  return { before: drop.length, after: groups.size };
+}
+
+
+// ---------- 碰撞：每个零件一个朝向盒子（合并前收集），像我的世界一样能挡路、能跳上去站 ----------
+const COL = [], R_ME = .3, STEP = .32, tmpV = V3();
+function addCol(inv, lb, wb) { COL.push({ inv, lb, wb, mg: V3(1, 1, 1) }); }
+function buildColliders(skip) {
+  gltf.scene.updateMatrixWorld(true);
+  const s = V3();
+  gltf.scene.traverse(o => {
+    if (!o.isMesh || skip.has(o) || o.material.transparent) return;
+    const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox();
+    const wb = g.boundingBox.clone().applyMatrix4(o.matrixWorld), sz = wb.getSize(V3());
+    if (Math.max(sz.x, sz.z) < .14 || sz.y < .05 || Math.max(sz.x, sz.z) > 30 || wb.max.y < .08) return;   // 小花小草、地面贴片不挡路
+    o.matrixWorld.decompose(V3(), new THREE.Quaternion(), s);
+    COL.push({ inv: o.matrixWorld.clone().invert(), lb: g.boundingBox.clone(), wb, mg: V3(1 / s.x, 1 / s.y, 1 / s.z) });
+  });
+  for (const [x, z, sc] of TREES) { const w = .3 * sc; COL.push({ inv: new THREE.Matrix4(), lb: new THREE.Box3(V3(x - w, 0, z - w), V3(x + w, 3.2 * sc, z + w)), wb: new THREE.Box3(V3(x - w, 0, z - w), V3(x + w, 3.2 * sc, z + w)), mg: V3(1, 1, 1) }); }
+}
+const inLocal = (c, p, r) => p.x > c.lb.min.x - r * c.mg.x && p.x < c.lb.max.x + r * c.mg.x && p.z > c.lb.min.z - r * c.mg.z && p.z < c.lb.max.z + r * c.mg.z && p.y > c.lb.min.y - .02 * c.mg.y && p.y < c.lb.max.y + .02 * c.mg.y;
+function blocked(x, y, z, r = R_ME, h = 1.6) {
+  if (Math.hypot(x - IC.x, z - IC.z) > IR - 1.2) return true;                                   // 岛边
+  if (Math.hypot(x - POND.x, z - POND.z) < POND.r + r - .3 && y < .4) return true;              // 池塘
+  for (const c of COL) { const w = c.wb;
+    if (x < w.min.x - r || x > w.max.x + r || z < w.min.z - r || z > w.max.z + r) continue;
+    if (w.max.y <= y + STEP || w.min.y >= y + h) continue;
+    const lo = Math.max(w.min.y, y + STEP + .02), hi = Math.min(w.max.y, y + h);
+    for (const ty of [lo, (lo + hi) / 2, hi - .01]) if (inLocal(c, tmpV.set(x, ty, z).applyMatrix4(c.inv), r)) return true;
+  }
+  return false;
+}
+function groundAt(x, y, z) {
+  let g = 0;
+  for (const c of COL) { const w = c.wb, top = w.max.y;
+    if (top > y + STEP || top <= g) continue;
+    if (x < w.min.x - .15 || x > w.max.x + .15 || z < w.min.z - .15 || z > w.max.z + .15) continue;
+    if (inLocal(c, tmpV.set(x, top - .03, z).applyMatrix4(c.inv), .12)) g = top;
+  }
+  return g;
+}
+
+// ---------- 伙伴 ----------
+const PETS = [
+  { id: '小狼', line: '红围巾是它的记号，耳朵一竖就是听见你了', food: 6, water: 6, aff: 1.5 },
+  { id: '熊猫', line: '背着一根竹子走来走去，随时能啃一口', food: 0, water: 4, aff: .5 },
+  { id: '美西螈', line: '住在水边，两边的小鳃一扇一扇', food: 0, water: 0, aff: 0 },
+];
+const pre = (p, n) => N[p.id + n] || N[p.id + '/' + n] || null;   // GLTFLoader 会去掉节点名里的「/」：熊猫/头 → 熊猫头
+for (const p of PETS) {
+  p.root = N[p.id]; p.head = pre(p, '头'); p.earL = pre(p, '耳朵左'); p.earR = pre(p, '耳朵右'); p.tail = pre(p, '尾巴');
+  p.foodN = pre(p, '狗粮'); p.waterN = pre(p, '水'); p.bowlN = pre(p, '食盆'); p.troughN = pre(p, '水槽');
+  p.home = p.root.position.clone(); p.head0 = p.head.rotation.x; p.legs = [];
+  p.root.traverse(o => { if (/腿\d$/.test(o.name) && !o.isMesh) p.legs.push(o); });
+  const local = v => p.root.parent.worldToLocal(v.clone());
+  p.bowlLocal = local(bbCenter(p.bowlN)); p.bowlLocal.y = p.home.y;
+  // 溜达的点：家门口附近三处 + 食盆旁
+  p.spots = [p.home.clone(), p.home.clone().add(V3(-1.4, 0, .5)), p.home.clone().add(V3(.6, 0, .9)), p.bowlLocal.clone().add(V3(.35, 0, .45))];
+  p.walk = { to: 0, wait: 1 + Math.random() * 2 };
+  p.tagPt = new THREE.Object3D(); p.head.add(p.tagPt); p.tagPt.position.set(0, .75, 0);
+  p.belt = layout.belts[p.id].map(a => V3(...a));
+  p.troughLocal = local(bbCenter(p.troughN)); p.troughLocal.y = p.home.y;
+  p.bowlW = bbCenter(p.bowlN); p.troughW = bbCenter(p.troughN);
+  p.inv = p.root.parent.matrixWorld.clone().invert();
+}
+buildColliders(new Set(PETS.flatMap(p => { const a = []; p.root.traverse(c => a.push(c)); for (const n of [p.foodN, p.waterN]) n.traverse(c => a.push(c)); return a; })));
+const MERGE = Q.get('merge') === '0' ? null : mergeStatic();
+const mood = p => p.food === 0 && p.water === 0 ? 'wilt' : (p.food === 0 || p.water === 0) ? 'want' : 'happy';
+const MOOD = { happy: '开心', want: '想吃', wilt: '蔫蔫' };
+let sel = PETS[0];
+
+// ---------- 名牌（原帖的白色胶囊）----------
+const tags = [];
+function addTag(html, cls, pos, onClick) { const el = document.createElement('div'); el.className = 'pill ' + cls; el.innerHTML = html; el.style.setProperty('--s', 0); document.body.appendChild(el); if (onClick) el.onclick = onClick; const t = { el, pos, born: -1 }; tags.push(t); return t; }
+for (const p of PETS) p.tag = addTag(`<i></i>${p.id} <small>开心</small>`, '', () => p.tagPt.getWorldPosition(V3()), () => select(p, true));
+addTag('<i style="background:#e0533d"></i>小卖部', '', () => V3(layout.shop[0], 3.4, layout.shop[2]), null);
+for (const pl of layout.plots) if (!pl.who) addTag('<i></i>待开放', 'lock', () => V3(pl.center[0], 1.9, pl.center[2]), null);
+
+// ---------- 界面 ----------
+$('tabs').innerHTML = PETS.map((p, i) => `<button data-i="${i}">${p.id}</button>`).join('');
+$('tabs').onclick = e => { const b = e.target.closest('button'); if (b) select(PETS[b.dataset.i], true); };
+function select(p, fly) { sel = p; ui(); if (fly && !busy && MODE === 'map') flyPet(p); }
+function ui() {
+  const m = mood(sel);
+  $('pName').textContent = sel.id; $('pLine').textContent = sel.line; $('pSt').textContent = MOOD[m]; $('pSt').className = 'st ' + m;
+  $('bF').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < sel.food ? 'on' : ''}"></i>`).join('');
+  $('bW').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < sel.water ? 'on' : ''}"></i>`).join('');
+  $('aF').disabled = busy || sel.food >= 6; $('aW').disabled = busy || sel.water >= 6;
+  $('aF').textContent = sel.food >= 6 ? '食盆已满' : '倒粮'; $('aW').textContent = sel.water >= 6 ? '水槽已满' : '倒水';
+  [...$('tabs').children].forEach((b, i) => b.classList.toggle('on', PETS[i] === sel));
+  for (const p of PETS) { const mm = mood(p); p.tag.el.className = 'pill ' + (mm === 'happy' ? '' : mm) + (p === sel ? ' sel' : ''); p.tag.el.querySelector('small').textContent = MOOD[mm]; }
+}
+function stats(final) {
+  const v = { sN: PETS.length, sH: PETS.filter(p => mood(p) === 'happy').length, sW: PETS.filter(p => mood(p) !== 'happy').length, sL: layout.plots.filter(p => !p.who).length };
+  for (const [k, n] of Object.entries(v)) { const el = $(k); if (el.textContent !== String(n)) { el.textContent = n; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } }
+}
+
+// ---------- 镜头 ----------
+let fly = null, follow = null, idleT = 0;
+function flyTo(pos, tgt, ms = 900, done) { fly = { p0: cam.position.clone(), t0: ctl.target.clone(), p1: pos.clone(), t1: tgt.clone(), s: performance.now(), ms: REDUCE ? 1 : ms, done }; }
+function flyPet(p, done) { const c = p.root.getWorldPosition(V3()), out = c.clone().setY(0).normalize(); const pos = c.clone().addScaledVector(out, -8.5).add(V3(0, 5.5, 0)).addScaledVector(V3(-out.z, 0, out.x), 2.2); flyTo(pos, c.clone().add(V3(0, .9, 0)), 900, done); }
+const orbit = (da, dr) => { const off = cam.position.clone().sub(ctl.target), sph = new THREE.Spherical().setFromVector3(off); sph.theta += da; sph.radius = THREE.MathUtils.clamp(sph.radius * dr, ctl.minDistance, ctl.maxDistance); flyTo(ctl.target.clone().add(V3().setFromSpherical(sph)), ctl.target.clone()); };
+let MODE = 'map';
+$('tHome').onclick = () => !busy && flyTo(HOME.pos, HOME.tgt, 1100);
+$('tL').onclick = () => !busy && orbit(-Math.PI / 4, 1); $('tR').onclick = () => !busy && orbit(Math.PI / 4, 1);
+$('tIn').onclick = () => !busy && orbit(0, .65); $('tOut').onclick = () => !busy && orbit(0, 1.5);
+let showTags = true; $('tTag').onclick = () => { showTags = !showTags; $('tTag').classList.toggle('on', !showTags); };
+renderer.domElement.addEventListener('pointerdown', () => { idleT = 0; ctl.autoRotate = false; });
+// 点伙伴：选中 + 镜头拉过去
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => downAt = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener('pointerup', e => { if (MODE !== 'map' || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
+  ptr.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(ptr, cam);
+  for (const p of PETS) if (ray.intersectObject(p.root, true).length) { select(p, true); break; } });
+
+// ---------- 爆炸框（原帖「叮！登录不上！」那种）----------
+{ const pts = []; for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2, r = i % 2 ? 36 : 55 + (i % 4 === 0 ? 8 : 0); pts.push((75 + Math.cos(a) * r * 1.25).toFixed(1) + ',' + (55 + Math.sin(a) * r * .9).toFixed(1)); } $('burstPoly').setAttribute('points', pts.join(' ')); }
+let burst = null;
+function popBurst(text, worldPos, ms = 1600) { $('burstT').textContent = text; burst = { pos: worldPos.clone(), t0: clock.elapsedTime, ms: ms / 1000 }; }
+
+// ---------- 送粮：粮箱从小卖部上传送带，镜头跟拍，跳进食盆 ----------
+const crateTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#d9a35e'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#e8892e'; g.fillRect(54, 0, 20, 128); g.fillRect(0, 54, 128, 20); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const crateM = new THREE.MeshStandardMaterial({ map: crateTex, roughness: .8 });
+let busy = false, job = null;
+function makeCrate(kind) {
+  const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(.55, .45, .55), kind === 'food' ? crateM : new THREE.MeshStandardMaterial({ color: 0x6fb6de, roughness: .35 }));
+  b.castShadow = true; g.add(b); if (kind === 'water') { const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .1, 16), clay({ color: 0xf7f1e3 })); cap.position.y = .27; g.add(cap); }
+  scene.add(g); return g;
+}
+function deliver(kind) {
+  if (busy) return; busy = true; ctl.autoRotate = false; ui();
+  const p = sel, crate = makeCrate(kind), shop = V3(layout.shop[0], 1.3, layout.shop[2]);
+  const [b0, b1] = p.belt, bowl = (kind === 'food' ? p.bowlN : p.troughN).getWorldPosition(V3());
+  const bowlW = bbCenter(kind === 'food' ? p.bowlN : p.troughN).setY(.55);
+  crate.position.copy(shop); crate.scale.setScalar(.001);
+  // 先把镜头带到小卖部
+  const toShop = b0.clone().sub(shop).setY(0).normalize();
+  flyTo(shop.clone().addScaledVector(toShop, -10).addScaledVector(V3(-toShop.z, 0, toShop.x), 4).add(V3(0, 9, 0)), shop.clone().addScaledVector(toShop, 2), 800, () => {
+    popBurst(kind === 'food' ? '送粮啦' : '送水啦', shop.clone().add(V3(0, 1.4, 0)));
+    job = { p, kind, crate, shop, b0, b1, bowlW, t0: clock.elapsedTime, legs: [.45, .55, 2.6, .7] };
+  });
+}
+$('aF').onclick = () => deliver('food'); $('aW').onclick = () => deliver('water');
+function arc(a, b, u, h) { const v = a.clone().lerp(b, u); v.y += Math.sin(u * Math.PI) * h; return v; }
+function runJob(t) {
+  const J = job, k = t - J.t0, [d0, d1, d2, d3] = J.legs, c = J.crate;
+  if (k < d0) { const u = k / d0; c.scale.setScalar(backOut(u)); c.position.copy(J.shop).add(V3(0, u * .3, 0)); }   // 冒出来
+  else if (k < d0 + d1) { const u = (k - d0) / d1; c.scale.setScalar(1); c.position.copy(arc(J.shop.clone().add(V3(0, .3, 0)), J.b0.clone().add(V3(0, .23, 0)), u, 1.2)); }   // 跳上传送带
+  else if (k < d0 + d1 + d2) { const u = (k - d0 - d1) / d2; c.position.copy(J.b0.clone().lerp(J.b1, u)).add(V3(0, .23 + Math.abs(Math.sin(u * 40)) * .02, 0)); }   // 传送带上走
+  else if (k < d0 + d1 + d2 + d3) { const u = (k - d0 - d1 - d2) / d3; c.position.copy(arc(J.b1.clone().add(V3(0, .23, 0)), J.bowlW, u, 1.0)); c.rotation.z = u * Math.PI * 2; c.scale.setScalar(1 - u * .6); }   // 跳进食盆
+  else { scene.remove(c); finishJob(t); return; }
+  // 镜头跟拍：低机位，在粮箱后上方
+  if (k > d0) { const dir = J.b1.clone().sub(J.b0).setY(0).normalize(), side = V3(-dir.z, 0, dir.x);
+    const want = c.position.clone().addScaledVector(dir, -7).addScaledVector(side, 3.5).add(V3(0, 4.8, 0));
+    cam.position.lerp(want, .08); ctl.target.lerp(c.position, .12); }
+}
+function finishJob(t) {
+  const J = job; job = null;
+  if (J.kind === 'food') J.p.food = 6; else J.p.water = 6;
+  J.p.joyT = t; J.p.grow = { kind: J.kind, t0: t };
+  for (let i = 0; i < 3; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthTest: false })); fx.add(s); hearts.push({ s, p: J.p, t0: t + .25 + i * .14, x: (i - 1) * .35 }); }
+  ui(); stats();
+  setTimeout(() => { busy = false; ui(); flyPet(J.p); }, 900);
+}
+const heartTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#ff6f8f'; g.beginPath(); g.moveTo(32, 54); g.bezierCurveTo(4, 32, 14, 8, 32, 22); g.bezierCurveTo(50, 8, 60, 32, 32, 54); g.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const hearts = [];
+
+// ---------- 烟囱冒烟 ----------
+const smokeTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 4, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+const chimney = Object.values(N).find(o => o.isMesh && /烟囱/.test(o.name));
+const puffs = []; if (chimney) { const top = new THREE.Box3().setFromObject(chimney); const base = V3((top.min.x + top.max.x) / 2, top.max.y + .1, (top.min.z + top.max.z) / 2);
+  for (let i = 0; i < 7; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, transparent: true, depthWrite: false, opacity: .0 })); fx.add(s); puffs.push({ s, base, ph: i / 7 }); } }
+
+
+// ================= 走走模式：照方块世界的玩法 —— 空空本人在乐园里走、跳、拿东西、和伙伴玩 =================
+const KS = Number(Q.get('ks')) || .78;                         // 空空的身高比例（伙伴约 1 米高）
+const kongG = await loadPark(Q.get('kong') || './kong.glb');
+const kong = kongG.scene; kong.scale.setScalar(KS); scene.add(kong);
+const KN = {}; kong.traverse(o => { o.castShadow = true; if (o.isMesh) o.receiveShadow = true; if (!KN[o.name]) KN[o.name] = o; });
+const kp = n => KN['空空' + n] || KN['空空/' + n];
+const K = { head: kp('头'), armL: kp('左臂'), armR: kp('右臂'), legL: kp('左腿'), legR: kp('右腿') };
+const handArm = [K.armL, K.armR].sort((a, b) => a.position.x - b.position.x)[0];   // 面朝 +Z 时，右手在 -X 一侧
+const otherArm = handArm === K.armL ? K.armR : K.armL;
+const P = { pos: V3(2.6, 0, 7.6), vy: 0, yaw: Math.PI + .2, pitch: .32, ground: true, view: 1, slot: 0, ph: 0, sp: 0, lock: 0, act: null };
+const INV = { food: 1, water: 1, gems: 6 };
+// 手里的东西
+const held = {};
+{ const sack = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(.3, .36, .2), clay({ color: 0xc9a36a })); sack.add(b);
+  const tie = new THREE.Mesh(new THREE.CylinderGeometry(.06, .1, .1, 10), clay({ color: 0xa37d48 })); tie.position.y = .22; sack.add(tie);
+  const band = new THREE.Mesh(new THREE.BoxGeometry(.31, .08, .21), clay({ color: 0xe8892e })); sack.add(band); held.food = sack;
+  const pail = new THREE.Group(), pb = new THREE.Mesh(new THREE.CylinderGeometry(.16, .12, .28, 18), new THREE.MeshStandardMaterial({ color: 0x9fb4c4, metalness: .5, roughness: .35 })); pail.add(pb);
+  const wt = new THREE.Mesh(new THREE.CylinderGeometry(.145, .145, .02, 18), new THREE.MeshStandardMaterial({ color: 0x4eb4d2, roughness: .1 })); wt.position.y = .12; pail.add(wt);
+  const hd = new THREE.Mesh(new THREE.TorusGeometry(.15, .015, 6, 20, Math.PI), clay({ color: 0x555b60 })); hd.position.y = .14; pail.add(hd); held.water = pail;
+  for (const k of ['food', 'water']) { held[k].position.set(0, -.62, .14); held[k].traverse(o => o.castShadow = true); handArm.add(held[k]); held[k].visible = false; } }
+const ballM = new THREE.MeshStandardMaterial({ color: 0xe8453c, roughness: .45 });
+const ball = { mesh: new THREE.Mesh(new THREE.SphereGeometry(.16, 20, 14), ballM), mode: 'hand', vel: V3(), pet: null };
+{ const st = new THREE.Mesh(new THREE.TorusGeometry(.162, .025, 6, 24), clay({ color: 0xffffff })); ball.mesh.add(st); }
+ball.mesh.castShadow = true; scene.add(ball.mesh);
+const SLOTS = [
+  { id: 'hand', name: '空手', icon: '<svg viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11m0-1V4.5a1.5 1.5 0 0 1 3 0V11m0-5.5a1.5 1.5 0 0 1 3 0V12m0-4.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-4.6-2.2L4.6 15.4a1.5 1.5 0 0 1 2.3-1.9L8 15" fill="#f1c27d" stroke="#3a3833" stroke-width="1.4" stroke-linejoin="round"/></svg>' },
+  { id: 'food', name: '粮袋', icon: '<svg viewBox="0 0 24 24"><path d="M7 7h10l2 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" fill="#c9a36a" stroke="#3a3833" stroke-width="1.4"/><path d="M8 4h8l-1 3H9z" fill="#a37d48" stroke="#3a3833" stroke-width="1.4"/><path d="M5.6 12h12.8" stroke="#e8892e" stroke-width="2.4"/></svg>' },
+  { id: 'water', name: '水桶', icon: '<svg viewBox="0 0 24 24"><path d="M5 9h14l-1.6 11a1.5 1.5 0 0 1-1.5 1.3H8.1a1.5 1.5 0 0 1-1.5-1.3z" fill="#9fb4c4" stroke="#3a3833" stroke-width="1.4"/><path d="M5.5 11.5h13" stroke="#4eb4d2" stroke-width="2.6"/><path d="M6 9a6 6 0 0 1 12 0" fill="none" stroke="#3a3833" stroke-width="1.4"/></svg>' },
+  { id: 'ball', name: '小球', icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="#e8453c" stroke="#3a3833" stroke-width="1.4"/><path d="M4.5 9.5c5 2 10 2 15 0" fill="none" stroke="#fff" stroke-width="2"/></svg>' },
+];
+$('hotbar').innerHTML = SLOTS.map((s, i) => `<button data-i="${i}"><span class="k">${i + 1}</span>${s.icon}<span class="lb">${s.name}</span><span class="n" id="hn${i}"></span></button>`).join('');
+$('hotbar').onclick = e => { const b = e.target.closest('button'); if (b) setSlot(+b.dataset.i); };
+function setSlot(i) { P.slot = (i + SLOTS.length) % SLOTS.length; hud(); }
+function hud() {
+  [...$('hotbar').children].forEach((b, i) => b.classList.toggle('on', i === P.slot));
+  $('hn1').textContent = INV.food; $('hn2').textContent = INV.water; $('hn3').textContent = ball.mode === 'hand' ? '' : '…'; $('gN').textContent = INV.gems;
+  const id = SLOTS[P.slot].id; held.food.visible = id === 'food'; held.water.visible = id === 'water';
+}
+let toastT = 0; function toast(msg) { $('toast').textContent = msg; $('toast').classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('on'), 2400); }
+
+// ---------- 输入：键盘 + 拖动转向 + 摇杆 ----------
+const KEY = {}, joy = { x: 0, y: 0, id: null };
+addEventListener('keydown', e => {
+  if (MODE !== 'play') { if (e.code === 'KeyM') setMode('play'); return; }
+  KEY[e.code] = true;
+  if (e.code === 'Space') { e.preventDefault(); jump(); }
+  if (e.code === 'KeyE' || e.code === 'KeyF') interact();
+  if (e.code === 'KeyV' || e.code === 'F5') { e.preventDefault(); cycleView(); }
+  if (e.code === 'KeyM') setMode('map');
+  if (/^Digit[1-4]$/.test(e.code)) setSlot(+e.code.slice(5) - 1);
+});
+addEventListener('keyup', e => { KEY[e.code] = false; });
+addEventListener('blur', () => { for (const k in KEY) KEY[k] = false; });
+renderer.domElement.addEventListener('wheel', e => { if (MODE === 'play') setSlot(P.slot + Math.sign(e.deltaY)); }, { passive: true });
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+const look = { id: null, x: 0, y: 0, moved: 0 };
+renderer.domElement.addEventListener('pointerdown', e => { if (MODE !== 'play' || look.id !== null) return; look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; look.btn = e.button; });
+addEventListener('pointermove', e => { if (e.pointerId !== look.id) return; const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy);
+  const k = e.pointerType === 'touch' ? .007 : .005; P.yaw -= dx * k; P.pitch = THREE.MathUtils.clamp(P.pitch + dy * k, -.6, 1.15); });
+addEventListener('pointerup', e => { if (e.pointerId !== look.id) return; look.id = null; if (look.moved < 6 && MODE === 'play') { if (look.btn === 2 || clickPet(e)) interact(); } });
+function clickPet(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(ptr, cam); return PETS.some(p => ray.intersectObject(p.root, true).length); }
+{ const J = $('joy'), knob = J.firstElementChild;
+  const upd = e => { const r = J.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = e.clientX - cx, dy = e.clientY - cy; const L = Math.hypot(dx, dy), m = r.width / 2 - 10; if (L > m) { dx *= m / L; dy *= m / L; } joy.x = dx / m; joy.y = -dy / m; knob.style.transform = `translate(${dx}px,${dy}px)`; };
+  J.addEventListener('pointerdown', e => { joy.id = e.pointerId; J.setPointerCapture(e.pointerId); upd(e); });
+  J.addEventListener('pointermove', e => { if (e.pointerId === joy.id) upd(e); });
+  const end = e => { if (e.pointerId !== joy.id) return; joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; };
+  J.addEventListener('pointerup', end); J.addEventListener('pointercancel', end); }
+$('bJump').onpointerdown = e => { e.preventDefault(); jump(); };
+$('bAct').onclick = () => interact();
+$('bView').onclick = () => cycleView();
+$('mPlay').onclick = () => setMode('play'); $('mMap').onclick = () => setMode('map');
+function jump() { if (P.ground && !P.lock) { P.vy = 7.4; P.ground = false; } }
+function cycleView() { P.view = (P.view + 1) % 3; toast(['第一人称', '第三人称 · 背后', '第三人称 · 正面'][P.view]); }
+
+// ---------- 镜头 ----------
+const lookDir = () => V3(Math.sin(P.yaw) * Math.cos(P.pitch), -Math.sin(P.pitch), Math.cos(P.yaw) * Math.cos(P.pitch));
+const headPos = () => P.pos.clone().add(V3(0, 1.62 * KS, 0));
+function camWant() {
+  const h = headPos(), L = lookDir();
+  if (P.view === 0) { const e = P.pos.clone().add(V3(0, 1.58 * KS, 0)).addScaledVector(V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), .12); return { pos: e, tgt: e.clone().add(L) }; }
+  if (P.view === 2) { const f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)); return { pos: h.clone().addScaledVector(f, 3.6).add(V3(0, .5, 0)), tgt: h }; }
+  let d = 5.2; const pos = h.clone().addScaledVector(L, -d);
+  for (let k = 1; k <= 22; k++) { const q = h.clone().addScaledVector(L, -d * k / 22); if (q.y < .15 || blocked(q.x, q.y - .25, q.z, .18, .5)) { d = Math.max(.7, d * (k - 1.5) / 22); break; } }   // 镜头别穿进屋子、树里
+  return { pos: h.clone().addScaledVector(L, -d), tgt: h.clone().add(V3(0, .15, 0)) };
+}
+function setMode(m) {
+  if (MODE === m || fly) return;
+  MODE = m; document.body.classList.toggle('play', m === 'play'); document.body.classList.toggle('map', m === 'map');
+  $('mPlay').classList.toggle('on', m === 'play'); $('mMap').classList.toggle('on', m === 'map');
+  cam.fov = m === 'play' ? 58 : 30; cam.updateProjectionMatrix();
+  if (m === 'play') { ctl.enabled = false; ctl.autoRotate = false; const w = camWant(); flyTo(w.pos, w.tgt, 1100); dof.uniforms.aperture.value = .0003; }
+  else { ctl.enabled = true; kong.visible = true; ctl.target.copy(headPos()); flyTo(HOME.pos, HOME.tgt, 1100); dof.uniforms.aperture.value = .0008; idleT = 0; }
+  hud();
+}
+
+// ---------- 互动 ----------
+const shopPos = V3(layout.shop[0], 0, layout.shop[2]);
+const petPos = p => p.root.getWorldPosition(V3());
+const flatD = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+let target = null;
+function findTarget() {
+  const id = SLOTS[P.slot].id, me = P.pos, f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw));
+  const front = me.clone().addScaledVector(f, .7);
+  if (flatD(front, shopPos) < 3.4) return { kind: 'shop', label: id === 'food' ? '拿粮袋' : id === 'water' ? '打水' : '补货', at: shopPos.clone().setY(3.2) };
+  for (const p of PETS) {
+    if (id === 'food' && flatD(front, p.bowlW) < 1.5) return { kind: 'pour', what: 'food', p, label: p.food >= 6 ? '食盆满了' : INV.food <= 0 ? '粮袋空了' : '倒粮', at: p.bowlW.clone().setY(1.1) };
+    if (id === 'water' && flatD(front, p.troughW) < 1.5) return { kind: 'pour', what: 'water', p, label: p.water >= 6 ? '水槽满了' : INV.water <= 0 ? '水桶空了' : '倒水', at: p.troughW.clone().setY(1.1) };
+  }
+  if (id === 'ball' && ball.mode === 'hand') return { kind: 'throw', label: '扔球', at: null };
+  let best = null, bd = 2.3;
+  for (const p of PETS) { const d = flatD(front, petPos(p)); if (d < bd) { bd = d; best = p; } }
+  if (best) return { kind: 'pet', p: best, label: '摸摸' + best.id, at: () => best.tagPt.getWorldPosition(V3()).add(V3(0, .35, 0)) };
+  return null;
+}
+function addHearts(p, n, t) { for (let i = 0; i < n; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthTest: false })); fx.add(s); hearts.push({ s, p, t0: t + i * .14, x: (i - (n - 1) / 2) * .35 }); } }
+function gainAff(p, v) {
+  const before = p.aff; p.aff = Math.min(3, p.aff + v);
+  if (before < 1 && p.aff >= 1) toast(`${p.id}会跟着你走了`);
+  else if (before < 2 && p.aff >= 2) toast(`${p.id}学会接球了：换成小球，按 E 扔`);
+  else if (before < 3 && p.aff >= 3) toast(`${p.id}送你一件装饰`);
+}
+const parts = [];
+function interact() {
+  if (MODE !== 'play' || P.lock > 0) return;
+  const t = clock.elapsedTime, T = target; if (!T) return;
+  if (T.kind === 'shop') {
+    if (INV.gems <= 0) return toast('宝石不够了，做题可以赚宝石');
+    const id = SLOTS[P.slot].id;
+    if (id === 'food' && INV.food >= 3 || id === 'water' && INV.water >= 3 || id !== 'food' && id !== 'water' && INV.food >= 3 && INV.water >= 3) return toast('拿满了，最多 3 份');
+    INV.gems--; if (id !== 'water') INV.food = 3; if (id !== 'food') INV.water = 3;
+    popBurst(id === 'food' ? '粮袋装满' : id === 'water' ? '水桶打满' : '补货啦', shopPos.clone().setY(2.6), 1300); hud(); P.act = { kind: 'pet', t0: t }; P.lock = .5; return;
+  }
+  if (T.kind === 'pour') {
+    const p = T.p, w = T.what;
+    if (INV[w] <= 0) return toast(w === 'food' ? '粮袋空了，去小卖部拿' : '水桶空了，去小卖部打水');
+    if (p[w] >= 6) return toast(w === 'food' ? '食盆是满的' : '水槽是满的');
+    INV[w]--; P.lock = 1.0; P.act = { kind: 'pour', t0: t };
+    const from = held[w].getWorldPosition(V3()).add(V3(0, .2, 0)), to = (w === 'food' ? p.bowlW : p.troughW).clone();
+    for (let i = 0; i < 16; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(w === 'food' ? .045 : .035, 8, 6), w === 'food' ? clay({ color: 0xb8793e }) : new THREE.MeshStandardMaterial({ color: 0x6fc8ec, roughness: .1 })); scene.add(m); parts.push({ m, from, to: to.clone().add(V3((Math.random() - .5) * .3, .1, (Math.random() - .5) * .3)), t0: t + .2 + i * .035, d: .45 }); }
+    setTimeout(() => { p[w] = 6; p.grow = { kind: w, t0: clock.elapsedTime }; p.act = { kind: 'eat', what: w, t0: -1 }; ui(); stats(); hud(); }, 800);
+    hud(); return;
+  }
+  if (T.kind === 'pet') {
+    const p = T.p; P.act = { kind: 'pet', t0: t }; P.lock = .55;
+    if (p.petT && t - p.petT < 1) return; p.petT = t; p.wiggleT = t;
+    addHearts(p, 2, t + .15);
+    if (mood(p) === 'wilt') { toast(`${p.id}饿得没力气，先喂吃的`); gainAff(p, .25); }
+    else gainAff(p, .5);
+    return;
+  }
+  if (T.kind === 'throw') {
+    const f = lookDir(); f.y = Math.max(f.y, -.1) + .45; f.normalize();
+    ball.mode = 'fly'; ball.mesh.position.copy(headPos()).addScaledVector(V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), .4); ball.vel.copy(f).multiplyScalar(10.5);
+    P.act = { kind: 'throw', t0: t }; P.lock = .35; hud();
+    const near = PETS.filter(p => flatD(petPos(p), P.pos) < 14).sort((a, b) => flatD(petPos(a), P.pos) - flatD(petPos(b), P.pos));
+    const fetcher = near.find(p => p.aff >= 2 && mood(p) !== 'wilt');
+    if (fetcher) { fetcher.act = { kind: 'fetch' }; ball.pet = fetcher; }
+    else if (near.length) toast(`${near[0].id}还不会接球（亲密度 2 颗心）`);
+  }
+}
+// 伙伴的世界坐标 ↔ 自家地块坐标
+const toLocal = (p, w) => w.clone().applyMatrix4(p.inv);
+function petMove(p, goalL, speed, dt, stop = .1) {
+  const pos = p.root.position, d = goalL.clone().sub(pos); d.y = 0; const L = d.length();
+  if (L < stop) return true;
+  pos.addScaledVector(d.normalize(), Math.min(speed * dt, L - stop * .5)); facePet(p, Math.atan2(d.x, d.z), dt); p.moving = speed;
+  return false;
+}
+function facePet(p, want, dt) { p.face = p.face ?? want; let df = want - p.face; df = Math.atan2(Math.sin(df), Math.cos(df)); p.face += df * Math.min(1, dt * 7); p.root.rotation.y = p.face; }
+const plotYaw = p => { const q = new THREE.Quaternion(); p.root.parent.getWorldQuaternion(q); return new THREE.Euler().setFromQuaternion(q, 'YXZ').y; };
+function stepBall(dt) {
+  const b = ball, m = b.mesh;
+  m.visible = !(b.mode === 'hand' && (SLOTS[P.slot].id !== 'ball' || (P.view === 0 && MODE === 'play')));
+  if (b.mode === 'hand') { handArm.updateWorldMatrix(true, false); m.position.copy(V3(0, -.66, .1).applyMatrix4(handArm.matrixWorld)); return; }
+  if (b.mode === 'mouth') { const pt = b.pet.head.localToWorld(V3(0, -.05, .45)); m.position.copy(pt); return; }
+  if (b.mode === 'fly' || b.mode === 'rest') {
+    b.vel.y -= 20 * dt; const n = m.position.clone().addScaledVector(b.vel, dt);
+    if (blocked(n.x, n.y - .16, n.z, .16, .32)) { b.vel.x *= -.45; b.vel.z *= -.45; n.x = m.position.x; n.z = m.position.z; }
+    const g = groundAt(n.x, m.position.y - .16, n.z) + .16;
+    if (n.y <= g) { n.y = g; if (Math.abs(b.vel.y) > 1.2) b.vel.y *= -.42; else b.vel.y = 0; b.vel.x *= .9; b.vel.z *= .9; if (b.vel.length() < .25) { b.vel.set(0, 0, 0); b.mode = 'rest'; } }
+    m.position.copy(n); m.rotation.x += b.vel.z * dt * 4; m.rotation.z -= b.vel.x * dt * 4;
+    if (b.mode === 'rest' && !b.pet && flatD(m.position, P.pos) < .8) { b.mode = 'hand'; hud(); }   // 走过去就捡起来
+  }
+}
+function stepPlayer(dt, t) {
+  let fw = 0, st = 0;
+  if (MODE === 'play' && !fly) {
+    fw = (KEY.KeyW || KEY.ArrowUp ? 1 : 0) - (KEY.KeyS || KEY.ArrowDown ? 1 : 0) + joy.y;
+    st = (KEY.KeyD || KEY.ArrowRight ? 1 : 0) - (KEY.KeyA || KEY.ArrowLeft ? 1 : 0) + joy.x;
+    if (KEY.KeyQ) P.yaw += 2.2 * dt; if (KEY.KeyR) P.yaw -= 2.2 * dt;
+  }
+  if (P.lock > 0) { P.lock -= dt; fw = st = 0; }
+  const f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), r = V3(-Math.cos(P.yaw), 0, Math.sin(P.yaw));
+  const mv = f.multiplyScalar(fw).addScaledVector(r, st); let L = mv.length(); if (L > 1) { mv.divideScalar(L); L = 1; }
+  const sp = 4.3 * (KEY.ShiftLeft ? 1.35 : 1), nx = P.pos.x + mv.x * sp * dt, nz = P.pos.z + mv.z * sp * dt, y = P.pos.y;
+  if (L > .02) { if (!blocked(nx, y, nz)) { P.pos.x = nx; P.pos.z = nz; } else if (!blocked(nx, y, P.pos.z)) P.pos.x = nx; else if (!blocked(P.pos.x, y, nz)) P.pos.z = nz; }
+  P.vy -= 22 * dt; let ny = y + P.vy * dt;
+  const g = groundAt(P.pos.x, Math.max(y, ny), P.pos.z);
+  if (ny <= g) { ny = g; P.vy = 0; P.ground = true; } else if (ny > g + .05) P.ground = false;
+  P.pos.y = ny; P.sp += (L - P.sp) * Math.min(1, dt * 10);
+  // 空空的动作：走路摆臂摆腿、跳起来抬腿、拿东西抬手、摸摸、倒、扔
+  kong.position.copy(P.pos); kong.rotation.y = P.yaw;
+  P.ph += dt * 9 * P.sp; const sw = Math.sin(P.ph) * .75 * P.sp;
+  K.legL.rotation.x = sw; K.legR.rotation.x = -sw;
+  if (!P.ground) { K.legL.rotation.x = -.45; K.legR.rotation.x = .3; }
+  otherArm.rotation.x = (handArm === K.armL ? sw : -sw) * .9; otherArm.rotation.z = 0;
+  let ha = (handArm === K.armL ? -sw : sw) * .9; const id = SLOTS[P.slot].id;
+  if (id === 'food' || id === 'water' || (id === 'ball' && ball.mode === 'hand')) ha = -.55 + ha * .25;
+  const A = P.act, k = A ? t - A.t0 : 9;
+  if (A && A.kind === 'pour' && k < 1) ha = -1.5 + Math.sin(k * 14) * .1;
+  else if (A && A.kind === 'pet' && k < .55) { ha = -1.15; handArm.rotation.z = Math.sin(k * 22) * .35 * (handArm.position.x < 0 ? 1 : -1); }
+  else if (A && A.kind === 'throw' && k < .35) ha = -2.6 + k / .35 * 2.4;
+  else handArm.rotation.z = 0;
+  handArm.rotation.x = ha;
+  K.head.rotation.x = THREE.MathUtils.clamp(P.pitch * .45 - .12, -.3, .45); K.head.rotation.y = 0;
+  kong.visible = !(MODE === 'play' && P.view === 0 && !fly);
+  if (P.ground && L < .02) kong.position.y += Math.sin(t * 2.2) * .006;
+}
+function stepParts(t) { for (let i = parts.length - 1; i >= 0; i--) { const q = parts[i], u = (t - q.t0) / q.d; if (u < 0) { q.m.visible = false; continue; } q.m.visible = true; if (u >= 1) { scene.remove(q.m); parts.splice(i, 1); continue; } q.m.position.copy(arc(q.from, q.to, u, .25)); } }
+// 伙伴：见到空空会转头看、开心地蹦；亲密度 1 颗心以上会跟着走；2 颗心会接球；倒了粮会跑过来吃
+function stepPetPlay(p, t, dt) {
+  const me = toLocal(p, P.pos), pos = p.root.position, dMe = Math.hypot(me.x - pos.x, me.z - pos.z), m = mood(p), A = p.act;
+  p.moving = 0; p.near = dMe;
+  if (dMe < 1.1 && dMe > .01) { const push = pos.clone().sub(me).setY(0).normalize(); pos.addScaledVector(push, (1.1 - dMe) * Math.min(1, dt * 8)); }
+  if (A && A.kind === 'eat') {
+    const spot = (A.what === 'food' ? p.bowlLocal : p.troughLocal).clone(), toMe = pos.clone().sub(spot).setY(0).normalize();
+    const stand = spot.clone().addScaledVector(toMe.lengthSq() ? toMe : V3(0, 0, 1), .55);
+    if (A.t0 < 0) { if (petMove(p, stand, 3.2, dt, .08)) A.t0 = t; }
+    else { facePet(p, Math.atan2(spot.x - pos.x, spot.z - pos.z), dt); p.eating = true; if (t - A.t0 > 2.2) { p.act = null; p.eating = false; p.joyT = t; addHearts(p, 3, t + .2); gainAff(p, .5); ui(); } }
+    return true;
+  }
+  if (A && A.kind === 'fetch') {
+    if (ball.mode === 'mouth') { p.act = { kind: 'bring' }; return true; }
+    const bl = toLocal(p, ball.mesh.position);
+    if (ball.mode === 'rest' || (ball.mode === 'fly' && ball.mesh.position.y < .6)) { if (petMove(p, bl, 5.2, dt, .45)) { ball.mode = 'mouth'; p.act = { kind: 'bring' }; } }
+    else petMove(p, bl, 4.2, dt, .45);
+    return true;
+  }
+  if (A && A.kind === 'bring') {
+    if (petMove(p, me, 4.6, dt, 1.7)) { ball.mode = 'rest'; ball.pet = null; ball.vel.set(0, 0, 0); ball.mesh.position.copy(p.head.localToWorld(V3(0, 0, .6))).setY(.3); p.act = null; p.joyT = t; addHearts(p, 2, t); gainAff(p, .25); }
+    return true;
+  }
+  if (p.aff >= 1 && m !== 'wilt' && dMe < 3.6 && !p.follow) p.follow = true;
+  if (p.follow && (dMe > 20 || m === 'wilt')) p.follow = false;
+  if (p.follow) { if (dMe > 2.4) { const k = PETS.indexOf(p), side = V3(-Math.cos(P.yaw), 0, Math.sin(P.yaw)).multiplyScalar((k - 1) * 1.1); petMove(p, toLocal(p, P.pos.clone().add(side)), dMe > 6 ? 5 : 3.6, dt, 1.6); return true; }
+    facePet(p, Math.atan2(me.x - pos.x, me.z - pos.z), dt); return true; }
+  if (dMe < 4.5) { facePet(p, Math.atan2(me.x - pos.x, me.z - pos.z), dt); return true; }   // 看着空空
+  return false;
+}
+// 键入 / 点击时的提示
+function stepHint() {
+  target = MODE === 'play' && !fly ? findTarget() : null;
+  const b = $('bAct'); b.disabled = !target; b.textContent = target ? target.label : '互动';
+  const h = $('hint'); if (!target || !target.at) { h.hidden = true; } else { const w = typeof target.at === 'function' ? target.at() : target.at, v = w.project(cam); if (v.z > 1) h.hidden = true; else { h.hidden = false; h.innerHTML = `<kbd>E</kbd>${target.label}`; h.style.left = (v.x * .5 + .5) * innerWidth + 'px'; h.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; } }
+  // 附近的伙伴卡
+  let np = null, nd = 6; for (const p of PETS) { const d = flatD(petPos(p), P.pos); if (d < nd) { nd = d; np = p; } }
+  $('near').hidden = !np || MODE !== 'play';
+  if (np) { const m = mood(np); $('nName').textContent = np.id; $('nSt').textContent = MOOD[m]; $('nSt').className = 'st ' + m;
+    $('nF').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < np.food ? 'on' : ''}"></i>`).join('');
+    $('nW').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < np.water ? 'on' : ''}"></i>`).join('');
+    [...$('nHearts').querySelectorAll('.fill')].forEach((f, i) => f.style.opacity = np.aff >= i + 1 ? 1 : np.aff >= i + .5 ? .45 : 0);
+    $('nUnlock').textContent = np.aff >= 3 ? '已解锁：跟着走 · 接球 · 装饰' : np.aff >= 2 ? '已解锁：跟着走 · 接球' : np.aff >= 1 ? '已解锁：跟着走 · 下一颗心学接球' : m === 'wilt' ? '饿坏了，先喂吃的和水' : '多摸摸它，1 颗心会跟着你走';
+    if (sel !== np) { sel = np; ui(); } }
+}
+hud();
+
+// ---------- 时间：本机时间；「看一天」= 12 秒延时 ----------
+const KEYS = [  // [小时, 天顶, 天中, 地平, 太阳色, 太阳强度, 半球光, 曝光]
+  [0, '#0b1430', '#1d2a52', '#2c3660', '#7f98ff', .22, .16, .95], [5.5, '#2b3a6b', '#e2a27a', '#f3c79a', '#ffb070', 1.0, .4, 1.0],
+  [8, '#7fb6e2', '#cfe6f2', '#f3efe2', '#ffe9c8', 3.4, .75, .95], [16.5, '#7fb6e2', '#d6e7ee', '#f6ecd8', '#ffe2b8', 3.2, .72, .95],
+  [18.5, '#5d6fa8', '#e9a77f', '#ffd9a0', '#ffa860', 2.0, .5, 1.0], [20, '#121c40', '#2b3562', '#3c4470', '#7f98ff', .3, .2, .98], [24, '#0b1430', '#1d2a52', '#2c3660', '#7f98ff', .22, .16, .95]];
+const cA = new THREE.Color(), cB = new THREE.Color();
+function applyHour(h) {
+  let i = 0; while (i < KEYS.length - 2 && h >= KEYS[i + 1][0]) i++;
+  const A = KEYS[i], B = KEYS[i + 1], u = THREE.MathUtils.clamp((h - A[0]) / (B[0] - A[0]), 0, 1), mix = j => cA.set(A[j]).lerp(cB.set(B[j]), u).clone(), num = j => A[j] + (B[j] - A[j]) * u;
+  skyU.top.value.copy(mix(1)); skyU.mid.value.copy(mix(2)); skyU.bot.value.copy(mix(3));
+  scene.fog = new THREE.Fog(mix(3).lerp(new THREE.Color('#cfe3ee'), .3), 45, 150);
+  sun.color.copy(mix(4)); sun.intensity = num(5); hemi.intensity = num(6); renderer.toneMappingExposure = num(7);
+  const ang = (h - 6) / 24 * Math.PI * 2; sun.position.set(Math.cos(ang) * 40, Math.max(8, Math.sin(ang) * 45 + 10), -6 + 18);   // 太阳东升西落
+  const night = h < 6 || h > 18.6 ? 1 : 0, dusk = THREE.MathUtils.clamp((h - 17.8) / .8, 0, 1) * (h < 23 ? 1 : 0);
+  const glow = Math.max(night, dusk);
+  scene.environmentIntensity = .35 - .29 * glow;
+  hemi.color.set('#d6ecff').lerp(new THREE.Color('#3f4f8c'), glow); hemi.groundColor.set('#5d7a3a').lerp(new THREE.Color('#1e2a3a'), glow);
+  glass.forEach(m => { m.emissive = new THREE.Color('#ffb85a'); m.emissiveIntensity = 1.4 * glow; });
+  nightLights.forEach(m => m.emissiveIntensity = 3 * glow); lampMats.forEach(m => m.emissiveIntensity = 1 + 3 * glow);
+}
+let lapse = null;
+const realHour = () => { const d = new Date(); return Q.has('hour') ? Number(Q.get('hour')) : d.getHours() + d.getMinutes() / 60; };
+const season = m => m >= 3 && m <= 5 ? '春' : m >= 6 && m <= 8 ? '夏' : m >= 9 && m <= 11 ? '秋' : '冬';
+function clockText(h) { const d = new Date(); $('cT').textContent = `${String(Math.floor(h) % 24).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`; $('cD').textContent = `${d.getMonth() + 1}月${d.getDate()}日周${'日一二三四五六'[d.getDay()]} · ${season(d.getMonth() + 1)}天`; }
+$('tDay').onclick = () => { if (lapse) return; lapse = { t0: clock.elapsedTime, h0: realHour() }; $('tDay').classList.add('on'); $('clock').classList.add('fast'); };
+
+// ---------- 每帧 ----------
+const clock = new THREE.Clock(); let frames = 0, acc = 0, fps = 0, slow = 0, tier = '高', introT = Q.get('intro') === '0' ? -1 : 0;
+ui(); stats(); applyHour(realHour()); clockText(realHour());
+if (introT === 0) { setTimeout(() => flyTo(HOME.pos, HOME.tgt, 3000, () => { document.body.classList.remove('intro'); popTags(); }), 300); }
+else { document.body.classList.remove('intro'); tags.forEach(t => t.born = 0); if (Q.get('mode') !== 'map') setMode('play'); }
+function popTags() { tags.forEach((t, i) => t.born = clock.elapsedTime + .15 + i * .16); setTimeout(() => { if (Q.get('mode') === 'map') ctl.autoRotate = !REDUCE; else setMode('play'); }, 1900); }
+function frame() {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; grassU.time.value = t;
+  if (fly) { const k = Math.min(1, (performance.now() - fly.s) / fly.ms), e = ease(k); cam.position.lerpVectors(fly.p0, fly.p1, e); ctl.target.lerpVectors(fly.t0, fly.t1, e); if (k >= 1) { const d = fly.done; fly = null; d && d(); } }
+  if (job) runJob(t);
+  stepPlayer(dt, t); stepBall(dt); stepParts(t);
+  if (MODE === 'map') { ctl.update(); idleT += dt; if (idleT > 6 && !busy && !fly && !REDUCE) ctl.autoRotate = true; }
+  else if (fly) cam.lookAt(ctl.target);
+  else { const w = camWant(); if (P.view === 0) cam.position.copy(w.pos); else cam.position.lerp(w.pos, 1 - Math.exp(-dt * 14)); ctl.target.copy(w.tgt); cam.lookAt(w.tgt); }
+  // 时间
+  if (lapse) { const u = (t - lapse.t0) / 12; const h = (lapse.h0 + u * 24) % 24; applyHour(h); clockText(h); if (u >= 1) { lapse = null; $('tDay').classList.remove('on'); $('clock').classList.remove('fast'); applyHour(realHour()); clockText(realHour()); } }
+  else if (frames === 0) clockText(realHour());
+  // 伙伴：溜达、摆腿、摇尾巴、蔫蔫低头；开心时被喂会蹦一下转一圈
+  for (const p of PETS) {
+    const m = mood(p), wl = m === 'wilt' ? 1 : 0; p.k = (p.k ?? wl) + (wl - (p.k ?? wl)) * Math.min(1, dt * 4);
+    const W = p.walk, target = p.spots[W.to], pos = p.root.position; let moving = false;
+    if (p.joyT !== undefined && t - p.joyT < 1.4) { const j = (t - p.joyT) / 1.4; pos.y = p.home.y + Math.abs(Math.sin(j * Math.PI * 3)) * .4 * (1 - j); p.root.rotation.y = p.face + j * Math.PI * 2; }
+    else if (busy && job && job.p === p) { /* 等粮：站好望向食盆 */ }
+    else if (stepPetPlay(p, t, dt)) { moving = p.moving > 0; if (moving) pos.y = p.home.y + Math.abs(Math.sin(t * 13)) * .06; else pos.y += (p.home.y - pos.y) * .2; }
+    else if (W.wait > 0) { W.wait -= dt; pos.y = p.home.y + (m === 'happy' ? Math.abs(Math.sin(t * 2.6)) * .03 : 0); }
+    else { const d = target.clone().sub(pos); d.y = 0; const L = d.length(), sp = (m === 'wilt' ? .35 : .9) * dt;
+      if (L < .05) { W.to = (W.to + 1 + Math.floor(Math.random() * 2)) % p.spots.length; W.wait = 1.5 + Math.random() * 3; }
+      else { pos.addScaledVector(d.normalize(), Math.min(sp, L)); moving = true; const want = Math.atan2(d.x, d.z); p.face = p.face ?? want; let df = want - p.face; df = Math.atan2(Math.sin(df), Math.cos(df)); p.face += df * Math.min(1, dt * 6); p.root.rotation.y = p.face; pos.y = p.home.y + Math.abs(Math.sin(t * 12)) * .05; } }
+    if (p.face === undefined) p.face = p.root.rotation.y;
+    if (p.wiggleT !== undefined && t - p.wiggleT < .8) { const u = (t - p.wiggleT) / .8; pos.y = p.home.y + Math.abs(Math.sin(u * Math.PI * 2)) * .12; p.root.rotation.z = Math.sin(u * 30) * .08 * (1 - u); } else p.root.rotation.z = 0;
+    p.legs.forEach((l, i) => l.rotation.x = moving ? Math.sin(t * (p.moving > 4 ? 18 : 12) + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI : 0)) * .45 : 0);
+    const seeMe = MODE === 'play' && p.near < 4.5 && !p.eating, kk = p.k * (seeMe ? .45 : 1);
+    p.head.rotation.x = p.head0 + .32 * kk + (m === 'want' ? Math.sin(t * 2) * .06 : 0) - (seeMe ? .22 : 0) + (p.eating ? .5 + Math.sin(t * 12) * .14 : 0);
+    if (p.earL) p.earL.rotation.z = .75 * kk; if (p.earR) p.earR.rotation.z = -.75 * kk;
+    if (p.tail) { p.tail.rotation.x = -.9 * kk; const fast = seeMe || (p.wiggleT !== undefined && t - p.wiggleT < 1.2); p.tail.rotation.y = m === 'happy' || fast ? Math.sin(t * (fast ? 18 : 10)) * (fast ? .5 : .35) : 0; }
+    // 粮堆、水面：被倒满时回弹长出来
+    const gk = p.grow ? Math.min(1, (t - p.grow.t0) / .45) : 1;
+    p.foodN.visible = p.food > 0; p.foodN.scale.setScalar(p.grow && p.grow.kind === 'food' ? Math.max(.05, backOut(gk)) : 1);
+    p.waterN.visible = p.water > 0; p.waterN.scale.y = p.grow && p.grow.kind === 'water' ? Math.max(.05, backOut(gk)) : 1;
+  }
+  stepHint();
+  for (let i = hearts.length - 1; i >= 0; i--) { const h = hearts[i], u = (t - h.t0) / 1.2; if (u < 0) { h.s.visible = false; continue; } if (u > 1) { fx.remove(h.s); hearts.splice(i, 1); continue; } h.s.visible = true; const sc = .42 * backOut(Math.min(1, u * 3)) * (1 - Math.max(0, u - .7) / .3); h.s.scale.set(sc, sc, 1); const c = h.p.root.getWorldPosition(V3()); h.s.position.set(c.x + h.x, 1.6 + u * 1.1, c.z); }
+  for (const pf of puffs) { const u = (t * .25 + pf.ph) % 1; pf.s.position.copy(pf.base).add(V3(Math.sin(u * 6 + pf.ph * 9) * .15 + u * .5, u * 2.2, 0)); const s = .25 + u * .7; pf.s.scale.set(s, s, 1); pf.s.material.opacity = (1 - u) * .55 * Math.min(1, u * 5); }
+  dof.uniforms.focus.value = cam.position.distanceTo(ctl.target);
+  renderer.info.autoReset = false; renderer.info.reset();
+  composer.render(dt);
+  renderer.autoClear = false; renderer.toneMapping = THREE.NoToneMapping; renderer.render(fx, cam); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.autoClear = true;
+  // 名牌：弹出（回弹）+ 跟随
+  const H = innerHeight, Wd = innerWidth;
+  for (const tg of tags) { const v = tg.pos().project(cam); const show = showTags && tg.born >= 0 && t >= tg.born && v.z < 1;
+    tg.el.style.display = show ? '' : 'none'; if (!show) continue;
+    const s = tg.born === 0 ? 1 : backOut(Math.min(1, (t - tg.born) / .35)); tg.el.style.setProperty('--s', s.toFixed(3));
+    tg.el.style.left = (v.x * .5 + .5) * Wd + 'px'; tg.el.style.top = (-v.y * .5 + .5) * H - 22 + 'px'; }
+  // 爆炸框
+  const bu = $('burst'); if (burst) { const u = (t - burst.t0) / burst.ms; if (u > 1) { burst = null; bu.style.setProperty('--s', 0); } else { const v = burst.pos.clone().project(cam); bu.style.left = (v.x * .5 + .5) * Wd + 'px'; bu.style.top = (-v.y * .5 + .5) * H + 'px'; bu.style.setProperty('--s', (u < .2 ? backOut(u / .2) : u > .85 ? 1 - (u - .85) / .15 : 1).toFixed(3)); } }
+  // 帧率：连续 3 秒低于 40 帧自动降档
+  frames++; acc += dt; if (acc >= 1) { fps = frames / acc; frames = 0; acc = 0; if (fps < 40 && !Q.get('lock')) { if (++slow >= 3) { slow = 0; if (dof.enabled) { dof.enabled = false; tier = '中'; } else if (ao.enabled) { ao.enabled = false; tier = '低'; } else if (renderer.getPixelRatio() > 1) { renderer.setPixelRatio(1); composer.setPixelRatio(1); tier = '最低'; } } } else slow = 0; }
+  $('hud').textContent = `${fps.toFixed(0)} 帧/秒 · 画质${tier} · ${renderer.info.render.calls} 次绘制`;
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
+window.__park = { P, INV, ball, setMode, interact, findTarget: () => target, COL, KEY, kong, MERGE, PETS, select, deliver, flyTo, flyPet, applyHour, cam, ctl, N, THREE, HOME, layout };
+window.__ready = true;
+requestAnimationFrame(frame);

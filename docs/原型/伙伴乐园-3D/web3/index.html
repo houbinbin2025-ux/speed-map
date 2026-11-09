@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>小伙伴乐园</title>
+<style>
+:root{--card:rgba(250,248,241,.93);--ink:#2b2a27;--mute:#7c776d;--ok:#4caf50;--want:#f0a23a;--wilt:#9aa0a6;--lock:#b9b2a3}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:#cfe4f2;color-scheme:light;font-family:"PingFang SC","Hiragino Sans GB",system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.card{position:fixed;z-index:5;background:var(--card);border-radius:18px;box-shadow:0 6px 24px rgba(40,50,30,.12);border:1px solid rgba(255,255,255,.6);transition:opacity .4s,transform .4s}
+.intro .card{opacity:0}
+#title{left:calc(16px + env(safe-area-inset-left,0px));top:calc(14px + env(safe-area-inset-top,0px));padding:10px 16px 10px 14px}
+#title b{font-size:20px;display:block}#title small{font-size:13px;color:var(--mute);display:flex;align-items:center;gap:5px}
+#title small i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+#stats{left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:4px;padding:8px 10px}
+#stats div{min-width:72px;padding:2px 10px}
+#stats b{display:block;font-size:30px;line-height:1.05;font-weight:700;font-variant-numeric:tabular-nums}
+#stats span{font-size:13px;color:var(--mute)}
+#stats b.bump{animation:bump .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes bump{0%{transform:scale(.6)}100%{transform:scale(1)}}
+#clock{right:calc(16px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));padding:8px 16px;text-align:right;min-width:150px}
+#clock b{font-size:32px;font-weight:800;line-height:1.05;display:block;font-variant-numeric:tabular-nums}
+#clock span{font-size:13px;color:var(--mute);display:block}
+#clock.fast b{color:#c2410c}
+#panel{left:calc(16px + env(safe-area-inset-left,0px));top:96px;width:250px;padding:12px 14px}
+#tabs{display:flex;gap:6px;margin-bottom:10px}
+#tabs button{flex:1;font:inherit;font-size:14px;font-weight:700;min-height:40px;border-radius:12px;border:0;background:#ece7da;color:var(--ink);cursor:pointer}
+#tabs button.on{background:#fff;box-shadow:0 2px 8px rgba(40,50,30,.15)}
+#panel h3{margin:0 0 2px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+#panel .st{font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;background:#e6f4e4;color:#2f7d32}
+#panel .st.wilt{background:#eceeef;color:#6b7075}#panel .st.want{background:#fdf0dc;color:#a8650f}
+#panel p{margin:0 0 8px;font-size:13px;color:var(--mute);line-height:1.5}
+.bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0}
+.bar .cells{display:flex;gap:3px;flex:1}.bar .cells i{flex:1;height:10px;border-radius:3px;background:#e3dfd4}
+.bar .cells.f i.on{background:#e3a35a}.bar .cells.w i.on{background:#5cb7e6}
+.acts{display:flex;gap:8px;margin-top:10px}
+.acts button,#tools button{font:inherit;cursor:pointer;border:0;background:#fff;color:var(--ink);border-radius:14px;box-shadow:0 2px 8px rgba(40,50,30,.12)}
+.acts button{flex:1;min-height:48px;font-size:17px;font-weight:700}
+.acts button.food{background:#ffe2b8}.acts button.water{background:#cdebfb}
+.acts button:disabled{opacity:.55;cursor:default}
+.acts button:active,#tools button:active{transform:scale(.96)}
+#tools{left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;padding:8px}
+#tools button{width:62px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px}
+#tools svg{width:22px;height:22px;stroke:#3a3833;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#tools button.on{background:#ffe9b8}
+.pill{position:fixed;z-index:2;left:0;top:0;transform:translate(-50%,-100%) scale(var(--s,1));transform-origin:50% 100%;background:rgba(255,253,246,.96);border-radius:999px;padding:5px 13px 5px 10px;font-size:15px;font-weight:800;white-space:nowrap;box-shadow:0 3px 12px rgba(40,50,30,.18);display:flex;align-items:center;gap:6px;cursor:pointer}
+.pill i{width:10px;height:10px;border-radius:50%;background:var(--ok)}.pill small{font-weight:600;color:var(--mute);font-size:13px}
+.pill.wilt i{background:var(--wilt)}.pill.want i{background:var(--want);animation:blink 1s infinite}.pill.lock i{background:var(--lock)}
+.pill.lock{font-size:13px;padding:4px 10px 4px 8px;font-weight:700;color:var(--mute);cursor:default}
+.pill.sel{outline:3px solid #ffd76a}
+.pill::after{content:"";position:absolute;left:50%;top:100%;width:1.5px;height:22px;background:rgba(255,253,246,.9)}
+@keyframes blink{50%{opacity:.35}}
+.burst{position:fixed;z-index:3;left:0;top:0;width:150px;height:110px;transform:translate(-50%,-100%) scale(var(--s,0)) rotate(-6deg);transform-origin:50% 90%;display:grid;place-items:center;pointer-events:none}
+.burst svg{position:absolute;inset:0;width:100%;height:100%}
+.burst b{position:relative;font-size:22px;font-weight:900;color:#2b1a00;line-height:1.1;text-align:center}
+#hud{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:11px;color:rgba(40,40,40,.55)}
+@media (max-width:820px){#panel{top:auto;bottom:86px;width:236px}#stats div{min-width:54px;padding:2px 6px}#stats b{font-size:22px}#title b{font-size:17px}#clock{min-width:0}#clock b{font-size:24px}#tools button{width:50px;height:52px;font-size:11px}}
+@media (max-height:500px){#panel{top:auto;bottom:80px;padding:8px 10px;width:220px}#panel p,#tabs{display:none}#stats{display:none}#tools button{height:46px}}
+
+/* 走走模式（我的世界玩法）/ 俯瞰模式 */
+body.play .map-only,body.map .play-only{display:none!important}
+#mode{right:calc(16px + env(safe-area-inset-right,0px));top:calc(84px + env(safe-area-inset-top,0px));padding:6px;display:flex;gap:4px}
+#mode button{font:inherit;font-size:14px;font-weight:700;min-height:40px;padding:0 14px;border-radius:12px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+#mode button.on{background:#fff;box-shadow:0 2px 8px rgba(40,50,30,.15)}
+#gems{left:calc(16px + env(safe-area-inset-left,0px));top:calc(84px + env(safe-area-inset-top,0px));padding:6px 14px;font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px}
+#gems i{width:14px;height:14px;background:#4fc3e8;transform:rotate(45deg);border-radius:3px;box-shadow:inset -3px -3px 0 rgba(0,0,0,.15)}
+#near{left:calc(16px + env(safe-area-inset-left,0px));top:calc(130px + env(safe-area-inset-top,0px));width:220px;padding:10px 14px}
+#near h3{margin:0 0 4px;font-size:17px;display:flex;justify-content:space-between;align-items:center}
+#near .st{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:#e6f4e4;color:#2f7d32}
+#near .st.wilt{background:#eceeef;color:#6b7075}#near .st.want{background:#fdf0dc;color:#a8650f}
+.hearts{display:flex;gap:4px;align-items:center;font-size:13px;margin:4px 0}
+.hearts b{font-weight:600;color:var(--mute);margin-right:4px}
+.hearts svg{width:18px;height:18px}
+#nUnlock{font-size:12px;color:var(--mute);margin-top:4px}
+#hotbar{left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;padding:6px}
+#hotbar button{position:relative;width:64px;height:64px;border-radius:12px;border:3px solid transparent;background:#efe9db;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:inherit;font-size:11px;font-weight:700;color:var(--ink)}
+#hotbar button.on{border-color:#2b2a27;background:#fff}
+#hotbar svg{width:28px;height:28px}
+#hotbar .n{position:absolute;right:4px;top:2px;font-size:12px;font-weight:800}
+#hotbar .k{position:absolute;left:5px;top:2px;font-size:10px;color:var(--mute)}
+#acts{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:flex-end;padding:8px;background:transparent;box-shadow:none;border:0}
+#acts button{font:inherit;font-weight:800;border:0;border-radius:50%;cursor:pointer;box-shadow:0 4px 14px rgba(40,50,30,.2);color:var(--ink);background:rgba(255,253,246,.95);touch-action:none}
+#bAct{width:96px;height:96px;font-size:16px;background:#ffd76a!important;padding:6px}
+#bAct:disabled{background:rgba(255,253,246,.8)!important;color:var(--mute)}
+#bJump{width:68px;height:68px;font-size:15px}#bView{width:56px;height:56px;font-size:13px}
+#joy{position:fixed;z-index:5;left:calc(28px + env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px));width:132px;height:132px;border-radius:50%;background:rgba(255,253,246,.35);border:2px solid rgba(255,253,246,.75);touch-action:none;display:none}
+#joy i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,253,246,.92);box-shadow:0 3px 10px rgba(0,0,0,.2)}
+@media (pointer:coarse){#joy{display:block}#keys{display:none}}
+#keys{position:fixed;z-index:4;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:12px;line-height:1.7;color:rgba(30,30,30,.7);background:rgba(250,248,241,.75);padding:6px 10px;border-radius:10px}
+#keys kbd{font:inherit;font-weight:800;background:#fff;border-radius:4px;padding:0 5px;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+#hint{position:fixed;z-index:4;left:0;top:0;transform:translate(-50%,-100%);background:#2b2a27;color:#fff;border-radius:999px;padding:6px 14px;font-size:15px;font-weight:800;white-space:nowrap;pointer-events:none}
+#hint kbd{font:inherit;background:#ffd76a;color:#2b1a00;border-radius:6px;padding:0 6px;margin-right:6px}
+@media (pointer:coarse){#hint kbd{display:none}}
+#toast{position:fixed;z-index:6;left:50%;top:calc(90px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-8px);opacity:0;transition:opacity .3s,transform .3s;background:rgba(43,42,39,.9);color:#fff;padding:9px 18px;border-radius:14px;font-size:16px;font-weight:700;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1;transform:translateX(-50%)}
+@media (max-width:820px){#hotbar button{width:52px;height:52px}#hotbar svg{width:22px;height:22px}#hotbar .lb{display:none}#bAct{width:80px;height:80px;font-size:14px}#near{width:190px}}
+@media (max-height:500px){#near{top:calc(76px + env(safe-area-inset-top,0px));padding:6px 10px}#gems{top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}#mode{top:calc(70px + env(safe-area-inset-top,0px))}#clock{display:none}#mode{top:calc(14px + env(safe-area-inset-top,0px))}}
+@media (prefers-reduced-motion:reduce){#stats b.bump{animation:none}}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/jsm/"}}</script>
+</head>
+<body class="intro map">
+<div class="card" id="title"><b>小伙伴乐园</b><small><i></i>空空的岛 · 3 位住户</small></div>
+<div class="card map-only" id="stats"><div><b id="sN">0</b><span>住户</span></div><div><b id="sH">0</b><span>开心</span></div><div><b id="sW">0</b><span>想吃</span></div><div><b id="sL">0</b><span>待开放</span></div></div>
+<div class="card" id="clock"><b id="cT">--:--</b><span id="cD"></span></div>
+<div class="card map-only" id="panel">
+  <div id="tabs"></div>
+  <h3><span id="pName">小狼</span> <span class="st" id="pSt">开心</span></h3>
+  <p id="pLine"></p>
+  <div class="bar">食盆<div class="cells f" id="bF"></div></div>
+  <div class="bar">水槽<div class="cells w" id="bW"></div></div>
+  <div class="acts"><button class="food" id="aF">倒粮</button><button class="water" id="aW">倒水</button></div>
+</div>
+<div class="card map-only" id="tools">
+  <button id="tHome"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>全景</button>
+  <button id="tL"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"/></svg>左转</button>
+  <button id="tR"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>右转</button>
+  <button id="tIn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg>拉近</button>
+  <button id="tOut"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M8 11h6"/></svg>拉远</button>
+  <button id="tDay"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>看一天</button>
+  <button id="tTag"><svg viewBox="0 0 24 24"><path d="M4 6h11l5 6-5 6H4z"/></svg>名牌</button>
+</div>
+
+<div class="card" id="mode"><button id="mPlay" class="on">走走</button><button id="mMap">俯瞰</button></div>
+<div class="card play-only" id="gems"><i></i><span id="gN">0</span> 宝石</div>
+<div class="card play-only" id="near" hidden>
+  <h3><span id="nName"></span><span class="st" id="nSt"></span></h3>
+  <div class="hearts" id="nHearts"><b>亲密度</b><svg viewBox="0 0 24 24"><path d="M12 21C5 15.5 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.7C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 15.5 12 21z" fill="#e3dfd4"/><path class="fill" d="M12 21C5 15.5 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.7C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 15.5 12 21z" fill="#ff6f8f"/></svg><svg viewBox="0 0 24 24"><path d="M12 21C5 15.5 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.7C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 15.5 12 21z" fill="#e3dfd4"/><path class="fill" d="M12 21C5 15.5 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.7C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 15.5 12 21z" fill="#ff6f8f"/></svg><svg viewBox="0 0 24 24"><path d="M12 21C5 15.5 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.7C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 15.5 12 21z" fill="#e3dfd4"/><path class="fill" d="M12 21C5 15.5 2 12 2 8.2 2 5.3 4.3 3 7.1 3c1.9 0 3.6 1 4.9 2.7C13.3 4 15 3 16.9 3 19.7 3 22 5.3 22 8.2 22 12 19 15.5 12 21z" fill="#ff6f8f"/></svg></div>
+  <div class="bar">食盆<div class="cells f" id="nF"></div></div>
+  <div class="bar">水槽<div class="cells w" id="nW"></div></div>
+  <div id="nUnlock"></div>
+</div>
+<div class="card play-only" id="hotbar"></div>
+<div class="card play-only" id="acts"><button id="bView">视角</button><button id="bJump">跳</button><button id="bAct" disabled>互动</button></div>
+<div id="joy" class="play-only"><i></i></div>
+<div id="keys" class="play-only"><kbd>W A S D</kbd> 走 · <kbd>空格</kbd> 跳 · 拖动 转向 · <kbd>E</kbd> 互动 · <kbd>1</kbd>–<kbd>4</kbd> 换物品 · <kbd>V</kbd> 视角 · <kbd>M</kbd> 俯瞰</div>
+<div id="hint" hidden></div>
+<div id="toast"></div>
+<div class="burst" id="burst"><svg viewBox="0 0 150 110"><polygon id="burstPoly" fill="#ffd23f" stroke="#2b1a00" stroke-width="4" stroke-linejoin="round"/></svg><b id="burstT">送粮啦</b></div>
+<div id="hud"></div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
