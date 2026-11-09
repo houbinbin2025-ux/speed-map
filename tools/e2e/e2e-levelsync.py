@@ -54,21 +54,33 @@ with sync_playwright() as p:
                         pg.click('#zGo'); pg.wait_for_timeout(2500)
                         check(cur(pg) in ('qplay', 'demo') and pg.evaluate("__sm.Q && String(__sm.Q.opts && __sm.Q.opts.group)") == 'speedH', f'{tag} 点了直接进挑战（{cur(pg)}）')
             # 4 思维地点
-            if W == 844:   # 思维地点：按进度，夹在所选范围里（中控 11-09）；分「刚开始」和「四个地点全部学会」两种进度各走一遍
-                for done in (False, True):
-                    pg.evaluate(f"(() => {{ const S = JSON.parse(localStorage.getItem('speedmap.v2.test')); if ({'true' if done else 'false'}) {{ S.think = {{}}; PUZZLES.MODULES.forEach(m => {{ S.think[m.id] = m.tiers.map(() => PUZZLES.PASS); }}); }} else delete S.think; localStorage.setItem('speedmap.v2.test', JSON.stringify(S)); }})()")
-                    pg.reload(); pg.wait_for_timeout(700)
-                    for mod in ['balance', 'target', 'clue', 'block']:
-                        pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{mod}\"]').click()"); pg.wait_for_timeout(400); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=20000); pg.wait_for_timeout(400)
-                        tier = pg.evaluate('__sm.TH.G.tier')
-                        want, n = pg.evaluate(f"""(() => {{ const lv = SKILLS.THINK_LEVEL['{mod}'], sel = {json.dumps(lv)}, pt = PUZZLES.progress(__sm.S, '{mod}').tier;
-                          if (!sel.length) return [pt, lv.length];
-                          const at = top => {{ let t = -1; lv.forEach((n, i) => {{ if (n <= top) t = i; }}); return t; }}, lo = at(Math.min(...sel)), hi = at(Math.max(...sel));
-                          return [Math.max(0, Math.min(Math.max(pt, lo), Math.max(hi, lo))), lv.length]; }})()""")
-                        en = pg.evaluate("[...document.querySelectorAll('#think [data-t]')].filter(b => !b.disabled).length")
-                        check(tier == want and en >= want + 1 and (not done or en == n), f'{tag} 思维地点 {mod}（{"全部学会" if done else "刚开始"}）默认第 {tier} 档（应 {want}），能点 {en} 档')
-                        pg.click('#think #back'); pg.wait_for_timeout(600)
             pg.close()
+    # 思维地点进门档位（中控 11-09：按进度，夹在所选范围里；审查 11-09：跳过低档后过关要能往上走）。预期值按 THINK_LEVEL 手算后写死，不照抄实现
+    # THINK_LEVEL：balance [3,4,4,4]、target [2,4,4]、clue [2,3,5,5]、block [8,8,11,13]。(选的级别, 地点, 每档做对几题, 进门停第几档, 能点几档)
+    TABLE = [
+        ([], 'clue', [0, 3, 0, 0], 0, 3),                    # 没手选：按进度；跳过低档时已过关的下一档也能点（不收回）
+        (list(range(1, 16)), 'balance', [0, 0, 0, 0], 0, 1),  # 全选 = 按进度，刚开始停第 0 档
+        (list(range(1, 16)), 'block', [3, 3, 3, 3], 3, 4),
+        (list(range(3, 9)), 'clue', [0, 0, 0, 0], 1, 2),      # 3–8：第 3 级那档是「四行」
+        (list(range(3, 9)), 'clue', [0, 3, 0, 0], 2, 3),      # 过了「四行」→ 进门「粗线框」，能点（审查必须修 1）
+        (list(range(3, 9)), 'clue', [0, 2, 0, 0], 1, 2),      # 学到一半：还在「四行」
+        (list(range(3, 9)), 'target', [3, 0, 0], 1, 2),
+        (list(range(3, 9)), 'block', [3, 3, 3, 3], 1, 4),     # 全部学会：最多停在第 8 级那档，档都能点
+        (list(range(9, 13)), 'block', [0, 0, 0, 0], 1, 2),    # 9–12：至少从第 9 级那档起
+        (list(range(9, 13)), 'block', [0, 3, 0, 0], 2, 3),
+        (list(range(9, 13)), 'balance', [0, 0, 0, 0], 3, 4),
+        ([1], 'block', [3, 3, 3, 0], 0, 4),                    # 所选范围里一档都没有：停第 0 档，已开放的不收回
+    ]
+    pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
+    for lv, mod, n, want, opens in TABLE:
+        pg.goto(url); pg.evaluate("localStorage.clear()"); pg.evaluate(SEED, [lv, False])
+        pg.evaluate(f"(() => {{ const S = JSON.parse(localStorage.getItem('speedmap.v2.test')); S.think = {{{mod!r}: {json.dumps(n)}}}; localStorage.setItem('speedmap.v2.test', JSON.stringify(S)); }})()")
+        pg.reload(); pg.wait_for_timeout(700)
+        pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{mod}\"]').click()"); pg.wait_for_timeout(400); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=20000); pg.wait_for_timeout(400)
+        tier = pg.evaluate('__sm.TH.G.tier'); can = pg.evaluate("[...document.querySelectorAll('#think [data-t]')].filter(b => !b.disabled).length")
+        sel = f'第 {lv[0]}–{lv[-1]} 级' if lv else '自动'
+        check(tier == want and can == opens, f'思维地点 {sel} {mod} 进度 {n}：进门第 {tier} 档（应 {want}），能点 {can} 档（应 {opens}）')
+    pg.close()
     b.close()
 print('页面报错：', errs[:5])
 if errs: fails.append('页面报错')
