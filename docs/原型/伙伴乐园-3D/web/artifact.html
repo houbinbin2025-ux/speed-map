@@ -1,0 +1,279 @@
+<title>小伙伴乐园</title>
+<style>
+:root{--card:rgba(250,248,241,.93);--ink:#2b2a27;--mute:#7c776d;--line:rgba(60,50,30,.10);--ok:#4caf50;--want:#f0a23a;--wilt:#9aa0a6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#cfe4f2;color-scheme:light;font-family:"PingFang SC","Hiragino Sans GB",system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.card{position:fixed;background:var(--card);border-radius:18px;box-shadow:0 6px 24px rgba(40,50,30,.12);border:1px solid rgba(255,255,255,.6)}
+#title{left:calc(16px + env(safe-area-inset-left,0px));top:calc(14px + env(safe-area-inset-top,0px));padding:10px 16px 10px 14px;display:flex;gap:10px;align-items:center}
+#title b{font-size:20px;display:block}#title small{font-size:13px;color:var(--mute);display:flex;align-items:center;gap:5px}
+#title small i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+#stats{left:50%;transform:translateX(-50%);top:14px;display:flex;gap:6px;padding:8px 10px}
+#stats div{min-width:76px;padding:2px 10px;text-align:left}
+#stats b{display:block;font-size:30px;line-height:1.05;font-weight:700;font-variant-numeric:tabular-nums}
+#stats span{font-size:13px;color:var(--mute)}
+#clock{right:calc(16px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));padding:8px 16px;text-align:right}
+#clock b{font-size:32px;font-weight:800;line-height:1.05;display:block;font-variant-numeric:tabular-nums}
+#clock span{font-size:13px;color:var(--mute);display:block}
+#panel{left:16px;top:100px;width:240px;padding:14px 16px}
+#panel h3{margin:0 0 2px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+#panel .st{font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;background:#e6f4e4;color:#2f7d32}
+#panel .st.wilt{background:#eceeef;color:#6b7075}#panel .st.want{background:#fdf0dc;color:#a8650f}
+#panel p{margin:0 0 10px;font-size:13px;color:var(--mute);line-height:1.5}
+.bar{display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0}
+.bar .cells{display:flex;gap:3px;flex:1}.bar .cells i{flex:1;height:10px;border-radius:3px;background:#e3dfd4}
+.bar .cells.f i.on{background:#e3a35a}.bar .cells.w i.on{background:#5cb7e6}
+.acts{display:flex;gap:8px;margin-top:12px}
+.acts button,#tools button{font:inherit;cursor:pointer;border:0;background:#fff;color:var(--ink);border-radius:14px;box-shadow:0 2px 8px rgba(40,50,30,.12)}
+.acts button{flex:1;min-height:48px;font-size:17px;font-weight:700}
+.acts button.food{background:#ffe2b8}.acts button.water{background:#cdebfb}
+.acts button:active,#tools button:active{transform:scale(.96)}
+#tools{left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;padding:8px}
+#tools button{width:64px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px}
+#tools svg{width:22px;height:22px;stroke:#3a3833;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pill{position:fixed;transform:translate(-50%,-100%);background:rgba(255,253,246,.96);border-radius:999px;padding:6px 14px 6px 11px;font-size:16px;font-weight:800;white-space:nowrap;box-shadow:0 3px 12px rgba(40,50,30,.18);display:flex;align-items:center;gap:7px;pointer-events:none}
+.pill i{width:10px;height:10px;border-radius:50%;background:var(--ok)}.pill small{font-weight:600;color:var(--mute);font-size:14px}
+.pill.wilt i{background:var(--wilt)}.pill.want i{background:var(--want)}
+.pill::after{content:"";position:absolute;left:50%;top:100%;width:1.5px;height:26px;background:rgba(255,253,246,.9)}
+#hud{position:fixed;right:16px;bottom:16px;font-size:11px;color:rgba(40,40,40,.55)}
+@media (max-width:820px){#panel{top:auto;bottom:90px;width:auto;right:16px}#stats div{min-width:58px}#stats b{font-size:24px}#title b{font-size:17px}#clock b{font-size:26px}#tools button{width:52px;height:54px}}
+@media (max-height:500px){#panel{top:auto;bottom:84px;left:16px;width:230px;padding:10px 12px}#panel p{display:none}#stats{display:none}#tools button{height:48px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<div class="card" id="title"><div><b>小伙伴乐园</b><small><i></i>空空的岛 · 1 位住户</small></div></div>
+<div class="card" id="stats"><div><b id="sN">1</b><span>住户</span></div><div><b id="sH">1</b><span>开心</span></div><div><b id="sF">6</b><span>粮仓</span></div><div><b id="sW">6</b><span>水桶</span></div></div>
+<div class="card" id="clock"><b id="cT">--:--</b><span id="cD"></span></div>
+<div class="card" id="panel">
+  <h3>小狼 <span class="st" id="pSt">开心</span></h3>
+  <p>红围巾是它的记号，耳朵一竖就是听见你了</p>
+  <div class="bar">食盆<div class="cells f" id="bF"></div></div>
+  <div class="bar">水槽<div class="cells w" id="bW"></div></div>
+  <div class="acts"><button class="food" id="aF">倒粮</button><button class="water" id="aW">倒水</button></div>
+</div>
+<div class="card" id="tools">
+  <button id="tHome"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>全景</button>
+  <button id="tL"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"/></svg>左转</button>
+  <button id="tR"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>右转</button>
+  <button id="tIn"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg>拉近</button>
+  <button id="tOut"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M8 11h6"/></svg>拉远</button>
+  <button id="tTag"><svg viewBox="0 0 24 24"><path d="M4 6h11l5 6-5 6H4z"/></svg>名牌</button>
+</div>
+<div class="pill" id="pill"><i></i>小狼 <small id="pillS">开心</small></div>
+<div id="hud"></div>
+<script type="module">
+// 小伙伴乐园 · 样例：模型来自 Blender（park.glb），网页负责灯光、后期、草地树木、界面和喂养动画。
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const Q = new URLSearchParams(location.search);
+const $ = id => document.getElementById(id);
+const rnd = (s => () => (s = (s * 16807) % 2147483647) / 2147483647);
+
+// ---------- 渲染器 ----------
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+const DPR = Math.min(devicePixelRatio || 1, Number(Q.get('dpr')) || 2);
+renderer.setPixelRatio(DPR); renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .95;
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(28, innerWidth / innerHeight, .1, 400);
+const ctl = new OrbitControls(cam, renderer.domElement);
+ctl.enableDamping = true; ctl.enablePan = false; ctl.minPolarAngle = .45; ctl.maxPolarAngle = 1.2; ctl.minDistance = 5; ctl.maxDistance = 38;
+const HOME = { pos: new THREE.Vector3(6.8, 6.4, 11.2), tgt: new THREE.Vector3(.1, .9, 1.1) };
+cam.position.copy(HOME.pos); ctl.target.copy(HOME.tgt);
+
+// ---------- 天空球（不用贴图背景：环境光遮蔽会把贴图背景画成一块黑片）----------
+const skyU = { top: { value: new THREE.Color() }, mid: { value: new THREE.Color() }, bot: { value: new THREE.Color() } };
+const sky = new THREE.Mesh(new THREE.SphereGeometry(200, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU,
+  vertexShader: 'varying vec3 vp; void main(){ vp = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: 'uniform vec3 top, mid, bot; varying vec3 vp; void main(){ float h = vp.y; vec3 c = h > .1 ? mix(mid, top, smoothstep(.1, .7, h)) : mix(bot, mid, smoothstep(-.1, .1, h)); gl_FragColor = vec4(c, 1.); }' }));
+scene.add(sky);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
+const hemi = new THREE.HemisphereLight(0xd6ecff, 0x5d7a3a, .75); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffe9c8, 3.6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 70 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03;
+scene.add(sun, sun.target);
+const lampLight = new THREE.PointLight(0xffb560, 0, 6, 1.5); lampLight.position.set(-.8, 1.3, 2.9); scene.add(lampLight);
+const winLight = new THREE.PointLight(0xffc070, 0, 5, 1.5); winLight.position.set(0, 1.2, 1.8); scene.add(winLight);
+
+// ---------- 地：一座圆圆的草岛，四周一圈树 ----------
+const clay = (o) => new THREE.MeshStandardMaterial({ roughness: .85, metalness: 0, ...o });
+{ const top = new THREE.Mesh(new THREE.CylinderGeometry(11, 11.2, .3, 72), clay({ color: 0x5c9d3c })); top.position.y = -.15; top.receiveShadow = true; scene.add(top);
+  const dirt = new THREE.Mesh(new THREE.CylinderGeometry(11.2, 9.5, 2.2, 72), clay({ color: 0x9a6c45 })); dirt.position.y = -1.4; scene.add(dirt);
+  const water = new THREE.Mesh(new THREE.CircleGeometry(160, 48), new THREE.MeshStandardMaterial({ color: 0x79c6dc, roughness: .12 })); water.rotation.x = -Math.PI / 2; water.position.y = -2; scene.add(water); }
+const inPlot = (x, z) => (x > -2.1 && x < 2.1 && z > -1.5 && z < 1.4) || (x > -.75 && x < .75 && z > 1.3 && z < 4.8) || (Math.hypot(x + 1, z - 1.75) < .4) || (x > .9 && x < 1.7 && z > 1.35 && z < 1.85);
+const grassU = { time: { value: 0 } };
+{ const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([-.022, 0, 0, .022, 0, 0, -.014, .07, 0, .014, .07, 0, 0, .16, 0], 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute([0, 1, .3, 0, 1, .3, 0, 1, .3, 0, 1, .3, 0, 1, .2], 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute([.35, .35, .35, .35, .35, .35, .8, .8, .8, .8, .8, .8, 1.15, 1.15, 1.1], 3));
+  g.setIndex([0, 1, 3, 0, 3, 2, 2, 3, 4]);
+  const m = new THREE.MeshStandardMaterial({ roughness: .8, side: THREE.DoubleSide, vertexColors: true });
+  m.onBeforeCompile = sh => { sh.uniforms.time = grassU.time; sh.vertexShader = 'uniform float time;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+    vec4 wp = instanceMatrix * vec4(0.,0.,0.,1.); float sw = sin(time*1.6 + wp.x*.7 + wp.z*.5)*.5 + sin(time*2.7 + wp.x*1.9)*.25; transformed.x += sw*position.y*.55; transformed.z += sw*position.y*.25;`); };
+  const N = Number(Q.get('grass')) || 70000, im = new THREE.InstancedMesh(g, m, N), o = new THREE.Object3D(), c = new THREE.Color(), R = rnd(7); let k = 0;
+  while (k < N) { const a = R() * Math.PI * 2, r = Math.sqrt(R()) * 10.8, x = Math.cos(a) * r, z = Math.sin(a) * r; if (inPlot(x, z)) continue;
+    o.position.set(x, 0, z); o.rotation.y = R() * 3.14; const s = .7 + R() * .9; o.scale.set(s, s * (.8 + R() * .8), s); o.updateMatrix(); im.setMatrixAt(k, o.matrix); im.setColorAt(k, c.setHSL(.25 + R() * .07, .62 + R() * .2, .36 + R() * .14)); k++; }
+  im.receiveShadow = true; scene.add(im);
+  const fl = new THREE.InstancedMesh(new THREE.SphereGeometry(.035, 8, 6), clay({ roughness: .6 }), 1400), cols = ['#ffffff', '#ffd6e6', '#fff1a8', '#d9c8ff'], R2 = rnd(99); k = 0;
+  while (k < 1400) { const a = R2() * 6.28, r = Math.sqrt(R2()) * 10.6, x = Math.cos(a) * r, z = Math.sin(a) * r; if (inPlot(x, z)) continue; o.position.set(x, .12 + R2() * .05, z); o.rotation.set(0, 0, 0); o.scale.setScalar(1); o.updateMatrix(); fl.setMatrixAt(k, o.matrix); fl.setColorAt(k, c.set(cols[k % 4])); k++; }
+  scene.add(fl); }
+function puffTree(x, z, s, hue, seed) {
+  const g = new THREE.Group(), R = rnd(seed); g.position.set(x, 0, z);
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(.14 * s, .22 * s, 1.5 * s, 10), clay({ color: 0x8a5a36 })); t.position.y = .75 * s; t.castShadow = true; g.add(t);
+  for (let i = 0; i < 10; i++) { const r = (.5 + R() * .45) * s, b = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 3), clay({ color: new THREE.Color().setHSL(hue + R() * .03, .58, .36 + R() * .12), roughness: .9 }));
+    const a = R() * 6.28, d = R() * .7 * s; b.position.set(Math.cos(a) * d, 1.8 * s + R() * 1.1 * s, Math.sin(a) * d); b.castShadow = b.receiveShadow = true; g.add(b); }
+  scene.add(g);
+}
+{ const R = rnd(31); for (let i = 0; i < 40; i++) { const a = i / 26 * 6.28 + R() * .15, r = 7.6 + R() * 2.6; if (Math.sin(a) > -.15) continue; puffTree(Math.cos(a) * r, Math.sin(a) * r, .8 + R() * .6, R() < .2 ? .12 : .28 + R() * .03, 100 + i); } }
+
+// ---------- 后期：环境光遮蔽、轻泛光、景深 ----------
+const rt = new THREE.WebGLRenderTarget(innerWidth * DPR, innerHeight * DPR, { type: THREE.HalfFloatType, samples: 4 });
+const composer = new EffectComposer(renderer, rt); composer.setPixelRatio(DPR); composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, cam));
+const ao = new GTAOPass(scene, cam, innerWidth, innerHeight); ao.updateGtaoMaterial({ radius: .5, distanceExponent: 1.4, thickness: 1.2, scale: 1.1, samples: 16 }); composer.addPass(ao);
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .14, .45, .93); composer.addPass(bloom);
+const dof = new BokehPass(scene, cam, { focus: 18, aperture: .0013, maxblur: .006 }); composer.addPass(dof);
+composer.addPass(new OutputPass());
+
+// ---------- 模型（Blender 导出）----------
+const S = { food: Number(Q.get('food') ?? 6), water: Number(Q.get('water') ?? 6), night: Q.has('night') ? Q.get('night') === '1' : (() => { const h = new Date().getHours(); return h >= 19 || h < 6; })(), tags: true };
+let P = {}, glass = [], lampMat = null;
+// 模型：自己读文件、解码内嵌数据、拼回 GLB 再解析（Artifact 的安全策略不让加载器直接读 data: 地址）
+async function loadPark(url) {
+  const res = await fetch(url); if (!res.ok) throw new Error('模型文件读取失败 ' + res.status);
+  if (!url.endsWith('.json')) return new GLTFLoader().parseAsync(await res.arrayBuffer(), './');
+  const js = await res.json(), uri = js.buffers[0].uri, raw = atob(uri.slice(uri.indexOf(',') + 1));
+  const bin = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i);
+  delete js.buffers[0].uri;
+  const enc = new TextEncoder(), pad4 = n => (n + 3) & ~3;
+  let jb = enc.encode(JSON.stringify(js)); const jl = pad4(jb.length), bl = pad4(bin.length);
+  const out = new Uint8Array(12 + 8 + jl + 8 + bl), dv = new DataView(out.buffer);
+  dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, out.length, true);
+  dv.setUint32(12, jl, true); dv.setUint32(16, 0x4E4F534A, true); out.fill(0x20, 20, 20 + jl); out.set(jb, 20);
+  const o = 20 + jl; dv.setUint32(o, bl, true); dv.setUint32(o + 4, 0x004E4942, true); out.set(bin, o + 8);
+  return new GLTFLoader().parseAsync(out.buffer, './');
+}
+const gltf = await loadPark(Q.get('glb') || './park.json');
+scene.add(gltf.scene);
+gltf.scene.traverse(o => {
+  if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; const n = o.material.name;
+    if (n === '玻璃') { glass.push(o.material); o.material.roughness = .05; o.material.envMapIntensity = 1.6; }
+    if (n === '灯芯') lampMat = o.material; }
+  P[o.name] = P[o.name] || o;
+});
+const pet = P['小狼'], head = P['头'], earL = P['耳朵左'], earR = P['耳朵右'], tail = P['尾巴'], food = P['狗粮'] || P['狗粮堆'], water = P['水'] || P['水面'];
+const pet0 = pet.position.clone(), head0 = head.rotation.clone();
+const petCenter = () => pet.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0, 0));
+// 名牌位置：头顶上方
+const tagPt = new THREE.Object3D(); head.add(tagPt); tagPt.position.set(0, .75, 0);
+
+// ---------- 时间和天光（只看本机时间，不联网）----------
+function season(m) { return m >= 3 && m <= 5 ? '春' : m >= 6 && m <= 8 ? '夏' : m >= 9 && m <= 11 ? '秋' : '冬'; }
+function applyTime() {
+  const n = S.night;
+  skyU.top.value.set(n ? '#0f1a3a' : '#7fb6e2'); skyU.mid.value.set(n ? '#27365f' : '#cfe6f2'); skyU.bot.value.set(n ? '#3a4466' : '#f3efe2');
+  scene.fog = new THREE.Fog(new THREE.Color(n ? '#2a3456' : '#d4e6ee'), 26, 90);
+  sun.color.set(n ? '#8ea6ff' : '#ffe9c8'); sun.intensity = n ? .55 : 3.6; sun.position.set(n ? -10 : 12, n ? 18 : 20, n ? 6 : 10);
+  hemi.color.set(n ? '#5d6fa8' : '#d6ecff'); hemi.intensity = n ? .35 : .75; scene.environmentIntensity = n ? .12 : .35;
+  lampLight.intensity = n ? 7 : 0; winLight.intensity = n ? 5 : 0;
+  glass.forEach(m => { m.emissive = new THREE.Color(n ? '#ffb85a' : '#000000'); m.emissiveIntensity = n ? 1.4 : 0; });
+  if (lampMat) lampMat.emissiveIntensity = n ? 4 : 1;
+  renderer.toneMappingExposure = n ? 1.15 : .95;
+}
+function tick() {
+  const d = new Date(); $('cT').textContent = d.toTimeString().slice(0, 5);
+  $('cD').textContent = `${d.getMonth() + 1}月${d.getDate()}日周${'日一二三四五六'[d.getDay()]} · ${season(d.getMonth() + 1)}天`;
+}
+tick(); setInterval(tick, 10000); applyTime();
+
+// ---------- 状态和界面 ----------
+const mood = () => (S.food === 0 && S.water === 0) || S.wilt ? 'wilt' : (S.food === 0 || S.water === 0) ? 'want' : 'happy';
+const MOOD = { happy: '开心', want: '想吃', wilt: '蔫蔫' };
+function ui() {
+  const m = mood();
+  $('pSt').textContent = MOOD[m]; $('pSt').className = 'st ' + m; $('pillS').textContent = MOOD[m]; $('pill').className = 'pill ' + m;
+  $('bF').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < S.food ? 'on' : ''}"></i>`).join('');
+  $('bW').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < S.water ? 'on' : ''}"></i>`).join('');
+  $('sH').textContent = m === 'happy' ? 1 : 0;
+  $('aF').disabled = S.food >= 6; $('aW').disabled = S.water >= 6;
+  $('aF').textContent = S.food >= 6 ? '食盆已满' : '倒粮'; $('aW').textContent = S.water >= 6 ? '水槽已满' : '倒水';
+}
+if (Q.get('mood') === 'wilt') { S.food = 0; S.water = 0; }
+ui();
+
+// ---------- 动画 ----------
+const heartTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#ff6f8f'; g.beginPath(); g.moveTo(32, 54); g.bezierCurveTo(4, 32, 14, 8, 32, 22); g.bezierCurveTo(50, 8, 60, 32, 32, 54); g.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+const hearts = [], drops = [];
+// 爱心放在单独一层，后期之后再叠上去：精灵贴片进了主场景会被环境光遮蔽画成黑块
+const fx = new THREE.Scene();
+const backOut = t => { const c = 1.7; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+let joyT = -9;
+function pour(kind) {
+  const tgt = new THREE.Box3().setFromObject(kind === 'food' ? (P['食盆'] || food) : (P['水槽'] || water)).getCenter(new THREE.Vector3());
+  for (let i = 0; i < 7; i++) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(kind === 'food' ? .07 : .06, 12, 8), new THREE.MeshStandardMaterial({ color: kind === 'food' ? 0xd9b27c : 0x6fcaf0, roughness: kind === 'food' ? .8 : .1 }));
+    m.castShadow = true; scene.add(m); drops.push({ m, t0: clock.elapsedTime + i * .06, from: tgt.clone().add(new THREE.Vector3((Math.random() - .5) * .2, 1.6, (Math.random() - .5) * .2)), to: tgt.clone().add(new THREE.Vector3((Math.random() - .5) * .18, .05, (Math.random() - .5) * .12)) });
+  }
+  setTimeout(() => { if (kind === 'food') S.food = 6; else S.water = 6; S.wilt = false; ui(); joyT = clock.elapsedTime; for (let i = 0; i < 3; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthWrite: false, depthTest: false })); fx.add(s); hearts.push({ s, t0: clock.elapsedTime + i * .14, x: (i - 1) * .35 }); } }, 650);
+}
+$('aF').onclick = () => pour('food'); $('aW').onclick = () => pour('water');
+
+// 镜头按钮：平滑移动
+let fly = null;
+function flyTo(pos, tgt, ms = 700) { fly = { p0: cam.position.clone(), t0: ctl.target.clone(), p1: pos, t1: tgt, s: performance.now(), ms }; }
+const orbit = (da, dr) => { const off = cam.position.clone().sub(ctl.target), sph = new THREE.Spherical().setFromVector3(off); sph.theta += da; sph.radius = THREE.MathUtils.clamp(sph.radius * dr, ctl.minDistance, ctl.maxDistance); flyTo(ctl.target.clone().add(new THREE.Vector3().setFromSpherical(sph)), ctl.target.clone()); };
+$('tHome').onclick = () => flyTo(HOME.pos.clone(), HOME.tgt.clone());
+$('tL').onclick = () => orbit(-Math.PI / 4, 1); $('tR').onclick = () => orbit(Math.PI / 4, 1);
+$('tIn').onclick = () => orbit(0, .7); $('tOut').onclick = () => orbit(0, 1.4);
+$('tTag').onclick = () => { S.tags = !S.tags; $('tTag').style.background = S.tags ? '#fff' : '#e8e3d6'; };
+// 点小狼：镜头拉过去
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => downAt = [e.clientX, e.clientY]);
+renderer.domElement.addEventListener('pointerup', e => { if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
+  ptr.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(ptr, cam);
+  if (ray.intersectObject(pet, true).length) { const c = petCenter(); flyTo(c.clone().add(new THREE.Vector3(2.6, 2.4, 4.6)), c.clone().add(new THREE.Vector3(0, .6, 0))); } });
+
+// ---------- 每帧 ----------
+const clock = new THREE.Clock(); let frames = 0, acc = 0, fps = 0, slow = 0, tier = '高';
+function frame() {
+  const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; grassU.time.value = t;
+  if (fly) { const k = Math.min(1, (performance.now() - fly.s) / fly.ms), e = 1 - Math.pow(1 - k, 3); cam.position.lerpVectors(fly.p0, fly.p1, e); ctl.target.lerpVectors(fly.t0, fly.t1, e); if (k >= 1) fly = null; }
+  ctl.update();
+  // 伙伴：开心时轻轻弹、摇尾巴；想吃时看着盆；蔫蔫耳朵耷拉、低头、尾巴垂
+  const m = mood(), w = m === 'wilt' ? 1 : 0; pet.userData.k = (pet.userData.k ?? w) + (w - (pet.userData.k ?? w)) * Math.min(1, dt * 4); const k = pet.userData.k;
+  const j = t - joyT, hop = j > 0 && j < 1.2 ? Math.abs(Math.sin(j / 1.2 * Math.PI * 3)) * .35 * (1 - j / 1.2) : (m === 'happy' ? Math.abs(Math.sin(t * 2.6)) * .04 : 0);
+  pet.position.y = pet0.y + hop; pet.rotation.y = j > 0 && j < 1.2 ? j / 1.2 * Math.PI * 2 : 0;
+  head.rotation.x = head0.x + .32 * k + (m === 'want' ? Math.sin(t * 2) * .05 : 0);
+  earL.rotation.z = .75 * k; earR.rotation.z = -.75 * k;
+  tail.rotation.x = -.9 * k; tail.rotation.y = m === 'happy' ? Math.sin(t * 10) * .35 : 0;
+  food.visible = S.food > 0; food.scale.y = S.food > 0 ? Math.max(.05, S.food / 6) : .05; water.visible = S.water > 0;
+  for (let i = drops.length - 1; i >= 0; i--) { const d = drops[i], u = (t - d.t0) / .5; if (u < 0) { d.m.visible = false; continue; } d.m.visible = true; if (u >= 1) { scene.remove(d.m); drops.splice(i, 1); continue; } d.m.position.lerpVectors(d.from, d.to, u * u); }
+  for (let i = hearts.length - 1; i >= 0; i--) { const h = hearts[i], u = (t - h.t0) / 1.2; if (u < 0) { h.s.visible = false; continue; } if (u > 1) { fx.remove(h.s); hearts.splice(i, 1); continue; } h.s.visible = true; const sc = .42 * backOut(Math.min(1, u * 3)) * (1 - Math.max(0, u - .7) / .3); h.s.scale.set(sc, sc, 1); const c = petCenter(); h.s.position.set(c.x + h.x, 1.6 + u * 1.1, c.z); }
+  dof.uniforms.focus.value = cam.position.distanceTo(ctl.target);
+  composer.render(dt);
+  if (hearts.length) { renderer.autoClear = false; renderer.toneMapping = THREE.NoToneMapping; renderer.render(fx, cam); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.autoClear = true; }
+  // 名牌
+  const v = tagPt.getWorldPosition(new THREE.Vector3()).project(cam), pill = $('pill');
+  pill.style.display = S.tags && v.z < 1 ? '' : 'none'; pill.style.left = (v.x * .5 + .5) * innerWidth + 'px'; pill.style.top = (-v.y * .5 + .5) * innerHeight - 26 + 'px';
+  // 帧率：连续 3 秒低于 40 帧自动降档（先关景深，再关环境光遮蔽，再降分辨率）
+  frames++; acc += dt; if (acc >= 1) { fps = frames / acc; frames = 0; acc = 0; if (fps < 40 && !Q.get('lock')) { if (++slow >= 3) { slow = 0; if (dof.enabled) { dof.enabled = false; tier = '中'; } else if (ao.enabled) { ao.enabled = false; tier = '低'; } else if (renderer.getPixelRatio() > 1) { renderer.setPixelRatio(1); composer.setPixelRatio(1); tier = '最低'; } } } else slow = 0; }
+  $('hud').textContent = `${fps.toFixed(0)} 帧/秒 · 画质${tier}`;
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
+window.__park = { S, ui, applyTime, pour, cam, ctl, flyTo, ao, dof, P, tagPt, THREE };
+window.__ready = true;
+requestAnimationFrame(frame);
+
+</script>

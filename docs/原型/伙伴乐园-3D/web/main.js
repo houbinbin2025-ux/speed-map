@@ -86,7 +86,22 @@ composer.addPass(new OutputPass());
 // ---------- 模型（Blender 导出）----------
 const S = { food: Number(Q.get('food') ?? 6), water: Number(Q.get('water') ?? 6), night: Q.has('night') ? Q.get('night') === '1' : (() => { const h = new Date().getHours(); return h >= 19 || h < 6; })(), tags: true };
 let P = {}, glass = [], lampMat = null;
-const gltf = await new GLTFLoader().loadAsync(Q.get('glb') || './park.json');
+// 模型：自己读文件、解码内嵌数据、拼回 GLB 再解析（Artifact 的安全策略不让加载器直接读 data: 地址）
+async function loadPark(url) {
+  const res = await fetch(url); if (!res.ok) throw new Error('模型文件读取失败 ' + res.status);
+  if (!url.endsWith('.json')) return new GLTFLoader().parseAsync(await res.arrayBuffer(), './');
+  const js = await res.json(), uri = js.buffers[0].uri, raw = atob(uri.slice(uri.indexOf(',') + 1));
+  const bin = new Uint8Array(raw.length); for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i);
+  delete js.buffers[0].uri;
+  const enc = new TextEncoder(), pad4 = n => (n + 3) & ~3;
+  let jb = enc.encode(JSON.stringify(js)); const jl = pad4(jb.length), bl = pad4(bin.length);
+  const out = new Uint8Array(12 + 8 + jl + 8 + bl), dv = new DataView(out.buffer);
+  dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, out.length, true);
+  dv.setUint32(12, jl, true); dv.setUint32(16, 0x4E4F534A, true); out.fill(0x20, 20, 20 + jl); out.set(jb, 20);
+  const o = 20 + jl; dv.setUint32(o, bl, true); dv.setUint32(o + 4, 0x004E4942, true); out.set(bin, o + 8);
+  return new GLTFLoader().parseAsync(out.buffer, './');
+}
+const gltf = await loadPark(Q.get('glb') || './park.json');
 scene.add(gltf.scene);
 gltf.scene.traverse(o => {
   if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; const n = o.material.name;

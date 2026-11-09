@@ -10,7 +10,7 @@
 | `blender/1-基础造型-build.py` | 第一步：Claude 写的基础造型（小狼、木屋、食盆水槽、灯笼、栅栏、灌木）。`blender -b --python 1-基础造型-build.py -- <输出目录>` |
 | `blender/2-给Codex的精修任务.md` | 第二步交给 Codex 的任务说明（附作者截图和基础预览） |
 | `blender/2-精修-refine.py` | Codex 写的精修脚本，三轮看图修正，14.4 万三角形 |
-| `web/` | 网页：`index.html` + `main.js`，模型 `park.json`（glTF 文本，二进制已内嵌），`vendor/` 是 three.js r170 本地文件（MIT 许可） |
+| `web/` | 网页：`index.html` + `main.js`（本地看用），`artifact.html`（发布到 claude.ai 用的单页版），模型 `park.json`（glTF 文本，二进制已内嵌），`vendor/` 是 three.js r170 本地文件（MIT 许可） |
 
 本地看：在 `web/` 里起个静态服务（ES 模块不能用 file:// 打开），浏览器开 `index.html`。参数：`?night=1` 夜景，`?mood=wilt` 蔫蔫开场，`?lock=1` 关掉自动降画质。
 
@@ -20,6 +20,8 @@
 3. 精灵贴片（爱心等）进主场景会被画成黑块：放进单独一层，在后期处理之后再叠上去。
 4. Blender 里给空物体（旋转支点）挂父物体时要换算坐标，否则支点位置会被叠加两次，动作会绕错的点转。
 5. Artifact 不收 `.glb`：用 glTF 文本，二进制用 base64 内嵌。
+6. Artifact 的安全策略拦同目录上传的 `.js`（页面外壳会显示，但脚本一行不跑）：发布版 `web/artifact.html` 把 `main.js` 内联，three.js 改从 jsDelivr 锁版本 0.170.0 加载。正式做进方块世界时仍用本地文件，不走 CDN。
+7. Artifact 也拦加载器去读 `data:` 地址：`main.js` 的 `loadPark()` 自己用相对路径读 `park.json`、解码、拼回 GLB 再解析。
 
 ## 验证
 - Mac（M4 Pro）浏览器：白天、夜景、手机横屏 844×390 都是 60 帧，页面没有报错；蔫蔫 → 倒粮 → 跳一跳冒爱心 → 开心的动作链正常。
