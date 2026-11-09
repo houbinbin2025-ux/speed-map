@@ -3,6 +3,7 @@
 # 用法：python3 tools/e2e/e2e-backup-gems.py <项目根> <截图目录>
 import sys, json, pathlib
 from playwright.sync_api import sync_playwright
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 url = (root / 'v2' / 'index.html').as_uri() + '?gems=1#test'
 PK, GK = 'speedmap.v2.test', 'speedmap.test.gems'
@@ -22,7 +23,7 @@ def fresh(pg, p, g):
       {f"localStorage.setItem('{GK}', {json.dumps(json.dumps(g))});" if g else ''}""")
     pg.reload(); pg.wait_for_timeout(900)
 def parent(pg):
-    hold(pg, '#gear', 2200)
+    hold(pg, '#gear', 2200); PIN(pg)
 def do_import(pg, text, kind='btnImport'):
     if pg.is_visible('#ioPanel'): pg.click('#ioClose'); pg.wait_for_timeout(150)   # 上一次的面板先关掉，和家长真用一样
     if kind == 'btnImportAll': pg.locator('#bkMoreBtn').click(); pg.wait_for_timeout(150)   # 整份替换收在「更多」里

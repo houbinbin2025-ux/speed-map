@@ -6,6 +6,7 @@
 # 用法：python3 tools/e2e/e2e-parent.py <项目根> <截图目录>
 import sys, json, pathlib
 from playwright.sync_api import sync_playwright
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 base = (root / 'v2' / 'index.html').as_uri()
 PK, IK = 'speedmap.v2.test', 'speedmap.ink.test'
@@ -23,7 +24,7 @@ def fresh(pg, url, extra=None):
       {extra or ''}""")
     pg.reload(); pg.wait_for_timeout(900)
 def parent(pg):
-    hold(pg, '#gear', 2200); check(pg.is_visible('#parent'), '长按齿轮进家长区')
+    hold(pg, '#gear', 2200); PIN(pg); check(pg.is_visible('#parent'), '长按齿轮进家长区')
 HIT = """sel => { const el = document.querySelector(sel); if (!el) return {miss: true};
   el.scrollIntoView({block: 'center'}); const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, t = document.elementFromPoint(x, y);
   return {ok: !!t && (t === el || el.contains(t)), x, y, w: r.width, h: r.height, top: t ? (t.id || t.tagName + '.' + t.className) : null}; }"""

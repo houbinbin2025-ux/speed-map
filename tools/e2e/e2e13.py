@@ -2,6 +2,7 @@
 # 线段图 / 条形图 / 长方形题面和答错图解不溢出；手选第 12、14 级 → 选择题点错看讲解、点对；讲解卡后前 5 题有记录
 # 用法：python3 tools/e2e/e2e13.py <项目根> <截图目录> [宽 高]
 import pathlib
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)
 fails = []
@@ -10,7 +11,7 @@ def check(ok, msg):
 W = int(sys.argv[3]) if len(sys.argv) > 3 else 844; H = int(sys.argv[4]) if len(sys.argv) > 4 else 390
 TAG = f'{W}x{H}'
 def parent(pg):
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300); PIN(pg)
 def choose(pg, lvs):
     parent(pg)
     pg.locator('#lvBoxes [data-lv="0"]').scroll_into_view_if_needed(); pg.click('#lvBoxes [data-lv="0"]')

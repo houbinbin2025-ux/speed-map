@@ -2,6 +2,7 @@
 # 每屏查：看得见的字没有中文、按钮和标题不出屏不撑破；家长区永远中文；开关立刻生效、刷新后保持；错题和进度不受切换影响；存档里没有英文
 # 用法：python3 tools/e2e/e2e-en.py <项目根> <截图目录> [宽 高]
 import pathlib
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)   # 借用 url / draw / cur / shot
 fails = []
@@ -141,7 +142,7 @@ with sync_playwright() as p:
     for w in ['Little ', 'How many', 'Start today', 'Kongkong', "o'clock"]: check(w not in saved, '存档里混进英文：' + w)
     # 家长区：永远中文，开关有效
     before = pg.evaluate(SNAP)
-    hold(pg, '#gear', 2200); pg.wait_for_timeout(200); check(cur(pg) == 'parent', '没进家长区')
+    hold(pg, '#gear', 2200); PIN(pg); pg.wait_for_timeout(200); check(cur(pg) == 'parent', '没进家长区')
     pt = pg.inner_text('#parent'); check('家长区' in pt and '单日英文、双日中文（今天：英文）' in pt, '家长区不是中文或开关文案不对'); check('Back' not in pt, '家长区混进英文')
     check(pg.is_checked('#biBox'), '默认没勾选'); pg.screenshot(path=str(out / '31-parent-en-day.png'))
     pg.click('#bankGo [data-bg="dock"]'); pg.wait_for_timeout(200); check('题库' in pg.inner_text('#bankv'), '题库页不是中文'); pg.click('#bankList [data-bo]'); pg.wait_for_timeout(200); pg.click('#bankList [data-bq]'); pg.wait_for_timeout(200); check('孩子看到的题' in pg.inner_text('#ovQ'), '题库预览不是中文'); check('还剩' in pg.inner_text('#ovQ') or '一共' in pg.inner_text('#ovQ') or '？' in pg.inner_text('#ovQ'), '题库预览的题不是中文'); pg.click('#qpX'); pg.click('#bankBack'); pg.wait_for_timeout(200)
@@ -155,7 +156,7 @@ with sync_playwright() as p:
     check(pg.evaluate("__sm.S.settings.bilingual") is False, '刷新后开关没保持'); check(pg.evaluate("document.documentElement.lang") == 'zh-CN', '刷新后变回英文'); check('空空数学岛' in pg.inner_text('#island'), '刷新后首页不是中文')
     after = pg.evaluate(SNAP); check(after == before, '切换语言后错题或进度变了：' + next((f'{k}: {json.loads(before)[k]} -> {json.loads(after)[k]}'[:400] for k in json.loads(before) if json.loads(before)[k] != json.loads(after)[k]), ''))
     # 再打开：立刻回英文；拨到下一天（双日或连着的单日）按规则走
-    hold(pg, '#gear', 2200); pg.click('#biBox'); pg.wait_for_timeout(100); check(pg.evaluate("document.documentElement.lang") == 'en', '重新勾选没回英文'); pg.click('#parBack'); pg.wait_for_timeout(200); check('Kongkong Math Island' in pg.inner_text('#island'), '重新勾选后首页不是英文')
+    hold(pg, '#gear', 2200); PIN(pg); pg.click('#biBox'); pg.wait_for_timeout(100); check(pg.evaluate("document.documentElement.lang") == 'en', '重新勾选没回英文'); pg.click('#parBack'); pg.wait_for_timeout(200); check('Kongkong Math Island' in pg.inner_text('#island'), '重新勾选后首页不是英文')
     pg.click('[data-t="day+1"]'); pg.wait_for_timeout(200)
     expect = pg.evaluate("I18N.isEn(__sm.S.settings, __sm.today()) ? 'en' : 'zh-CN'"); check(pg.evaluate("document.documentElement.lang") == expect, '拨日期后语言不对')
     check(not pg.is_visible('#ovCrash'), '出现崩溃页')

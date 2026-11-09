@@ -2,6 +2,7 @@
 # 先 bash ios/sync-web.sh 生成 ios/web，再跑：python3 tools/e2e/e2e-world-time.py <项目根> <截图目录>
 import sys, json, pathlib, datetime
 from playwright.sync_api import sync_playwright
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 web = root / 'ios' / 'web'
 url = (web / 'index.html').as_uri()
@@ -27,7 +28,7 @@ with sync_playwright() as p:
     cb = pg.evaluate("(()=>{const a=document.getElementById('worldChip').getBoundingClientRect(),b=document.getElementById('worldEntry').getBoundingClientRect();return {cr:a.right,w:innerWidth,overlap:!(a.left>=b.right||a.right<=b.left||a.top>=b.bottom||a.bottom<=b.top)}})()")
     check(cb['cr'] <= cb['w'] and not cb['overlap'], f'状态条不超屏、不压入口 {cb}')
     pg.screenshot(path=str(out / 'world-time-chip.png'))
-    hold(pg, '#gear', 2200)
+    hold(pg, '#gear', 2200); PIN(pg)
     check(pg.locator('#worldPanel').count() == 1 and pg.is_visible('#worldPanel'), '家长区有方块世界面板')
     check(pg.evaluate("document.querySelector('#parent .pgrid').firstElementChild.id") == 'worldPanel', '面板排在最前')
     t = panel(pg)
@@ -62,12 +63,12 @@ with sync_playwright() as p:
     pg.evaluate("document.documentElement.lang = 'en'"); pg.wait_for_timeout(100)
     check(chip() == '30 min to play', '单日英文：' + chip())
     pg.evaluate("document.documentElement.lang = 'zh-CN'"); pg.wait_for_timeout(100)
-    hold(pg, '#gear', 2200)
+    hold(pg, '#gear', 2200); PIN(pg)
     pg.uncheck('#wPass'); pg.wait_for_timeout(100)
     check(mc(pg)['pass'] is None and '未达标' in panel(pg), '今天不需达标：关')
     # 玩过之后再进家长区，面板跟着变
     pg.evaluate(f"(()=>{{const s=JSON.parse(localStorage.getItem('mc_unlock')); s.play={{day:'{d}', sec:300}}; s.extra=null; s.welcomed=true; localStorage.setItem('mc_unlock', JSON.stringify(s));}})()")
-    pg.click('#parBack'); pg.wait_for_timeout(300); hold(pg, '#gear', 2200)
+    pg.click('#parBack'); pg.wait_for_timeout(300); hold(pg, '#gear', 2200); PIN(pg)
     check('未达标：仅可试用 20 秒，还剩 0 秒' in panel(pg), '重进家长区刷新剩余时间：' + panel(pg).split('\n')[1])
     # 进方块世界：未达标、试用已用完 → 弹窗写明去家长区；家长打开「今天不需达标」后能玩
     pg.goto((web / 'world' / 'index.html').as_uri()); pg.wait_for_timeout(500)
@@ -77,7 +78,7 @@ with sync_playwright() as p:
     check('试用已结束' in t and '数学岛 · 家长区' in t and pg.locator('.qPanel button:has-text("家长中心")').count() == 0, '方块世界弹窗指向数学岛家长区：' + t.replace('\n', ' | '))
     pg.screenshot(path=str(out / 'world-time-gate.png'))
     pg.click('.qPanel button:has-text("回数学岛")'); pg.wait_for_timeout(1200)
-    hold(pg, '#gear', 2200); pg.check('#wPass'); pg.wait_for_timeout(150)
+    hold(pg, '#gear', 2200); PIN(pg); pg.check('#wPass'); pg.wait_for_timeout(150)
     pg.goto((web / 'world' / 'index.html').as_uri()); pg.wait_for_timeout(500)
     pg.click('#btnStart'); pg.wait_for_function("() => window.__game && window.__game.playing", timeout=30000); pg.wait_for_timeout(2500)
     check(pg.locator('.uGateT').count() == 0 and '分' in pg.inner_text('#uChip'), '家长区放行后能玩：' + pg.inner_text('#uChip'))
