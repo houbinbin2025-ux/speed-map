@@ -124,8 +124,9 @@
   }
   function addOre(S, n) { const h = ensure(S); if (n > 0) h.ore += n; }
   // 这一级开放了没有（家长选了这一级，或自动模式到过）：没开放的三四年级奖状不显示、不进「下一个目标」，得到了的照常显示
-  // 家长手选：只认选中的级别（和排课 engine.levelFits 一样，审查 11-09：选了第 8 级没选第 5 级，第 5 级的奖状练不到，不能挂在目标里）；自动模式：开到的级别以内
-  const opened = (S, g) => { const c = E.chosen(S); return c ? lvsOf(g).some(n => c.includes(n)) : Math.min(...lvsOf(g)) <= E.autoLevel(S); };
+  // 家长手选：只认选中的级别；自动模式：开到的级别以内（审查 11-09：练不到的奖状不能挂在目标里）
+  // 审查 R2：组里每一格都能出题才算开放（第 4–5 级组的格子分属第 4、5 级，只选其中一级时另一级的格子练不到）；直接用排课的 itemOn，手选、自动一个判断
+  const opened = (S, g) => lvCells(g).every(i => E.itemOn(S, i.id));
   const shown = (S, r) => !r.lv || !!(ensure(S).got[r.id]) || opened(S, r.lv);
   // 下一个最接近的目标：屋里只提示 3 个，避免一屏清单
   function next(S, n) {
