@@ -80,3 +80,18 @@ test('讲解卡的按钮和每一页都有英文', () => {
   ['下一步', '试一试', '我知道了'].forEach(t => assert.ok(!I.ZH.test(I.text(t)), t));
   R.CONCEPTS.forEach(c => R.card(c).pages.forEach((p, i) => { const t = I.html(R.cardPage(c, i)).replace(/<[^>]+>/g, ' '); assert.ok(!I.ZH.test(t), `${c} ${i}: ${t.slice(0, 80)}`); }));
 });
+
+// A 转（中控 11-08）：讲解卡名额要真出了卡才占，排课挑技能时不占（原来 session 挑新技能时就调 cardFor，一挑就推进 Dy.cards；现在挑技能用 planCard 只做预算）
+test('讲解卡名额：排课挑技能时不占名额，真出了讲解卡才占', () => {
+  const S = C.blank(); S.placedAt = 1; S.settings = {levels: [11, 12, 13], levelsV: 2};   // 这几级一天会挑到两个要讲解的新技能（rem、perim）
+  const sess = E.session(S, D(0), {rnd: seeded(3)});
+  const shown = [];
+  for (let i = 0; i < 300; i++) {
+    const x = sess.next(); if (!x) break;
+    if (x.kind === 'demo' && x.concept) shown.push(x.concept);
+    assert.deepEqual(S.daily.cards || [], shown, '名额只算真出过的讲解卡：第 ' + i + ' 步');
+    if (x.kind === 'demo') continue;
+    sess.answer({ok: true, fast: true, secs: 3});
+  }
+  assert.deepEqual(S.daily.cards, shown, '一天下来占的名额 = 真出的讲解卡');
+});

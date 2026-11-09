@@ -108,11 +108,10 @@ test('再看一次后答对：不给碎片，不计正确率', () => {
   assert.equal(st.days[DAY].bad, 0);
 });
 
-test('口答模式完全不算', () => {
+test('口答模式答对也给碎片：按没秒答算，1 个小碎片（Ben 11-08：所有题都有激励；原来口答完全不算）', () => {
   const st = G.blank();
-  assert.equal(ans(st, {oral: true}), null);
-  assert.equal(st.days[DAY], undefined);
-  assert.deepEqual(ans(st, {top: 99}), ['b'], '口答没有占掉当天的第一次作答');
+  assert.equal(ans(st, {oral: true}).length, 1, '口答答对：1 个小碎片');
+  assert.equal(ans(G.blank(), {oral: true, ok: false}), null, '口答答错：不给');
 });
 
 test('老秒答流程和新流程同一题 key 相同（asInst 没有 op）', () => {

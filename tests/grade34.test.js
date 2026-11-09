@@ -72,7 +72,7 @@ function checkEq(text, ans) {
 test('每个答案都用独立算法重算；故事题的校验算式只用题面里的数', () => {
   let n = 0;
   G.forEach(([id, l]) => l.forEach(x => {
-    n++; const ok = x.c ? same(evalx(x.c), evalx(String(x.ans))) : checkEq(x.q.text, x.ans);
+    n++; const ok = x.c ? same(evalx(x.c), evalx(String(x.ans))) : checkEq(x.q.text, x.q.dp ? (x.ans / 10 ** x.q.dp).toFixed(x.q.dp) : x.ans);   // 小数加减：ans 是去掉小数点的整数（捣蛋鬼 1-4）
     assert.ok(ok, `${id} ${x.q.say || x.q.text} = ${x.ans}（${x.c || ''}）`);
     assert.ok(Number.isInteger(x.ans) && x.ans >= 0 && String(x.ans).length <= 4, `${id} 答案 ${x.ans}`);
     if (x.c) (x.c.match(/\d+(\.\d+)?/g) || []).forEach(v => assert.ok(['1', '2', '4', '7', '12', '24', '60', '100', '180', '1000'].includes(v) || x.q.say.includes(v) || x.q.text.includes(v) || new RegExp(`^(${(x.q.say.match(/\d+/g) || []).join('|')})$`).test(v) || id === 'place:g15:gcd' || /g15:(lcm|timessum)|g13:unit|g13:speed|g11:times|g10:remain/.test(id), `${id} 算式里的 ${v} 不在题面：${x.q.say}`));
@@ -84,7 +84,7 @@ test('题池 30–300 道；编号和题面都不重复；每题有讲解，讲�
     assert.ok(l.length >= 22 && l.length <= 300, `${id} ${l.length} 道`);
     assert.equal(new Set(l.map(x => x.q.qk)).size, l.length, `${id} 编号重复`);
     assert.equal(new Set(l.map(x => x.q.say || x.q.text)).size, l.length, `${id} 题面重复`);
-    l.forEach(x => { assert.ok(x.q.why && x.q.why.includes(String(x.ans)) || /十分位|余|商/.test(x.q.why), `${id} ${x.q.why}`); assert.ok(x.q.text); if (x.q.say) assert.ok(x.q.say.length <= 48, `${id} 题干太长：${x.q.say}`); });
+    l.forEach(x => { assert.ok(x.q.why && x.q.why.includes(x.q.dp ? (x.ans / 10 ** x.q.dp).toFixed(x.q.dp) : String(x.ans)) || /十分位|余|商/.test(x.q.why), `${id} ${x.q.why}`); assert.ok(x.q.text); if (x.q.say) assert.ok(x.q.say.length <= 48, `${id} 题干太长：${x.q.say}`); });
   });
 });
 test('第 10–15 级每级题量够、技能够', () => {
@@ -103,7 +103,8 @@ test('错题和题库标签：文字题显示题干，不只是一个 □', () =
 test('题面提示：挖空题写方框里的数；多位计算和文字题提示纸笔，提示不泄露答案位数；计算题不叫秒答', () => {
   const R = require('../v2/render.js');
   const q = (id, x) => R.question({id, q: x.q, ans: x.ans});
-  const dec = HB.pools['speed:g12:dec'][0]; assert.match(q('speed:g12:dec', dec).note, /方框/);
+  const box = HB.pools['speed:g10:rem'][0]; assert.match(q('speed:g10:rem', box).note, /方框/);
+  for (const id of ['speed:g12:dec', 'speed:g14:dec2']) { const x = HB.pools[id][0]; assert.ok(!/方框/.test(q(id, x).note), id); }
   const mul = HB.pools['speed:g11:mul'].find(x => String(x.ans).length >= 3); assert.match(q('speed:g11:mul', mul).note, /纸笔/);
   for (const x of HB.pools['speed:g13:div2'].filter(x => String(x.ans).length < 3).slice(0, 3)) assert.match(q('speed:g13:div2', x).note, /纸笔/);
   assert.match(q('speed:g11:mul', mul).tag, /^计算/); assert.ok(!/秒答/.test(R.demo(K.ITEM['speed:g11:mul'].skill)));
@@ -142,4 +143,21 @@ test('导入进度：开级进度取大，不退回去', () => {
   const a = blank(), b = blank(); b.lvTop = 12; b.lvTopDay = D(5);
   const M = C.importMerge(a, JSON.stringify(b)); assert.equal(M.lvTop, 12); assert.equal(M.lvTopDay, D(5));
   const c = blank(); c.lvTop = 14; c.lvTopDay = D(9); assert.equal(C.importMerge(c, JSON.stringify(b)).lvTop, 14);
+});
+
+test('小数加减写完整得数（捣蛋鬼 1-4）：题面不给整数部分，答案按 q.dp 还原，过整数的至少一半，加减各约一半，剔除两可的写法', () => {
+  const R = require('../v2/render.js');
+  for (const [id, dp] of [['speed:g12:dec', 1], ['speed:g14:dec2', 2]]) {
+    const l = HB.pools[id]; let cross = 0, add = 0;
+    l.forEach(x => {
+      const m = /^(\d+\.\d+) ([+−]) (\d+\.\d+) =$/.exec(x.q.text); assert.ok(m, `${id} 题面只有算式：${x.q.text}`);
+      assert.equal(x.q.dp, dp, id); assert.ok(!x.q.text.includes('□'), id);
+      const u = 10 ** dp, A = Math.round(+m[1] * u), B = Math.round(+m[3] * u), s = m[2] === '+' ? A + B : A - B;
+      assert.equal(x.ans, s, `${id} ${x.q.text}`); assert.equal(R.ansText(x.q, x.ans), (s / u).toFixed(dp));
+      assert.ok(s > u && s % 10 && A % 10 && B % 10, `${id} 两可：${x.q.text} ${R.ansText(x.q, x.ans)}`);
+      if (m[2] === '+') { add++; if (A % u + B % u >= u) cross++; } else if (A % u < B % u) cross++;
+    });
+    assert.ok(cross >= l.length / 2, `${id} 过整数 ${cross}/${l.length}`); assert.ok(add >= l.length * .4 && add <= l.length * .6, `${id} 加法 ${add}`);
+  }
+  assert.equal(R.ansText({}, 7), '7'); assert.equal(R.ansText({dp: 2}, 705), '7.05');
 });

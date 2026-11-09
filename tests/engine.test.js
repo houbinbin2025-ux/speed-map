@@ -391,14 +391,20 @@ test('R2-B16 「再看一次」答对不拉低合格率（不影响"有余力再
 });
 
 test('R2-B17 排课速度：460 道错题、全部格子有记录时，next + answer 每题 ≤ 10 毫秒', () => {
-  const S = C.blank(); S.placedAt = 1;
-  K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 2, d: [D(-9), D(-8)], seen: 5, lastDay: D(-8)})));
-  const r = seeded(3);
-  for (let k = 0; k < 460; k++) { const it = K.SKILLS[k % K.SKILLS.length].items[0]; E.addMistake(S, K.make(it.id, r), D(-1 - (k % 5))); }
-  const s = E.session(S, D(0), {rnd: seeded(1)});
-  let worst = 0;
-  for (let k = 0; k < 60; k++) { const t0 = performance.now(); const x = s.next(); if (!x) break; if (x.kind === 'q') s.answer(ok); worst = Math.max(worst, performance.now() - t0); }
-  assert.ok(worst <= 10, '最慢 ' + worst.toFixed(2) + ' 毫秒');
+  // 机器忙（几个会话同时跑走查）时单次计时会被别的进程打断：先空跑一遍预热，再跑 5 遍，每遍取最慢一步，看 5 遍的中位数（中控 11-08）；门槛不变
+  const run = () => {
+    const S = C.blank(); S.placedAt = 1;
+    K.SKILLS.forEach(s => s.items.forEach(it => Object.assign(E.prog(S, it.id), {lv: 2, d: [D(-9), D(-8)], seen: 5, lastDay: D(-8)})));
+    const r = seeded(3);
+    for (let k = 0; k < 460; k++) { const it = K.SKILLS[k % K.SKILLS.length].items[0]; E.addMistake(S, K.make(it.id, r), D(-1 - (k % 5))); }
+    const s = E.session(S, D(0), {rnd: seeded(1)});
+    let worst = 0;
+    for (let k = 0; k < 60; k++) { const t0 = performance.now(); const x = s.next(); if (!x) break; if (x.kind === 'q') s.answer(ok); worst = Math.max(worst, performance.now() - t0); }
+    return worst;
+  };
+  run();
+  const w = Array.from({length: 5}, run).sort((a, b) => a - b);
+  assert.ok(w[2] <= 10, '5 遍最慢一步的中位数 ' + w[2].toFixed(2) + ' 毫秒（各遍 ' + w.map(x => x.toFixed(1)).join(' / ') + '）');
 });
 
 test('题型错题每种最多留最近 3 道（同一类题不堆成一串）；卡的错题不受影响', () => {
@@ -686,4 +692,26 @@ test('再来一次最多连着 2 道：自由加练连错 5 道后不会连出 4
     assert.ok(seq.length - main - 1 <= 3, `seed ${seed} 收尾 ${seq}`);
     assert.ok(!/RRR/.test(seq.slice(0, main)), `seed ${seed} 正式题之间连出 3 道：${seq}`);
   }
+});
+
+// 捣蛋鬼第 1 轮第 6 条：17 个秒答技能共用一张「秒答：看到算式，马上写答案」示范卡，看过一次就都算看过（旧进度里看过任一个也算）
+test('秒答示范卡只出一次：看过任一个秒答技能的示范，其他秒答技能不再出', () => {
+  const demosOf = S => { const f = E.free(S, D(0), 'speed', {rnd: seeded(3)}), d = []; for (let x = f.next(), g = 0; x && g < 80; x = f.next(), g++) { if (x.kind === 'demo') d.push(x.skill); else if (x.kind === 'q') f.answer(ok); } return d; };
+  const A = C.blank(); A.placedAt = 1; A.demoSeen = {'speed:L1:1': true};
+  assert.deepEqual(demosOf(A), [], '旧进度看过 speed:L1:1');
+  const B = C.blank(); B.placedAt = 1;
+  const d = demosOf(B); assert.equal(d.length, 1, '新进度正好看一张：' + d);
+  assert.ok(E.demoDone(A, 'speed:L4:1') && !E.demoDone(A, 'bond3'), '只管秒答技能，别的技能照旧按自己记');
+});
+
+test('20 以内分合加前置凑十：旧进度里分合已点亮、凑十还灰，已点亮的题照常复习，等级不掉', () => {
+  const S = C.blank(); S.placedAt = 1; S.settings = S.settings || {};
+  const lit = K.BY.bondH3.items.map(it => it.id);
+  S.settings.levels = [...new Set(lit.flatMap(id => K.itemLevels(id)))];   // 打开这几道题所在的级别
+  lit.forEach(id => Object.assign(E.prog(S, id), {lv: 2, d: [D(-30), D(-20)], seen: 5, lastDay: D(-20)}));
+  assert.ok(K.BY.bond3.items.every(it => E.lv(S, it.id) === 0), '凑十还灰');
+  const asked = new Set(), f = E.session(S, D(0), {rnd: seeded(5)});
+  for (let x = f.next(), g = 0; x && g < 200; x = f.next(), g++) { if (x.kind === 'q') { asked.add(x.inst.id); f.answer(ok); } }
+  assert.ok(lit.some(id => asked.has(id)), '已点亮的 20 以内分合还会出来复习');
+  lit.forEach(id => assert.ok(E.lv(S, id) >= 2, id + ' 等级不掉'));
 });

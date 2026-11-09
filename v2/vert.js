@@ -14,15 +14,20 @@
   const BOARD = ['speed:g10:rem', 'speed:g10:quo', 'place:g10:thou', 'market:g10:conv', 'market:g10:span', 'dock:g10:remain', 'dock:g10:two', 'speed:g11:divrem',
     'dock:g11:perim', 'dock:g11:times', 'dock:g11:two', 'dock:g11:speed', 'dock:g11:part', 'speed:g12:dec', 'dock:g12:area', 'dock:g12:price', 'market:g12:24', 'market:g12:year',
     'speed:g13:order', 'place:g13:round', 'dock:g13:unit', 'dock:g13:speed', 'dock:g13:share', 'speed:g14:law', 'speed:g14:lawfill', 'speed:g14:dec2', 'speed:g14:move',
-    'dock:g14:avg', 'dock:g14:meet', 'dock:g14:tri', 'market:g14:unit', 'place:g15:lcm', 'place:g15:gcd', 'dock:g15:three', 'dock:g15:sumdiff', 'dock:g15:timessum', 'dock:g15:legs', 'dock:g15:age'];
+    'dock:g14:avg', 'dock:g14:meet', 'dock:g14:tri', 'market:g14:unit', 'place:g15:lcm', 'place:g15:gcd', 'dock:g15:three', 'dock:g15:sumdiff', 'dock:g15:timessum', 'dock:g15:legs', 'dock:g15:age',
+    // 中控 11-08：2a 看图题（线段图、条形图、长方形）和 2b-1 分数手写题也用蓝框，统一点「写好了」交卷；题面的图 / 上下结构分数放在版面上方
+    'dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum',
+    'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv'];
+  const FIG = ['bar', 'chart', 'rect'];   // 看图题：正确写法不重复题面（讲解里有算式）
   const OPS = {'+': '+', '−': '-', '-': '-', '×': '×', '÷': '÷'};
   // 答案格数：方框夹在数字中间（2.□、11.□8）就一格；否则比答案多一格（不泄露位数到个位）
   // maxLen：这个题型里最长的答案有几位（页面从题库算好传进来），格数按它定，不随这道题变，免得格子数泄露位数
   function board(inst, maxLen) {
     const q = inst.q || {}, text = String(q.text || ''), ans = inst.ans;
     if (!Number.isInteger(ans) || ans < 0) return null;
-    const inNum = /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
-    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, n: inNum ? 1 : len + 1};
+    // 小数加减写完整得数（q.dp = 小数位数，ans 是去掉小数点的整数）：答案格里印一个固定小数点，孩子不写点
+    const dp = q.dp > 0 ? q.dp : 0, inNum = !dp && /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
+    return {kind: STEP.includes(inst.id) ? 'step' : q.view === 'story' ? 'word' : FIG.includes(q.view) ? 'fig' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
   }
   const TAP_MS = 1500;   // 点「写好了」的时间，不算进用时
   function parse(inst, maxLen) {
@@ -228,32 +233,37 @@
         steps: S.lines.map((l, i) => ({show: [ids[i]], hi: [], say: `先算 ${S.why[i]}`, en: `First ${S.why[i].replace(/，/g, ', ')}`}))};
     }
     const box = v => `<b class="vfillv">${v}</b>`;
-    if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : p.ans)) : p.text.replace(/=\s*$/, '= ' + box(p.ans))}</div></div>`, steps: []};
+    const full = p.dp ? (p.ans / 10 ** p.dp).toFixed(p.dp) : p.ans;
+    if (p.kind === 'fill' && p.ahtml) return {html: `<div class="vls"><div>${p.ahtml}</div></div>`, steps: []};   // 页面传进来的整式（分数上下结构，render.js fr）
+    if (p.kind === 'fig') return {html: '', steps: []};
+    if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : full)) : p.text.replace(/=\s*$/, '= ' + box(full))}</div></div>`, steps: []};
     if (p.kind === 'word') return {html: '', steps: []};
     const B = build(p); return {html: renderB(B, all), steps: B.steps};
   }
   const worked = (p, en) => { const h = plan(p, true).html; return h ? `<div class="vwk"><h4>${en ? 'The right way' : '正确写法'}</h4>${h}</div>` : ''; };
 
   // ---------- 输入版面（手指尺寸，同原型） ----------
-  const LAB = {carry: ['进位<br>退位', 'Carry<br>Borrow'], carry1: ['进位', 'Carry'], ans: ['答案', 'Answer'], quo: ['商', 'Quotient'], draft: ['草稿', 'Work'],
+  const LAB = {carry1: ['进位', 'Carry'], borrow: ['退位', 'Borrow'], gap: ['中间空了一格', 'A box in the middle is empty'], ans: ['答案', 'Answer'], quo: ['商', 'Quotient'], draft: ['草稿', 'Work'],
     done: ['写好了', 'Done'], clear: ['擦一笔', 'Undo'], dunno: ['不会', "I don't know"], demo: ['看示范', 'Show me'], step: ['一步一步看', 'Step by step'],
     demoH: ['先看一遍怎么写', 'Watch how to write it'], go: ['我会了，开始写', 'Got it, let me write'], again: ['再看一遍', 'Watch again'], ex: ['例题', 'Example'], first: ['先看题', 'Look at the problem'],
     empty: ['在蓝框里写答案', 'Write the answer in the blue boxes'], unclear: ['这一格没看清，再写一次', "Couldn't read that box. Write it again"],
-    two: ['一格只写一个数', 'One digit in each box'], place: ['个位写在最右边的格子里', 'Write the ones digit in the rightmost box'], zero: ['最高位不写 0', "Don't write 0 in front"], same: ['这道题的写法', 'How to write this one']};
+    two: ['一格只写一个数', 'One digit in each box'], dpPlace: ['小数部分写在小数点后面的格子里', 'Write the decimal part in the boxes after the point'], place: ['个位写在最右边的格子里', 'Write the ones digit in the rightmost box'], zero: ['最高位不写 0', "Don't write 0 in front"], same: ['这道题的写法', 'How to write this one']};
   const L = (k, en) => LAB[k][en ? 1 : 0];
   const cells = n => Array.from({length: n}, () => '<div class="vcell"><canvas></canvas></div>').join('');
   const minis = n => Array.from({length: n}, () => '<div class="vmini"><canvas></canvas></div>').join('');
   const digs = (s, n) => Array(n - String(s).length).fill('').concat(String(s).split('')).map(d => `<div>${d}</div>`).join('');
   function layout(p, en) {
-    if (p.kind === 'step' || p.kind === 'fill' || p.kind === 'word') {
+    if (p.kind === 'step' || p.kind === 'fill' || p.kind === 'word' || p.kind === 'fig') {
       const rows = p.kind === 'step' ? [0, 1].map(() => `<div class="veq"><b>=</b><div class="vstrip vplain"><canvas></canvas></div></div>`).join('') : '';
       return `<div class="vboard vb-${p.kind}"><div class="vbq">${p.qhtml || ''}</div><div class="vcard">${rows}
         <div class="vrow" style="grid-template-columns:80px 1fr"><div class="vlab">${L('draft', en)}</div><div class="vgrid vstrip"><canvas></canvas></div></div>
-        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div><div style="display:grid;grid-template-columns:repeat(${p.n}, 96px);gap:8px">${cells(p.n)}</div></div></div></div>`;
+        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div>${p.dp
+          ? `<div style="display:grid;grid-template-columns:repeat(${p.n - p.dp}, 96px) 22px repeat(${p.dp}, 96px);gap:8px">${cells(p.n - p.dp)}<div class="vdotc"></div>${cells(p.dp)}</div>`
+          : `<div style="display:grid;grid-template-columns:repeat(${p.n}, 96px);gap:8px">${cells(p.n)}</div>`}</div></div></div>`;
     }
     if (p.kind === 'vert') {
       const n = Math.max(String(p.a).length, String(p.b).length) + (p.op === '+' ? 1 : 0), col = `80px repeat(${n}, 104px)`;
-      return `<div class="vcard"><div class="vrow" style="grid-template-columns:${col}"><div class="vlab">${L('carry', en)}</div>${minis(n)}</div>
+      return `<div class="vcard"><div class="vrow" style="grid-template-columns:${col}"><div class="vlab">${L(p.op === '+' ? 'carry1' : 'borrow', en)}</div>${minis(n)}</div>
         <div class="vrow vdig" style="grid-template-columns:${col}"><div></div>${digs(p.a, n)}</div>
         <div class="vrow vdig vline" style="grid-template-columns:${col}"><div>${p.op === '-' ? '−' : '+'}</div>${digs(p.b, n)}</div>
         <div class="vrow" style="grid-template-columns:${col};padding-top:10px"><div class="vlab">${L('ans', en)}</div>${cells(n)}</div></div>`;
@@ -280,10 +290,11 @@
     const f = read.findIndex(x => x !== '');
     if (f < 0) return {empty: true};
     let l = read.length - 1; while (read[l] === '') l--;
-    const body = read.slice(f, l + 1), text = body.map(x => (x === '' ? '_' : x.charAt(0) === '两' ? x.slice(1) || '?' : x)).join('');
+    const body = read.slice(f, l + 1), text = body.map(x => (x === '' ? '□' : x.charAt(0) === '两' ? x.slice(1) || '?' : x)).join('');
     // 竖式的答案格对着数位，个位必须在最右；递等式 / 填空 / 应用题的蓝框只是一排格子，靠左写也算（捣蛋鬼第 1 轮 P1）
-    const columns = p.kind === 'vert' || p.kind === 'mul' || p.kind === 'div';
-    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L('place', en) : '';
+    // 带固定小数点的蓝框（小数题）也按格对齐：小数部分要写到最右格，整数部分靠着小数点
+    const columns = p.kind === 'vert' || p.kind === 'mul' || p.kind === 'div' || p.dp > 0;
+    const tip = body.some(x => x.charAt(0) === '两') ? L('two', en) : body.includes('') ? L('gap', en) : body.length > 1 && body[0] === '0' ? L('zero', en) : columns && l < read.length - 1 ? L(p.dp > 0 ? 'dpPlace' : 'place', en) : '';
     return {ok: !tip && body.every(x => /^\d$/.test(x)) && text === String(p.ans), text, tip};
   }
 
@@ -315,14 +326,15 @@
 .vboard{width:1000px;display:flex;flex-direction:column;gap:14px}
 .vboard .vbq{font-size:30px;line-height:1.4;color:#f3f1ea;zoom:1.25}
 .vboard.vb-word .vbq{zoom:1.75}.vboard.vb-word .vgrid{height:220px}
-.vboard .vcard{padding:14px 24px}.vboard .vlab{font-size:22px}
+.vboard .vcard{padding:14px 24px}.vdotc{align-self:end;justify-self:center;width:16px;height:16px;border-radius:50%;background:#2b2920;margin-bottom:14px}.vboard .vlab{font-size:22px}
 .vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
 .vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}
 .vls{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:48px}.vls .vfillv{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;padding:0 6px;font-weight:400}
-.vq .vres{position:absolute;right:0;top:0;bottom:0;width:min(560px,100%);background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
+.vq .vres{position:absolute;right:0;top:0;bottom:0;width:55%;background:#1b1d22;border-left:3px solid #000;padding:14px 18px;display:flex;flex-direction:column;gap:10px;transform:translateX(105%);transition:transform .25s}
 .vq .vres.show{transform:none}
 .vq .vres .explain{color:#e6e3da}
-.vq .vres .vresc{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+#qplay #qWide .vq .vres .explain{display:flex;flex-direction:column;gap:8px;align-items:stretch}   /* 宽版讲解的两栏规则（index.html #qplay.wide #qWide .explain）不用在讲解栏里：看图题的图会被挤进 0 宽的一栏 */
+.vq .vres .vresc{flex:1;min-height:0;overflow-y:auto}.vq .vres .vresi{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .vq .vres .vresh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .vq .vres .vfoot{flex:none;display:flex;align-items:center;gap:12px}
 .vq .vres .vfoot #qNext{flex:1}.vq .vres .vfoot .qnote{flex:1;font-size:14px}
@@ -371,10 +383,20 @@
       <div class="vside"><button class="btn vdemoB"${DEMO[demoKey(p)] ? '' : ' style="visibility:hidden"'}>${L('demo', E)}</button><div style="flex:1"></div><div class="vnote"></div>
       <button class="big go vdone">${L('done', E)}</button><button class="big vclear">${L('clear', E)}</button><button class="big vdunno">${L('dunno', E)}</button></div></div>`;
     const box = host.querySelector('.vq'), area = box.querySelector('.varea'), fitEl = box.querySelector('.vfit'), note = box.querySelector('.vnote');
+    // 答错后右边滑出讲解栏：孩子自己写的竖式缩到左边留着，好对照（捣蛋鬼第 1 轮第 16 条）
+    const resEl = () => box.querySelector('.vres.show');
     const fitNow = () => {
       fitEl.style.transform = '';
-      const k = Math.min(1.15, (area.clientWidth - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
-      fitEl.style.transform = `translate(${Math.max(0, (area.clientWidth - fitEl.offsetWidth * k) / 2)}px,${Math.max(0, (area.clientHeight - fitEl.offsetHeight * k) / 2)}px) scale(${k})`;
+      const rv = resEl(), w = area.clientWidth - (rv ? rv.offsetWidth : 0);
+      const k = Math.min(1.15, (w - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
+      fitEl.style.transform = `translate(${Math.max(0, (w - fitEl.offsetWidth * k) / 2)}px,${Math.max(0, (area.clientHeight - fitEl.offsetHeight * k) / 2)}px) scale(${k})`;
+      fitRes();
+    };
+    // 讲解栏放不下（iPad App 932×651）：整体按比例缩小，不用滑（捣蛋鬼第 1 轮第 7 条）；缩到 0.6 还放不下才允许滑
+    const fitRes = () => {
+      const rv = resEl(), c = rv && rv.querySelector('.vresc'), i = c && c.querySelector('.vresi'); if (!i) return;
+      i.style.zoom = ''; const k = Math.min(1, c.clientHeight / i.offsetHeight, c.clientWidth / i.scrollWidth);
+      if (k < 1) i.style.zoom = String(Math.max(0.6, Math.floor(k * 100) / 100));
     };
     if (root.I18N && root.I18N.flush) root.I18N.flush();   // 英文日先翻好再量尺寸（英文题面更长）
     fitNow();
@@ -402,11 +424,13 @@
       result(top, explainHtml, onStep) {
         const r = box.querySelector('.vres'), E2 = en();
         const can = plan(p).steps.length > 0;
-        r.innerHTML = `<div class="vresc"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div><div class="vfoot"></div>`;
+        r.innerHTML = `<div class="vresc"><div class="vresi"><div class="vresh">${top}${can ? `<button class="btn vstep">${L('step', E2)}</button>` : ''}</div>${worked(p, E2)}${explainHtml || ''}</div></div><div class="vfoot"></div>`;
         if (can) r.querySelector('.vstep').onclick = onStep;
-        r.classList.add('show');
+        box.querySelector('.vside').style.display = 'none';   // 答完右边按钮用不上了，让出地方给讲解栏和孩子的竖式
+        r.classList.add('show'); if (root.I18N && root.I18N.flush) root.I18N.flush(); fitNow();   // 英文日先翻好再量
         return r.querySelector('.vfoot');
       },
+      refit() { if (root.I18N && root.I18N.flush) root.I18N.flush(); fitNow(); },
       destroy() { root.removeEventListener('resize', onR); if (ro) ro.disconnect(); clearTimeout(demoT); },
     };
   }

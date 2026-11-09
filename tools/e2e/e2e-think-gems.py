@@ -1,5 +1,5 @@
 # 思维地点答对给碎片、算有效时间（宝石规则 10.2，中控 11-08）。用法：python3 tools/e2e/e2e-think-gems.py <项目根> <截图目录>
-# 做对：+1 个金色小碎片、有效时间增加；「不会」：不给；同一题当天再做：普通小碎片；口答模式不给
+# 做对：+1 个金色小碎片、有效时间增加；「不会」：不给；同一题当天再做：普通小碎片；口答模式也给（Ben 11-08）
 import sys, json, pathlib
 from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
@@ -40,9 +40,12 @@ with sync_playwright() as p:
     pg.wait_for_timeout(1700); i3 = inv(pg)
     tap(pg, '#dunno'); pg.wait_for_timeout(300)
     check(inv(pg) == i3, '点「不会」：不给碎片')
-    # 口答模式：不给
-    pg.evaluate("__sm.S.oral = true"); pg.click(T + '#cont'); pg.wait_for_timeout(400); i4 = inv(pg); solve(pg); pg.wait_for_timeout(300)
-    check(inv(pg) == i4, '口答模式：不给碎片')
+    # 口答模式：也给（Ben 11-08：所有题都有激励）
+    pg.wait_for_timeout(700)   # 「不会」后有 0.5 秒防连点，太快点「继续」会被挡掉、题目不换（原来这里查「不给」，被挡掉也会误报通过）
+    pg.evaluate("__sm.S.oral = true"); pg.click(T + '#cont'); pg.wait_for_timeout(700); i4 = inv(pg)
+    check(not pg.evaluate('__sm.TH.G.done'), '换到新题了')
+    solve(pg); pg.wait_for_timeout(300)
+    check(pg.evaluate('__sm.TH.G.got') and sum(inv(pg).values()) > sum(i4.values()), '口答模式：也给碎片')
     # 试错后才对：普通小碎片（同练习页「答错后改对」）
     pg.evaluate("__sm.S.oral = false"); pg.wait_for_timeout(1900)   # 做对后 1.5 秒自动进下一题
     pg.evaluate("(()=>{const c=document.querySelector('#think #cont'); if (c) c.click();})()"); pg.wait_for_timeout(400); i5 = inv(pg)
