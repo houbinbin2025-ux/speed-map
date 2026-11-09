@@ -250,6 +250,7 @@
     const b = c && c.$('btnForge'); if (!b) return;
     b.hidden = !on || !c.canWrite(); if (b.hidden) return;
     c.$('forgeIco').src = gemURL(); c.$('forgeN').textContent = (st.days[c.today()] || {}).forged || 0;
+    b.classList.toggle('spent', !G.forgeLeft(st, c.today()));   // 今天 5 次用完：按钮变暗，点了只提示明天再来
   }
   function parentStats() {
     if (!on) return '';
@@ -436,7 +437,21 @@
 
   // ---------- 锻造台：炉子里不显示合计，要自己算 ----------
   let busy = false, hold = 0;
-  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; mode = 'gem'; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene(); }
+  // 锻造室每天只能进 5 次（Ben 11-09）：进门就算一次；用完了不进门，在当前页面提示明天再来
+  function openForge(from) {
+    if (!on || !c.canWrite()) return;
+    const r = G.forgeEnter(st, c.today());
+    if (!r.ok) { toast(`今天的 ${G.FORGE_DAY} 次锻造已用完，明天再来`); islandBtn(); return; }
+    save(); back = from || 'island'; slots = []; msg = ''; mode = 'gem'; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene();
+    toast(r.left ? `今天还可进入锻造室 ${r.left} 次` : '这是今天最后一次进入锻造室', true); islandBtn();
+  }
+  // 顶部居中的短提示，2.5 秒后消失（锻造次数用）
+  let toastT = 0;
+  function toast(text, mid) {   // mid：锻造室里放在中间（刚进门炉子格子是空的），不盖住上面的「炼宝石 / 炼大碎片」
+    let el = document.getElementById('gemToast');
+    if (!el) { el = document.createElement('div'); el.id = 'gemToast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = text; el.classList.toggle('mid', !!mid); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 2500);
+  }
   function setMode(m) { if (busy || m === mode) return; mode = m; slots = []; msg = ''; blip([[440, 0, 0.05]]); draw(); }
   const slotN = () => (mode === 'big' ? G.BIG_SLOTS : G.SLOTS);
   const placed = t => slots.filter(x => x === t).length;
@@ -542,6 +557,7 @@
     $('forgeMsg').textContent = msg;
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span><span class="ft14">近 ${G.RECENT_DAYS} 天 ${G.recentForged(st, today) - hold}</span>`;
+    const fl = G.forgeLeft(st, today), fe = $('forgeLeft'); if (fe) fe.textContent = fl ? `今天还可进入 ${fl} 次` : '今天最后一次进入';   // 锻造每天 5 次（Ben 11-09）
     const b = $('forgeClaim');
     b.hidden = !c.canClaim || !items || hold > 0; const keep = G.jarWant(st, today); b.textContent = !left ? '再领一次' : keep ? (left > keep ? `留 ${keep} 颗给伙伴罐，领 ${left - keep} 颗` : `留 ${keep} 颗给伙伴罐`) : `领 ${left} 颗宝石`;
     b.classList.toggle('go', left > 0);

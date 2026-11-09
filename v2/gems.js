@@ -33,6 +33,15 @@
   const blank = () => ({v: 1, inv: {a: 0, b: 0, g: 0, s: 0, m: 0, h: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
+  // 锻造室每天只能进 FORGE_DAY 次（Ben 11-09：少在锻造室里耗时间）。每次进门算一次，进了不炼也算；次数记 st.days[日].fin，合并按天取大
+  const FORGE_DAY = 5;
+  const finOf = (st, day) => { const v = +((st.days[day] || {}).fin); return v > 0 ? Math.floor(v) : 0; };
+  const forgeLeft = (st, day) => Math.max(0, FORGE_DAY - finOf(st, day));
+  function forgeEnter(st, day) {
+    if (!forgeLeft(st, day)) return {ok: false, left: 0};
+    const D = dayOf(st, day); D.fin = finOf(st, day) + 1;
+    return {ok: true, left: forgeLeft(st, day)};
+  }
 
   // 没存过 → 空白；损坏 → null（调用方用副本恢复，不能当空白覆盖）
   const isObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
@@ -447,6 +456,6 @@
     return got;
   }
 
-  return {placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {FORGE_DAY, forgeLeft, forgeEnter, placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });
