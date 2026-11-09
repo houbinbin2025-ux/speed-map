@@ -2,12 +2,15 @@
 # 入口只在 iPad App 里（ios/world-entry.js 打包时插进页面）：这里把它注进岛首页查——
 # 透明度 0.5、没有动画和阴影、旁边没有「可玩 N 分钟」状态条、热区 68×68、点了跳去 world/index.html；手机和 iPad 尺寸 × 中英文。
 # 用法：python3 tools/e2e/e2e-worldentry.py <项目根> <截图目录> [入口脚本，默认 ios/world-entry.js]
+#      加 --app：查打包后的 App 页面 ios/web/index.html（先 bash ios/sync-web.sh），模拟 App 环境，入口由打包注入
 import sys, json, pathlib, datetime
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
-entry = pathlib.Path(sys.argv[3]) if len(sys.argv) > 3 else root / 'ios' / 'world-entry.js'
-url = (root / 'v2' / 'index.html').as_uri() + '#test'
+APPMODE = '--app' in sys.argv; args = [a for a in sys.argv[3:] if a != '--app']
+entry = pathlib.Path(args[0]) if args else root / 'ios' / 'world-entry.js'
+url = (root / 'ios' / 'web' / 'index.html').as_uri() if APPMODE else (root / 'v2' / 'index.html').as_uri() + '#test'
+APP = "window.webkit = { messageHandlers: { backup: { postMessage() {} } } }; window.__kongK = () => 1;"   # 同 e2e-world-time.py
 fails, errs = [], []
 def check(ok, msg):
     if not ok: fails.append(msg)
@@ -18,11 +21,14 @@ with sync_playwright() as p:
             name = f'{W}x{H}-{"en" if en else "zh"}'
             kw = {'viewport': {'width': W, 'height': H}}
             if scr: kw['screen'] = {'width': scr[0], 'height': scr[1]}
-            pg = b.new_page(**kw); pg.on('pageerror', lambda e: errs.append(str(e)))
+            pg = b.new_page(**kw); pg.on('pageerror', lambda e: None if 'pointer lock' in str(e).lower() else errs.append(str(e)))
+            if APPMODE: pg.add_init_script(APP)
             day = (0 if datetime.date.today().day % 2 == 1 else 1) if en else 0
             seed = {'v': 2, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'placedAt': 1, 'known': {}, 'settings': {'bilingual': en}, 'testDays': day}
-            pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(600)
-            pg.add_script_tag(path=str(entry)); pg.wait_for_timeout(400)
+            key = 'speedmap.v2' if APPMODE else 'speedmap.v2.test'
+            pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('{key}', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(800)
+            if not APPMODE: pg.add_script_tag(path=str(entry))
+            pg.wait_for_timeout(400)
             r = pg.evaluate("""(() => { const b = document.getElementById('worldEntry'); if (!b) return null; const c = getComputedStyle(b), r = b.getBoundingClientRect();
               return {op: +c.opacity, anim: c.animationName, shadow: c.boxShadow, run: b.getAnimations({subtree: true}).length, w: r.width, h: r.height, x: r.left, y: r.top,
                 chip: !!document.getElementById('worldChip') && getComputedStyle(document.getElementById('worldChip')).display !== 'none',
@@ -36,7 +42,7 @@ with sync_playwright() as p:
             check(not r['badge'], f'{name}：入口上有角标 / 红点')
             check(r['w'] >= 68 and r['h'] >= 68, f"{name}：热区缩小了 {r['w']}x{r['h']}")
             check(r['hit'], f'{name}：入口中心点不到（被别的东西挡住）')
-            pg.screenshot(path=str(out / f'{name}-island.png'))
+            pg.screenshot(path=str(out / f'{name}{"-app" if APPMODE else ""}-island.png'))
             reqs = []; pg.on('request', lambda q: reqs.append(q.url))
             pg.click('#worldEntry'); pg.wait_for_timeout(500)
             check(any(u.split('#')[0].endswith('/world/index.html') for u in reqs) or pg.url.split('#')[0].endswith('/world/index.html'), f'{name}：点了没跳去方块世界 {reqs[-3:]}')
