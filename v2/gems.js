@@ -29,7 +29,7 @@
     h0: 0.85, hUp: 0.03, hDown: 0.07, hMin: 0.5, hMax: 1.1, stretch: 0.25,   // 难度：赢了略难、输了略易，稳定在约 70% 完成（0.03 ÷ 0.1 = 30% 完不成）；稍难题比例
     restAt: 1800, restSec: 300, restGrace: 30,   // 连续有效学习 30 分钟：30 秒内结束，休息 5 分钟
   };
-  const BOLT = 0.6, BOLT_DAY = 20;   // 闪电秒答：用时不到秒答时间的 60%，多得 1 个中碎片，一天最多 20 个（小碎片单独炼不出宝石，给小的等于没奖励）
+  const BOLT = 0.6, BOLT_DAY = 10;   // 闪电秒答：多得 1 个中碎片，一天最多 10 个（11-09 由 20 降到 10：空空一天答约 100 题，闪电改成「比自己平时快很多」后仍天天顶到 20，见 B 的秒答时间校准）。判法在 skills.js K.boltMs；BOLT 只在技能样本不够、老流程（Boss）里用：用时不到秒答时间的 60%（小碎片单独炼不出宝石，给小的等于没奖励）
   const blank = () => ({v: 1, inv: {a: 0, b: 0, g: 0, s: 0, m: 0, h: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());

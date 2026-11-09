@@ -47,7 +47,7 @@ test('每道题每天只有第一次作答算数；错了当天再做不给，�
   assert.deepEqual(ans(st, {day: '2026-11-07', top: 99}), ['b']);
 });
 
-test('秒答不再多给小碎片（第 10.1 版）；闪电多 1 份中碎片，一天最多 20 次；倍数跟这一题一样', () => {
+test('秒答不再多给小碎片（第 10.1 版）；闪电多 1 份中碎片，一天最多 BOLT_DAY（10）次；倍数跟这一题一样', () => {
   const st = G.blank();
   assert.deepEqual(G.speedBonus(st, DAY, false), {extra: [], bolt: false});
   for (let i = 0; i < G.BOLT_DAY; i++) assert.deepEqual(G.speedBonus(st, DAY, true), {extra: ['m'], bolt: true});
@@ -575,3 +575,4 @@ test('伙伴罐：删旧日子时一起删 moved；存读不丢', () => {
   for (let i = 1; i <= 15; i++) st.days[jarDay(i)] = {forged: 1, ok: 1, n: 1};   // 记录只留最近 14 天
   G.prune(st, jarDay(15)); assert.equal(st.days[d], undefined); assert.equal(st.palJar.moved[d], undefined); assert.equal(st.palJar.bal, 2, '罐不过期');
 });
+test('闪电一天最多 10 次（11-09 由 20 降到 10，配合 B 的「比自己平时快很多」判法）', () => { assert.equal(G.BOLT_DAY, 10); });
