@@ -82,7 +82,7 @@ function childHtml() {
   let h = read('../v2/index.html');
   h = h.slice(h.indexOf('<body'), h.indexOf('<!-- 改了 core'));
   const cut = id => { const i = h.indexOf(`id="${id}"`); if (i < 0) throw new Error('页面没有 ' + id); const start = h.lastIndexOf('<', i); let depth = 0; const re = /<(\/?)div\b[^>]*>/g; re.lastIndex = start; let m; while ((m = re.exec(h))) { depth += m[1] ? -1 : 1; if (!depth) { h = h.slice(0, start) + h.slice(m.index + m[0].length); return; } } throw new Error('没配平 ' + id); };
-  ['parent', 'bankv', 'habit', 'ovQ', 'ovCrash', 'testBar'].forEach(cut);
+  ['parent', 'bankv', 'habit', 'mistp', 'ovQ', 'ovCrash', 'testBar'].forEach(cut);
   return h.replace(/<!--[\s\S]*?-->/g, '');
 }
 test('页面静态文字（家长区除外）都有英文', () => {
