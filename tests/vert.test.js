@@ -72,10 +72,13 @@ test('版面和示范的文字中英都有；答案格数由题目定（不随�
 });
 
 // 递等式 / 填空 / 应用题（Ben 11-08「做完上线」）
-const BALL = V.BOARD.flatMap(poolOf);
+const CELLS = ['speed:g10:divrem2', 'speed:g15:mixed'];   // 2b-2 一题几个空：MULTI_CELL 打开才登记（A 的开关）
+const BON = V.BOARD.filter(id => K.ITEM[id]);   // 登记了的蓝框题型（关掉时不含 2b-2）
+const BALL = BON.flatMap(poolOf).filter(i => !(i.q && i.q.cells));
 const maxLen = id => Math.max(...poolOf(id).map(x => String(x.ans).length));
 test('三四年级手写题（含 2a 看图题、2b-1 分数题，11-08 起）都用 iPad 版面；格数：方框夹在数字里一格，否则按这个题型最长答案多一格（同一题型格数不变）', () => {
-  V.BOARD.forEach(id => assert.ok(poolOf(id).length > 10, id));
+  assert.deepEqual(V.BOARD.filter(id => !K.ITEM[id]), K.MULTI_CELL ? [] : CELLS, '没登记的只能是 2b-2（开关关着时）');
+  BON.forEach(id => assert.ok(poolOf(id).length > 10, id));
   const seen = {};
   BALL.forEach(i => {
     const p = V.parse(i, maxLen(i.id)); assert.ok(p, i.id);
@@ -171,4 +174,25 @@ test('分数题和看图题都进蓝框：分数按填空、看图题按看图�
   const x = K.rawPool('speed:g12:fracadd')[0], p = V.parse({id: 'speed:g12:fracadd', q: x.q, ans: x.ans}, 2);
   p.noWorked = true; assert.equal(V.worked(p, false), '', '分数题不再重复一张正确写法');
   assert.ok(R.hasFr('2/4 − 1/4 = □/4') && !R.hasFr('3 / 10 题'));
+});
+
+// 2b-2 一题几个空（B 方案 §6）：答案按 q.cells 分组，每组格数 = 这一格位数 + 1，组之间印「余」「又」；逐组读，组内靠左靠右都算；空一组提示不判
+test('2b-2 多格蓝框：每道题分组、格数、组间字；判对 / 一组错 / 组内靠左 / 空一组 / 一组写两位；正确写法按格填', { skip: !K.MULTI_CELL }, () => {
+  CELLS.forEach(id => poolOf(id).forEach(i => {
+    const p = V.parse(i, 0), a = String(i.ans), parts = V.cellParts(p);
+    assert.deepEqual(p.groups, i.q.cells.map(c => c + 1), i.q.text); assert.equal(p.n, p.groups.reduce((x, y) => x + y, 0));
+    assert.equal(parts.join(''), a); assert.equal(p.seps[0], id === 'speed:g10:divrem2' ? '余' : '又');
+    const h = V.layout(p, false); assert.equal((h.match(/class="vcell"/g) || []).length, p.n); assert.ok(h.includes(`<div class="vsep">${p.seps[0]}</div>`));
+    assert.ok(V.layout(p, true).includes(`<div class="vsep">${id === 'speed:g10:divrem2' ? 'R' : 'and'}</div>`), '英文日组间字');
+    const right = [].concat(...parts.map((x, k) => x.padStart(p.groups[k], '').padStart(p.groups[k], ' ').split('').map(c => (c === ' ' ? '' : c))));
+    assert.ok(V.judge(right, p).ok, i.q.text + ' 靠右写对');
+    assert.deepEqual(V.want(p).map(c => (c === ' ' ? '' : c)), right);
+    const left = [].concat(...parts.map((x, k) => (x + ' '.repeat(p.groups[k] - x.length)).split('').map(c => (c === ' ' ? '' : c))));
+    assert.ok(V.judge(left, p).ok, '组内靠左也算');
+    const bad = right.slice(); const li = bad.length - 1; bad[li] = String((+bad[li] % 9) + 1); assert.equal(V.judge(bad, p).ok, false, '一组错');
+    const gap = right.map((c, k) => (k >= p.groups[0] ? '' : c)); assert.deepEqual(V.judge(gap, p), {empty: true, note: '还有一个答案没写'});
+    assert.ok(V.plan(p, true).html.includes(`<b class="vfillv">${parts[0]}</b>`) || p.kind !== 'fill');
+  }));
+  const p = V.parse({id: 'speed:g10:divrem2', q: {text: '16 ÷ 5 = □ 余 □', cells: [1, 1]}, ans: 31}, 0);
+  const j = V.judge(['3', '1', '', '1'], p); assert.equal(j.ok, false); assert.equal(j.text, '31 余 1', '孩子写的按组显示，不按格切');
 });

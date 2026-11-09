@@ -997,7 +997,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v156:01f23c390a8e -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v158:9c45dfc08917 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1007,26 +1007,26 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=156"></script>
-<script src="i18n.js?v=156"></script>
-<script src="bank.js?v=156"></script>
-<script src="hardbank.js?v=156"></script>
-<script src="placebank.js?v=156"></script>
-<script src="core.js?v=156"></script>
-<script src="ink.js?v=156"></script>
-<script src="skills.js?v=156"></script>
-<script src="engine.js?v=156"></script>
-<script src="render.js?v=156"></script>
-<script src="world.js?v=156"></script>
-<script src="home.js?v=156"></script>
-<script src="puzzles.js?v=156"></script>
-<script src="thinking.js?v=156"></script>
-<script src="house.js?v=156"></script>
-<script src="kongmine.js?v=156"></script>
-<script src="gems.js?v=156"></script>
-<script src="gemui.js?v=156"></script>
-<script src="vert.js?v=156"></script>
-<script src="mistview.js?v=156"></script>
+<script src="touchfix.js?v=158"></script>
+<script src="i18n.js?v=158"></script>
+<script src="bank.js?v=158"></script>
+<script src="hardbank.js?v=158"></script>
+<script src="placebank.js?v=158"></script>
+<script src="core.js?v=158"></script>
+<script src="ink.js?v=158"></script>
+<script src="skills.js?v=158"></script>
+<script src="engine.js?v=158"></script>
+<script src="render.js?v=158"></script>
+<script src="world.js?v=158"></script>
+<script src="home.js?v=158"></script>
+<script src="puzzles.js?v=158"></script>
+<script src="thinking.js?v=158"></script>
+<script src="house.js?v=158"></script>
+<script src="kongmine.js?v=158"></script>
+<script src="gems.js?v=158"></script>
+<script src="gemui.js?v=158"></script>
+<script src="vert.js?v=158"></script>
+<script src="mistview.js?v=158"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, $ = id => document.getElementById(id);
@@ -1759,7 +1759,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // 拿不准的格同写字板（ink.js resolveWith）：只有把它们换成答案要的数字后整串正好等于答案才按答案认，按答案认的格不存字模
   function vertDone() {
     if (guarded() || !Q || Q.phase !== 'q' || Q.vdemo || !Q.vc) return;
-    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = String(inst.ans).padStart(n, ' ');
+    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = VERT.want(Q.v.vp);   // 每格期望的数（多格按组靠右）
     const recs = strokes.map(st => {
       if (!st.length) return {t: ''};
       const res = I.recognize(st, INKS);
@@ -1774,10 +1774,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     }
     const j = VERT.judge(recs.map(r => r.t), Q.v.vp, I18N.on), L = k => VERT.LAB[k][I18N.on ? 1 : 0];
     if (j.retry) { tapGuard = performance.now() + 500; Q.vc.clearCells(recs.map(r => r.t === '?')); Q.vc.note(L('unclear')); return; }
-    if (j.empty) { Q.vc.note(L('empty')); return; }
+    if (j.empty) { Q.vc.note(j.note || L('empty')); return; }   // 多格：有一组空着，提示不判
     Q.ms = Math.max(0, performance.now() - Q.t0 - VERT.TAP_MS);
     if (j.ok) { recs.forEach(r => { if (r.d && r.d.sure && !r.byAns) I.addTemplate(INKS, r.t, r.d.strokes); }); saveInk(); }
-    Q.vtip = j.tip; Q.vc.mark(j.ok); Q.vc.done();
+    Q.vtip = j.tip; Q.vc.mark(j.ok || j.tip || !j.cellOk ? j.ok : j.cellOk); Q.vc.done();   // 多格：错的那组标红、对的组标绿
     resolve({ok: j.ok, fast: j.ok && Q.ms <= qLimit(inst), typed: j.text});
   }
   // 看数：图案闪现 flashMs 后消失，用 requestAnimationFrame 记真实显示时长；「再看一次」再闪一遍，这题不点亮

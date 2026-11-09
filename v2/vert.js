@@ -19,7 +19,9 @@
     'dock:g7:bar', 'dock:g8:chart', 'place:g8:side', 'dock:g9:chart2', 'dock:g9:times', 'dock:g9:sumtimes', 'dock:g10:chart5', 'dock:g11:perim2', 'place:g12:area2', 'dock:g15:barsum',
     'dock:g11:fracbar', 'speed:g12:fracadd', 'speed:g15:equiv',
     // 第三批趣味题（中控 11-09）：数塔、幻方、植树 / 锯木头（题面有图）、算式谜（方框夹在数字里，一格）、猜数（纯文字，同应用题）
-    'garden:g4:pyr', 'garden:g7:pyr2', 'garden:g7:magic', 'dock:g5:tree', 'dock:g5:saw', 'dock:g7:tree2', 'dock:g9:tree3', 'dock:g7:cipher', 'dock:g7:riddle', 'dock:g9:riddle2'];
+    'garden:g4:pyr', 'garden:g7:pyr2', 'garden:g7:magic', 'dock:g5:tree', 'dock:g5:saw', 'dock:g7:tree2', 'dock:g9:tree3', 'dock:g7:cipher', 'dock:g7:riddle', 'dock:g9:riddle2',
+    // 2b-2 一题几个空（B 方案 §6，MULTI_CELL 打开才登记）：答案按 q.cells 分组，组之间印题面的字（余、又）
+    'speed:g10:divrem2', 'speed:g15:mixed'];
   const FIG = ['bar', 'chart', 'rect', 'pyr', 'magic', 'trees'], WORD = ['story', 'riddle'];   // 看图题：正确写法不重复题面（讲解里有算式）
   const OPS = {'+': '+', '−': '-', '-': '-', '×': '×', '÷': '÷'};
   // 答案格数：方框夹在数字中间（2.□、11.□8）就一格；否则比答案多一格（不泄露位数到个位）
@@ -29,7 +31,12 @@
     if (!Number.isInteger(ans) || ans < 0) return null;
     // 小数加减写完整得数（q.dp = 小数位数，ans 是去掉小数点的整数）：答案格里印一个固定小数点，孩子不写点
     const dp = q.dp > 0 ? q.dp : 0, inNum = !dp && /[\d.]□|□[\d.]/.test(text), len = Math.max(String(ans).length, maxLen || 0);
-    return {kind: STEP.includes(inst.id) ? 'step' : WORD.includes(q.view) ? 'word' : FIG.includes(q.view) ? 'fig' : 'fill', law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
+    const kind = STEP.includes(inst.id) ? 'step' : WORD.includes(q.view) ? 'word' : FIG.includes(q.view) ? 'fig' : 'fill';
+    if (Array.isArray(q.cells) && q.cells.length > 1) {   // 多格：每组格数 = 这一格的位数 + 1（不泄露位数）；seps = 组之间的字，tail = 最后一组后面（带分数的 /6）
+      const parts = text.split('□'), seps = parts.slice(1, -1).map(t => t.replace(/\/\d+\s*$/, '').trim()), tail = (parts[parts.length - 1].match(/^\s*(\/\d+)/) || [])[1] || '';
+      return {kind, ans, text, inNum: false, dp: 0, cells: q.cells.slice(), groups: q.cells.map(c => c + 1), seps, tail, n: q.cells.reduce((a, c) => a + c + 1, 0)};
+    }
+    return {kind, law: inst.id === 'speed:g14:law', ans, text, inNum, dp, n: inNum ? 1 : len + 1};
   }
   const TAP_MS = 1500;   // 点「写好了」的时间，不算进用时
   function parse(inst, maxLen) {
@@ -238,10 +245,14 @@
     const full = p.dp ? (p.ans / 10 ** p.dp).toFixed(p.dp) : p.ans;
     if (p.kind === 'fill' && p.noWorked) return {html: '', steps: []};   // 分数题：讲解里已经是上下结构的整式，不再重复一张「正确写法」（E 核对第 5 条）
     if (p.kind === 'fig') return {html: '', steps: []};
+    if (p.kind === 'fill' && p.cells) { const pt = cellParts(p); let k = 0; return {html: `<div class="vls"><div>${p.text.replace(/□/g, () => box(pt[k++]))}</div></div>`, steps: []}; }
     if (p.kind === 'fill') return {html: `<div class="vls"><div>${p.text.includes('□') ? p.text.replace('□', box(p.inNum ? String(p.ans).slice(-1) : full)) : p.text.replace(/=\s*$/, '= ' + box(full))}</div></div>`, steps: []};
     if (p.kind === 'word') return {html: '', steps: []};
     const B = build(p); return {html: renderB(B, all), steps: B.steps};
   }
+  // 多格：答案按 cells 切开；每格对应的期望读数（组内靠右，前面空），用答案定夺两可笔迹时用
+  const cellParts = p => { const s = String(p.ans), out = []; let i = 0; p.cells.forEach(c => { out.push(s.slice(i, i + c)); i += c; }); return out; };
+  const want = p => (p.cells ? [].concat(...cellParts(p).map((x, k) => x.padStart(p.groups[k], ' ').split(''))) : String(p.ans).padStart(p.n, ' ').split(''));
   const worked = (p, en) => { const h = plan(p, true).html; return h ? `<div class="vwk"><h4>${en ? 'The right way' : '正确写法'}</h4>${h}</div>` : ''; };
 
   // ---------- 输入版面（手指尺寸，同原型） ----------
@@ -249,8 +260,9 @@
     done: ['写好了', 'Done'], clear: ['擦一笔', 'Undo'], dunno: ['不会', "I don't know"], demo: ['看示范', 'Show me'], step: ['一步一步看', 'Step by step'],
     demoH: ['先看一遍怎么写', 'Watch how to write it'], go: ['我会了，开始写', 'Got it, let me write'], again: ['再看一遍', 'Watch again'], ex: ['例题', 'Example'], first: ['先看题', 'Look at the problem'],
     empty: ['在蓝框里写答案', 'Write the answer in the blue boxes'], unclear: ['这一格没看清，再写一次', "Couldn't read that box. Write it again"],
-    two: ['一格只写一个数', 'One digit in each box'], dpPlace: ['小数部分写在小数点后面的格子里', 'Write the decimal part in the boxes after the point'], place: ['个位写在最右边的格子里', 'Write the ones digit in the rightmost box'], zero: ['最高位不写 0', "Don't write 0 in front"], same: ['这道题的写法', 'How to write this one']};
+    two: ['一格只写一个数', 'One digit in each box'], cellEmpty: ['还有一个答案没写', 'One answer is still empty'], dpPlace: ['小数部分写在小数点后面的格子里', 'Write the decimal part in the boxes after the point'], place: ['个位写在最右边的格子里', 'Write the ones digit in the rightmost box'], zero: ['最高位不写 0', "Don't write 0 in front"], same: ['这道题的写法', 'How to write this one']};
   const L = (k, en) => LAB[k][en ? 1 : 0];
+  const SEP_EN = {余: 'R', 又: 'and'}, sepWord = (w, en) => (en && SEP_EN[w]) || w || '';
   const cells = n => Array.from({length: n}, () => '<div class="vcell"><canvas></canvas></div>').join('');
   const minis = n => Array.from({length: n}, () => '<div class="vmini"><canvas></canvas></div>').join('');
   const digs = (s, n) => Array(n - String(s).length).fill('').concat(String(s).split('')).map(d => `<div>${d}</div>`).join('');
@@ -259,7 +271,9 @@
       const rows = p.kind === 'step' ? [0, 1].map(() => `<div class="veq"><b>=</b><div class="vstrip vplain"><canvas></canvas></div></div>`).join('') : '';
       return `<div class="vboard vb-${p.kind}"><div class="vbq">${p.qhtml || ''}</div><div class="vcard">${rows}
         <div class="vrow" style="grid-template-columns:80px 1fr"><div class="vlab">${L('draft', en)}</div><div class="vgrid vstrip"><canvas></canvas></div></div>
-        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div>${p.dp
+        <div class="vrow" style="grid-template-columns:80px auto;justify-content:start;padding-top:8px"><div class="vlab">${L('ans', en)}</div>${p.cells
+          ? `<div class="vgroups" style="display:flex;align-items:center;gap:14px">${p.groups.map((g, k) => (k ? `<div class="vsep">${sepWord(p.seps[k - 1], en)}</div>` : '') + `<div style="display:grid;grid-template-columns:repeat(${g}, 96px);gap:8px">${cells(g)}</div>`).join('')}${p.tail ? `<div class="vsep">${p.tail}</div>` : ''}</div>`
+          : p.dp
           ? `<div style="display:grid;grid-template-columns:repeat(${p.n - p.dp}, 96px) 22px repeat(${p.dp}, 96px);gap:8px">${cells(p.n - p.dp)}<div class="vdotc"></div>${cells(p.dp)}</div>`
           : `<div style="display:grid;grid-template-columns:repeat(${p.n}, 96px);gap:8px">${cells(p.n)}</div>`}</div></div></div>`;
     }
@@ -289,6 +303,17 @@
   // 个位要写在最右边那格：写对了数字但整体往左挪了，提示「个位写在最右边的格子里」
   function judge(read, p, en) {
     if (read.includes('?')) return {retry: true};
+    if (p.cells) {   // 多格：逐组读（组内是一排格子，靠左写也算）；有一组空着：提示，不判；拼起来比 ans，且每组位数对上
+      if (read.every(x => x === '')) return {empty: true};
+      let i = 0; const gs = p.groups.map(g => { const r = read.slice(i, i + g); i += g; return judge(r, Object.assign({}, p, {cells: null, kind: 'fill', dp: 0, ans: -1}), en); });
+      if (gs.some(g => g.retry)) return {retry: true};
+      if (gs.some(g => g.empty)) return {empty: true, note: L('cellEmpty', en)};
+      const tip = (gs.find(g => g.tip) || {}).tip || '', parts = gs.map(g => g.text);
+      const ok = !tip && parts.every((x, k) => /^\d+$/.test(x) && x.length === p.cells[k]) && parts.join('') === String(p.ans);
+      // 孩子写的按组显示（31 余 1、2 又 5/6），不按 cells 切，免得一组写两位时少显示一位
+      const want = cellParts(p), cellOk = [].concat(...p.groups.map((g, k) => Array(g).fill(parts[k] === want[k])));
+      return {ok, text: parts.map((x, k) => (k ? ` ${sepWord(p.seps[k - 1], en)} ` : '') + x).join('') + p.tail, tip, groups: parts, cellOk};
+    }
     const f = read.findIndex(x => x !== '');
     if (f < 0) return {empty: true};
     let l = read.length - 1; while (read[l] === '') l--;
@@ -300,7 +325,7 @@
     return {ok: !tip && body.every(x => /^\d$/.test(x)) && text === String(p.ans), text, tip};
   }
 
-  const api = {IDS, BOARD, TAP_MS, parse, demoKey, DEMO, build, plan, worked, layout, judge, LAB, stepLines};
+  const api = {IDS, BOARD, TAP_MS, want, cellParts, parse, demoKey, DEMO, build, plan, worked, layout, judge, LAB, stepLines};
   if (!root) return api;
 
   // ================= 浏览器部分 =================
@@ -317,6 +342,7 @@
 .vcard{background:#f7f4ec;border:3px solid #000;border-radius:12px;color:#2b2920;padding:18px 34px;display:flex;flex-direction:column;gap:6px;font-family:'PingFang SC',system-ui,sans-serif}
 .vrow{display:grid;gap:10px;align-items:center;text-align:center}
 .vlab{font-size:17px;color:#6b6555;font-weight:700;text-align:left;line-height:1.2}
+.vsep{font-size:52px;font-weight:900;color:#2b2920;line-height:1;white-space:nowrap}   /* 2b-2 多格：组之间的「余」「又」、带分数的 /6 */
 .vdig{font-size:72px;font-weight:800;line-height:96px}
 .vline{border-bottom:5px solid #2b2920;padding-bottom:8px}
 .vq canvas{display:block;width:100%;height:100%;touch-action:none}
@@ -422,7 +448,7 @@
       cells: () => pads.map(x => x.strokes().filter(s => { const xs = s.map(q => q.x), ys = s.map(q => q.y); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) >= 12; })),
       touched: () => pads.concat(scratch).some(x => x.strokes().length),
       clearCells: which => which.forEach((w, k) => { if (w) { pads[k].clear(); cellEls[k].classList.add('bad'); } }),
-      mark: ok => cellEls.forEach(c => { c.classList.remove('bad', 'ok'); c.classList.add(ok ? 'ok' : 'bad'); }),
+      mark: ok => cellEls.forEach((c, k) => { const v = Array.isArray(ok) ? ok[k] : ok; c.classList.remove('bad', 'ok'); c.classList.add(v ? 'ok' : 'bad'); }),   // 多格：传每格对错，哪一组错标哪一组
       done() { box.querySelector('.vside').style.visibility = 'hidden'; },
       // 答错 / 不会：右边滑出正确写法和讲解；foot 放「继续」
       result(top, explainHtml, onStep) {
