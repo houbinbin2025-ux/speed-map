@@ -62,7 +62,7 @@ td{padding:6px 4px;border-bottom:1px solid var(--stone-hi);font-variant-numeric:
 .todo{margin:0;padding-left:20px;font-size:14px;line-height:1.7}
 .foot{font-size:12px;color:var(--dim);line-height:1.7}
 .proto{font-size:12px;color:var(--warn)}
-@media (max-width:560px){.acts{grid-template-columns:1fr}.frow{grid-template-columns:96px 1fr 90px}.bars{height:150px;gap:4px}.xl{gap:4px;font-size:11px}.hero{grid-template-columns:1fr}.seg{margin-left:0}.seg .btn{padding:6px 10px}}
+@media (max-width:560px){.top{position:static}.acts{grid-template-columns:1fr}.frow{grid-template-columns:96px 1fr 90px}.bars{height:150px;gap:4px}.xl{gap:4px;font-size:11px}.hero{grid-template-columns:1fr}.seg{margin-left:0}.seg .btn{padding:6px 10px}}
 </style>
 </head>
 <body>
@@ -90,10 +90,11 @@ const DEMO = [
 const DEMO_HR = {9:[.62,.48],10:[.58,.44],11:[.5,.4],14:[.47,.38],15:[.45,.37],16:[.5,.42],17:[.52,.45],18:[.6,.53],19:[.56,.5],20:[.41,.33]};
 // 空空真实数据（iPad 备份 2026-11-08 13:48）。11-02~05 只有 S.log 的题数和升档；11-06~08 有作答（含停留）、空空的家、方块世界
 const REAL = [
-  D('11-02', null, {log:true,n:1,ups:35}), D('11-03', null, {log:true,n:62,ups:75}), D('11-04', null, {log:true,n:0,ups:1}), D('11-05', null, {log:true,n:98,ups:136}),
+  D('11-02', null, {log:true,cells:35}), D('11-03', null, {log:true,cells:75}), D('11-04', null, {log:true,cells:1}), D('11-05', null, {log:true,cells:136}),   // S.log[日].ups 是升过档的格子列表（同一格一天记一次）；S.log 的题数只含旧流程，不用
   D('11-06', {p:7.0,h:7.4}, {old:7.0,n:67,acc:null,fr:null,ups:21,partial:true}),
-  D('11-07', {p:41.2,h:11.0,w:24.3}, {old:41.2,n:366,acc:.89,fr:.06,dunno:6,ups:68,partial:true}),
+  D('11-07', {p:41.2,h:11.0,w:24.3}, {old:41.2,n:366,acc:.89,fr:.06,dunno:6,ups:68,partial:true,noMC:true}),   // 方块世界每日时长设定 11-07 23:01 才加（4e3ee99）
   D('11-08', {p:19.2,h:0.7,w:0.7}, {old:19.2,n:134,acc:.89,fr:.45,dunno:3,ups:8,partial:true,cut:'只到 13:48'}),
+  // 11-06 锻造台还没上线（aa85529 当天「还没接进页面」）
 ];
 let SRC = 'demo', SEL = 6;
 const sumA = a => Object.values(a || {}).reduce((x, y) => x + (y || 0), 0);
@@ -103,40 +104,44 @@ const has = (a, k) => !!a && a[k] !== undefined;
 const grp = (a, g) => ACT.filter(x => x[2] === g).reduce((n, x) => n + ((a || {})[x[0]] || 0), 0);
 const TAG = {ok: ['正常', 't-ok'], warn: ['注意', 't-warn'], bad: ['需调整', 't-bad'], part: ['数据不全', 't-na'], na: ['上线前未记录', 't-na']};
 const NA = d => d.partial || d.log || !d.a ? (d.a ? 'part' : 'na') : null;   // 旧日子：有一部分 = 数据不全；完全没有 = 上线前未记录
-// ---------- 健康度 6 项（门槛见意图卡 §3）----------
+// ---------- 健康度 7 项（门槛见意图卡 §3）----------
+// 只有部分数据的日子：一律「数据不全」；唯一例外是已记录的部分就已经越线（每日时长），显示「至少注意 / 需调整」
+const pp = (x, y) => Math.round(x * 100) - Math.round(y * 100);   // 百分点差，先取整，避免 0.9 − 0.8 = 9.999…
 function health(d) {
   const a = d.a, miss = NA(d), learn = a ? grp(a, '学习') : 0, total = a ? sumA(a) - (a.idle || 0) : 0, H = [];
   const card = (k, t, v, rule, src, adj) => H.push({k, t, v, rule, src, adj});
-  // 1 每日时长
-  if (miss) card('每日时长', miss, d.a ? `作答（含停留）${mins(d.old)} · 有记录的 ${mins(sumA(a))}` : '--', '', '', '');
-  else card('每日时长', total > 120 ? 'bad' : (total > 60 || learn < BUDGET) ? 'warn' : 'ok', `学习 ${mins(learn)} · 总 ${mins(total)}`, '');
-  H[0].rule = `正常：学习 ≥ 每日练习时长（${BUDGET} 分钟）且总时长 ≤ 60 分钟。注意：学习不到每日练习时长，或总时长 60–120 分钟。需调整：总时长 > 120 分钟`;
-  H[0].src = '美国儿科学会：6 岁以上要「一致的限制」，不设固定上限。120 分钟借用加拿大 24 小时活动指南「娱乐性屏幕时间每天不超过 2 小时」。60 分钟一档是产品设定';
-  H[0].adj = '对应调整：每日练习时长';
-  // 2 有效学习占比
-  { const ok = !miss && d.ok != null && learn; card('有效学习占比', ok ? (d.ok / learn >= .5 ? 'ok' : d.ok / learn >= .35 ? 'warn' : 'bad') : (miss || 'na'), ok ? pct(d.ok / learn) : '--',
-      '有效学习（答对的作答时间，不含答后停留）÷ 学习时间。正常 ≥ 50%，注意 35–50%，需调整 < 35%（学习页面里本来就含讲解卡、答后停留和结算页）', '口径改编自学业学习时间（Fisher、Berliner 等，BTES 1972–1978）；门槛是产品设定，上线 2 周后校准', '对应调整：难度、讲解卡长度'); }
-  // 3 游戏时长（对照家长设定）
+  // 1 学习时长
+  card('学习时长', miss || (learn >= BUDGET ? 'ok' : 'warn'), miss ? (d.old != null ? `作答（含停留）${mins(d.old)}` : '--') : `${mins(learn)} · 每日练习 ${BUDGET} 分钟`,
+    `学习时间（练习、错题复习、思维地点、趣味题）对照每日练习时长（现在 ${BUDGET} 分钟）。正常：达到；注意：没达到`, '每日练习时长是排课设定（engine.js BUDGET），不是外部标准', '对应调整：每日练习时长');
+  // 2 在岛总时长：已记录的部分越线时，部分数据也给档（「至少」）
+  { const rec = a ? sumA(a) - (a.idle || 0) : 0, t = rec > 120 ? 'bad' : rec > 60 ? 'warn' : (miss || 'ok');
+    card('在岛总时长', t, !a ? '--' : (miss ? `已记录 ${mins(rec)}${t === 'warn' || t === 'bad' ? '，至少' + TAG[t][0] : ''}` : mins(rec)),
+      '在岛时间（不含无操作）。正常 ≤ 60 分钟，注意 60–120 分钟，需调整 > 120 分钟。只有部分记录的日子，已记录的部分越线就按「至少」给档', '美国儿科学会：6 岁以上要「一致的限制」，不设固定上限。120 分钟借用加拿大 24 小时活动指南「娱乐性屏幕时间每天不超过 2 小时」。60 分钟一档是产品设定', '对应调整：看「时间去向」，哪一块多就收哪一块'); }
+  // 3 作答正确率（高成功率）：用题数算，答得快不吃亏
+  { const ok = !miss && d.acc != null; card('作答正确率', ok ? (d.acc >= .85 ? 'ok' : d.acc >= .7 ? 'warn' : 'bad') : (miss || 'na'), d.acc != null ? pct(d.acc) + (miss ? '（当天部分）' : '') : '--',
+      '学习页面里答对的题 ÷ 作答的题。正常 ≥ 85%，注意 70–85%，需调整 < 70%。用题数不用时间：秒答越多越好，不能因为答得快被扣分', '改编自学业学习时间（Fisher、Berliner 等，BTES 1972–1978）的「高成功率」：投入在能高比例做对的任务上；具体门槛是产品设定', '对应调整：难度（家长区）'); }
+  // 4 游戏时长（对照家长设定；没有设定的日子不判）
   { const g = has(a, 'w') ? a.w : null, over = g === null ? null : (g - MC) / MC;
-    card('游戏时长', g === null ? (miss || 'na') : over <= 0 ? 'ok' : over <= .5 ? 'warn' : 'bad', g === null ? '--' : `方块世界 ${mins(g)} · 设定 ${MC} 分钟${has(a, 'k') ? ` · 小伙伴乐园 ${mins(a.k)}` : ''}`,
-      `方块世界对照家长设定的每日时长（现在 ${MC} 分钟，含当天加时）。正常 ≤ 设定，注意超出不到 50%，需调整超出 50% 以上。小伙伴乐园单独显示：是否和方块世界共用每日时长，等 C 模块确认`, '基准取家长自己的设定', '对应调整：方块世界每日时长（家长区）'); }
-  // 4 岛上奖励玩法
+    const t = g === null || d.noMC ? (miss || 'na') : miss ? 'part' : over <= 0 ? 'ok' : over <= .5 ? 'warn' : 'bad';
+    card('游戏时长', t, g === null ? '--' : `方块世界 ${mins(g)}${d.noMC ? ' · 当天还没有每日时长设定' : ' · 设定 ' + MC + ' 分钟'}${has(a, 'k') ? ` · 小伙伴乐园 ${mins(a.k)}` : ''}`,
+      `方块世界对照家长设定的每日时长（现在 ${MC} 分钟，含当天加时）。正常 ≤ 设定，注意超出不到 50%，需调整超出 50% 以上。小伙伴乐园单独显示：是否和方块世界共用每日时长，等 C 模块确认。手机网页没有方块世界，不显示这一项`, '基准取家长自己的设定', '对应调整：方块世界每日时长（家长区）'); }
+  // 5 岛上奖励玩法
   { const known = !miss && has(a, 'g'), r = known && learn ? ((a.g || 0) + (a.h || 0)) / learn : null;
-    card('岛上奖励玩法', r === null ? (miss || 'na') : r <= .5 ? 'ok' : r <= 1 ? 'warn' : 'bad', r === null ? (has(a, 'h') ? `空空的家 ${mins(a.h)} · 锻造台未记录` : '--') : r.toFixed(2) + ' 倍',
-      '（空空的家 + 锻造台）÷ 学习时间。正常 ≤ 0.5 倍，注意 0.5–1 倍，需调整 > 1 倍', '产品设定，依据 Ben「往有效利用时间上走」；反面案例：Prodigy 数学游戏被批评玩的时间远多于做题（家长个案）', '对应调整：锻造台每天次数'); }
-  // 5 后半段表现
+    card('岛上奖励玩法', r === null ? (miss || 'na') : r <= .5 ? 'ok' : r <= 1 ? 'warn' : 'bad', r === null ? (has(a, 'h') ? `空空的家 ${mins(a.h)} · 锻造台${d.d === '11-06' ? '当天还没上线' : '未记录'}` : '--') : r.toFixed(2) + ' 倍',
+      '（空空的家 + 锻造台）÷ 学习时间。正常 ≤ 0.5 倍，注意 0.5–1 倍，需调整 > 1 倍。只练最低时长的日子分母小，最容易被判注意，上线后校准时留意', '产品设定，依据 Ben「往有效利用时间上走」；反面案例：Prodigy 数学游戏被批评玩的时间远多于做题（家长个案）', '对应调整：锻造台每天次数'); }
+  // 6 后半段表现（百分点先取整）
   { const s = (d.seg || []).filter(x => x[1] >= 6 && x[4] >= 6); let t = miss || 'na', v = '--';
-    if (s.length) { const w = s.reduce((m, x) => { const da = (x[2] - x[5]) * 100, dt = (x[6] - x[3]) / x[3] * 100; return da + dt > m.da + m.dt ? {da, dt} : m; }, {da: -1e9, dt: -1e9});
-      v = `正确率${w.da >= 1 ? '降 ' + Math.round(w.da) + ' 个百分点' : '持平'} · 每题用时${w.dt >= 1 ? '增 ' + Math.round(w.dt) + '%' : '持平'}`; const n = (w.da >= 10) + (w.dt >= 30); t = n === 2 ? 'bad' : n === 1 ? 'warn' : 'ok'; }
+    if (s.length) { const w = s.reduce((m, x) => { const da = pp(x[2], x[5]), dt = Math.round((x[6] - x[3]) / x[3] * 100); return da + dt > m.da + m.dt ? {da, dt} : m; }, {da: -1e9, dt: -1e9});
+      v = `正确率${w.da >= 1 ? '降 ' + w.da + ' 个百分点' : '持平'} · 每题用时${w.dt >= 1 ? '增 ' + w.dt + '%' : '持平'}`; const n = (w.da >= 10) + (w.dt >= 30); t = n === 2 ? 'bad' : n === 1 ? 'warn' : 'ok'; }
     card('后半段表现', t, v, '每段练习后半段比前半段：正确率降 ≥ 10 个百分点、每题用时增 ≥ 30%（取当天最明显的一段）。都没有 = 正常，一项 = 注意，两项 = 需调整', '产品设定；对照已有的休息规则：连续有效学习 30 分钟休息 5 分钟', '对应调整：每日练习时长、休息规则'); }
-  // 6 无操作
+  // 7 无操作
   { const ok = !miss && has(a, 'idle'), r = ok ? a.idle / (total + a.idle) : null;
     card('无操作', r === null ? (miss || 'na') : r < .1 ? 'ok' : r <= .2 ? 'warn' : 'bad', r === null ? '--' : pct(r),
       '出题页超过单题上限（60 秒）、讲解卡超过 90 秒、其他页 60 秒不点屏幕，之后的时间记无操作；切后台、熄屏不计。无操作 ÷ 在岛时间：正常 < 10%，注意 10–20%，需调整 > 20%', '判定参照 Imagine Learning（约 60 秒无交互暂停计时，原文未核对）；占比门槛是产品设定', '提醒家长，不调设置'); }
   return H;
 }
 function conclusion(d, H) {
-  if (!d.a) return d.log ? `上线前未记录时长；当天作答 ${d.n} 题、升档 ${d.ups} 次（来自每日记录）` : '这一天没有记录';
+  if (!d.a) return d.log ? `上线前未记录时长；当天升档的格子 ${d.cells} 个（来自每日记录）` : '这一天没有记录';
   const flag = H.filter(h => h.t === 'bad' || h.t === 'warn').map(h => `${h.k}${h.t === 'bad' ? '需调整' : '要注意'}（${h.v}）`);
   return (d.partial ? '旧日子只有作答（含停留）、空空的家、方块世界的记录，其余数据不全。' : '') + (flag.length ? flag.join('；') : (d.partial ? '' : '各项正常'));
 }
@@ -144,7 +149,7 @@ function render() {
   const days = SRC === 'demo' ? DEMO : REAL, d = days[SEL], H = health(d), known = H.filter(h => !['na', 'part'].includes(h.t)), okN = known.filter(h => h.t === 'ok').length;
   document.getElementById('sub').textContent = SRC === 'demo' ? '近 7 天 · 示例数据（模拟）' : '空空真实数据 · iPad 备份 11-08 13:48';
   const max = Math.max(60, ...days.map(x => x.a ? sumA(x.a) : 0)), refPct = BUDGET / max * 100;
-  const bars = days.map((x, i) => `<button class="bar ${i === SEL ? 'sel' : ''}" data-i="${i}" aria-label="${x.d}">${x.a ? ACT.map(([k]) => x.a[k] ? `<i style="height:${x.a[k] / max * 100}%;background:var(--c-${k})"></i>` : '').join('') : `<span class="none">${x.log ? x.n + ' 题 · 未记录时长' : '上线前未记录'}</span>`}</button>`).join('');
+  const bars = days.map((x, i) => `<button class="bar ${i === SEL ? 'sel' : ''}" data-i="${i}" aria-label="${x.d}">${x.a ? ACT.map(([k]) => x.a[k] ? `<i style="height:${x.a[k] / max * 100}%;background:var(--c-${k})"></i>` : '').join('') : `<span class="none">${x.log ? '未记录时长' : '上线前未记录'}</span>`}</button>`).join('');
   const a = d.a || {}, tot = sumA(a), miss = NA(d);
   const hasG = g => ACT.some(x => x[2] === g && has(d.a, x[0]));
   const actList = ['学习', '奖励玩法', '其他', '无操作'].map(g => `<div class="grp">${g} ${hasG(g) ? mins(grp(a, g)) + (miss ? '（有记录的部分）' : '') : ''}</div>` + ACT.filter(x => x[2] === g).map(([k, n]) => `<div><i style="width:10px;height:10px;display:inline-block;background:var(--c-${k})"></i>${n}<b>${has(d.a, k) ? mins(a[k]) : '<span class="muted">' + (miss ? '上线前未记录' : '--') + '</span>'}</b></div>`).join('')).join('');
@@ -154,7 +159,7 @@ function render() {
     ? `${frow('作答（含停留）', d.old, d.old, '旧口径：含答后停留和讲解卡')}${frow('真在作答', null)}${frow('答对的作答', null, 0, d.acc != null ? '正确率 ' + pct(d.acc) : '')}${frow('其中秒答', null, 0, d.fr != null ? '秒答率 ' + pct(d.fr) : '')}`
     : `${frow('在学习页面', learnPage, learnPage)}${frow('真在作答', d.e == null ? null : d.e, learnPage)}${frow('答对的作答', d.ok == null ? null : d.ok, learnPage, d.acc != null ? '正确率 ' + pct(d.acc) : '')}${frow('其中秒答', d.fast == null ? null : d.fast, learnPage, d.fr != null ? '秒答率 ' + pct(d.fr) : '')}`;
   const per10 = d.e ? `<span class="chip">每 10 分钟作答 ${Math.round((d.n || 0) / d.e * 10)} 题、升档 ${((d.ups || 0) / d.e * 10).toFixed(1)} 次</span>` : '';
-  const segRows = (d.seg || []).map(s => `<tr><td>${s[0]}:00 起</td><td>${s[1] + s[4]} 题</td><td>${pct(s[2])} → <span class="${s[2] - s[5] >= .1 ? 'dn' : ''}">${pct(s[5])}</span></td><td>${s[3].toFixed(1)} → <span class="${s[6] >= s[3] * 1.3 ? 'dn' : ''}">${s[6].toFixed(1)}</span> 秒</td></tr>`).join('');
+  const segRows = (d.seg || []).map(s => `<tr><td>${s[0]}:00 起</td><td>${s[1] + s[4]} 题</td><td>${pct(s[2])} → <span class="${pp(s[2], s[5]) >= 10 ? 'dn' : ''}">${pct(s[5])}</span></td><td>${s[3].toFixed(1)} → <span class="${s[6] >= s[3] * 1.3 ? 'dn' : ''}">${s[6].toFixed(1)}</span> 秒</td></tr>`).join('');
   const hrs = SRC === 'demo' ? Array.from({length: 14}, (_, i) => i + 7).map(h => { const v = DEMO_HR[h] || [0, 0]; return `<div style="background:${v[0] ? `rgba(123,216,143,${.2 + v[1] * 1.4})` : 'var(--stone-hi)'}" title="${h}:00 正确率 ${pct(v[0])} 秒答率 ${pct(v[1])}">${h}</div>`; }).join('') : '';
   document.getElementById('root').innerHTML = `
     <div class="panel hero">
@@ -163,24 +168,24 @@ function render() {
       <div class="sum">${conclusion(d, H)}</div>
     </div>
     <div class="panel"><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px"><b>近 7 天</b><span class="muted">点选日期查看当天 · 虚线：每日练习时长 ${BUDGET} 分钟</span></div>
-      <div class="bars"><div class="ref" style="bottom:${refPct}%"><span>${BUDGET} 分钟</span></div>${bars}</div>
+      <div class="bars"><div class="ref" style="bottom:${refPct}%"></div>${bars}</div>
       <div class="xl">${days.map(x => `<span>${x.d}</span>`).join('')}</div>
       <div class="legend">${ACT.map(([k, n]) => `<span><i style="background:var(--c-${k})"></i>${n}</span>`).join('')}</div></div>
     <div class="panel"><b>时间去向 · ${d.d}</b>
       ${d.a ? `<div class="hbar">${ACT.map(([k]) => a[k] ? `<i style="width:${a[k] / tot * 100}%;background:var(--c-${k})"></i>` : '').join('')}</div>` : ''}
       <div class="acts">${!d.a ? '<div class="muted">上线前未记录时长</div>' : actList}</div></div>
-    <div class="panel"><b>练习里有效的有多少</b><span class="muted"> · 学业学习时间三层（改编）</span>
+    <div class="panel"><b>练习里有效的有多少</b><span class="muted"> · 学业学习时间三层（改编）· 只展示，不判档：答得越快，作答时间占比本来就越低</span>
       <div class="funnel">${three}</div>
-      <div class="chips"><span class="chip">作答 ${d.n == null ? '--' : d.n} 题</span><span class="chip">「不会」 ${d.dunno == null ? '--' : d.dunno} 次</span><span class="chip">升档 ${d.ups == null ? '--' : d.ups} 次</span><span class="chip">错题学会 ${d.mp == null ? '<span class="muted">上线前未记录</span>' : d.mp + ' 道'}</span>${per10}</div></div>
+      <div class="chips"><span class="chip">作答 ${d.n == null ? '<span class="muted">上线前未记录</span>' : d.n + ' 题'}</span><span class="chip">「不会」 ${d.dunno == null ? '--' : d.dunno} 次</span>${d.log ? `<span class="chip">升档的格子 ${d.cells} 个</span>` : `<span class="chip">升档 ${d.ups == null ? '--' : d.ups} 次</span>`}<span class="chip">错题学会 ${d.mp == null ? '<span class="muted">上线前未记录</span>' : d.mp + ' 道'}</span>${per10}</div></div>
     <div class="hcards">${H.map(h => `<div class="hcard"><div style="display:flex;justify-content:space-between;gap:8px"><b>${h.k}</b><span class="tag ${TAG[h.t][1]}">${TAG[h.t][0]}</span></div><div class="v">${h.v}</div><div class="adj">${h.adj}</div><details><summary>门槛和出处</summary>${h.rule}<br>出处：${h.src}</details></div>`).join('')}</div>
     <div class="panel"><b>后半段表现</b><span class="muted"> · 每段练习，前半段 → 后半段</span>
       ${segRows ? `<table><tr><th>开始</th><th>题数</th><th>正确率</th><th>每题用时</th></tr>${segRows}</table>` : `<div class="muted" style="margin-top:6px">${d.a || d.log ? '上线前未记录' : '--'}</div>`}</div>
     <div class="panel"><b>分时段效率</b><span class="muted"> · 近 14 天，颜色越深秒答率越高</span>
       ${hrs ? `<div class="hours">${hrs}</div><div class="muted" style="margin-top:6px">示例：上午 9–10 点和傍晚 6–7 点秒答率最高，晚上 8 点以后明显下降</div>` : '<div class="muted" style="margin-top:6px">数据不足：攒满 14 天后显示</div>'}</div>
     <div class="panel"><b>主要问题和建议</b><ol class="todo">${SRC === 'demo'
-      ? '<li>11-15（周六）在岛 1 小时 35 分；方块世界 30 分钟，是设定的 2 倍。建议周末也按设定的方块世界时长</li><li>11-12、11-15 后半段正确率降 10 个百分点以上：每段练到第 35–50 题开始下降。建议每日练习满 40 题进结算</li><li>晚上 8 点以后秒答率最低，建议练习放在晚饭前</li>'
-      : '<li>11-07 作答（含停留）41 分钟；扣掉答后停留约 27 分钟，仍是每日练习时长的 2.7 倍。加上空空的家和方块世界，有记录的约 77 分钟</li><li>11-07 方块世界 24 分钟，超过现在的设定 15 分钟；当天设定和加时没有记录，原因待查</li><li>11-07 秒答率 6%、11-08 45%，但 11-07 每题反而更快：更可能是秒答标准在改，不据此判断快慢，等新数据</li>'}</ol></div>
-    <div class="foot">口径说明<br>在岛时间 = 数学岛在前台、且没有超过无操作上限的时间；切后台、熄屏不计 · 无操作 = 出题页超过单题上限（60 秒）、讲解卡超过 90 秒、其他页超过 60 秒不点屏幕之后的时间<br>真在作答 = 题目出现到交卷，不含答后停留，单题最多 60 秒 · 答对的作答 = 其中答对的题 · 秒答 = 在秒答时间内答对 · 升档 = 格子往上走一档<br>作答（含停留）= 旧记录的口径，含答后停留和讲解卡 · 每日练习时长现在是排课里写死的 10 分钟，点「再练一会」加 5 分钟<br>方块世界、小伙伴乐园在另一个页面，数据截至上次打开数学岛 · 手机和 iPad 各记各的，互发进度后按天取大，同一天两台都用时会少算<br>健康度不打总分；每项门槛和出处见卡片里的「门槛和出处」</div>
+      ? '<li>11-15（周六）在岛 1 小时 35 分；方块世界 30 分钟，是设定的 2 倍。建议周末也按设定的方块世界时长</li><li>11-12、11-15 后半段正确率都降了 10 个百分点以上，每题用时也都增加了 30% 以上：这两天练得最久。建议对照休息规则，看是否缩短每段练习</li><li>晚上 8 点以后秒答率最低，建议练习放在晚饭前</li>'
+      : '<li>11-07 已记录约 77 分钟（作答含停留 41 + 空空的家 11 + 方块世界 24），在岛总时长至少「注意」；扣掉答后停留，作答约 27 分钟，是每日练习时长的 2.7 倍</li><li>11-07 方块世界 24 分钟；当天还没有每日时长设定（11-07 晚上才加），不判档</li><li>11-07 秒答率 6%、11-08 45%，但 11-07 每题反而更快：更可能是秒答标准在改，不据此判断快慢，等新数据</li>'}</ol></div>
+    <div class="foot">口径说明<br>在岛时间 = 数学岛在前台、且没有超过无操作上限的时间；切后台、熄屏不计 · 无操作 = 出题页超过单题上限（60 秒）、讲解卡超过 90 秒、其他页超过 60 秒不点屏幕之后的时间<br>真在作答 = 题目出现到交卷，不含答后停留，单题最多 60 秒 · 答对的作答 = 其中答对的题 · 秒答 = 在秒答时间内答对 · 升档 = 格子往上走一档<br>作答（含停留）= 旧记录的口径，含答后停留和讲解卡 · 每日练习时长现在是排课里写死的 10 分钟，点「再练一会」加 5 分钟<br>方块世界、小伙伴乐园在另一个页面，数据截至上次打开数学岛 · 手机和 iPad 各记各的，互发进度后按天取大，同一天两台都用时会少算<br>健康度不打总分；每项门槛和出处见卡片里的「门槛和出处」· 升档的格子 = 每日记录里当天升过档的格子数，同一格一天只算一次（11-06 以前只有这个）</div>
     <div class="proto">原型：示例数据为模拟；「空空真实数据」取自 iPad 备份。实施后数据来自 v2/timelog.js。</div>`;
   document.querySelectorAll('.bar').forEach(b => b.addEventListener('click', () => { SEL = +b.dataset.i; render(); }));
 }
