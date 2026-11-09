@@ -173,6 +173,11 @@
     摆放: 'Arrange', 完成: 'Done', 奖状: 'Award', 伙伴: 'Pals', 钻石: 'Diamonds', 奖状墙: 'Award Wall', 门口: 'Door', 矿物柜: 'Ore Cabinet', 道具: 'Items', 播放: 'Play', 停止: 'Stop', 获得条件: 'How to get it', 去练这一块: 'Practice this', 下一个目标: 'Next goals', 全部目标已完成: 'All goals complete', 记牢了: 'Remembered', 金锭: 'Gold', 另一天再次做对: 'Right again on another day', 铁锭: 'Iron', 格子第一次点亮: 'Square lit for the first time', '格子每升一档，多一件。只增不减。': 'Each square that levels up adds one. They never go away.', 木箱: 'Wooden Chest', 矿石: 'Ore', '练习时每答对一题，得到 1 块矿石。': 'Each right answer in practice earns 1 ore.',
     合上图鉴: 'Close book', 伙伴图鉴: 'Pal Book', 已解锁: 'Unlocked', '学会一个技能，解锁一只伙伴': 'Learn a skill to unlock a pal', 未解锁: 'Locked', 留在图鉴: 'Keep in book', 带回家: 'Bring home', 至少带一个伙伴回家: 'Keep at least one pal at home', 附魔: 'Enchanted', 收好: 'Keep it', 打印奖状: 'Print award', 新伙伴: 'New pal', 伙伴附魔: 'Pal enchanted', 点箱子打开: 'Tap the chest to open', 战利品: 'Loot', 已放入家中: 'Added to your home', 这件摆在地上: 'This goes on the floor', 这件挂在墙上: 'This goes on the wall', '点一件东西，再点新位置': 'Tap an item, then tap a new spot', 已保存摆放: 'Arrangement saved',
     // 奖状
+    林间探路人: 'Forest Pathfinder', 林间向导: 'Forest Guide', 沙漠旅人: 'Desert Traveler', 沙漠向导: 'Desert Guide',
+    丛林猎人: 'Jungle Hunter', 丛林之王: 'Jungle King', 雪原骑士: 'Snowfield Knight', 雪原守护者: 'Snowfield Guardian', 海底潜水员: 'Deep Sea Diver', 海底探险家: 'Deep Sea Explorer',
+    山巅攀登者: 'Peak Climber', 山巅守望者: 'Peak Watcher', 下界勇士: 'Nether Warrior', 下界征服者: 'Nether Conqueror', 要塞侦察兵: 'Stronghold Scout', 要塞指挥官: 'Stronghold Commander',
+    末地旅人: 'End Traveler', 末地守卫: 'End Guard', 天空工匠: 'Sky Crafter', 天空建筑师: 'Sky Builder', 末影龙骑士: 'Ender Dragon Rider', 驯服末影龙: 'Tamed the Ender Dragon',
+    这一级新本领全部点亮: 'Every new skill in this level lit', 这一级新本领全部变深红: 'Every new skill in this level dark red',
     草原牧羊人: 'Meadow Shepherd', 草原牧羊大师: 'Master Shepherd', 矿洞矿工: 'Mine Worker', 矿洞大师: 'Mine Master', 村庄建筑师: 'Village Builder', 村庄建筑大师: 'Master Builder', 双塔哨兵: 'Tower Lookout', 双塔将军: 'Tower General', 铁轨列车长: 'Train Conductor', 铁轨大师: 'Railway Master', 花园园丁: 'Gardener', 花园大师: 'Garden Master', 集市伙计: 'Market Helper', 集市掌柜: 'Market Owner', 码头水手: 'Sailor', 码头船长: 'Ship Captain', 打败果冻王: 'Beat the Jelly King', 驯服果冻王: 'Tamed the Jelly King', 打败骷髅将军: 'Beat the Bone General', 驯服骷髅将军: 'Tamed the Bone General', 打败蜘蛛女王: 'Beat the Spider Queen', 驯服蜘蛛女王: 'Tamed the Spider Queen', 打败巨龙: 'Beat the Great Dragon', 驯服巨龙: 'Tamed the Great Dragon', 平安度过第一夜: 'Safe First Night', 搭好营地: 'Camp Builder', 老探险家: 'Seasoned Explorer', 百日传奇: '100-Day Legend', 点燃熔炉: 'Furnace Lit', 熔炉师傅: 'Furnace Expert', 炼金大师: 'Master Smith',
     错题第一次复习做对: 'Get a mistake right on review for the first time', '写错的题，复习时做对了': 'You got a missed question right on review', '错的题，在这里炼成会的题': 'This is where mistakes turn into things you know', 这个技能全部格子点亮: 'Every square in this skill lit', 这个技能全部格子变深红: 'Every square in this skill dark red', 全部格子变深红: 'Every square dark red', '第 1 张附魔奖状': 'First enchanted award', '第一次练满 10 分钟': 'First 10-minute practice', '点亮第 1 个格子': 'Light your first square', '学会第 1 个技能': 'Learn your first skill', '岛上 6 个地方都点亮过格子': 'Light squares in 6 places on the island',
     // 道具
@@ -420,6 +425,10 @@
     // 家
     [/^已完成 (\d+) \/ (\d+)$/, (m, a, b) => `Done ${a} / ${b}`], [/^盔甲件数：(\d+) \/ (\d+)$/, (m, a, b) => `Armor pieces: ${a} / ${b}`], [/^得到日期：(.+)$/, (m, d) => { const t = one(d); return t === null ? null : `Earned: ${t}`; }], [/^已复习做对 (\d+) 道错题$/, (m, a) => `${pl(a, 'mistake')} fixed on review`], [/^已选择 (.+)，点一个位置$/, (m, a) => { const t = one(a); return t === null ? null : `${t} selected. Tap a spot`; }], [/^学会「(.+)」后解锁$/, (m, a) => { const t = one(a); return t === null ? null : `Learn "${t}" to unlock`; }], [/^学会了「(.+)」(?:，全部隔 3 天还做对)?$/, (m, a) => { const t = one(a); return t === null ? null : `Learned "${t}"${m.includes('隔') ? ', still right 3 days later' : ''}`; }], [/^，全部隔 3 天还做对$/, () => ', still right 3 days later'],
     // 奖状和道具
+    // 三四年级每级奖状、伙伴（C 方案 11-09）；第 4–5 级合成一组
+    [/^第 (\d+(?:–\d+)?) 级$/, (m, n) => LVS(n)], [/^第 (\d+(?:–\d+)?) 级伙伴$/, (m, n) => `${LVS(n)} Pal`], [/^第 (\d+(?:–\d+)?) 级新本领$/, (m, n) => `${LVS(n)} Skills`], [/^第 (\d+(?:–\d+)?) 级大师$/, (m, n) => `${LVS(n)} Master`],
+    [/^第 (\d+(?:–\d+)?) 级新本领全部点亮$/, (m, n) => `Every new skill in ${LVS(n)} lit`], [/^第 (\d+(?:–\d+)?) 级新本领全部变深红$/, (m, n) => `Every new skill in ${LVS(n)} dark red`],
+    [/^学会了第 (\d+(?:–\d+)?) 级的 (\d+) 个新本领$/, (m, n, k) => `Learned all ${k} new skills in ${LVS(n)}`], [/^第 (\d+(?:–\d+)?) 级的 (\d+) 个新本领，都记牢了$/, (m, n, k) => `All ${k} new skills in ${LVS(n)}, remembered`],
     [/^(.+)全部格子点亮$/, (m, a) => { const t = one(a); return t === null ? null : `Every square lit in ${t}`; }], [/^(.+)全部格子变深红$/, (m, a) => { const t = one(a); return t === null ? null : `Every square dark red in ${t}`; }], [/^学会了(.+)全部 (\d+) 格$/, (m, a, n) => { const t = one(a); return t === null ? null : `Learned all ${n} squares of ${t}`; }], [/^(.+)全部 (\d+) 格，都记牢了$/, (m, a, n) => { const t = one(a); return t === null ? null : `All ${n} squares of ${t}, remembered for good`; }], [/^累计练习 (\d+) 天$/, (m, a) => `${pl(a, 'day')} of practice`], [/^(\d+) 道错题真的会了$/, (m, a) => `Really learn ${pl(a, 'mistake')}`], [/^(\d+) 道错题过完 5 次复习$/, (m, a) => `${pl(a, 'mistake')} passed 5 reviews`], [/^(\d+) 个格子点亮$/, (m, a) => `Light ${pl(a, 'square')}`], [/^(\d+) 个格子变淡红$/, (m, a) => `Turn ${pl(a, 'square')} light red`], [/^(\d+) 个格子变深红$/, (m, a) => `Turn ${pl(a, 'square')} dark red`], [/^学会 (\d+) 个技能$/, (m, a) => `Learn ${pl(a, 'skill')}`], [/^秒答 (.+)$/, (m, a) => { const t = one(a); return t === null ? null : `Speed ${t}`; }],
   ];
 
@@ -542,6 +551,7 @@
   ];
 
   // ---------- 翻译一段（去掉前后空格之后）；翻不了返回 null ----------
+  function LVS(n) { return n.includes('–') ? `Levels ${n}` : `Level ${n}`; }   // 三四年级奖状：第 4–5 级合成一组
   function one(c) {
     if (!ZH.test(c)) return c;
     if (Object.prototype.hasOwnProperty.call(D, c)) return D[c];

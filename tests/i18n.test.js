@@ -65,7 +65,7 @@ test('答对时的字（R.okWords）都有英文', () => {
 });
 
 test('奖状、道具、伙伴（home.js / house.js）都有英文', () => {
-  const t = {all: () => ({n: 9, l1: 1, l3: 1})}, out = [];
+  const t = {all: () => ({n: 9, l1: 1, l3: 1}), lvAll: () => ({n: 9, l1: 1, l3: 1})}, out = [];
   HOME.CERTS.forEach(c => out.push(txt(c.name), txt(c.title), txt(c.text), txt(c.say(t))));
   HOME.ITEMS.forEach(i => out.push(txt(i.name), txt(i.text), txt(i.say || '')));
   HOME.MEDALS.forEach(m => out.push(txt(m.name), txt(m.text)));
