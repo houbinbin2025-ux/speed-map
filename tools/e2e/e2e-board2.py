@@ -36,6 +36,8 @@ with sync_playwright() as p:
                     check(pg.evaluate('__sm.Q.t0') == t1, f'{tag} 落笔后点喇叭不重新计时'); pg.click('.vclear')
                 if not en and id in (FRAC + FIG[:2]): pg.screenshot(path=str(out / f'{name}-{id.replace(":", "_")}.png'))
                 answer(pg, it['ans']); pg.click('.vdone'); pg.wait_for_timeout(500)
+                try: pg.wait_for_selector('.vcell.ok', timeout=3000)   # 机器忙时格子变绿会慢一拍
+                except Exception: pass
                 t = pg.inner_text('#qBody'); check(any(w in t for w in ('对了', '秒答', 'fast', 'Fast', 'Right', 'right')) and pg.locator('.vcell.ok').count() > 0, f'{tag} 真写 {it["ans"]} 判对：{t[:40]!r}')
                 pg.wait_for_timeout(2600)
                 c = pg.locator('.vcell'); write(pg, c.nth(0), (it['ans'] + 1) % 10 if it['ans'] < 9 else 1); pg.click('.vdone'); pg.wait_for_timeout(600)
