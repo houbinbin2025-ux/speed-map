@@ -93,7 +93,7 @@
   const HARD = [];
   // 第三批趣味题的保险（说明书-第三批 §4.3「关掉 / 退回」）：每日趣味题时间上限；= 0 时 fun 技能完全不登记（不进 HARD / BY / ITEM），
   // 练习、挑战、开级、allOut 都一道不出，留在错题本里的趣味错题查不到题型就不回炉。和 A、C 同一次上线时改成 90
-  const FUN_SEC = 0;
+  const FUN_SEC = (typeof process === 'object' && process.env && Number(process.env.FUN_SEC) > 0) ? Number(process.env.FUN_SEC) : 0;   // 网页里永远是 0；node 测试可用 FUN_SEC=90 npm test 提前跑打开后的路径
   const funAllowed = (o, sec) => !o.fun || sec > 0;
   const hard = o => { if (!funAllowed(o, FUN_SEC)) return; const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
   hard({id: 'lookH1', group: 'look', name: '几排几个', ids: ['look:h:grid']});
@@ -144,7 +144,7 @@
   g2('dock', '分数读图', ['dock:g11:fracbar'], 'frac'); g2('speedH', '同分母加减', ['speed:g12:fracadd'], 'fracadd'); g2('cmp', '分数比大小', ['cmp:g12:fraccmp'], 'fraccmp', {input: 'pick'});
   g2('cmp', '同分子比大小', ['cmp:g15:fraccmp2'], 'fraccmp2', {input: 'pick'}); g2('speedH', '等值分数', ['speed:g15:equiv'], 'equiv');
   // 第一批已上线、当时没讲解的技能也挂上概念（第二批 §2）
-  Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec', 'g34:g11:part': 'frac'}).forEach(([id, c]) => { BY[id].concept = c; });
+  Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec', 'g34:g11:part': 'frac'}).forEach(([id, c]) => { if (BY[id]) BY[id].concept = c; });   // 关掉的趣味技能没登记：跳过，不让页面加载时崩
 
   // ---------- 15 级难度（说明书-难度分级）：每道题一个级别，按题算，题库数据不改 ----------
   // ---------- 级别说明（中控 11-08，Ben：「新内容加入时定级没有增补和调整」）----------
@@ -322,7 +322,7 @@
     const s = BY[ITEM[id].skill];
     let c;
     if (C.BYID[id]) c = 'card';
-    else if (s.fun) c = 'word';   // 趣味题（第三批）：读题题类，12–25 秒
+    else if (s.fun) c = 'word';   // 趣味题（第三批）：读题题类（3–30 秒），A 定的 12–25 秒在范围里
     else if (COLUMN.includes(id)) c = 'column';
     else if (s.input === 'line') c = 'line';
     else if (s.input === 'pick') c = 'pick';
@@ -381,6 +381,7 @@
     return SK.every(s => visit(s.id));
   }
 
+  HARD.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 高级题的前置也只留登记了的（关掉的趣味技能不登记，写进前置会让 ready() 查不到而崩，审查 R1）
   return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, thinkMs, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

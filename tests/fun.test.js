@@ -5,7 +5,7 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const K = require('../v2/skills.js'), C = require('../v2/core.js'), E = require('../v2/engine.js');
 
-test('FUN_SEC 是常量，现在是 0（趣味题和 A、C 同一次上线时再改成 90）', () => {
+test('FUN_SEC 是常量，现在是 0（趣味题和 A、C 同一次上线时再改成 90）', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
   assert.equal(typeof K.FUN_SEC, 'number'); assert.equal(K.FUN_SEC, 0);
 });
 test('登记闸门：fun 技能只有 FUN_SEC > 0 才登记；非 fun 技能不受影响', () => {
@@ -13,7 +13,7 @@ test('登记闸门：fun 技能只有 FUN_SEC > 0 才登记；非 fun 技能不�
   assert.equal(K.funAllowed({fun: true}, 90), true);
   assert.equal(K.funAllowed({}, 0), true); assert.equal(K.funAllowed({fun: false}, 0), true);
 });
-test('FUN_SEC = 0：题表里没有任何 fun 技能（练习、挑战、开级、allOut 都从这里取题）', () => {
+test('FUN_SEC = 0：题表里没有任何 fun 技能（练习、挑战、开级、allOut 都从这里取题）', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
   assert.ok(K.SKILLS.concat(K.HARD).every(s => !s.fun));
   assert.ok(Object.values(K.BY).every(s => !s.fun));
   assert.ok(Object.values(K.ITEM).every(it => !(K.BY[it.skill] || {}).fun));
@@ -29,4 +29,11 @@ test('错题本里有趣味题（关掉以后留下的）：不回炉、不报�
   const s = E.session(S, '2026-11-02', {rnd: () => 0.5}); const seen = [];
   for (let x = s.next(), g = 0; x && g < 200; x = s.next(), g++) if (x.kind === 'q') { seen.push(x.inst.id); s.answer({ok: true, fast: true, secs: 3}); }
   assert.ok(!seen.includes('fun:t:x'), '不回炉'); assert.ok(S.mistakes['fun:t:x|1'], '记录还在');
+});
+
+test('关掉时前置里写了趣味技能也不崩：所有技能（含高级题）的前置都只留登记了的（审查 R1）', () => {
+  K.SKILLS.concat(K.HARD).forEach(s => s.pre.forEach(p => assert.ok(K.BY[p], `${s.id} 的前置 ${p} 没登记`)));
+});
+test('测试开关：环境变量 FUN_SEC 只在 node 里生效（npm test 时 FUN_SEC=90 可以提前跑打开后的路径），网页里永远按代码里的常量', () => {
+  assert.equal(K.FUN_SEC, Number(process.env.FUN_SEC) > 0 ? Number(process.env.FUN_SEC) : 0);
 });
