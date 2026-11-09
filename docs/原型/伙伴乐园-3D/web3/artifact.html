@@ -50,7 +50,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .burst{position:fixed;z-index:3;left:0;top:0;width:150px;height:110px;transform:translate(-50%,-100%) scale(var(--s,0)) rotate(-6deg);transform-origin:50% 90%;display:grid;place-items:center;pointer-events:none}
 .burst svg{position:absolute;inset:0;width:100%;height:100%}
 .burst b{position:relative;font-size:22px;font-weight:900;color:#2b1a00;line-height:1.1;text-align:center}
-#hud{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:11px;color:rgba(40,40,40,.55)}
+#hud{position:fixed;z-index:4;right:calc(16px + env(safe-area-inset-right,0px));top:calc(140px + env(safe-area-inset-top,0px));font-size:11px;color:rgba(40,40,40,.55)}
 @media (max-width:820px){#panel{top:auto;bottom:86px;width:236px}#stats div{min-width:54px;padding:2px 6px}#stats b{font-size:22px}#title b{font-size:17px}#clock{min-width:0}#clock b{font-size:24px}#tools button{width:50px;height:52px;font-size:11px}}
 @media (max-height:500px){#panel{top:auto;bottom:80px;padding:8px 10px;width:220px}#panel p,#tabs{display:none}#stats{display:none}#tools button{height:46px}}
 
@@ -555,9 +555,13 @@ function camWant() {
   if (P.view === 0) { const e = P.pos.clone().add(V3(0, 1.58 * KS, 0)).addScaledVector(V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), .12); return { pos: e, tgt: e.clone().add(L) }; }
   if (P.view === 2) { const f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)); return { pos: h.clone().addScaledVector(f, 3.6).add(V3(0, .5, 0)), tgt: h }; }
   let d = 5.2; const pos = h.clone().addScaledVector(L, -d);
-  for (let k = 1; k <= 22; k++) { const q = h.clone().addScaledVector(L, -d * k / 22); if (q.y < .15 || blocked(q.x, q.y - .25, q.z, .18, .5)) { d = Math.max(.7, d * (k - 1.5) / 22); break; } }   // 镜头别穿进屋子、树里
+  for (let k = 1; k <= 22; k++) { const q = h.clone().addScaledVector(L, -d * k / 22); if (q.y < .15 || camHit(q)) { d = Math.max(.7, d * (k - 1.5) / 22); break; } }   // 镜头别穿进屋子、树里
   return { pos: h.clone().addScaledVector(L, -d), tgt: h.clone().add(V3(0, .15, 0)) };
 }
+// 镜头和空空之间有东西就拉近（按零件外包盒判断，宁可近一点也别被挡住）
+function camHit(q) { if (Math.hypot(q.x - POND.x, q.z - POND.z) > 999) return false;
+  for (const c of COL) { const w = c.wb; if (q.x > w.min.x - .12 && q.x < w.max.x + .12 && q.z > w.min.z - .12 && q.z < w.max.z + .12 && q.y > w.min.y - .12 && q.y < w.max.y + .12 && (w.max.x - w.min.x) * (w.max.z - w.min.z) < 40) return true; }
+  return false; }
 function setMode(m) {
   if (MODE === m || fly) return;
   MODE = m; document.body.classList.toggle('play', m === 'play'); document.body.classList.toggle('map', m === 'map');
@@ -771,7 +775,8 @@ ui(); stats(); applyHour(realHour()); clockText(realHour());
 if (introT === 0) { setTimeout(() => flyTo(HOME.pos, HOME.tgt, 3000, () => { document.body.classList.remove('intro'); popTags(); }), 300); }
 else { document.body.classList.remove('intro'); tags.forEach(t => t.born = 0); if (Q.get('mode') !== 'map') setMode('play'); }
 function popTags() { tags.forEach((t, i) => t.born = clock.elapsedTime + .15 + i * .16); setTimeout(() => { if (Q.get('mode') === 'map') ctl.autoRotate = !REDUCE; else setMode('play'); }, 1900); }
-function frame() {
+let FR = 0;
+function frame() { FR++;
   const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; grassU.time.value = t;
   if (fly) { const k = Math.min(1, (performance.now() - fly.s) / fly.ms), e = ease(k); cam.position.lerpVectors(fly.p0, fly.p1, e); ctl.target.lerpVectors(fly.t0, fly.t1, e); if (k >= 1) { const d = fly.done; fly = null; d && d(); } }
   if (job) runJob(t);
@@ -828,6 +833,18 @@ function frame() {
 addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
 window.__park = { P, INV, ball, setMode, interact, findTarget: () => target, COL, KEY, kong, MERGE, PETS, select, deliver, flyTo, flyPet, applyHour, cam, ctl, N, THREE, HOME, layout };
 window.__ready = true;
+// ---------- 测速（?bench=1）：自动走一圈各模式，把帧率回传给本机测速服务 ----------
+if (Q.get('bench')) {
+  const log = d => fetch('/log', { method: 'POST', body: JSON.stringify({ ...d, ua: navigator.userAgent.slice(0, 80), dpr: devicePixelRatio, w: innerWidth, h: innerHeight }) }).catch(() => {});
+  addEventListener('error', e => log({ err: String(e.message) + ' @' + e.lineno }));
+  const phases = [['走走·站着', () => { }], ['走走·走路', () => { joy.y = 1; }], ['走走·第一人称', () => { P.view = 0; }], ['俯瞰', () => { joy.y = 0; P.view = 1; setMode('map'); }], ['俯瞰·看一天', () => $('tDay').click()]];
+  let i = 0; const run = () => { if (i >= phases.length) return log({ done: true }); const [name, fn] = phases[i++]; fn(); let f0 = 0, t0 = 0, min = 99;
+    const tick = () => { /* 每帧转一点方向，走成一圈 */ if (name === '走走·走路' || name === '走走·第一人称') P.yaw += .012; };
+    const iv = setInterval(tick, 16);
+    setTimeout(() => { f0 = FR; t0 = performance.now(); }, 2000);
+    setTimeout(() => { clearInterval(iv); const n = FR - f0, s = (performance.now() - t0) / 1000; log({ phase: name, fps: +(n / s).toFixed(1), tier, calls: renderer.info.render.calls, pr: renderer.getPixelRatio() }); run(); }, 8000); };
+  setTimeout(() => { log({ start: true, tier }); run(); }, 4000);
+}
 requestAnimationFrame(frame);
 
 </script>
