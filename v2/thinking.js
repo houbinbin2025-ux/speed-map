@@ -138,15 +138,15 @@ function enter(id) {
   G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = startTier(P.progress(o.S(), id)); G.tap = performance.now() + 500;
   o.show(); fit(); next();
 }
-function next() { hush(); cancelAuto(); if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; G.t0 = performance.now(); render(); }
+function next() { hush(); cancelAuto(); if (G.up !== false) { G.tier = G.up; G.up = false; } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; G.t0 = performance.now(); render(); }
 function earn() {   // 一题一块矿石；进度和矿石马上存，中途退出不丢
   if (G.got) return; G.got = true; G.ore++; const n = $s.querySelector('#oreN'); if (n) n.textContent = G.ore;
   if (o.gem) o.gem({key: G.mod.id + ':' + G.tier + ':' + JSON.stringify(G.q), wrong: G.wrong, secs: (performance.now() - (G.t0 || performance.now())) / 1000});   // 答对给碎片、算有效时间（C 模块接线，中控 11-08）
   G.note = '';
   if (P.record(o.S(), G.mod.id, G.tier)) {
-    const last = G.tier === G.mod.tiers.length - 1, all = P.progress(o.S(), G.mod.id).passed === G.mod.tiers.length;
-    if (!last) G.up = true;
-    G.note = all ? `${G.mod.name}全部学会了` : last ? '' : `学会了，下一个：${G.mod.tiers[G.tier + 1]}`;
+    const pr = P.progress(o.S(), G.mod.id), up = pr.n.findIndex((x, i) => i > G.tier && x < P.PASS), all = pr.passed === G.mod.tiers.length;   // 升到后面第一个没过关的档（跳过低档时后面可能已经过关，审查 11-09）
+    if (up >= 0) G.up = up;
+    G.note = all ? `${G.mod.name}全部学会了` : up < 0 ? '' : `学会了，下一个：${G.mod.tiers[up]}`;
     const f = $s.querySelector('#fb'); if (f && G.note) setTimeout(() => { const t = document.createElement('div'); t.textContent = G.note; f.appendChild(t); G.note = ''; }, 0);
   }
   paintTabs();
