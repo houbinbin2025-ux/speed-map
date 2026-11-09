@@ -91,7 +91,11 @@
 
   // ---------- 高级别题（不进 SK：现有地图、奖状、伙伴不受影响。说明书-难度分级） ----------
   const HARD = [];
-  const hard = o => { const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
+  // 第三批趣味题的保险（说明书-第三批 §4.3「关掉 / 退回」）：每日趣味题时间上限；= 0 时 fun 技能完全不登记（不进 HARD / BY / ITEM），
+  // 练习、挑战、开级、allOut 都一道不出，留在错题本里的趣味错题查不到题型就不回炉。和 A、C 同一次上线时改成 90
+  const FUN_SEC = 0;
+  const funAllowed = (o, sec) => !o.fun || sec > 0;
+  const hard = o => { if (!funAllowed(o, FUN_SEC)) return; const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
   hard({id: 'lookH1', group: 'look', name: '几排几个', ids: ['look:h:grid']});
   hard({id: 'lookH2', group: 'look', name: '百格图数数', pre: ['lookH1'], ids: ['look:h:h100']});
   hard({id: 'bondH1', group: 'bond', name: '整十分合', ids: ['bond:h:tens']});
@@ -318,6 +322,7 @@
     const s = BY[ITEM[id].skill];
     let c;
     if (C.BYID[id]) c = 'card';
+    else if (s.fun) c = 'word';   // 趣味题（第三批）：读题题类，12–25 秒
     else if (COLUMN.includes(id)) c = 'column';
     else if (s.input === 'line') c = 'line';
     else if (s.input === 'pick') c = 'pick';
@@ -376,6 +381,6 @@
     return SK.every(s => visit(s.id));
   }
 
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, thinkMs, fastLabel,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, thinkMs, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });
