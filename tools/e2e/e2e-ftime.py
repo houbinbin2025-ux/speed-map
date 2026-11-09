@@ -8,7 +8,7 @@ def go(pg, items, oral=False):
     pg.wait_for_timeout(500)
 ft = lambda pg, sk: pg.evaluate(f"(__sm.S.ftime || {{}})[{json.dumps(sk)}] || []")
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); {NODEMO}"); pg.reload(); pg.wait_for_timeout(500)
     # 手机写字板写对

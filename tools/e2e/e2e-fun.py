@@ -26,7 +26,7 @@ def setup(pg, en):
             for r in range(3): draw(pg, '#calPad', str(d)); pg.wait_for_timeout(1050)
         pg.wait_for_timeout(400)
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for en in (False, True):
         L = 'en' if en else 'zh'; TAG = f'{W}x{H} {L}'
         pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
