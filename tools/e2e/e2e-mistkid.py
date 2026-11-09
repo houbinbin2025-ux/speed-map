@@ -74,7 +74,7 @@ with sync_playwright() as p:
             else:
                 for w in ['开始复习', '今天要复习', '过几天再来', '已经学会']: check(w in txt, f'{name}：没有「{w}」')
             pg.screenshot(path=str(out / f'{name}.png'))
-            if W == 844:
+            if (W, mode) in [(844, 'zh'), (667, 'zh'), (667, 'en'), (874, 'en')]:
                 # 开始复习：进练习页，第一题是今天要复习的题
                 due = pg.evaluate("MISTVIEW.shelves(__sm.S, __sm.today()).today.map(m => m.uid)")
                 pg.click('#mistGo'); pg.wait_for_timeout(1500)
@@ -94,21 +94,25 @@ with sync_playwright() as p:
                     c = pg.evaluate("['qplay','demo','qsum'].find(k => !document.getElementById(k).hidden) || ''")
                     if c == 'qsum': break
                     if c == 'demo': pg.click('#ack'); pg.wait_for_timeout(500); continue
-                    st = pg.evaluate("__sm.Q && __sm.Q.phase === 'q' && __sm.Q.x && __sm.Q.x.inst ? [!!__sm.Q.x.retry, __sm.Q.sess.pos, document.getElementById('qTag').textContent] : null")
+                    st = pg.evaluate("__sm.Q && __sm.Q.phase === 'q' && __sm.Q.x && __sm.Q.x.inst ? [!!__sm.Q.x.retry, __sm.Q.sess.pos, document.getElementById('qPos').textContent] : null")
                     if not st: pg.wait_for_timeout(250); continue
                     if not st[0]: seen += 1
-                    check(st[1] == seen and f'第 {seen} / 15' in st[2], f'{name}：第 {seen} 道题签不对 {st}')
+                    check(st[1] == seen and (f'第 {seen} / 15' if mode == 'zh' else f'{seen} / 15') == st[2], f'{name}：第 {seen} 道题签不对 {st}')
                     if seen == 3: pg.screenshot(path=str(out / f'{name}-review3.png'))
                     pg.evaluate("__sm.resolve({ok: true, fast: true})"); pg.wait_for_timeout(250)
                 check(seen == 15, f'{name}：一次复习出了 {seen} 道，应 15 道')
                 pg.wait_for_selector('#qsMist', timeout=5000)
-                check('回到岛上' in pg.inner_text('#qsum'), f'{name}：复习结算没有「回到岛上」')
+                check(pg.is_visible('#qsHome'), f'{name}：复习结算没有「回到岛上」')
+                # 结算按钮（有战利品箱时三个）：整个在屏内、文字不溢出按钮（审查 R1：667 英文「Open at home」掉出下沿）
+                for b in pg.evaluate("[...document.querySelectorAll('#qsum button[id^=qs]')].map(e => { const r = e.getBoundingClientRect(); return [e.id, r.left, r.top, r.right, r.bottom, e.scrollHeight - e.clientHeight, e.scrollWidth - e.clientWidth]; })"):
+                    check(b[1] >= -1 and b[2] >= -1 and b[3] <= W + 1 and b[4] <= H + 1 and b[5] <= 1 and b[6] <= 1, f'{name}：结算按钮 {b[0]} 出界或文字溢出 {b}')
                 pg.screenshot(path=str(out / f'{name}-review-done.png'))
                 pg.click('#qsMist'); pg.wait_for_timeout(400)
                 check(not pg.locator('#mist').is_hidden(), f'{name}：点「回到错题宝箱」没回到错题宝箱')
                 left = pg.evaluate("document.querySelectorAll('#mShelves .mshelf:nth-child(1) .mq').length")
                 check(left == 5, f'{name}：复习完 15 道后今天要复习应剩 5 道，实际 {left}')
                 check(pg.evaluate("!document.getElementById('mistGo').disabled"), f'{name}：还剩 5 道，开始复习却灰着')
+            if W == 844:
                 # 从拼数地点的卡片进来：只看这一块
                 seed(pg, mode)
                 pg.evaluate("document.querySelector('.w-mini button[data-z=\"bond\"]').click()"); pg.wait_for_timeout(700)

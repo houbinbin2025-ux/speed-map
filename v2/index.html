@@ -256,6 +256,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .qr{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
 .qtop{display:flex;align-items:center;gap:10px;position:relative}
 .tbar{flex:1;height:10px;background:var(--stone);border:2px solid #000}.tbar i{display:block;height:100%;background:var(--go);width:0}
+.qpos{flex:none;font-size:15px;font-weight:800;white-space:nowrap}   /* 说明档 15（字号审查标准） */
 .qtag{align-self:flex-start;background:var(--stone);border:2px solid #000;padding:3px 10px;font-size:15px;font-weight:700}
 /* 碎片的火苗、能量、小目标浮在练习页右上角（写字板右上角里面），不占顶栏和题签的位置（捣蛋鬼第 1 轮第 5 条；放题签行会把题签截掉，审查 R1） */
 #gemToast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 12px);transform:translateX(-50%);z-index:60;background:var(--stone);border:3px solid #000;box-shadow:0 4px 0 rgba(0,0,0,.35);padding:8px 16px;font-size:17px;font-weight:800;pointer-events:none;max-width:calc(100% - 32px);text-align:center}#gemToast[hidden]{display:none}#gemToast.mid{top:45%}body:has(#forgeWarn:not([hidden])) #gemToast,body:has(#exitOv:not([hidden])) #gemToast,body:has(#restOv:not([hidden])) #gemToast,body:has(.ovl:not([hidden])) #gemToast{display:none}   /* 弹窗打开时提示条让开，不压住说明句（中控 11-09） */
@@ -708,7 +709,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
   <div id="exitOv" hidden><div class="fwcard"><b></b><span></span><div class="gembtns"><button class="btn go" id="exitGo">继续答题</button><button class="btn" id="exitEnd">结束</button></div></div></div>
   <canvas class="scnbg px" id="qBg"></canvas>
   <div class="ql">
-    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qmined" id="qMined"><i></i><b>0</b></span></div>
+    <div class="qtop"><button class="btn hold-btn" id="qQuit">长按结束<i></i></button><div class="tbar" id="qBar"><i></i></div><span class="qpos" id="qPos" hidden></span><span class="qmined" id="qMined"><i></i><b>0</b></span></div>
     <div class="banner" id="qWarn" hidden></div>
     <div class="hint-pop" id="qQuitHint" hidden>要结束就按住左上角</div>
     <div class="qtag" id="qTag"></div>
@@ -1847,6 +1848,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
     if (Q.vc) Q.vc.destroy();
     Object.assign(Q, {vc: null, vfoot: null, vtip: '', vdemo: false});
     $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : Q.x.retry ? v.tag + ' · 再来一次' : v.tag;
+    $('qPos').hidden = !(Q.kind === 'review' && Q.sess.total); $('qPos').textContent = $('qPos').hidden ? '' : `第 ${Q.sess.pos} / ${Q.sess.total}`;   // 错题复习一次最多 15 道的进度（不放题签里：英文题签会折行）
     $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : cellsOf(inst) && !vp ? '一格一格写，写好一格自动跳到下一格' : v.note || '';
     $('qBody').innerHTML = v.html; $('qBody').hidden = false; $('qWide').after($('qNote'));
     Q.mc = !vp && !S.oral && v.input === 'write' && cellsOf(inst) ? {i: 0, vals: [], recs: [], conf: false} : null;   // 多格：当前格、各格写的数、各格的识别（学字模、习惯记录用）   // 提示回到原位（宽版答错时挪到了「继续」下面）
@@ -2209,7 +2211,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
     const q = Q; Q = null; save();
     if (q.kind === 'place') return showPlaceResult(q, quit);
     if (q.kind === 'challenge') { HOME.addOre(S, q.n - q.wrong); HOME.sync(S, today()); save(); return GM.finishChallenge(q); }
-    if (!q.n) return goIsland();
+    if (!q.n) return q.kind === 'review' ? openMist(q.opts.group) : goIsland();   // 复习一道没答就退出：回错题宝箱
     // 墙上贴珠子已停用（Ben 11-08：珠子被 App 取代）。存档里的 S.daily.pearl 不再读写，旧数据留着
     const mins = Math.max(1, Math.round((q.kind === 'today' ? S.daily.sec : q.secs) / 60));
     const newMist = Math.max(0, Object.keys(S.mistakes).length - q.mist0);
@@ -2239,8 +2241,8 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
         </div>
         <div style="display:flex;gap:12px;flex:none">
           ${q.kind === 'free' ? `<button class="btn" id="qsAgain" style="min-height:72px;flex:1;font-size:20px">再来一组</button>` : ''}
-          ${q.kind === 'review' ? `<button class="btn" id="qsMist" style="min-height:72px;flex:1;font-size:18px">回到错题宝箱</button>` : ''}
-          ${box ? `<button class="gobig" id="qsHouse" style="flex:2;height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2};${box ? 'min-height:72px;font-size:18px' : 'height:72px;font-size:22px'}">回到岛上</button>
+          ${q.kind === 'review' ? `<button class="btn" id="qsMist" style="min-height:72px;flex:1 1 0;min-width:0;font-size:18px">回到错题宝箱</button>` : ''}
+          ${box ? `<button class="gobig" id="qsHouse" style="flex:2 1 0;min-width:0;min-height:72px;font-size:22px">回家打开</button>` : ''}<button class="${box ? 'btn' : 'gobig'}" id="qsHome" style="flex:${box ? 1 : 2} 1 0;min-width:0;${box ? 'min-height:72px;font-size:18px' : 'min-height:72px;font-size:22px'}">回到岛上</button>
         </div>
       </div>`;
     show('qsum'); GM.bind($('qsum'), 'qsum'); foldGems(q, tight); if (tight) trimChips(q.ups.length, 2);
