@@ -276,6 +276,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .okbig{font-size:30px;font-weight:900;color:var(--ok)}.okbig.plain{color:var(--ink)}
 .eq{font-family:var(--f-num);font-weight:900;font-size:48px;white-space:nowrap;display:flex;align-items:center;gap:8px}
 .box{flex:none;display:inline-block;width:56px;height:62px;border:4px dashed var(--warn)}
+.box.cur{border:4px solid #4ea3ff;box-shadow:0 0 0 3px rgba(78,163,255,.35)}.box.filled{display:inline-flex;align-items:center;justify-content:center;border-style:solid;color:var(--warn);font-size:44px;line-height:1}.box[data-ci]{cursor:pointer}   /* 2b-2 多格：当前格蓝框，写好的格显示识别出的数，点格回去重写 */
 .say2{font-size:28px;font-weight:900;line-height:1.5;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .say2 .num{font-family:var(--f-num);font-size:56px}
 .ansv{color:var(--ok)}
@@ -1418,10 +1419,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const limitOf = c => C.fastLimit(c, c.ans, mode(), INKS.speed);
   // 描红：答错后照着描的数字。用 ink.js 的标准手写笔画画（和识别认的写法同一套），约写字板一半高，不用印刷体
   function ghostInk(g, ans, pad) {
-    const s = String(ans), n = s.length, H = Math.min(pad.clientHeight * 0.45, pad.clientWidth * 0.8 / (0.85 * n - 0.25));
+    const s = Array.isArray(ans) ? ans : String(ans).match(/[A-Za-z]+|./g) || [], n = s.length, H = Math.min(pad.clientHeight * 0.45, pad.clientWidth * 0.8 / (0.85 * n - 0.25));   // 英文单词（R、and）占一格
     const pts = d => (d === '1' ? I.STD[1][1] : (I.STD[d] || [])[0] || []).map(st => st.map(([x, y]) => `${(x * 100).toFixed(1)},${(y * 100).toFixed(1)}`).join(' '));
-    const body = s.split('').map((d, i) => /\d/.test(d) ? pts(d).map(l => `<polyline transform="translate(${i * 85},0)" points="${l}"></polyline>`).join('') : `<circle cx="${i * 85 + 30}" cy="92" r="6" fill="#cdbd94"></circle>`).join('');
-    g.innerHTML = `<svg width="${(H * (0.85 * n - 0.25)).toFixed(0)}" height="${H.toFixed(0)}" viewBox="-6 -6 ${85 * n - 13} 112" fill="none" stroke="#cdbd94" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${s}">${body}</svg>`;
+    const body = s.map((d, i) => /\d/.test(d) ? pts(d).map(l => `<polyline transform="translate(${i * 85},0)" points="${l}"></polyline>`).join('')
+      : d === '.' ? `<circle cx="${i * 85 + 30}" cy="92" r="6" fill="#cdbd94"></circle>`
+      : d === ' ' ? '' : `<text x="${i * 85 + 30}" y="72" font-size="${d.length > 1 ? 40 : 62}" text-anchor="middle" fill="#cdbd94" stroke="none" font-family="PingFang SC, sans-serif">${d}</text>`).join('');   // 多格：格之间印「余」「又」
+    g.innerHTML = `<svg width="${(H * (0.85 * n - 0.25)).toFixed(0)}" height="${H.toFixed(0)}" viewBox="-6 -6 ${85 * n - 13} 112" fill="none" stroke="#cdbd94" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="${s.join('')}">${body}</svg>`;
   }
   function showQ() {
     const c = P.deck[P.i];
@@ -1687,6 +1690,19 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   let svgFitRaf = 0; new MutationObserver(() => { if (svgFitRaf) return; svgFitRaf = requestAnimationFrame(() => { svgFitRaf = 0; fitSvgText(); }); }).observe(document.body, {childList: true, subtree: true, characterData: true});
   window.__fitSvg = fitSvgText;
   addEventListener('resize', fitBody);
+  // ---------- 2b-2 一题几个空（B 方案 §6，题池 A）：ans 是各格拼起来的整数，q.cells 记每格几位 ----------
+  // 手机写字板一格一格写：停笔就把识别结果填进当前格、跳到下一个空格；最后一格写完才判；点题面上的格回去重写；「擦掉」只擦写字板
+  const cellsOf = inst => (K.MULTI_CELL && inst.q && Array.isArray(inst.q.cells) && inst.q.cells.length > 1 ? inst.q.cells : null);
+  const cellParts = (q, a) => { const s = String(a), out = []; let i = 0; q.cells.forEach(n => { out.push(s.slice(i, i + n)); i += n; }); return out; };
+  const cellSeps = q => String(q.text || '').split('□').slice(1, -1).map(t => t.replace(/\/\d+$/, '').trim());   // 格之间的字（余、又）；分数格后面的 /5 不算
+  const SEP_EN = {余: 'R', 又: 'and'}, sepWord = w => (I18N.on && SEP_EN[w]) || w;   // 英文日：余 → R、又 → and（和 i18n 题面一致）
+  const cellsLine = (q, a) => R.cellsText(q, a).replace(/ (余|又) /g, (m, w) => ` ${sepWord(w)} `);   // 「3 余 2」「3 又 2/5」（按当天语言）
+  const cellsTail = q => (String(q.text || '').split('□').pop().match(/^\s*(\/\d+)/) || [])[1] || '';
+  const cellsZh = (q, vals) => vals.map((x, k) => (k ? ` ${cellSeps(q)[k - 1]} ` : '') + x).join('') + cellsTail(q);   // 孩子逐格写的（中文，错题记录用）：「52 余 」也不会切错
+  function cellsShow() {
+    const m = Q && Q.mc; if (!m) return;
+    $('qBody').querySelectorAll('.box').forEach((b, k) => { b.dataset.ci = k; b.classList.toggle('cur', Q.phase === 'q' && k === m.i); b.classList.toggle('filled', !!m.vals[k]); b.textContent = m.vals[k] || ''; });
+  }
   function showQuestion(x) {
     const inst = x.inst, vp = vertOn(inst), v = vp ? Object.assign({}, R.question(inst), {input: 'vert', vp, flash: false, note: ''}) : R.question(inst);
     Object.assign(Q, {v, phase: 'q', peeked: false, oralWrong: false, wasLv: E.lv(S, inst.id), shownAt: performance.now(), t0: performance.now(), val: null});
@@ -1697,8 +1713,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (Q.vc) Q.vc.destroy();
     Object.assign(Q, {vc: null, vfoot: null, vtip: '', vdemo: false});
     $('qTag').textContent = Q.kind === 'place' ? '看看你已经会什么' : Q.x.retry ? v.tag + ' · 再来一次' : v.tag;
-    $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : v.note || '';
-    $('qBody').innerHTML = v.html; $('qBody').hidden = false; $('qWide').after($('qNote'));   // 提示回到原位（宽版答错时挪到了「继续」下面）
+    $('qNote').textContent = S.oral && v.input === 'write' ? '说出答案，再点右边看答案' : cellsOf(inst) && !vp ? '一格一格写，写好一格自动跳到下一格' : v.note || '';
+    $('qBody').innerHTML = v.html; $('qBody').hidden = false; $('qWide').after($('qNote'));
+    Q.mc = !vp && !S.oral && v.input === 'write' && cellsOf(inst) ? {i: 0, vals: [], recs: [], conf: false} : null;   // 多格：当前格、各格写的数、各格的识别（学字模、习惯记录用）   // 提示回到原位（宽版答错时挪到了「继续」下面）
     $('qWide').hidden = !wide; $('qWide').innerHTML = '';
     $('qPeek').hidden = !v.flash; $('qPeek').disabled = false;
     ['qGhost', 'qPadTip', 'qCheck', 'qConfirm', 'qOralWrong', 'qOralNext', 'qNext'].forEach(id => { $(id).hidden = true; });
@@ -1706,6 +1723,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('qFootNote').textContent = ''; $('qClear').hidden = !!S.oral; $('qDunno').hidden = false;
     $('qPad').hidden = !!S.oral; $('qOral').hidden = !S.oral; $('qOral').textContent = '说出答案后，点这里看答案';
     if (v.input === 'write') { qPad.fit(); qPad.clear(); qPad.enabled = !S.oral; }
+    cellsShow();
     if (v.input === 'pick') showPick(v);
     if (v.input === 'line') { showLine(v); $('qNextCol').append($('qDunno'), $('qNote')); }   // 数线（宽版，右栏收起）：「不会」和提示放到题目右边（同答错时「继续」的排法，不加高），提示不再压在刻度「0」上（捣蛋鬼第 1 轮第 10 条）
     else $('qplay').querySelector('.qfoot').insertBefore($('qDunno'), $('qNext'));
@@ -1748,7 +1766,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // 拿不准的格同写字板（ink.js resolveWith）：只有把它们换成答案要的数字后整串正好等于答案才按答案认，按答案认的格不存字模
   function vertDone() {
     if (guarded() || !Q || Q.phase !== 'q' || Q.vdemo || !Q.vc) return;
-    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = String(inst.ans).padStart(n, ' ');
+    const inst = Q.x.inst, strokes = Q.vc.cells(), n = strokes.length, want = VERT.want(Q.v.vp, n, strokes.map(st => st.length > 0));   // 每格期望的数：靠右对齐；多格按组、按孩子写了的格对齐
     const recs = strokes.map(st => {
       if (!st.length) return {t: ''};
       const res = I.recognize(st, INKS);
@@ -1763,10 +1781,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     }
     const j = VERT.judge(recs.map(r => r.t), Q.v.vp, I18N.on), L = k => VERT.LAB[k][I18N.on ? 1 : 0];
     if (j.retry) { tapGuard = performance.now() + 500; Q.vc.clearCells(recs.map(r => r.t === '?')); Q.vc.note(L('unclear')); return; }
-    if (j.empty) { Q.vc.note(L('empty')); return; }
+    if (j.empty) { Q.vc.note(j.note || L('empty')); return; }   // 多格：有一组空着，提示不判
     Q.ms = Math.max(0, performance.now() - Q.t0 - VERT.TAP_MS);
     if (j.ok) { recs.forEach(r => { if (r.d && r.d.sure && !r.byAns) I.addTemplate(INKS, r.t, r.d.strokes); }); saveInk(); }
-    Q.vtip = j.tip; Q.vc.mark(j.ok); Q.vc.done();
+    Q.vtip = j.tip; Q.vc.mark(j.ok || j.tip || !j.cellOk ? j.ok : j.cellOk); Q.vc.done();   // 多格：错的那组标红、对的组标绿
     resolve({ok: j.ok, fast: j.ok && Q.ms <= qLimit(inst), typed: j.text});
   }
   // 看数：图案闪现 flashMs 后消失，用 requestAnimationFrame 记真实显示时长；「再看一次」再闪一遍，这题不点亮
@@ -1789,8 +1807,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function qSchedule() {
     if (!Q || Q.phase !== 'q' || Q.v.input !== 'write') return;
     clearTimeout(Q.submitT);
-    const groups = I.groupStrokes(qPad.strokes()).length;
-    Q.submitT = setTimeout(qSubmit, groups < C.digits(Q.x.inst.ans) ? (K.slowWrite(Q.x.inst) ? 4000 : 1500) : 900);   // 新题多位计算：写到一半停下想，不算写完
+    const groups = I.groupStrokes(qPad.strokes()).length, need = Q.mc ? Q.x.inst.q.cells[Q.mc.i] : C.digits(Q.x.inst.ans);   // 多格：按当前格的位数等
+    Q.submitT = setTimeout(qSubmit, groups < need ? (K.slowWrite(Q.x.inst) ? 4000 : 1500) : 900);   // 新题多位计算：写到一半停下想，不算写完
   }
   function qSubmit() {
     if (!Q || Q.phase !== 'q') return;
@@ -1798,7 +1816,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     Q.ms = Math.max(0, qPad.lastUp - Q.t0);
     const res = I.recognize(strokes, INKS);
     if (res.text === null) { qPad.clear(); $('qFootNote').textContent = '没看清，再写一次'; return; }
-    const rv = I.resolveWith(res, Q.x.inst.ans);
+    const q = Q.x.inst.q, want = Q.mc ? cellParts(q, Q.x.inst.ans)[Q.mc.i] : Q.x.inst.ans;   // 多格：两可的笔迹按当前格的答案定夺
+    if (Q.mc && res.digits.length > q.cells[Q.mc.i]) { qPad.clear(); $('qFootNote').textContent = '这一格写多了，再写一次'; return; }
+    const rv = I.resolveWith(res, want);
     Object.assign(Q, {rec: res, picked: rv.picked, unsure: rv.unsure, byAnswer: rv.byAnswer});
     if (TEST && qForceUnsure && res.digits[0].cands.length > 1) { qForceUnsure = false; Q.unsure = [0]; Q.byAnswer = []; }
     INKS.stats = (INKS.stats || []).concat(Q.unsure.length || Q.byAnswer.length ? 0 : 1).slice(-100); saveInk();
@@ -1820,19 +1840,37 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('qcRewrite').addEventListener('click', () => { if (!Q || Q.phase !== 'confirm') return; $('qConfirm').hidden = true; Q.phase = 'q'; qPad.clear(); qPad.enabled = true; });
   // 每道题的秒答时间（说明书-秒答时间）
   const limOpt = () => ({oral: S.oral, speed: INKS.speed, en: I18N.on, ft: S.oral ? null : S.ftime}), qLimit = inst => K.fastMs(inst, limOpt());   // ft：攒够样本的技能按空空自己的速度定线（说明书-秒答时间校准）；口答用估计值——样本都是写字作答的，口答「说 + 点」没有额度（审查 R2）
+  // 多格：这一格写好了 → 记下、清写字板、跳到下一个空格；都写满了才判（拼成整串比 ans，每格无前导 0 所以等价于逐格对）
+  function cellCommit(viaConfirm) {
+    const m = Q.mc, inst = Q.x.inst;
+    m.vals[m.i] = Q.picked.join(''); m.recs[m.i] = {rec: Q.rec, picked: Q.picked.slice(), byAnswer: Q.byAnswer.slice(), via: !!viaConfirm}; m.conf = m.conf || !!viaConfirm;
+    Q.phase = 'q'; qPad.clear(); qPad.enabled = true;
+    const next = inst.q.cells.findIndex((_, k) => !m.vals[k]);
+    if (next >= 0) { m.i = next; cellsShow(); return; }
+    const right = m.vals.join('') === String(inst.ans) && m.vals.every((x, k) => x.length === inst.q.cells[k]);
+    if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) m.recs.forEach(r => recordInk(r.rec, r.picked, !r.via && !r.byAnswer.length));   // 按格记：别的格弹过确认不算这一格写得不清楚
+    if (right) { m.recs.forEach(r => { if (!r.via) r.rec.digits.forEach((d, k) => { if (!r.byAnswer.includes(k)) I.addTemplate(INKS, r.picked[k], d.strokes); }); }); saveInk(); }
+    resolve({ok: right, fast: right && !m.conf && Q.ms <= qLimit(inst), typed: cellsZh(inst.q, m.vals), confirm: m.conf});
+    cellsShow();
+  }
   function qDecide(viaConfirm) {
+    if (Q.mc) return cellCommit(viaConfirm);
     const inst = Q.x.inst, text = Q.picked.join(''), right = text === String(inst.ans);
     if (Q.kind !== 'place' && !Q.x.retry && !Q.peeked) recordInk(Q.rec, Q.picked, !viaConfirm && !Q.byAnswer.length && !Q.x.asked);
     if (right && !viaConfirm) { Q.rec.digits.forEach((d, k) => { if (!Q.byAnswer.includes(k)) I.addTemplate(INKS, text[k], d.strokes); }); saveInk(); }
     resolve({ok: right, fast: right && !viaConfirm && Q.ms <= qLimit(inst), typed: text, confirm: !!viaConfirm});   // 识别要确认的：用时含确认，不记逐题用时
   }
+  $('qBody').addEventListener('click', e => {   // 多格：点题面上的格，回去重写那一格
+    const b = e.target.closest('.box'); if (!b || !Q || !Q.mc || Q.phase !== 'q' || guarded() || b.dataset.ci === undefined) return;
+    clearTimeout(Q.submitT); qPad.clear(); Q.mc.i = +b.dataset.ci; Q.mc.vals[Q.mc.i] = ''; $('qFootNote').textContent = ''; cellsShow();
+  });
   $('qClear').addEventListener('click', () => { if (guarded()) return; if (Q && ['q', 'trace'].includes(Q.phase)) { clearTimeout(Q.submitT); qPad.clear(); } });
   $('qDunno').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'q') return; clearTimeout(Q.submitT); resolve({ok: false, dunno: true}); });
   // 口答（家长陪着）：说出答案 → 点一下看答案 → 家长判
   $('qOral').addEventListener('click', () => {
     if (!Q || Q.phase !== 'q' || !S.oral || Q.v.input !== 'write') return;
     Q.ms = performance.now() - Q.t0; Q.phase = 'oral';
-    $('qOral').textContent = '答案是 ' + R.ansText(Q.x.inst.q, Q.x.inst.ans); $('qOralWrong').hidden = false; $('qOralNext').hidden = false; $('qOralWrong').textContent = '答错了'; $('qDunno').hidden = true;   // 小数题 ans 存去掉小数点的整数，显示按 q.dp 加回
+    $('qOral').textContent = '答案是 ' + (cellsOf(Q.x.inst) ? cellsLine(Q.x.inst.q, Q.x.inst.ans) : R.ansText(Q.x.inst.q, Q.x.inst.ans)); $('qOralWrong').hidden = false; $('qOralNext').hidden = false; $('qOralWrong').textContent = '答错了'; $('qDunno').hidden = true;   // 小数题 ans 存去掉小数点的整数，显示按 q.dp 加回
   });
   $('qOralWrong').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.oralWrong = !Q.oralWrong; $('qOralWrong').textContent = Q.oralWrong ? '其实答对了' : '答错了'; });
   $('qOralNext').addEventListener('click', () => { if (guarded()) return; if (!Q || Q.phase !== 'oral') return; Q.phase = 'q'; resolve({ok: !Q.oralWrong, fast: !Q.oralWrong && Q.ms <= qLimit(Q.x.inst), oral: true}); });
@@ -1895,7 +1933,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     r.bolt = !!r.fast && used <= K.boltMs(inst, limOpt(), GEMS.BOLT);   // 闪电：样本够按自己的第 10 百分位，夹在秒答线 × 0.35–× BOLT；不够 = 秒答线 × BOLT（C 11-09 对齐）
     const gain = GM.answerQ(Q, x, r, secs, lim);
     // 错题记录「孩子写了什么」（docs/方案-错题数据字段.md §2.1）：写字板 = 识别结果、蓝框 = 格子里的数、选择题 = 点的选项、数线 = 插旗的数；小数题加回小数点
-    const typed = r.dunno || r.oral || r.typed == null ? undefined : Q.v.input === 'vert' && Q.vtip ? String(r.typed) : typedText(inst.q, String(r.typed));
+    const typed = r.dunno || r.oral || r.typed == null ? undefined : (Q.v.input === 'vert' && Q.vtip) || cellsOf(inst) ? String(r.typed) : typedText(inst.q, String(r.typed));   // 多格：孩子写的已是中文（「3 余 2」），错题记录不跟当天语言
     const out = Q.sess.answer({ok: r.ok, fast: !!r.fast, secs, peeked: Q.peeked, dunno: !!r.dunno, typed, oral: !!r.oral, think: r.ok && !r.oral && !r.confirm && !x.asked && !(Q.pickDelay && Q.v.input === 'pick') ? K.thinkRatio(inst, used, limOpt()) : null, readSecs: Math.round(Math.min(SEC_CAP, (performance.now() - Q.shownAt) / 1000) * 10) / 10}) || {pass: r.ok && !!r.fast && !Q.peeked, up: false};
     Q.n++; Q.secs += secs; if (!r.ok) Q.wrong++; if (x.retry) Q.retries++; if (out.pass) Q.fastN++;
     if (out.up && !Q.ups.includes(inst.id)) Q.ups.push(inst.id);
@@ -1942,7 +1980,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (S.oral) return waitNext();
     // 手写题：照着描一遍，描完点「继续」
     qPad.clear();
-    const g = $('qGhost'); ghostInk(g, R.ansText(inst.q, inst.ans), $('qPad')); g.hidden = false;   // 小数描红带小数点
+    const g = $('qGhost'); ghostInk(g, cellsOf(inst) ? cellParts(inst.q, inst.ans).map((p, k) => (k ? sepWord(cellSeps(inst.q)[k - 1]) || ' ' : '') + p).join('') : R.ansText(inst.q, inst.ans), $('qPad')); g.hidden = false;   // 小数描红带小数点
     $('qPadTip').hidden = false; $('qFootNote').textContent = '描完点「继续」'; $('qClear').hidden = false;
     qPad.enabled = true; waitNext('trace');
   }
@@ -1954,9 +1992,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const pickTyped = (n, b) => { const v = Q.v, q = Q.x.inst.q, i = v.pick.indexOf(n);
     return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : (v.pickText && b.textContent.trim()) || String(n); };
   // 孩子写的数按题目的小数位数加回小数点（小数点写不写都认，写字板不记它）；蓝框的 □ 等非数字原样
-  const typedText = (q, t) => q && q.dp && /^\d+$/.test(t) && t.length > q.dp ? t.slice(0, -q.dp) + '.' + t.slice(-q.dp) : t;
+  const typedText = (q, t) => q && K.MULTI_CELL && Array.isArray(q.cells) && q.cells.length > 1 ? (/^\d+$/.test(t) ? cellsLine(q, t) : t.replace(/ (余|又) /g, (m, w) => ` ${sepWord(w)} `)) : q && q.dp && /^\d+$/.test(t) && t.length > q.dp ? t.slice(0, -q.dp) + '.' + t.slice(-q.dp) : t;   // 多格：「3 余 2」
   function answerLine(inst) {
-    const s = K.BY[K.ITEM[inst.id].skill], q = inst.q;
+    const s = K.BY[K.ITEM[inst.id].skill], q = inst.q, F = t => (R.hasFr(t) ? R.fr(t) : t);
+    if (cellsOf(inst)) return `${F(q.text.split(' = ')[0])} = <span class="ansv">${F(cellsLine(q, inst.ans))}</span>`;   // 多格：16 ÷ 5 = 3 余 1、17/6 = 2 又 5/6
     if (R.hasFr(q.text)) return R.fr(q.text, `<span class="ansv">${inst.ans}</span>`);   // 分数题：答对后整道式子，上下结构（中控转 A 11-08）
     if (s.speed) return `${q.a} ${q.op === '+' ? '+' : '−'} ${q.b} = <span class="ansv">${R.ansText(q, inst.ans)}</span>`;
     return `<span class="ansv">${R.ansText(q, inst.ans)}</span>`;
@@ -2315,7 +2354,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const o = e.target.closest('[data-bo]'); if (o) { bankOpen[o.dataset.bo] = !bankOpen[o.dataset.bo]; const y = $('bankList').scrollTop; renderBank(); $('bankList').scrollTop = y; return; }
     const b = e.target.closest('[data-bq]'); if (!b) return;
     const inst = BQ[+b.dataset.bq], q = R.question(inst);
-    $('qpTag').textContent = q.tag; $('qpAns').innerHTML = '答案：' + (q.pickText ? (q.pickAria || q.pickText)[q.pick.indexOf(inst.ans)] : R.ansText(inst.q, inst.ans));
+    $('qpTag').textContent = q.tag; $('qpAns').innerHTML = '答案：' + (q.pickText ? (q.pickAria || q.pickText)[q.pick.indexOf(inst.ans)] : (cellsOf(inst) ? R.cellsText(inst.q, inst.ans) : R.ansText(inst.q, inst.ans)));   // 题库预览不翻译
     $('qpQ').innerHTML = q.input === 'pick' ? `${q.html}<div style="display:flex;gap:16px;margin-top:10px">${q.pick.map((n, i) => `<span class="mq" style="font-size:${q.pickText ? 24 : 40}px;padding:10px 26px">${q.pickText ? q.pickText[i] : n}</span>`).join('')}</div>`
       : q.input === 'line' ? `${q.html}<div class="muted" style="font-size:16px;margin-top:8px">在 0—${q.line.max} 的线上插旗</div>` : q.html + (q.note ? `<div class="muted" style="font-size:16px;margin-top:8px">${q.note}</div>` : '');
     $('qpE').innerHTML = R.explain(inst); $('ovQ').hidden = false;

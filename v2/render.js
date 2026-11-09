@@ -47,7 +47,8 @@
   const frBox = '<span class="box" style="width:.9em;height:.9em;margin:.04em 0"></span>';
   const fr = (t, slot, em) => String(t).replace(FR_RE, (m, a, b) => `<span class="frac" role="img" aria-label="${frRead(m)}" style="display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .25em;font-size:max(${em || .86}em,15px)"><span style="padding:0 .12em">${frPart(a, slot || frBox)}</span><span style="align-self:stretch;border-top:.09em solid currentColor;margin-top:.04em;padding:0 .12em;text-align:center">${frPart(b, slot || frBox)}</span></span>`);
   const CNUM = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
-  const frRead = m => { const [a, b] = m.split('/'); return `${b === '□' ? '几' : CNUM[b] || b}分之${a === '□' ? '几' : CNUM[a] || a}`; };
+  const cnum = n => (n <= 12 ? CNUM[n] : n < 20 ? '十' + CNUM[n - 10] : CNUM[Math.floor(n / 10)] + '十' + (n % 10 ? CNUM[n % 10] : ''));   // 1–99（带分数的假分数分子到 49）
+  const frRead = m => { const [a, b] = m.split('/'); return `${b === '□' ? '几' : +b < 100 ? cnum(+b) : b}分之${a === '□' ? '几' : +a < 100 ? cnum(+a) : a}`; };
   const ans = n => `<span class="num ansv">${n}</span>`;
   // 十格框：两行各 5 格，先填满上一行；cells = 每格的样子（'' 空 / 'on' 点 / 'moved' 挪来的 / 'gone' 挪走的虚线）
   const frame = cells => `<div class="tf">${cells.map(c => `<i class="cell">${c ? dot(c) : ''}</i>`).join('')}</div>`;
@@ -289,6 +290,11 @@
       [`<div class="eq num sm">20 + 5 = 25</div>`, '倒着走：最后减了 5，先加回 5'],
       [`<div class="eq num sm">25 − 8 = ${ans(17)}</div>`, '前面加了 8，再减掉 8：这个数是 17'],
       [`<div class="eq num sm">17 + 8 − 5 = 20</div>`, '代回去检查：17 加 8 再减 5，正好是 20']]},
+    mixed: {title: '带分数', pages: [
+      [fracSvg({rows: [{n: 5, k: 5}, {n: 5, k: 5}, {n: 5, k: 5}, {n: 5, k: 2}]}), '17/5 是 17 份，每 5 份拼成 1 个整的'],
+      [fracSvg({rows: [{n: 5, k: 5, label: '1'}, {n: 5, k: 5, label: '1'}, {n: 5, k: 5, label: '1'}, {n: 5, k: 2, label: '2/5'}]}), '拼出 3 个整的，还剩 2 份'],
+      [`<div class="eq num sm">17 ÷ 5 = 3 余 ${ans(2)}</div>`, '用除法算：17 ÷ 5 = 3 余 2'],
+      [`<div class="eq num sm">${fr('17/5')} = 3 又 ${fr('2/5')}</div>`, '写成 3 又 2/5，读作三又五分之二']]},
     dec: {title: '小数', pages: [
       [tenthSvg(0, 3), '一条分成 10 份，涂了 3 份'],
       [tenthSvg(0, 3, '0.3'), '3 份就是 0.3，读作零点三'],
@@ -303,7 +309,21 @@
   // 挑战题的图：点阵、百格、百十个、算式
   // 小数加减（捣蛋鬼 1-4）：答案存成去掉小数点的整数，q.dp 是小数位数；显示答案一律走这里（index.html 的答案行、描红、口答也要用，B）
   const ansText = (q, a) => q && q.dp ? (a / 10 ** q.dp).toFixed(q.dp) : String(a);
+  // ---------- 2b-2 分步作答（一题几个空）：ans 是各格拼起来的整数，q.cells 记每格几位（B 方案 §6）----------
+  const cellParts = (q, a) => { const s = String(a), out = []; let i = 0; (q.cells || []).forEach(n => { out.push(s.slice(i, i + n)); i += n; }); return out; };
+  // 按 cells 把答案依次填进题面的方框，返回等号右边：「3 余 2」「3 又 2/5」（答对整式、口答、你写的是、错题记录都用它）
+  const cellsText = (q, a) => { const p = cellParts(q, a); let i = 0; const t = String(q.text || '').replace(/□/g, () => p[i++] ?? ''); return t.includes(' = ') ? t.split(' = ').slice(1).join(' = ') : t; };
+  // 题面 / 讲解：独立的方框用 box（或填答案），分数里的方框交给 fr（分子上下结构）
+  function cellsFig(q, a) {
+    const t = String(q.text || ''), p = a === undefined ? null : cellParts(q, a); let i = 0, slot;
+    const t2 = t.replace(/□/g, (m, off) => { const k = i++; const inFr = t[off + 1] === '/' || t[off - 1] === '/'; if (inFr) { if (p) slot = ans(p[k]); return m; } return `\u0001${k}\u0002`; });
+    // 排版不缩字（E 全站字号审查 11-09）：在等号后切成两段，每段内部不断行——放得下就一行，放不下上一行「61 ÷ 7 =」、下一行「□ 余 □」（中控 11-09）
+    const nw = x => `<span style="white-space:nowrap">${(hasFr(x) ? fr(x, slot, p ? .72 : undefined) : x).replace(/\u0001(\d+)\u0002/g, (m, k) => (p ? ans(p[+k]) : box))}</span>`;
+    const at = t2.indexOf(' = '), body = at > 0 ? `${nw(t2.slice(0, at + 2))} ${nw(t2.slice(at + 3))}` : nw(t2);
+    return `<div class="eq num sm${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}">${body}</div>` + (a === undefined && q.read ? `<div class="nbsay" style="justify-content:center"><button class="spk" type="button" data-say="${q.read}" aria-label="朗读题目">${SPK}</button></div>` : '');
+  }
   const hardFig = (q, a) => {
+    if (q.cells) return cellsFig(q, a);
     if (q.dp && a !== undefined) a = ansText(q, a);
     if (q.view === 'grid') return `<div class="hgrid" style="grid-template-columns:repeat(${q.cols},26px)">${dot().repeat(q.rows * q.cols)}</div>`;
     if (q.view === 'h100') return `<div class="h100">${Array.from({length: 100}, (_, i) => `<i${i < q.n ? ' class="on"' : ''}></i>`).join('')}</div>`;
@@ -415,6 +435,9 @@
     if (s.nb) return pack(`${q.view === 'clock' ? clockSvg(q.h, q.m) : ''}<div class="say2">${s.input === 'pick' && q.view !== 'bad' ? '应该是 ' : ''}${nbAns(q, a)}</div>`, q.why);
     if (s.hard && s.input === 'pick' && q.view === 'choice') return pack(`<div class="say2">应该是 <span class="num" style="font-size:32px">${hasFr(q.opts[a]) ? fr(q.opts[a]) : q.opts[a]}</span></div>`, q.why);
     if (s.hard && s.input === 'pick') return pack(`<div class="say2"><span class="num" style="font-size:32px">${pickWord(q, a)}</span> 更大</div>`, q.why);
+    // 分步作答的讲解句按「：」「，」切成几段、每段不断行：换行只落在语义断点上，不会把最后一个字甩到下一行（11-09）。
+    // 段间放 <wbr>：英文译文的空格在不断行的段里，没有它英文整句不换行；「，比 N 小」不切开，整段走 i18n 原来的整句规则（单独的「比 N 小」是思维地点线索，译法不同）
+    if (s.hard && s.input === 'write' && q.cells) return pack(hardFig(q, a), q.why.split(/(?<=[：，])(?!比)/).map(x => `<span style="white-space:nowrap">${x}</span>`).join('<wbr>'));
     if (s.hard && s.input === 'write') return pack((q.qk && q.say ? `<div class="whysay">${q.say}</div>` : '') + hardFig(q, a), q.view === 'fracbar' ? q.why.replace(/：[^：]*$/, '') : q.why);   // 分数读图：算式行已写出答案，讲解句不再重复分数（矮屏放得下）
     if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
     if (s.group === 'look') {
@@ -583,5 +606,6 @@
     return `数线 · ${q.target}`;
   }
 
-  return {ansText, fr, hasFr, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, skillsOf, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
+  if (!K.MULTI_CELL) delete CARDS.mixed;   // 分步作答没开时，带分数讲解卡不出（没有技能挂它）
+  return {ansText, cellsText, fr, hasFr, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, skillsOf, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });

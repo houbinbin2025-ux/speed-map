@@ -153,7 +153,7 @@
     加法练习: 'Addition', 减法练习: 'Subtraction', 加减混合: 'Mixed', 只出加法: 'Addition only', 只出减法: 'Subtraction only', 加法减法一起出: 'Addition and subtraction together', '连加连减、两位数、乘除法': 'Chains, 2-digit, times, and division', 错题本: 'Mistake Book', '这里随便挑着练，每天的练习在岛上': 'Pick anything here. Daily practice is on the island.',
     摸底: 'Quick check', 'Boss 关': 'Boss Level', 已击败: 'Defeated', 这一级全部深红后解锁: 'Unlocks when this level is all dark red', 'Boss 已通关': 'Boss beaten',
     '第一次用手写，先认识一下你的字': "First time writing. Let's learn your handwriting", 教我认识: 'Teach me', 你写的数字: 'your numbers', 请写: 'Write', '0 到 9 每个写 3 遍': 'Write 0 to 9, 3 times each', 写完停一下会自动记下来: 'Pause to save', '像平时一样写，不用特别慢': 'Write the way you normally do, no need to go slow',
-    '要按住不放，才能结束': 'Keep holding to end', '在右边写出答案，写完停一下就好': 'Write the answer on the right, then pause', '说出答案，再点右边看答案': 'Say the answer, then tap the right side to check', '没看清，再写一次': "Couldn't read that. Write it again", '⚡ 秒答！': '⚡ Super fast!', '马上进入下一题…': 'Next question coming…', '没关系，记住它': "That's OK. Remember this one", '已放进错题本，明天再来': 'Added to the Mistake Book. Back tomorrow', 这题再练一下: 'Practice this one more', '描完点「继续」': 'Trace it, then tap "Continue"',
+    '要按住不放，才能结束': 'Keep holding to end', '在右边写出答案，写完停一下就好': 'Write the answer on the right, then pause', '一格一格写，写好一格自动跳到下一格': 'Fill one box at a time. It moves on by itself', '这一格写多了，再写一次': 'Too many digits for this box. Try again', '说出答案，再点右边看答案': 'Say the answer, then tap the right side to check', '没看清，再写一次': "Couldn't read that. Write it again", '⚡ 秒答！': '⚡ Super fast!', '马上进入下一题…': 'Next question coming…', '没关系，记住它': "That's OK. Remember this one", '已放进错题本，明天再来': 'Added to the Mistake Book. Back tomorrow', 这题再练一下: 'Practice this one more', '描完点「继续」': 'Trace it, then tap "Continue"',
     '✗ 你写的是': '✗ You wrote', '✗ 你点的是': '✗ You tapped', '✗ 这题答错了': '✗ Not quite', '已放进错题宝箱，一会儿再来': 'Added to the Mistake Chest. Back soon', '已放进错题宝箱，明天再来': 'Added to the Mistake Chest. Back tomorrow', '记住它，下次再来': 'Remember it for next time', 一会儿再来一次: 'One more try soon', 明天再考你一次: "We'll ask again tomorrow", '很接近！': 'So close!', 点亮了: 'Lit up', '✓ 对了': '✓ Correct', 再快一点就能升级: 'A little faster to level up', '✓ 对了！点亮了': '✓ Correct! Lit up', '✓ 点亮了！': '✓ Lit up!', '✓ 对了！': '✓ Correct!',
     '慢一点，看清楚再点': 'Slow down and look before you tap',
     // 示范卡
@@ -486,10 +486,23 @@
   const CNN = {一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 十一: 11, 十二: 12};
   const ONE = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
   const ORD = ['', '', ['half', 'halves'], ['third', 'thirds'], ['quarter', 'quarters'], ['fifth', 'fifths'], ['sixth', 'sixths'], ['seventh', 'sevenths'], ['eighth', 'eighths'], ['ninth', 'ninths'], ['tenth', 'tenths'], ['eleventh', 'elevenths'], ['twelfth', 'twelfths']];
-  const FCN = '(十[一二]|[一二三四五六七八九十]|几)分之(十[一二]|[一二三四五六七八九十]|几)';
-  const frEn = (d, n) => d === '几' ? `${ONE[CNN[n]]} out of how many` : n === '几' ? `how many ${ORD[CNN[d]][1]}` : `${ONE[CNN[n]]} ${ORD[CNN[d]][CNN[n] === 1 ? 0 : 1]}`;
+  // 1–99 的中文数字（带分数的假分数分子会到 49）：十一、二十二、四十九
+  const CNUM99 = '[一二三四五六七八九]?十[一二三四五六七八九]?|[一二三四五六七八九十]';
+  const cnn = s => { if (CNN[s]) return CNN[s]; const m = /^([一二三四五六七八九])?十([一二三四五六七八九])?$/.exec(s); return m ? (m[1] ? CNN[m[1]] : 1) * 10 + (m[2] ? CNN[m[2]] : 0) : 0; };
+  const FCN = `(十[一二]|[一二三四五六七八九十]|几)分之(${CNUM99}|几)`;   // 分母只到十二（ORD 序数词表到 twelfth），分子到 99
+  const oneW = k => ONE[k] || String(k);
+  const frEn = (d, n) => d === '几' ? `${oneW(cnn(n))} out of how many` : n === '几' ? `how many ${ORD[cnn(d)][1]}` : `${oneW(cnn(n))} ${ORD[cnn(d)][cnn(n) === 1 ? 0 : 1]}`;
   const frAll = t => t.replace(new RegExp(FCN, 'g'), (m, d, n) => frEn(d, n));
   const FRS = new RegExp(`^${FCN}$`), FRT = new RegExp(`^(.+)：(${FCN}(?: = ${FCN})?)$`);
+  // 第二批 2b-2 分步作答：商和余数、假分数化带分数（题面被方框切成几段，每段单独翻）
+  const P2B2 = [
+    [/^= (□|\d+) 又$/, (m, a) => `= ${a} and`],
+    [/^(\d+) 个整的，$/, (m, w) => `${pl(w, 'whole')}, `], [/^还剩 (\d+) 份$/, (m, x) => `${pl(x, 'part')} left`],   // 讲解句按「：」「，」切段后的片段
+    [/^(\d+) 又 (\d+)\/(\d+)$/, (m, a, b, c) => `${a} and ${b}/${c}`],
+    [/^([\d ×÷=−+]+) 余 (\d+)：(\d+) 个整的，还剩 (\d+) 份$/, (m, a, r, w, x) => `${a} R ${r}: ${pl(w, 'whole')}, ${pl(x, 'part')} left`],
+    [/^([\d ×=−+，]+)，比 (\d+) 小$/, (m, a, b) => `${a.replace(/，/g, ', ')}, less than ${b}`],
+    [new RegExp(`^${FCN}等于几又${FCN}？$`), (m, d, n, d2) => `${frEn(d, n)} is how many wholes and how many ${ORD[cnn(d2)][1]}?`],
+  ];
   const P2B = [
     [FRS, (m, d, n) => frEn(d, n)],
     [new RegExp(`^哪个分数最(大|小)？(${FCN}(?:、${FCN})+)$`), (m, w, l) => `Which fraction is the ${w === '大' ? 'greatest' : 'smallest'}? ${frAll(l).split('、').join(', ')}`],
@@ -573,6 +586,12 @@
     [/^倒着算：(.+)$/, (m, e) => (HAN.test(e) ? null : `Work backwards: ${e.replace(/，/g, ', ')}`)],
     [/^(.+)，所以 □ 是 (\d+)$/, (m, e, d) => (HAN.test(e) ? null : `${e}, so the box is ${d}`)],
   ];
+  Object.assign(D, {
+    余: 'R', 又: 'and', 商和余数: 'Quotient and remainder', 假分数化带分数: 'Improper to mixed', 带分数: 'Mixed numbers',
+    '是 17 份，每 5 份拼成 1 个整的': 'is 17 parts. Every 5 parts make 1 whole', '拼出 3 个整的，还剩 2 份': 'That makes 3 wholes with 2 parts left',
+    '用除法算：17 ÷ 5 = 3 余 2': 'Use division: 17 ÷ 5 = 3 R 2', '写成 3 又': 'Write it as 3 and', '，读作三又五分之二': ', read as three and two fifths',
+    '五分之十七 是 17 份，每 5 份拼成 1 个整的': 'Seventeen fifths is 17 parts. Every 5 parts make 1 whole', '写成 3 又 五分之二，读作三又五分之二': 'Write it as 3 and two fifths',
+  });
   Object.assign(D, KID, {
     数塔: 'Number pyramid', '数塔（两位数）': 'Number pyramid (2-digit)', 幻方: 'Magic square', '植树（两头都种）': 'Planting trees (both ends)', 锯木头: 'Cutting logs',
     '植树（只种一头、两头不种）': 'Planting trees (one end, no ends)', '植树（先算段数）': 'Planting trees (sections first)', 排顺序: 'Putting in order', '猜数（加减）': 'Mystery number (+ −)',
@@ -587,7 +606,7 @@
     '一个数加上 8，再减去 5，得 20': 'A number plus 8, then minus 5, makes 20', '倒着走：最后减了 5，先加回 5': 'Go backwards: the last step was minus 5, so add 5 back',
     '前面加了 8，再减掉 8：这个数是 17': 'The first step was plus 8, so take 8 away: the number is 17', '代回去检查：17 加 8 再减 5，正好是 20': 'Check it: 17 plus 8 minus 5 is exactly 20',
   });
-  P.unshift(...P2A, ...P2B, ...P34, ...P3);
+  P.unshift(...P2B2, ...P2A, ...P2B, ...P34, ...P3);
   P.push(...LIST);
   const AFTER = [
     [/^ 个百$/, o => (o ? ' hundred' : ' hundreds')], [/^ 个十$/, o => (o ? ' ten' : ' tens')], [/^ 个一$/, o => (o ? ' one' : ' ones')],
