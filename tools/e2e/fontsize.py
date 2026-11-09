@@ -69,10 +69,15 @@ SAMPLER = r"""(() => {
     if (window.__fsReport) window.__fsReport(out);
   };
   // 等页面自己跑完再量（中控 11-09）：距上一次页面变动满 300ms，再等 2 帧（页面的 fitBody、fitSvgText 都在这之前跑完），量到的才是孩子看到的
-  let lastMut = 0, tm = 0;
-  const sample = () => { const q = performance.now() - lastMut; if (q < 300) { clearTimeout(tm); tm = setTimeout(sample, 300 - q + 10); return; }
-    requestAnimationFrame(() => requestAnimationFrame(() => { if (performance.now() - lastMut >= 300) measure(); else sample(); })); };
-  addEventListener('DOMContentLoaded', () => { new MutationObserver(() => { lastMut = performance.now(); clearTimeout(tm); tm = setTimeout(sample, 310); }).observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'style']}); sample(); setInterval(sample, 900); });
+  // 一直在动的小动画（火苗、计数、闪光只改 class / style）会让页面永远「不静」：文字和结构静了满 1 秒、只剩样式在动，也算跑完（审查 R2：结算页从没被量到）
+  let lastStruct = 0, lastStyle = 0, tm = 0;
+  const wait = () => { const now = performance.now(), a = now - lastStruct, b = now - lastStyle; return a < 300 ? 300 - a : b < 300 && a < 1000 ? Math.min(300 - b, 1000 - a) : 0; };
+  const sample = () => { const w = wait(); if (w > 0) { clearTimeout(tm); tm = setTimeout(sample, w + 10); return; }
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (wait() <= 0) measure(); else sample(); })); };
+  addEventListener('DOMContentLoaded', () => { new MutationObserver(ms => { const now = performance.now();
+      if (ms.some(m => m.type !== 'attributes' || m.attributeName === 'hidden')) lastStruct = now; else lastStyle = now;
+      clearTimeout(tm); tm = setTimeout(sample, wait() + 10); })
+    .observe(document.body, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'class', 'style']}); sample(); setInterval(sample, 900); });
   window.__fsSample = measure;   // 题型部分自己控制时机（逐题塞进去后等页面跑完），直接量
 })()"""
 
@@ -94,6 +99,14 @@ def drive(prof, lang, outjson, script, args):
     def new_page(self, *a, **kw):
         ctx = new_context(self, *a, **kw); pg = ctx.new_page(); return pg
     Browser.new_context = new_context; Browser.new_page = new_page
+    # 导游截图 = 它想让人看的那一屏：截之前停 1.1 秒，让采样器等页面自己跑完再量（demofit 每张卡只停 40ms，原来一张都没量到，审查 R2）
+    from playwright.sync_api import Page
+    orig_shot = Page.screenshot
+    def screenshot(self, *a, **kw):
+        try: self.wait_for_timeout(1100)
+        except Exception: pass
+        return orig_shot(self, *a, **kw)
+    Page.screenshot = screenshot
     def dump():
         pathlib.Path(outjson).write_text(json.dumps(list(seen.values()), ensure_ascii=False))
     import atexit; atexit.register(dump)
@@ -106,18 +119,18 @@ def drive(prof, lang, outjson, script, args):
     dump()
 
 # 导游：脚本名 + 参数（{root} {out} 会替换）；超时秒数
-GUIDES = [
-    ('e2e-en.py', ['{root}', '{out}']),          # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、错题宝箱、技能地图、秒答地图和练习、家、图鉴、奖状
-    ('e2e.py', ['{root}', '{out}']),             # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
-    ('e2e-gems.py', ['{root}', '{out}']),        # 碎片条、小目标弹窗（Goal done）、炉子、锻造确认
-    ('e2e-qsum.py', ['{root}', '{out}'], 'phone'),   # 结算页（信息最多）；它要等的「碎片收起」只在矮屏出现
-    ('e2e-v8.py', ['{root}', '{out}']),          # 四个思维地点
-    ('e2e7.py', ['{root}', '{out}']),            # 家：开箱、奖状、图鉴、告示牌、摆放
-    ('e2e13.py', ['{root}', '{out}']),           # 讲解卡、四年级题型
-    ('e2e-fun.py', ['{root}', '{out}']),         # 趣味题和它们的讲解卡
-    ('e2e-vert.py', ['{root}', '{out}'], 'ipad'),    # iPad 竖式（只在 iPad 出现）
-    ('demofit.py', ['{root}', '{out}']),         # 示范卡
-    ('e2e-mistkid.py', ['{root}', '{out}']),     # 错题宝箱三栏、复习、复习结算
+GUIDES = [   # 脚本、参数、只走哪种设备（None = 都走）、必须量到的页面（缺一个 = 导游走偏，判不通过，审查 R2）
+    ('e2e-en.py', ['{root}', '{out}'], None, '#island #qplay #demo #qsum #home #house'),   # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、技能地图、秒答地图和练习、家、图鉴、奖状
+    ('e2e.py', ['{root}', '{out}'], None, '#qplay #demo #placeResult'),                 # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
+    ('e2e-gems.py', ['{root}', '{out}'], None, '#forge #qsum #qplay'),                   # 碎片条、小目标弹窗（Goal done）、炉子、锻造确认
+    ('e2e-qsum.py', ['{root}', '{out}'], 'phone', '#qsum'),                              # 结算页（信息最多）；它要等的「碎片收起」只在矮屏出现
+    ('e2e-v8.py', ['{root}', '{out}'], None, '#think'),                                  # 四个思维地点
+    ('e2e7.py', ['{root}', '{out}'], None, '#house'),                                    # 家：开箱、奖状、图鉴、告示牌、摆放
+    ('e2e13.py', ['{root}', '{out}'], None, '#demo #qplay'),                             # 讲解卡、四年级题型
+    ('e2e-fun.py', ['{root}', '{out}'], None, '#demo #qplay'),                           # 趣味题和它们的讲解卡
+    ('e2e-vert.py', ['{root}', '{out}'], 'ipad', '#qplay'),                              # iPad 竖式（只在 iPad 出现）
+    ('demofit.py', ['{root}', '{out}'], None, '#demo'),                                  # 示范卡
+    ('e2e-mistkid.py', ['{root}', '{out}'], None, '#mist #qplay'),                       # 错题宝箱三栏、复习、复习结算
 ]
 
 # ---------- A：题型逐个量 ----------
@@ -155,7 +168,7 @@ def main():
         return drive(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6:])
     root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
     only = next((a.split('=', 1)[1] if '=' in a else sys.argv[sys.argv.index(a) + 1] for a in sys.argv if a.startswith('--only')), 'phone-zh,phone-en,ipad-zh,ipad-en').split(',')
-    rows, broken, cover = [], [], {}
+    rows, broken, cover, guide_fail = [], [], {}, {}
     for combo in only:
         prof, lang = combo.split('-')
         if '--skip-a' not in sys.argv:
@@ -163,17 +176,21 @@ def main():
             for x in a: x.update(combo=combo, part='题型', guide='overflow 式')
             rows += a; print(f'{combo} 题型 量了 {len(a)} 种 · {time.time() - t0:.0f}s', flush=True)
         if '--skip-b' not in sys.argv:
-            for g, args, *only_prof in GUIDES:
-                if only_prof and only_prof[0] != prof: continue   # 这个导游只走得通某种设备
+            for g, args, only_prof, must in GUIDES:
+                if only_prof and only_prof != prof: continue   # 这个导游只走得通某种设备
                 f = out / f'raw-{combo}-{g}.json'; shots = out / 'shots' / combo / g.replace('.py', ''); shots.mkdir(parents=True, exist_ok=True)
                 cmd = [sys.executable, str(HERE / 'fontsize.py'), '--drive', prof, lang, str(f), g] + [s.replace('{root}', str(root)).replace('{out}', str(shots)) for s in args]
-                t0 = time.time(); why = ''
+                t0 = time.time(); why = ''; r = None
                 try:
                     r = subprocess.run(cmd, cwd=root, timeout=1800, capture_output=True, text=True)
                     if '导游脚本中途出错' in (r.stderr or ''): why = '中途出错：' + r.stderr.strip().splitlines()[-1][:160]
                 except subprocess.TimeoutExpired: why = '超时（30 分钟）'
                 b = json.loads(f.read_text()) if f.exists() else []
                 if not b and not why: why = '一个字都没量到'
+                miss = [m for m in must.split() if not any(x['area'] == m for x in b)]
+                if miss and not why: why = '该量的页面没量到 ' + ' '.join(miss)
+                gf = (r.stdout or '').count('FAIL') if r else -1
+                if gf > 0: guide_fail[f'{combo} {g}'] = gf   # 导游自己的检查按它原来的尺寸、语言写，强制尺寸后失败是预期的；只记数，不算字号问题
                 if why: broken.append(f'{combo} {g}：{why}')   # 导游没走完 = 这部分页面没量，审查不能算通过（审查 R1）
                 for x in b: cover.setdefault((combo, g), {}).setdefault(x['area'], 0); cover[(combo, g)][x['area']] += 1
                 for x in b: x.update(combo=combo, part='页面', guide=g)
@@ -186,7 +203,7 @@ def main():
         k = (x['combo'], x['area'], x['sig'], x['tier'])
         if k not in uniq or x['pt'] < uniq[k]['pt']: uniq[k] = x
     bad = sorted(uniq.values(), key=lambda x: (x['combo'], x['area'], x['tier'], x['pt']))
-    (out / 'report.json').write_text(json.dumps({'标准pt': MIN, '设备': {k: v['k'] for k, v in PROFILES.items()}, '量过': len(rows), '不达标': bad, '导游没走完': broken,
+    (out / 'report.json').write_text(json.dumps({'标准pt': MIN, '设备': {k: v['k'] for k, v in PROFILES.items()}, '量过': len(rows), '不达标': bad, '导游没走完': broken, '导游自身检查失败数（强制尺寸后预期会有，不算字号问题）': guide_fail,
         '覆盖': {f'{c} {g}': a for (c, g), a in cover.items()}}, ensure_ascii=False, indent=1))
     lines = [f'量过 {len(rows)} 种文字（去重后），不达标 {len(bad)} 处（同一元素同一档算一处）；导游没走完 {len(broken)} 个'] + [f'  ！{x}' for x in broken]
     by = {}

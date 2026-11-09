@@ -556,7 +556,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .hto{display:flex;flex-direction:column;gap:8px;align-items:center}.hsqs{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;max-width:280px}
 .hsq{width:34px;height:34px;display:block;background:var(--warn);border:2px solid #000;background-image:linear-gradient(rgba(0,0,0,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.25) 1px,transparent 1px);background-size:6px 6px}
 .hto .rods{transform:scale(.72);transform-origin:top center;margin-bottom:-30px}
-.eq.sm{font-size:clamp(30px,6vw,42px)}.pickcard.expr{font-size:clamp(34px,6vw,50px);white-space:nowrap;min-height:0}/* 新关卡示范卡：题干放标题同一行，图和答案按矮屏收小 */.dnb .dhead{gap:12px}.dnb .dhead .dtitle{flex:none;font-size:17px}.dnb .nbsay{flex:1;min-width:0;justify-content:flex-end;font-size:17px}.dnb .nbsay .spk{width:36px;height:36px}.dnb .dstep{gap:4px;min-width:0}.dnb .dcap{font-size:15px;line-height:1.1}.dnb .pclock{width:min(76px,19vh);height:min(76px,19vh);flex:none}.dnb .say2{font-size:20px;line-height:1.2;white-space:nowrap}.dnb .say2 .ansv,.dnb .say2 b,.dnb .say2 span{font-size:28px}.dnb .nbthink{font-size:17px;line-height:1.25;max-width:min(240px,32vw)}@media (max-height:400px){html[lang=en] .dnb .dhead:has(.nbsay) .dtitle{display:none}}   /* 英文日矮屏：题干长，卡片名收起给题干让地方，字不缩（字号审查 11-09） */.dnb .pbox{padding:4px;gap:2px}.dnb .spr{width:26px;height:auto}.dnb .pore,.dnb .papple,.dnb .pbone{width:14px;height:14px}.dnb .pcell{width:26px}.dnb .pblk{width:22px;box-shadow:none;border-width:2px;font-size:15px}.dnb .pst{font-size:17px;padding:2px 6px}.dnb .eq{font-size:clamp(20px,3.6vw,26px)}.dnb .hto{zoom:.5}.dnb .h100,.dnb .hgrid{zoom:.55}.dnb .dbody svg:not(.arr):not(.pclock){max-height:90px}.dnb .prow{gap:3px}.dnb .pcmp{gap:2px}
+.eq.sm{font-size:clamp(30px,6vw,42px)}.pickcard.expr{font-size:clamp(34px,6vw,50px);white-space:nowrap;min-height:0}/* 新关卡示范卡：题干放标题同一行，图和答案按矮屏收小 */.dnb .dhead{gap:12px}.dnb .dhead .dtitle{flex:none;font-size:17px}.dnb .nbsay{flex:1;min-width:0;justify-content:flex-end;font-size:17px}.dnb .nbsay .spk{width:36px;height:36px}.dnb .dstep{gap:4px;min-width:0}.dnb .dcap{font-size:15px;line-height:1.1}.dnb .pclock{width:min(76px,19vh);height:min(76px,19vh);flex:none}.dnb .say2{font-size:20px;line-height:1.2;white-space:nowrap}.dnb .say2 .ansv,.dnb .say2 b,.dnb .say2 span{font-size:28px}.dnb .nbthink{font-size:17px;line-height:1.25;max-width:min(240px,32vw)}@media (max-height:400px){html[lang=en] .dnb .dhead:has(.nbsay) .dtitle{display:none}}   /* 英文日矮屏：题干长，卡片名收起给题干让地方，字不缩（字号审查 11-09） */.dnb .pbox{padding:4px;gap:2px}.dnb .spr{width:26px;height:auto}.dnb .pore,.dnb .papple,.dnb .pbone{width:14px;height:14px}.dnb .pcell{width:26px}.dnb .pblk{width:22px;box-shadow:none;border-width:2px;font-size:15px}.dnb .pst{font-size:17px;padding:2px 6px}.dnb .eq{font-size:clamp(20px,3.6vw,26px)}.dnb .hto{zoom:.5}.dnb .h100,.dnb .hgrid{zoom:.55}.dnb .dbody svg:not(.arr):not(.pclock){max-height:90px}.dnb .dbody>.dstep:has(>svg.fig2){align-self:stretch;justify-content:center;flex:1 1 0}.dnb .dbody>.dstep>svg.fig2{flex:1 1 0;min-height:0;max-height:none;width:100%;height:auto}
+/* 示范卡的钟面：12 个数字不低于角标 13pt（审查 R2）。只有钟的一步，钟占满这一步的高；钟旁有题干或答案的一步，钟放左边、字放右边，不再上下叠着挤小钟 */
+.dnb .dbody .dstep:has(>.pclock){min-width:0;flex:1 1 0}
+html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
+.dnb .dbody .dstep:has(>.pclock):has(>.nbsay,>.say2,>.nbthink){display:grid;grid-template-columns:auto minmax(0,auto);align-items:center;justify-items:start;column-gap:8px;row-gap:2px}
+.dnb .dbody .dstep:has(>.pclock):has(>.nbsay,>.say2,>.nbthink)>.dcap{grid-column:1/-1;justify-self:center}html .dnb .dbody .dstep:has(>.nbsay,>.say2,>.nbthink)>.pclock{width:min(96px,26vh);height:min(96px,26vh)}
+.dnb .dbody .dstep:has(>.pclock)>.say2{white-space:normal}.dnb .prow{gap:3px}.dnb .pcmp{gap:2px}
 .nbrow{display:flex;align-items:center;justify-content:center;gap:20px}.nbrow .pclock{width:96px;height:96px;flex:none}.cards2 b.sm{font-size:20px;white-space:nowrap}
 .lvboxes{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.lvboxes button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;background:var(--stone);border:3px solid #000;padding:5px 8px;min-height:54px;text-align:left;color:var(--ink,#ecebe4);min-width:0}.lvboxes button b{font-size:14px;font-weight:800}.lvboxes button small{font-size:11px;color:var(--mute);line-height:1.25}.lvboxes button.on{border-color:var(--warn);background:#4a3d1a}.lvboxes button.auto{min-height:48px}
 .hardboxes label{display:flex;align-items:center;gap:8px;background:var(--stone);border:2px solid #000;padding:4px 8px;min-height:48px}.hardboxes input{width:26px;height:26px;flex:none;margin:0}.hardboxes b{display:block;font-size:14px}.hardboxes small{font-size:12px;color:var(--mute);line-height:1.25;display:block}
@@ -1721,12 +1727,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // 孩子看到的字的下限（docs/视觉规范.md 2.3，和 tools/e2e/fontsize.py 同一口径）：讲解、题干、提示这些「说话」的地方一律按正文 17；
   // 其余按文字判——纯数字和符号（1–4 位）13，句子 17（中文 ≥ 9 字、英文 ≥ 6 个词、带中文句读或以 . ? ! 结尾），短标签 15
   const BODY_ROLE = '.why,.whysay,.nbsay,.nbthink,.qnote,.dfoot,.fwcard span,.padtip,.hint-pop,.badline,#leadSub,#hint';
-  const txtFloor = (t, el) => { if (/^[\s\d+\-−×÷=.,/%:?？□…()（）]+$/.test(t)) return t.replace(/\s/g, '').length <= 4 || !(el && el.closest(BODY_ROLE)) ? 13 : 17;
+  const txtFloor = (t, el) => { if (/^[\s\d+\-−×x÷=.,/%:：✓✗★·…()（）□?？<>]+$/.test(t)) return t.replace(/\s/g, '').length <= 4 ? 13 : el && el.closest(BODY_ROLE) ? 17 : 15;   // 和 fontsize.py 的 tierOf 同一口径：1–4 个字符的数字符号 = 角标，更长的数字串 = 说明（审查 R2）
     if (el && el.closest(BODY_ROLE)) return 17;
     const cjk = (t.match(/[㐀-鿿]/g) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length;
     return cjk >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, '')) ? 17 : 15; };
   // 屏幕上实际的缩放：自己和各级祖先的 zoom × transform。不用 getBoundingClientRect / getScreenCTM——iPad 的 WebKit 里
   // 它们不含 CSS zoom（11-10 模拟器实测）；读到的字号 × 各级 zoom 在 Chromium 和 WebKit 里都等于屏幕上的字号
+  const svgTxt = t => { const sp = t.querySelectorAll('tspan'); return (sp.length ? [...sp].map(x => x.textContent).join(' ') : t.textContent).trim(); };   // 拆成两行后按词拼回（不丢空格）
   const effScale = el => { let k = 1; for (let e = el; e && e.nodeType === 1; e = e.parentElement) { const c = getComputedStyle(e); k *= parseFloat(c.zoom) || 1;
     if (c.transform && c.transform !== 'none') { const m = c.transform.match(/matrix\(([^)]+)\)/); if (m) { const v = m[1].split(',').map(parseFloat); k *= Math.hypot(v[2], v[3]); } } } return k; };
   // 图（svg.fig2）自己的布局缩放：布局尺寸 ÷ viewBox（默认等比放进框里），两种浏览器的 clientWidth/Height 都不含 zoom
@@ -1759,7 +1766,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     if (z > k + 0.005) {
       b.classList.add('scrolly'); b.classList.remove('atend'); b.scrollTop = 0;
       b.querySelectorAll('.fig2w>svg.fig2').forEach(svg => { const vb = svg.viewBox.baseVal; if (!vb || !vb.height) return;
-        let need = 0; svg.querySelectorAll('text').forEach(t => { need = Math.max(need, txtFloor(t.textContent.trim(), t) / (+(t.dataset.fs0 || parseFloat(getComputedStyle(t).fontSize)))); });
+        let need = 0; svg.querySelectorAll('text').forEach(t => { need = Math.max(need, txtFloor(svgTxt(t), t) / (+(t.dataset.fs0 || parseFloat(getComputedStyle(t).fontSize)))); });
         const w = svg.parentElement.clientWidth, sNow = svgScale(svg) / z, want = Math.min(need, w / vb.width);   // 宽度够才长高；宽度不够的交给 fitSvgText 放大字
         if (want > sNow * 1.01) { svg.parentElement.style.minHeight = Math.min(320, vb.height * want / z).toFixed(0) + 'px'; svg.parentElement.style.maxHeight = 'none'; } });
     }
@@ -1780,14 +1787,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
         if (t.dataset.split && !t.dataset.fs0) delete t.dataset.split;
         if (!t.dataset.fs0) { t.dataset.fs0 = parseFloat(getComputedStyle(t).fontSize); t.dataset.w0 = t.getComputedTextLength(); }
-        const fs0 = +t.dataset.fs0, need = txtFloor(t.textContent.trim(), t) * 1.02 / sc, big = fs0 < need;
+        const fs0 = +t.dataset.fs0, need = txtFloor(svgTxt(t), t) * 1.02 / sc, big = fs0 < need;
         t.style.fontSize = big ? need.toFixed(2) + 'px' : '';
         const max = Math.min(t.dataset.fit ? +t.dataset.fit : Infinity, big ? +t.dataset.w0 * 1.25 : Infinity);
         if (t.getComputedTextLength() <= max) return;
         // 放不下：带空格的标签拆成两行（Little / Sheep），比横向压扁好认；拆了还长才压紧
         const words = t.textContent.trim().split(/\s+/);
-        if (words.length > 1 && !t.querySelector('tspan')) {
-          let cut = 1, best = Infinity; for (let i = 1; i < words.length; i++) { const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length); if (d < best) { best = d; cut = i; } }
+        const cuts = [...words.keys()].filter(i => i > 0 && !/^[\d.,/]+$/.test(words[i - 1]));   // 数字和后面的词（「12 cm」「8 in」）不拆开
+        if (cuts.length && !t.querySelector('tspan')) {
+          let cut = cuts[0], best = Infinity; for (const i of cuts) { const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length); if (d < best) { best = d; cut = i; } }
           const x = t.getAttribute('x') || 0, l1 = words.slice(0, cut).join(' '), l2 = words.slice(cut).join(' ');
           t.textContent = ''; [l1, l2].forEach((w, i) => { const sp = document.createElementNS('http://www.w3.org/2000/svg', 'tspan'); sp.setAttribute('x', x); if (i) sp.setAttribute('dy', '1.05em'); sp.textContent = w; t.appendChild(sp); });
           t.dataset.split = 1;
@@ -1796,9 +1804,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
           t.querySelectorAll('tspan').forEach(sp => { sp.removeAttribute('textLength'); if (sp.getComputedTextLength() > max) { sp.setAttribute('textLength', max); sp.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } });
         } else { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
       });
-      if (svg.querySelector('text[data-split]')) { const vb = svg.viewBox.baseVal, bb = svg.getBBox(); if (vb && vb.height && bb.y + bb.height > vb.y + vb.height) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${Math.ceil(bb.y + bb.height - vb.y + 4)}`); }   // 拆成两行的标签：图加高到装得下
-        const w = svg.parentElement;   // 框是限高的：给框留出加高的那一截（最多 320），放不下由左栏上下滚
-        if (sc0 && w.classList.contains('fig2w') && svgScale(svg) < sc0 * 0.99) { const h = Math.min(320, Math.ceil(svg.viewBox.baseVal.height * sc0 / (effScale(svg) || 1))); if (h > w.clientHeight) { w.style.minHeight = h + 'px'; w.style.maxHeight = 'none'; } }
+      if (svg.querySelector('text[data-split],text[style*="font-size"]')) { const vb = svg.viewBox.baseVal, bb = svg.getBBox();   // 放大或拆成两行的标签：图往四边扩到装得下（贴顶的「12 cm」放大后不被裁，审查 R2）
+        if (vb && vb.width && vb.height) { const x0 = Math.min(vb.x, Math.floor(bb.x - 2)), y0 = Math.min(vb.y, Math.floor(bb.y - 2)), x1 = Math.max(vb.x + vb.width, Math.ceil(bb.x + bb.width + 2)), y1 = Math.max(vb.y + vb.height, Math.ceil(bb.y + bb.height + 4));
+          if (x0 < vb.x || y0 < vb.y || x1 > vb.x + vb.width || y1 > vb.y + vb.height) svg.setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`); } }
+        const w = svg.parentElement;   // 框是限高的：给框留出加高的那一截（最多 320），放不下由左栏上下滚。只管题面左栏（fitBody 每次会重置）；示范卡、iPad 竖式的图外面有固定最高，加高只会多出空白（审查 R2）
+        if (sc0 && w.classList.contains('fig2w') && w.closest('#qBody') && svgScale(svg) < sc0 * 0.99) { const h = Math.min(320, Math.ceil(svg.viewBox.baseVal.height * sc0 / (effScale(svg) || 1))); if (h > w.clientHeight) { w.style.minHeight = h + 'px'; w.style.maxHeight = 'none'; } }
       }
     } catch (e) {} });
     const b = $('qBody');   // 图加高后左栏放不下：改成栏内滚动（和 fitBody 第二步同一种）
