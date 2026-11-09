@@ -316,7 +316,8 @@
     const t = String(q.text || ''), p = a === undefined ? null : cellParts(q, a); let i = 0, slot;
     const t2 = t.replace(/□/g, (m, off) => { const k = i++; const inFr = t[off + 1] === '/' || t[off - 1] === '/'; if (inFr) { if (p) slot = ans(p[k]); return m; } return `\u0001${k}\u0002`; });
     const body = (hasFr(t2) ? fr(t2, slot, p ? .72 : undefined) : t2).replace(/\u0001(\d+)\u0002/g, (m, k) => (p ? ans(p[+k]) : box));
-    return `<div class="eq num sm${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}">${body}</div>` + (a === undefined && q.read ? `<div class="nbsay" style="justify-content:center"><button class="spk" type="button" data-say="${q.read}" aria-label="朗读题目">${SPK}</button></div>` : '');
+    // 一行不换行（B 的多格方框更宽，844 宽时「61 ÷ 7 =」会把等号挤到第二行）；不含分数的算式用小一号字，分数题照旧 sm
+    return `<div class="eq num ${hasFr(t2) ? 'sm' : 'xs'}${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}" style="white-space:nowrap">${body}</div>` + (a === undefined && q.read ? `<div class="nbsay" style="justify-content:center"><button class="spk" type="button" data-say="${q.read}" aria-label="朗读题目">${SPK}</button></div>` : '');
   }
   const hardFig = (q, a) => {
     if (q.cells) return cellsFig(q, a);
