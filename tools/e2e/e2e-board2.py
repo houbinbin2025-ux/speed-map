@@ -16,7 +16,7 @@ QFIT = """() => { const a = document.querySelector('.vq .varea').getBoundingClie
   const kids = [...q.querySelectorAll('svg, .frac, .eq, .nbsay')].map(e => e.getBoundingClientRect()).filter(b => b.width);
   return {n: kids.length, inside: kids.every(b => b.left >= a.left - 1 && b.right <= a.right + 1 && b.top >= a.top - 1 && b.bottom <= a.bottom + 1)}; }"""
 RES = """() => { const r = document.querySelector('.vres'), c = r.querySelector('.vresc'), rr = r.getBoundingClientRect();
-  return {over: c.scrollHeight - c.clientHeight, clip: [...c.querySelectorAll('*')].map(e => e.getBoundingClientRect()).filter(b => b.width).some(b => b.bottom > rr.bottom + 1 || b.right > rr.right + 1), frac: r.querySelectorAll('.vwk .frac').length}; }"""
+  return {over: c.scrollHeight - c.clientHeight, clip: [...c.querySelectorAll('*')].map(e => e.getBoundingClientRect()).filter(b => b.width).some(b => b.bottom > rr.bottom + 1 || b.right > rr.right + 1), frac: r.querySelectorAll('.explain .frac').length}; }"""
 with sync_playwright() as p:
     b = p.chromium.launch()
     for name, kw in [('Safari', {'viewport': {'width': 1194, 'height': 834}}), ('App', {'viewport': {'width': 932, 'height': 651}, 'screen': {'width': 1194, 'height': 834}})]:
