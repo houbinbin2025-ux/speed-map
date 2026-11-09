@@ -116,6 +116,13 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 
 /* 结算、错题本、家长区 */
 #summary{gap:24px}
+/* 秒答地图结算页（Boss、摸底、秒答练习）：左栏随屏宽收窄；右栏内容多时在栏内滚、按钮固定在底部（台账：Boss 结算页 667 宽右边超出） */
+#summary .sumL{width:clamp(230px,38vw,330px);flex:none}#summary .sumbig{white-space:nowrap;font-size:min(76px,10.5vw)}   /* 三位数也一行（审查 11-09） */
+#summary .sumR{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px}#summary .sumR>*{flex:none}
+#summary .sumR>:first-child{margin-top:auto}#summary .sumR>:last-child{margin-bottom:auto}   /* 放得下就上下居中，放不下从顶上开始滚，不裁掉第一行 */
+#summary .sumMistRow{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;flex:none;overflow:visible}
+#summary .sumBtns{display:flex;gap:10px;flex:none}
+#summary .sumBtns .btn{flex:1;min-width:0;font-size:20px;white-space:nowrap}
 .sumbig{font-size:76px;line-height:1}
 .gem{background:#20363a;border:2px solid #4fd6d0;padding:10px 14px;font-size:16px;font-weight:700}
 .ups{display:flex;gap:6px;flex-wrap:wrap}
@@ -192,12 +199,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .w-lead .muted{font-size:12px;line-height:1.4}
 .w-lead .startbtn{height:64px;font-size:23px}
 .w-lead .startbtn.busy{opacity:.6}
-.w-sheet{position:absolute;z-index:6;left:50%;bottom:0;width:min(600px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:12px 16px 14px}
+.w-sheet{position:absolute;z-index:6;left:50%;bottom:0;width:min(600px,94vw);transform:translate(-50%,110%);transition:transform .28s cubic-bezier(.2,.9,.3,1);background:var(--cave);border:3px solid #000;border-bottom:0;box-shadow:0 -4px 0 #000;padding:12px 16px 14px;max-height:calc(100% - 6px);display:flex;flex-direction:column}
 .w-sheet.open{transform:translate(-50%,0)}
 .w-sheet h2{margin:0;font-size:22px;font-weight:900;display:flex;align-items:center;gap:10px}
 .w-sheet h2 small{font-size:13px;color:var(--mute);font-weight:700}
 .w-sheet .x{position:absolute;right:8px;top:8px;width:44px;height:44px;font-size:22px;color:var(--mute);background:none;border:0}
-.zskills{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
+.zskills{display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;margin:10px 0 12px;min-height:0;overflow-y:auto}   /* 技能多（三四年级）时在卡片里滚，地名和 ✕ 留在屏内（审查 11-09） */
+.w-sheet h2,.w-sheet .btns{flex:none}
 .zsk{display:flex;align-items:center;gap:6px;height:28px;padding:0 4px 0 0;font-size:14px;font-weight:700;color:var(--mute)}
 .zsk i{width:14px;height:14px;border:2px solid #000;background:var(--lv0)}
 .w-sheet .btns{display:flex;gap:10px}.w-sheet .btns .gobig{height:56px;padding:0 22px;font-size:19px}.w-sheet .btns .btn{min-height:56px}
@@ -947,7 +955,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v147:7cef1b23de9b -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v148:1c931f87438e -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -957,25 +965,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=147"></script>
-<script src="i18n.js?v=147"></script>
-<script src="bank.js?v=147"></script>
-<script src="hardbank.js?v=147"></script>
-<script src="placebank.js?v=147"></script>
-<script src="core.js?v=147"></script>
-<script src="ink.js?v=147"></script>
-<script src="skills.js?v=147"></script>
-<script src="engine.js?v=147"></script>
-<script src="render.js?v=147"></script>
-<script src="world.js?v=147"></script>
-<script src="home.js?v=147"></script>
-<script src="puzzles.js?v=147"></script>
-<script src="thinking.js?v=147"></script>
-<script src="house.js?v=147"></script>
-<script src="kongmine.js?v=147"></script>
-<script src="gems.js?v=147"></script>
-<script src="gemui.js?v=147"></script>
-<script src="vert.js?v=147"></script>
+<script src="touchfix.js?v=148"></script>
+<script src="i18n.js?v=148"></script>
+<script src="bank.js?v=148"></script>
+<script src="hardbank.js?v=148"></script>
+<script src="placebank.js?v=148"></script>
+<script src="core.js?v=148"></script>
+<script src="ink.js?v=148"></script>
+<script src="skills.js?v=148"></script>
+<script src="engine.js?v=148"></script>
+<script src="render.js?v=148"></script>
+<script src="world.js?v=148"></script>
+<script src="home.js?v=148"></script>
+<script src="puzzles.js?v=148"></script>
+<script src="thinking.js?v=148"></script>
+<script src="house.js?v=148"></script>
+<script src="kongmine.js?v=148"></script>
+<script src="gems.js?v=148"></script>
+<script src="gemui.js?v=148"></script>
+<script src="vert.js?v=148"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1098,7 +1106,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
   // ---------- 岛世界：木牌按真实进度上色（一个技能一格 = 这个技能里至少 1/3 的格子到了的那一档，练了就看得见；秒答按 4 级） ----------
   const third = a => { const s = a.slice().sort((x, y) => y - x); return s.length ? s[Math.ceil(s.length / 3) - 1] : 0; };
-  const zoneSkills = g => g === 'speed' ? C.LEVELS.map((LV, L) => ({name: LV.name, items: K.speed.filter(s => s.L === L).flatMap(s => s.items)})) : K.SKILLS.filter(s => s.group === g);
+  const zoneSkills = g => g === 'speed' && !anyMap() ? R.skillsOf(S, 'speedH') : g === 'speed' ? C.LEVELS.map((LV, L) => ({name: LV.name, items: K.speed.filter(s => s.L === L).flatMap(s => s.items)})) : R.skillsOf(S, g);   // 老技能 + 这一级开放的三四年级技能（和技能地图同一口径，分级同步 11-09）
+  const zoneKey = g => (g === 'speed' && !anyMap() ? 'speedH' : g);   // 秒答地图 4 张图都没题时，高塔卡片按「挑战」列技能、算格子
   const zoneSq = g => zoneSkills(g).map(s => third(s.items.map(it => E.lv(S, it.id) || 0)));
   const zoneName = g => (WORLD.ZONES.find(z => z.id === g) || {}).name || '';
   // 今天先去哪：今天练完了 → 没有；还没摸底 → 看数草原；否则 = "学新的"会先学的那个技能所在的地方
@@ -1109,6 +1118,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     return s ? s.group : 'speed';
   }
   let zCur = null, Zone = null;   // Zone = 这次练习在岛上的哪块地（背景、结算、回岛时闪的格子）
+  // 秒答地图 4 张图里哪张有题（分级同步 11-09）：当前这张没题就换到有题的那张；4 张都没题，高塔直接进「挑战」
+  const mapOn = L => C.unitsOf(L).some(u => E.itemOn(S, u.id));
+  const anyMap = () => C.LEVELS.some((x, L) => mapOn(L));
+  function fixSpeedMap() { if (!mapOn(curL())) { const L = C.LEVELS.findIndex((x, i) => mapOn(i)); if (L >= 0 && L !== S.level) { S.level = L; save(); } } }
   function openZone(z) {
     if (PUZZLES.modOf(z.id)) {   // 思维模块：不算格子，不接错题，只看学会了几个技能
       const pr = PUZZLES.progress(S, z.id); zCur = z.id;
@@ -1119,11 +1132,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       return;
     }
     $('zMist').hidden = false;
-    zCur = z.id; const st = R.groupStat(S, z.id), sq = zoneSq(z.id);
+    zCur = z.id; const st = R.groupStat(S, zoneKey(z.id)), sq = zoneSq(z.id);
     $('zName').textContent = z.name; $('zCt').textContent = `亮了 ${st.lit} / ${st.total} 格`;
     $('zSkills').innerHTML = zoneSkills(z.id).map((s, i) => `<span class="zsk"><i class="l${sq[i]}"></i>${s.name}</span>`).join('');
     const zNone = z.id !== 'speed' && E.groupEmpty(S, z.id), zOut = z.id !== 'speed' && !zNone && E.groupOut(S, z.id, today());
     $('zGo').textContent = z.id === 'speed' ? '去秒答地图' : zNone ? (E.chosen(S) ? '这个难度没有题' : '还没开放') : zOut ? '全部通关' : '练这一块'; $('zGo').disabled = zOut || zNone; $('zMap').hidden = z.id === 'speed';
+    if (z.id === 'speed' && !anyMap()) { const off = E.groupEmpty(S, 'speedH'); $('zGo').textContent = off ? (E.chosen(S) ? '这个难度没有题' : '还没开放') : '去挑战'; $('zGo').disabled = off; }
     const nm = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.mistOn(S, m) && m.due !== null && m.due <= today() && !(m.q && C.isLow(m.q)) && (z.id === 'speed' ? !m.src : m.src === z.id)).length;
     $('zMist').textContent = nm ? `这里的错题（${nm}）` : '这里的错题';
     $('zSheet').classList.add('open'); $('lead').style.visibility = 'hidden'; document.querySelector('.w-mini').style.visibility = 'hidden';
@@ -1137,7 +1151,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     homeLoot: () => !!(S.home && S.home.loot && S.home.loot.length),
     heroLine: () => E.allOut(S, today()) ? '全部通关了' : isDone() ? '今天练完啦，明天再来' : !S.placedAt ? '一起看看你会什么吧！' : `今天去${zoneName(todayZone())}吧！`,
   });
-  const TH = THINKING.create($('think'), {S: () => S, show: () => show('think'), earn: n => { HOME.addOre(S, n); HOME.sync(S, today()); save(); }, gem: o => GM.answerThink(o), onExit: goIsland, stopSay: () => sayStop()}, {seed: CTX.test ? 7 : 0});
+  const TH = THINKING.create($('think'), {S: () => S, show: () => show('think'), earn: n => { HOME.addOre(S, n); HOME.sync(S, today()); save(); }, gem: o => GM.answerThink(o), onExit: goIsland, stopSay: () => sayStop(), levelRange: () => { const l = E.chosen(S); return l ? [Math.min(...l), Math.max(...l)] : [0, 0]; }}, {seed: CTX.test ? 7 : 0});
   const HS = HOUSE.create($('house'), {
     S: () => S, today, save, show: () => show('house'), leave: goIsland, doneToday: isDone,
     // 从家里去练：有对应的地方就走过去，秒答进秒答地图，其余 = 今天的探险
@@ -1145,7 +1159,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       HOME.ensure(S).go++; save(); goIsland();
       const sk = r && r.skill, g = r && (r.place || (sk && (sk.speed ? 'speed:L' + (sk.L + 1) : sk.group)));
       if (!g) { if (!isDone()) $('btnStart').click(); return; }
-      if (g.startsWith('speed')) { S.level = +g.slice(-1) - 1; renderSpeed(); show('home'); return; }
+      if (g.startsWith('speed') && !anyMap()) { Zone = 'speed'; WD.go('speed', () => begin(() => startQ('free', {group: 'speedH'}), goIsland)); return; }   // 这个难度只在挑战里有题
+      if (g.startsWith('speed')) { S.level = +g.slice(-1) - 1; fixSpeedMap(); renderSpeed(); show('home'); return; }
       Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
     },
   });
@@ -1155,7 +1170,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   $('zX').addEventListener('click', closeZone);
   $('zGo').addEventListener('click', () => {
     const g = zCur; if (!g) return;
-    if (g === 'speed') { closeZone(); renderSpeed(); show('home'); return; }
+    if (g === 'speed' && !anyMap()) { closeZone(); Zone = 'speed'; WD.go('speed', () => begin(() => startQ('free', {group: 'speedH'}), goIsland)); return; }   // 这个难度只在挑战里有题
+    if (g === 'speed') { closeZone(); fixSpeedMap(); renderSpeed(); show('home'); return; }
     if (PUZZLES.modOf(g)) { closeZone(); WD.go(g, () => TH.enter(g)); return; }
     closeZone(); Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
   });
@@ -1551,18 +1567,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const blk = id => blockHtml(C.BYID[id]);
     const titles = {daily: P.title + ' · 本次总结', review: '错题复习 · 本次总结'};
     $('summary').innerHTML = `
-      <div class="col" style="width:330px;flex:none;justify-content:center">
+      <div class="col sumL" style="justify-content:center">
         <div style="font-size:24px;font-weight:900">${titles[P.kind] || (quit ? '先练到这里' : '练完啦')}</div>
         <div class="num sumbig">⚡ ${fast}<span style="font-size:30px;color:var(--mute)"> / ${done.length}</span></div>
         <div class="muted" style="font-size:15px;line-height:1.6">${P.word} ${fast} 题 · 慢了 ${slow} 题 · 写错 ${wrong} 题<br>用时约 ${mins} 分钟 · 写对的平均 ${avg} 秒</div>
         ${bossLine}
       </div>
-      <div class="col" style="flex:1;justify-content:center;gap:12px;overflow-y:auto">
+      <div class="col" style="flex:1;gap:10px">
+        <div class="sumR">
         ${GM.summary(P, P.gemDay || today())}
-        ${P.ups.length ? `<div style="font-weight:900">这次升级的方块${P.L === 0 ? '（去墙上的地图涂上这个颜色）' : ''}</div><div class="ups">${P.ups.map(blk).join('')}</div>` : '<div class="muted">这次没有方块升级</div>'}
-        <div class="panel" style="flex-direction:row;align-items:center;gap:12px"><b>错题本</b><span>新放进 <b style="color:var(--bad)">${P.newMist}</b> 道 · 今天复习过关 <b style="color:var(--ok)">${P.passed}</b> 道</span><span style="flex:1"></span><button class="btn" id="sumMist" style="background:var(--stone-hi)">去看看</button></div>
+        ${P.ups.length ? `<div style="font-weight:900">这次升级的方块</div><div class="ups">${P.ups.map(blk).join('')}</div>` : '<div class="muted">这次没有方块升级</div>'}
+        <div class="panel sumMistRow"><b>错题本</b><span>新放进 <b style="color:var(--bad)">${P.newMist}</b> 道 · 今天复习过关 <b style="color:var(--ok)">${P.passed}</b> 道</span><span style="flex:1"></span><button class="btn" id="sumMist" style="background:var(--stone-hi)">去看看</button></div>
         ${slowIds.length ? `<div style="font-weight:900">这几个写对了，还不够快</div><div class="ups">${slowIds.map(blk).join('')}</div>` : ''}
-        <div style="display:flex;gap:10px;align-self:flex-start">${box ? '<button class="btn go big" id="sumHouse" style="min-width:200px;font-size:20px">回家打开</button>' : ''}<button class="btn${box ? '' : ' go'} big" id="sumHome" style="min-width:${box ? 150 : 220}px;font-size:20px">回到地图</button></div>
+        </div>
+        <div class="sumBtns">${box ? '<button class="btn go big" id="sumHouse">回家打开</button>' : ''}<button class="btn${box ? '' : ' go'} big" id="sumHome">回到地图</button></div>
       </div>`;
     show('summary'); GM.bind($('summary'), 'summary');
     $('sumHome').addEventListener('click', goHome);
@@ -2007,7 +2025,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     WORLD.sceneBg($('qsBg'), q.zone, innerWidth, innerHeight); WORLD.drawSprite($('qsHero'), WORLD.HERO, 'a'); WORLD.drawSprite($('qsDog'), WORLD.DOG, 'b');
     $('qsBag').querySelectorAll('i').forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 60));
     // 回到岛上：这次点亮的格子所在的木牌闪一下
-    $('qsHome').addEventListener('click', () => { goIsland(); q.ups.forEach(id => { const s = K.BY[K.ITEM[id].skill], g = s.group, i = s.speed ? s.L : zoneSkills(g).indexOf(s); if (i >= 0) WD.pulse(g, i); }); });
+    $('qsHome').addEventListener('click', () => { goIsland(); q.ups.forEach(id => { const s = K.BY[K.ITEM[id].skill], g = s.group === 'speedH' ? 'speed' : s.group, i = s.speed ? s.L : zoneSkills(g).indexOf(s); if (i >= 0) WD.pulse(g, i); }); });   // 挑战（speedH）的技能闪在高塔木牌上（4 张图都没题时木牌列的是挑战）
     if (box) $('qsHouse').addEventListener('click', () => HS.enter());
     if (q.kind === 'free') $('qsAgain').addEventListener('click', () => begin(() => startQ('free', q.opts)));
   }

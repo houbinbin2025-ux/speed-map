@@ -71,3 +71,21 @@ test('名称：每个格子都有短名字；每种错题都能列出来；题�
   }));
   assert.equal(R.mistLabel({a: 3, op: '-', b: 1}), '3 − 1');
 });
+
+test('地块的技能和格子（R.skillsOf / groupStat）= 老技能 + 当前级别开放的高级技能；手选每一级都和能出题的技能对上（分级同步审查第 1 条）', () => {
+  const ZONES = ['look', 'bond', 'place', 'cmp', 'line', 'garden', 'market', 'dock'];
+  for (let L = 1; L <= 15; L++) {
+    const S = C.blank(); S.placedAt = 1; S.settings = {levels: [L], levelsV: 2};
+    ZONES.forEach(g => {
+      const sk = R.skillsOf(S, g), ids = sk.map(s => s.id);
+      // 这块地这一级能出题的技能，全在卡片里
+      K.SKILLS.concat(K.HARD).filter(s => s.group === g && s.items.some(it => E.itemOn(S, it.id))).forEach(s => assert.ok(ids.includes(s.id), `第 ${L} 级 ${g} 卡片缺 ${s.id}`));
+      // 卡片里的高级技能，这一级都能出题（没开放的不显示）
+      sk.filter(s => s.hard).forEach(s => assert.ok(s.items.some(it => E.itemOn(S, it.id)), `第 ${L} 级 ${g} 卡片多了 ${s.id}`));
+      // 老技能一直都在；格子数 = 这些技能的格子
+      K.SKILLS.filter(s => s.group === g).forEach(s => assert.ok(ids.includes(s.id)));
+      assert.equal(R.groupStat(S, g).total, R.itemsOf(S, g).length);
+    });
+    assert.ok(!R.skillsOf(S, 'speed').some(s => s.hard) && R.skillsOf(S, 'speedH').every(s => s.group === 'speedH'));
+  }
+});

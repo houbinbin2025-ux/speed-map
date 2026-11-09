@@ -23,6 +23,7 @@
     {id: 'clue', x: 1690, name: '线索营地', short: '线索', icon: '#7bd88f'},
     {id: 'block', x: 1830, name: '方块工坊', short: '工坊', icon: '#6ea8fe'},
   ];
+  const MAXSQ = 10;   // 木牌上最多摆几格（一个技能一格）
   const WW = 1904, WH = 110;              // 岛的像素画尺寸（1 格 = 1 个像素点，屏幕上按比例放大）
   const ORE = ['#f2c14e', '#6ea8fe', '#7bd88f', '#f6a5a0'];
 
@@ -214,7 +215,8 @@
         const st = o.sign(z.id), s = document.createElement('div');
         s.className = 'w-sign' + (st.today ? ' today' : ''); s.dataset.z = z.id;
         s.style.left = (z.sx || z.x) * P + 'px'; s.style.top = Math.max(84, 15 * P) + 'px';
-        s.innerHTML = (st.today ? '<span class="w-flag">今天先来这里</span>' : '') + `<div class="board"><div class="nm">${z.name}</div><div class="row">${st.sq.map(l => `<i class="l${l}"></i>`).join('')}</div></div><div class="post"></div>`;
+        const off = Math.max(0, st.sq.length - MAXSQ); s.dataset.off = off;   // 技能多（三四年级）时木牌只摆最后 MAXSQ 格：最新开放的在后面
+        s.innerHTML = (st.today ? '<span class="w-flag">今天先来这里</span>' : '') + `<div class="board"><div class="nm">${z.name}</div><div class="row">${st.sq.slice(off).map(l => `<i class="l${l}"></i>`).join('')}</div></div><div class="post"></div>`;
         props.appendChild(s); signs[z.id] = s;
       });
       mini.innerHTML = ZONES.map(z => `<button data-z="${z.id}" class="${z.id !== 'home' && o.sign(z.id).today ? 'today' : ''}"><i style="background:${z.icon}"></i><span>${z.short}</span></button>`).join('');
@@ -320,7 +322,7 @@
       panTo(Math.max(0, Math.min(maxX, hero.x * P + 20 * P - W() / 2)), 260, () => walkTo(z.x - 20, arrive));
       return true;
     }
-    function pulse(id, idx) { const s = signs[id]; if (!s) return; const i = s.querySelectorAll('.row i')[idx]; if (i) { i.classList.remove('pulse'); void i.offsetWidth; i.classList.add('pulse'); } }
+    function pulse(id, idx) { const s = signs[id]; if (!s) return; const i = s.querySelectorAll('.row i')[idx - (+s.dataset.off || 0)]; if (i) { i.classList.remove('pulse'); void i.offsetWidth; i.classList.add('pulse'); } }
     // 首次：镜头放在今天要去的地方附近，4 秒后收起"拖一拖"提示
     function start(todayId) {
       layout();
