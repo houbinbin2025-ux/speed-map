@@ -386,10 +386,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 /* 孩子的错题宝箱（11-09 简化，原型 docs/原型/错题-家长视角）：一个「开始复习」+ 今天要复习 / 过几天再来 / 已经学会 三栏；统计和规则给家长区 */
 #mist h1 small{font-size:15px;color:var(--mute);font-weight:700;margin-left:8px}
 #mistGo{flex:none;height:64px;font-size:23px;width:100%}
+@media (max-height:340px){#mistGo{height:52px;font-size:21px}}
 .mshelves{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .mshelf{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:0}
 .mshelf>b{font-size:16px;flex:none}
-.mshelf .mrow{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;overflow-y:auto;min-height:0}
+.mshelf .mrow{background:none;border:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;overflow-y:auto;min-height:0}
 .mshelf.done .mq{opacity:.55}
 .mshelf .mmore{font-size:14px;color:var(--mute);align-self:center}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
