@@ -12,8 +12,10 @@ test('讲解句切段：拼回去等于原句；每段英文都翻译了，拼�
 });
 
 test('开关打开时：讲解里每段不断行、段间有 <wbr>；题面等号留在前一段', {skip: !K.MULTI_CELL}, () => {
-  IDS.forEach(id => { const x = HB.pools[id][0], h = R.explain({id, q: x.q, ans: x.ans});
-    assert.ok(/nowrap/.test(h) && /<wbr>/.test(h), h); });
+  IDS.forEach(id => HB.pools[id].forEach(x => { const h = R.explain({id, q: x.q, ans: x.ans}).split('<div class="why">')[1];   // 查 render.js 的真实输出，不用上面抄的切法
+    const ps = [...h.matchAll(/<span style="white-space:nowrap">([^<]*)<\/span>/g)].map(m => m[1]);
+    assert.equal(ps.join(''), x.q.why, h); assert.ok(ps.length >= 2 && ps.every(p => !p.startsWith('比')), h);
+    assert.equal((h.match(/<\/span><wbr><span/g) || []).length, ps.length - 1, h); }));
   const q = R.question({id: IDS[0], q: HB.pools[IDS[0]][0].q, ans: HB.pools[IDS[0]][0].ans}), t = HB.pools[IDS[0]][0].q.text;
   assert.ok(q.html.includes(`>${t.slice(0, t.indexOf(' = ') + 2)}</span>`), '题面上一段应是「61 ÷ 7 =」（等号留在上一行）');
 });
