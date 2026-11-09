@@ -178,9 +178,11 @@ test('典型错法：加法算成了减法；小数题差 1 也认；选择题�
   const S2 = blank(), m = typeMist(S2, 'cmp:g12:deccmp', '0', 1);   // 选择题
   m.hist.push({d: D(-1), k: 'w', w: String(Number(m.ans) + 1)}); m.hist.push({d: D(-1), k: 'w', w: String(Number(m.ans) - 1)});
   assert.equal(MV.build(S2, T).cats[0].note, null);
-  const S3 = blank(), x = speed(S3, SUB, [[-2, 'w', '4']]);   // 手写小数题：答案 143（dp 1）= 14.3
-  Object.assign(S3.mistakes[x], {src: 'speed', q: {a: 100, b: 43, op: '+', dp: 1}, ans: 143, hist: [{d: D(-2), k: 'w', w: '15.3'}, {d: D(-1), k: 'w', w: '13.3'}]});
+  const S3 = blank(), dm = typeMist(S3, 'speed:g12:dec', 'x', 4);   // 真实小数手写题（q.dp = 1，答案存去掉小数点的整数）
+  assert.equal(dm.q.dp, 1); const real = dm.ans / 10;
+  dm.hist = [{d: D(-2), k: 'w', w: (real + 1).toFixed(1)}, {d: D(-1), k: 'w', w: (real - 1).toFixed(1)}];
   assert.equal(MV.build(S3, T).cats[0].note, '写错多为差 1');
+  assert.equal(MV.ansOf(dm, R), real.toFixed(1));
 });
 
 test('结论和建议的文字：错题都在好转；较上周少 / 多；三种建议', () => {
@@ -196,4 +198,31 @@ test('结论和建议的文字：错题都在好转；较上周少 / 多；三�
   assert.deepEqual(MV.build(S5, T).advice, [`「${K.mistCat(SUB)}」：会做但易错，提醒写完检查一遍`]);
   const S6 = blank(); speed(S6, SUB, [[-12, 'w', '7'], [-2, 's'], [-1, 's']]);
   assert.deepEqual(MV.build(S6, T).advice, [`「${K.mistCat(SUB)}」：会做但不够快，正常练习即可，不需要讲`]);
+});
+
+test('ansOf 覆盖全部选择题型：和记录侧 pickTyped（index.html）同一规则，没有「--」、HTML 标签', () => {
+  // pickTyped(n)：choice 题 = opts[n]；有 pickAria = pickAria[i]；有 pickText = 按钮文字；否则 String(n)
+  const rule = (inst, n) => { const q = inst.q, v = R.question(inst), i = v.pick.indexOf(n);
+    return q.view === 'choice' && q.opts ? String(q.opts[n]) : v.pickAria ? String(v.pickAria[i]) : v.pickText ? String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() : String(n); };
+  const pickIds = Object.keys(K.ITEM).filter(id => (K.BY[K.ITEM[id].skill] || {}).input === 'pick');
+  const types = [...new Set(pickIds.map(id => K.ITEM[id].skill))];
+  assert.ok(types.length >= 10, `选择题技能 ${types.length} 个`);
+  let n = 0;
+  for (const sk of types) for (const it of K.BY[sk].items.slice(0, 4)) for (let r = 1; r <= 3; r++) {
+    const inst = K.make(it.id, rnd(r)), m = {src: K.BY[sk].group, uid: it.id, q: inst.q, ans: inst.ans};
+    const got = MV.ansOf(m, R); n++;
+    assert.equal(got, rule(inst, inst.ans), it.id); assert.notEqual(got, '--', it.id); assert.doesNotMatch(got, /</, it.id);
+  }
+  assert.ok(n > 30);
+});
+
+test('趣味题关掉时，没到期的趣味错题算暂停，不进「过几天再来」', () => {
+  const fun = Object.keys(K.ITEM).find(id => (K.BY[K.ITEM[id].skill] || {}).fun);
+  if (!fun) return;   // 题库里还没有趣味题
+  const S = blank(), inst = K.make(fun, rnd(2)), key = E.addMistake(S, inst, D(-1)); S.mistakes[key].due = D(3);
+  S.settings = {levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], levelsV: 2};   // 级别全开：E.mistOn 为真，只剩趣味题开关在挡
+  assert.equal(E.mistOn(S, S.mistakes[key]), true);
+  const sh = MV.shelves(S, T), off = !(K.FUN_SEC > 0);
+  assert.equal(sh.later.some(m => m.key === key), !off);
+  assert.equal(MV.stateOf(S, S.mistakes[key], T, null), off ? 'paused' : 'doing');
 });

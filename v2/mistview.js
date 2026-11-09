@@ -23,16 +23,19 @@
     const L = /^speed:L(\d+)$/.exec(group);
     return L ? !m.src && m.L === +L[1] - 1 : m.src === group;
   }
+  // 趣味题关掉时（K.FUN_SEC = 0），趣味错题不回炉：算暂停（同 engine.js funOff，审查 R2）
+  const funOff = m => !(K.FUN_SEC > 0) && !!(K.BY[K.ITEM[m.uid].skill] || {}).fun;
   const dueSet = (S, day) => { try { return new Set(E.dueMistakes(S, day)); } catch (e) { return null; } };
   // 每道错题的状态：due 今日复习（= E.dueMistakes，孩子今天真的会做到的）/ doing 复习中 / paused 暂停（难度设置或趣味题关掉）/ done 已学会
   function stateOf(S, m, day, due) {
     if (m.due === null) return 'done';
     if (due ? due.has(m) : (m.due <= day && E.mistOn(S, m))) return 'due';
-    if (!E.mistOn(S, m) || m.due <= day) return 'paused';
+    if (!E.mistOn(S, m) || funOff(m) || m.due <= day) return 'paused';
     return 'doing';
   }
   // 孩子错题宝箱三栏：today 今天要复习（按复习先后，不截到每天上限）、later 过几天再来（按日期从近到远）、done 已经学会（最近学会的在前）
   // 暂停的不进三栏（孩子做不到）；group 不传 = 全部
+  // done 含秒答下架的（m.out，孩子确实会了）；家长页 build 不列下架题（不是复习学会的），所以两页「已学会」的数可以不同，有意为之
   function shelves(S, day, group) {
     const due = dueSet(S, day), out = {today: [], later: [], done: []};
     const ms = Object.values(S.mistakes || {}).filter(m => okMist(m) && inGroup(m, group));
@@ -63,8 +66,8 @@
         if (q.view === 'choice' && Array.isArray(q.opts)) return String(q.opts[m.ans]);
         const v = R.question(K.make(m.uid, null, {q, ans: m.ans})), i = Array.isArray(v.pick) ? v.pick.indexOf(m.ans) : -1;
         if (i >= 0 && v.pickAria) return String(v.pickAria[i]);
-        if (i >= 0 && v.pickText) return String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() || '--';
-        return '--';
+        if (i >= 0 && v.pickText) return String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() || String(m.ans);
+        return String(m.ans);   // 比大小等纯数字选项：选项就是数本身（同 pickTyped 最后一步）
       }
       return R.ansText(q, m.ans);
     } catch (e) { return '--'; }
