@@ -38,7 +38,9 @@ test('简单类（口算卡、短题、点选、数线）只收紧不放宽：�
 
 test('简单类的尺子是「这一类里最快那部分」：别的技能熟了，还在一步一步算的技能过不了线', () => {
   const cards = K.SKILLS.filter(s => s.items.length && K.fastClass(s.items[0].id) === 'card');
-  const big = s => s.items.find(it => core(K.make(it.id, seeded(2))) >= 4000), slow = cards.find(big), quick = cards.filter(s => s !== slow).slice(0, 3);
+  const big = s => s.items.find(it => core(K.make(it.id, seeded(2))) >= 4000), slow = cards.find(big), L = C.BYID[big(slow).id].L;
+  const quick = cards.filter(s => s !== slow && Math.min(C.BYID[s.items[0].id].L, 2) === Math.min(L, 2)).slice(0, 3);   // 口算卡按范围分组：陪练要同一范围
+  assert.ok(quick.length >= 2);
   const f = {}; quick.forEach(s => { f[s.id] = ten(0.3); }); f[slow.id] = ten(0.9);   // 熟的技能 0.3，这个技能 0.9（每次都在算）
   const inst = K.make(big(slow).id, seeded(5)), cr = core(inst);
   const pool = [].concat(...Object.values(f)).sort((a, b) => a - b), p25 = pool[Math.floor((pool.length - 1) * 0.25)];
@@ -71,24 +73,50 @@ test('任何样本下，线不低于估计一半（想的部分 ≥ 1 秒）、�
   });
 });
 
-test('闪电线：写字 + 读题和想 × 这个技能自己的第 25 百分位，这部分夹在个人线的 0.35 到 BOLT 倍；技能自己不够 8 条照旧', () => {
+test('闪电线：写字 + 读题和想 × 这个技能自己的第 10 百分位（C 拍板），这部分夹在个人线的 0.35 到 BOLT 倍；简单类不比原来的闪电线松；技能自己不够 8 条照旧', () => {
   const lc = (inst, o) => K.fastMs(inst, o) - wr(inst);   // 个人线里「读题 + 想」那部分
+  const old = inst => K.fastMs(inst, o0) * G.BOLT;          // 原来的闪电线
+  const q = (a, p) => { const x = a.slice().sort((m, n) => m - n), i = (x.length - 1) * p, k = Math.floor(i); return x[k] + (x[Math.min(k + 1, x.length - 1)] - x[k]) * (i - k); };
+  assert.equal(K.FT.boltQ, 0.1, 'P10：比自己 10 次里 9 次都快');
   const id = pickId('word'), inst = K.make(id, seeded(6));
-  const s = [0.3, 0.35, 0.4, 0.45, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9], o = withFt(ft(id, s));   // 第 25 百分位 = 0.4125
-  assert.ok(Math.abs(K.boltMs(inst, o, G.BOLT) - (wr(inst) + clamp(core(inst) * 0.4125, lc(inst, o) * K.BOLT_FLOOR, lc(inst, o) * G.BOLT))) < 1);
+  const s = [0.3, 0.35, 0.4, 0.45, 0.5, 0.5, 0.6, 0.7, 0.8, 0.9], o = withFt(ft(id, s));
+  const want = wr(inst) + clamp(core(inst) * q(s, 0.1), lc(inst, o) * K.BOLT_FLOOR, lc(inst, o) * G.BOLT);   // 难类：跟着自己的速度
+  assert.ok(Math.abs(K.boltMs(inst, o, G.BOLT) - want) < 1);
   const lowF = withFt(ft(id, ten(0.05)));
   assert.equal(K.boltMs(inst, lowF, G.BOLT), wr(inst) + lc(inst, lowF) * K.BOLT_FLOOR, '下限 0.35 倍');
+  // 难类熟了但比估计慢：闪电能比原来的闪电线宽（原来几乎拿不到）
+  const slowF = withFt(ft(id, ten(1.3)));
+  assert.ok(K.boltMs(inst, slowF, G.BOLT) > old(inst), '难类慢技能的闪电跟着放宽');
+  // 慢的口算卡（线 = 估计）：写字不打折会比原来的闪电线松，取原来的
   const easy = pickId('card'), ie = K.make(easy, seeded(7)), oe = withFt(ft(easy, ten(1.6)));
-  assert.equal(K.boltMs(ie, oe, G.BOLT), wr(ie) + lc(ie, oe) * G.BOLT, '上限 = 个人线 × BOLT');
+  assert.equal(K.boltMs(ie, oe, G.BOLT), Math.min(old(ie), wr(ie) + lc(ie, oe) * G.BOLT), '上限');
+  assert.ok(K.boltMs(ie, oe, G.BOLT) <= old(ie), '不比原来的闪电线松（审查 R2）');
   // 熟练的 10 以内口算卡：闪电线的「想」部分不会被压到够不着（≥ 0.35 × 个人线，个人线 ≥ 1 秒）
   const c10 = K.make(K.BY['speed:L1:3'].items[0].id, seeded(3)), f10 = withFt({'speed:L1:3': ten(0.35), 'speed:L1:1': ten(0.35), 'speed:L1:2': ten(0.35)});
   assert.ok(K.boltMs(c10, f10, G.BOLT) - wr(c10) >= 350, '10 以内口算卡闪电里想的部分 ≥ 0.35 秒');
-  // 类尺子有了、这个技能自己没样本：写字 + 个人线 × BOLT
+  // 类尺子有了、这个技能自己没样本：写字 + 个人线 × BOLT（且不松于原来的）
   const cards = K.SKILLS.filter(x => x.items.length && K.fastClass(x.items[0].id) === 'card'), f = {};
   cards.slice(1, 4).forEach(x => { f[x.id] = ten(0.3); });
   const ic = K.make(cards[0].items[0].id, seeded(8)), oc = withFt(f);
-  assert.equal(K.boltMs(ic, oc, G.BOLT), wr(ic) + lc(ic, oc) * G.BOLT);
+  assert.equal(K.boltMs(ic, oc, G.BOLT), Math.min(old(ic), wr(ic) + lc(ic, oc) * G.BOLT));
 });
+
+test('审查 R2：口答不用个人线（样本都是写字作答的）', () => {
+  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '../v2/index.html'), 'utf8');
+  assert.match(html, /ft: S\.oral \? null : S\.ftime/);
+  const id = pickId('card'), inst = K.make(id, seeded(15));
+  assert.equal(K.fastMs(inst, {oral: true, speed: 900, ft: null}), K.fastMs(inst, {oral: true, speed: 900}));
+});
+
+test('审查 R2：口算卡按范围各用各的尺子——10 以内熟了不卡两位数', () => {
+  const cards = K.SKILLS.filter(x => x.items.length && K.fastClass(x.items[0].id) === 'card');
+  const byL = L => cards.filter(s => C.BYID[s.items[0].id].L === L);
+  const f = {}; byL(0).slice(0, 3).forEach(s => { f[s.id] = ten(0.2); });   // 10 以内很熟
+  const two = byL(2)[0], inst = K.make(two.items[0].id, seeded(16));
+  assert.equal(K.ftNote(inst.id, f), null, '50 以内的技能：10 以内的样本不算它的尺子');
+  assert.equal(K.fastMs(inst, withFt(f)), K.fastMs(inst, o0));
+});
+
 test('只用最近 10 条；坏值不算数', () => {
   const id = pickId('multi'), inst = K.make(id, seeded(8));
   const a = K.fastMs(inst, withFt(ft(id, ten(1))));
@@ -117,7 +145,7 @@ test('引擎：样本记进 S.ftime 以后，下一题的秒答线就变了（�
 
 test('页面：秒答线带 S.ftime，闪电走 K.boltMs，识别确认过的不记用时', () => {
   const html = require('node:fs').readFileSync(require('node:path').join(__dirname, '../v2/index.html'), 'utf8');
-  assert.match(html, /ft: S\.ftime\}\), qLimit = inst => K\.fastMs\(inst, limOpt\(\)\)/);
+  assert.match(html, /ft: S\.oral \? null : S\.ftime\}\), qLimit = inst => K\.fastMs\(inst, limOpt\(\)\)/);
   assert.match(html, /r\.bolt = !!r\.fast && used <= K\.boltMs\(inst, limOpt\(\), GEMS\.BOLT\)/);
   assert.match(html, /think: r\.ok && !r\.oral && !r\.confirm/);
   assert.match(html, /confirm: !!viaConfirm/);
@@ -156,6 +184,6 @@ test('审查 R1：页面判题、发奖励、显示「秒答要 M 秒内」用�
   assert.ok(iLim > 0 && iLim < iRec, '线在记录之前算');
   assert.match(body, /GM\.answerQ\(Q, x, r, secs, lim\)/);
   assert.match(body, /R\.okWords\(inst, out, Q\.wasLv, \{used, limit: lim\}, gain\)/);
-  assert.match(body, /!r\.confirm && !x\.asked && !Q\.pickDelay \? K\.thinkRatio/);
+  assert.match(body, /!r\.confirm && !x\.asked && !\(Q\.pickDelay && Q\.v\.input === 'pick'\) \? K\.thinkRatio/);
   assert.ok(!/qLimit\(inst\)/.test(body.slice(iRec)), '记录之后不再取线');
 });

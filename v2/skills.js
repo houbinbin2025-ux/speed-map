@@ -387,27 +387,30 @@
   // ---------- 按空空自己的速度定线（秒答校准第二步，说明书-秒答时间校准 §2） ----------
   // S.ftime[技能] = 最近 10 次干净答对的「(用时 − 写字) ÷ 估计的读题 + 想」（倍数，见 thinkRatio）。
   // 一步能想出的类（口算卡、短题、点选、数线）：比的是「熟到不用想」——拿空空在这一类里最快那部分的速度当尺子：
-  //   全类样本（≥ 20 条、≥ 2 个技能）的第 25 百分位 × 2，倍数夹在 0.5–1（只收紧不放宽）；还在一步一步算的技能过不了线。
+  //   全组样本（≥ 20 条、≥ 2 个技能；口算卡按 10 以内 / 20 以内 / 两位数分组）的第 25 百分位 × 2，倍数夹在 0.5–1（只收紧不放宽）；还在一步一步算的技能过不了线。
   //   全类样本不够、这个技能自己够 8 条：自己的中位数 × 1.2（0.5–1）。
   // 要想好几步的类（读题题、三四年级算式、多位笔算）：这个技能够 8 条，自己的中位数 × 1.2，倍数 1–1.5——只松不紧（估计偏紧的放宽；比估计快的照旧，不追着收紧）。
   // 都再夹住：不低于估计的一半（想的部分至少 1 秒），见 lineCoreMs。
-  // 闪电线 = 写字 + 估计的读题和想 × 这个技能自己的第 25 百分位（够 8 条才有），这部分夹在个人线（读题 + 想）的 0.35 到 BOLT 倍之间（C 11-09 对齐；上限审查 R1 收紧）；
+  // 闪电线 = 写字 + 估计的读题和想 × 这个技能自己的第 10 百分位（够 8 条才有，C 11-09 拍板），这部分夹在个人线（读题 + 想）的 0.35 到 BOLT 倍之间（C 11-09 对齐；上限审查 R1 收紧）；
   //   技能自己不够 8 条但有类尺子：写字 + 个人线 × BOLT；没有任何个人数据：秒答线 × BOLT（照旧）。
   // 样本是这次作答之前的（判完才记进去）。
   const TOO_FAST = 500, FT_MIN = 8, FT_K = 1.2, FT_LO = 0.5, THINK_FLOOR = 1000, BOLT_FLOOR = 0.35, POOL_MIN = 20, POOL_K = 2;
-  const FT = {boltQ: +((typeof process !== 'undefined' && process.env && process.env.BOLT_Q) || 0.25)};   // 闪电分位数（模拟可用 BOLT_Q 环境变量试）
+  const FT = {boltQ: +((typeof process !== 'undefined' && process.env && process.env.BOLT_Q) || 0.1)};   // 闪电分位数：比自己 10 次里 9 次都快（C 11-09 拍板 P10；模拟可用 BOLT_Q 环境变量试）
   const FT_HI = {card: 1, short: 1, pick: 1, line: 1, word: 1.5, multi: 1.5, column: 1.5};   // 难类最多放宽到 1.5 倍：再慢就是还没熟（模拟：2 倍时用时 2.2 倍的孩子也有 41% 秒答）
   const okRatio = v => typeof v === 'number' && isFinite(v) && v > 0 && v <= 10;
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
   const quant = (a, p) => { const s = a.slice().sort((x, y) => x - y), i = (s.length - 1) * p, k = Math.floor(i); return s[k] + (s[Math.min(k + 1, s.length - 1)] - s[k]) * (i - k); };
   const isFT = ft => !!ft && typeof ft === 'object' && !Array.isArray(ft);
   const samples = (ft, sk) => Array.isArray(ft[sk]) ? ft[sk].filter(okRatio).slice(-10) : [];
-  const SKC = {};   // 技能 → 类（技能里第一个题型的类；口算卡技能全是卡）
-  const skClass = sk => SKC[sk] || (SKC[sk] = BY[sk] && BY[sk].items.length ? fastClass(BY[sk].items[0].id) : '');
-  // 一步能想出的类的尺子：全类样本的第 25 百分位；不够返回 null
-  function poolOf(cls, ft) {
+  // 尺子分组：一般按类；口算卡再按范围分（10 以内 / 20 以内 / 两位数各一把，50 和 100 以内都是两位数、各只有 2 个技能，合一组）——
+  //   10 以内熟到直接提取，两位数总要算一下，倍数不成比例（审查 R2）
+  const groupOf = id => C.BYID[id] ? 'card:' + Math.min(C.BYID[id].L, 2) : fastClass(id);
+  const SKG = {};   // 技能 → 尺子分组（技能里第一个题型的）
+  const skGroup = sk => SKG[sk] || (SKG[sk] = BY[sk] && BY[sk].items.length ? groupOf(BY[sk].items[0].id) : '');
+  // 一步能想出的类的尺子：这一组样本的第 25 百分位；不够返回 null
+  function poolOf(grp, ft) {
     let all = [], k = 0;
-    Object.keys(ft).forEach(sk => { if (BY[sk] && skClass(sk) === cls) { const a = samples(ft, sk); if (a.length) { k++; all = all.concat(a); } } });
+    Object.keys(ft).forEach(sk => { if (BY[sk] && skGroup(sk) === grp) { const a = samples(ft, sk); if (a.length) { k++; all = all.concat(a); } } });
     return all.length >= POOL_MIN && k >= 2 ? {n: all.length, p25: quant(all, 0.25)} : null;   // 每技能最多 10 条，20 条必然来自 ≥ 2 个技能；k 留着防以后改条数
   }
   // 这一题的个人倍数：{n, by: '类' | '技能', line: 秒答线倍数, bolt: 闪电倍数或 null}；没有个人数据返回 null
@@ -416,7 +419,7 @@
     const cls = fastClass(id), hi = FT_HI[cls] || 1, a = samples(ft, ITEM[id].skill), own = a.length >= FT_MIN;
     const bolt = own ? quant(a, FT.boltQ) : null;
     if (hi === 1) {
-      const pool = poolOf(cls, ft);
+      const pool = poolOf(groupOf(id), ft);
       if (pool) return {n: pool.n, by: '类', line: clamp(pool.p25 * POOL_K, FT_LO, 1), bolt};
     }
     return own ? {n: a.length, by: '技能', line: clamp(quant(a, 0.5) * FT_K, hi > 1 ? 1 : FT_LO, hi), bolt} : null;   // 难类只松不紧：熟了比估计快的照旧好拿，不追着孩子越收越紧
@@ -437,10 +440,12 @@
   // 闪电线（毫秒）：rate = gems.js 的 BOLT（样本不够时用）
   function boltMs(inst, o, rate) {
     o = o || {};
-    const p = ftOf(inst.id, o.ft); if (!p) return fastMs(inst, o) * rate;   // 没有任何个人数据：照旧
-    // 有个人线：上下限只作用在「读题 + 想」那部分（口算卡的线大半是写字，整条线 × 0.6 会把想的部分压到 0.2 秒，审查 R1 后实测）
+    const old = fastMs(inst, Object.assign({}, o, {ft: null})) * rate, p = ftOf(inst.id, o.ft); if (!p) return old;   // 没有任何个人数据：照旧
+    // 有个人线：上下限只作用在「读题 + 想」那部分（口算卡的线大半是写字，整条线 × 0.6 会把想的部分压到 0.2 秒，审查 R1 后实测）；
+    //   简单类（秒答线只紧不松）也不比原来的闪电线松——写字不打折会让闪电反而变松（审查 R2）；难类线放宽了，闪电跟着自己的速度走
     const line = lineCoreMs(inst, o), core = thinkMs(inst) + readMs(inst, o);
-    return writeMs(inst, o) + clamp(p.bolt === null ? Infinity : core * p.bolt, line * BOLT_FLOOR, line * rate);
+    const b = writeMs(inst, o) + clamp(p.bolt === null ? Infinity : core * p.bolt, line * BOLT_FLOOR, line * rate);
+    return (FT_HI[fastClass(inst.id)] || 1) > 1 ? b : Math.min(old, b);
   }
   // 题库页：个人线说明（样本够才有）
   const ftNote = (id, ft) => { const p = ftOf(id, ft); return p ? {n: p.n, by: p.by, line: Math.round(p.line * 100) / 100} : null; };
@@ -473,6 +478,6 @@
   }
 
   HARD.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 高级题的前置也只留登记了的（关掉的趣味技能不登记，写进前置会让 ready() 查不到而崩，审查 R1）
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, thinkRatio, fastLabel, boltMs, restMs, readMs, writeMs, ftOf, ftNote, FT_MIN, FT_HI, BOLT_FLOOR, POOL_MIN, POOL_K, THINK_FLOOR, FT, TOO_FAST,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, thinkRatio, fastLabel, boltMs, restMs, readMs, writeMs, ftOf, ftNote, FT_MIN, FT_HI, BOLT_FLOOR, POOL_MIN, POOL_K, THINK_FLOOR, FT, TOO_FAST, groupOf,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

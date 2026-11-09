@@ -310,10 +310,11 @@
   // 只记录，不改任何判断；写入前顺手洗掉这个技能数组里的坏值（合并、读档清洗归 F）
   const FTIME_N = 10, okRatio = v => typeof v === 'number' && isFinite(v) && v > 0 && v <= 10;
   function noteThink(S, skill, r) {
+    r = typeof r === 'number' ? Math.round(r * 100) / 100 : r;   // 先取两位再判：小于 0.005 的取整成 0 就不记（F 审查）
     if (!okRatio(r)) return;
     if (!S.ftime || typeof S.ftime !== 'object' || Array.isArray(S.ftime)) S.ftime = {};
     const a = (Array.isArray(S.ftime[skill]) ? S.ftime[skill] : []).filter(okRatio);
-    a.push(Math.round(r * 100) / 100); S.ftime[skill] = a.slice(-FTIME_N);
+    a.push(r); S.ftime[skill] = a.slice(-FTIME_N);
   }
   // 一题作答之后的共同处理：升级、错题、维持复习档位、统计
   function settle(S, x, res, day, onTime) {

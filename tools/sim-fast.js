@@ -80,7 +80,7 @@ function spot() {
   all.forEach(([label, cls, m, tid]) => {
     const of = s => s.items.filter(it => K.fastClass(it.id) === cls), sks = K.SKILLS.concat(K.HARD).filter(s => of(s).length);
     if (sks.length < 2) return;
-    const T = tid ? K.BY[tid] : sks[sks.length >> 1], ft = {}; sks.filter(s => s !== T).slice(0, 3).forEach(s => { ft[s.id] = Array.from({length: 10}, () => Math.round(draw(0.35) * 100) / 100); });
+    const T = tid ? K.BY[tid] : sks[sks.length >> 1], ft = {}; sks.filter(s => s !== T && K.groupOf(of(s)[0].id) === K.groupOf(of(T)[0].id)).slice(0, 3).forEach(s => { ft[s.id] = Array.from({length: 10}, () => Math.round(draw(0.35) * 100) / 100); });
     ft[T.id] = Array.from({length: 10}, () => Math.round(draw(m) * 100) / 100);
     const n = {fb: 0, fa: 0, bb: 0, ba: 0};
     for (let i = 0; i < 400; i++) {
