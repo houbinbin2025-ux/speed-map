@@ -65,7 +65,7 @@ test('答对时的字（R.okWords）都有英文', () => {
 });
 
 test('奖状、道具、伙伴（home.js / house.js）都有英文', () => {
-  const t = {all: () => ({n: 9, l1: 1, l3: 1})}, out = [];
+  const t = {all: () => ({n: 9, l1: 1, l3: 1}), lvAll: () => ({n: 9, l1: 1, l3: 1})}, out = [];
   HOME.CERTS.forEach(c => out.push(txt(c.name), txt(c.title), txt(c.text), txt(c.say(t))));
   HOME.ITEMS.forEach(i => out.push(txt(i.name), txt(i.text), txt(i.say || '')));
   HOME.MEDALS.forEach(m => out.push(txt(m.name), txt(m.text)));
@@ -183,3 +183,9 @@ test('思维地点每档的建议级别（中控 11-08）有英文', () => {
 });
 
 test('分级同步：秒答高塔「去挑战」有英文（审查 11-09）', () => { assert.equal(txt('去挑战'), 'Go to challenge'); });
+test('家：三四年级伙伴图鉴的说明、「新本领」导航有英文（E 11-09）', () => {
+  assert.equal(txt('第 4–5 级新本领全部点亮后解锁').indexOf('unlock') > 0, true);
+  assert.ok(!I18N.ZH.test(txt('学会了第 15 级的全部新本领，全部隔 3 天还做对')));
+  assert.equal(txt('新本领'), 'New skills');
+  ['林间小鹿', '驼驼', '斑斑豹', '冰冰熊', '泡泡海马', '岩角羊', '火尾蜥', '铜壳虫', '紫夜鸮', '云鲸', '小飞龙'].forEach(n => assert.ok(!I18N.ZH.test(txt(n)), n));
+});
