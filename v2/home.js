@@ -103,7 +103,7 @@
   const done = (r, t) => { const [a, b] = r.need(t); return a >= b; };
   const ALL = CERTS.concat(ITEMS, MEDALS), BY = Object.fromEntries(ALL.map(r => [r.id, r]));
   // 伙伴：编号固定对应生物（art 在 house.js 的 CREATURES 里按这个下标取）。新增技能往后加
-  const CREATURE_IDS = ['look1', 'cmp1', 'look3', 'look4', 'bond2', 'line1', 'bond3', 'cmp2', 'bond4', 'bond5', 'line2', 'place1', 'place2', 'cmp3', 'cmp4', 'line3', 'line4', 'dockC', 'clockB', 'speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5', 'speed:L1:6', 'dockD', 'speed:L2:0', 'speed:L2:1', 'speed:L2:2', 'speed:L2:3', 'speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7', 'speed:L3:0', 'speed:L3:1', 'speed:L4:0', 'speed:L4:1', 'dockA', 'dockB', 'gardenA', 'gardenB', 'gardenC', 'clockA', 'money1', 'money2'];   // 下标 = house.js 的 CREATURES
+  const CREATURE_IDS = ['look1', 'cmp1', 'look3', 'look4', 'bond2', 'line1', 'bond3', 'cmp2', 'bond4', 'bond5', 'line2', 'place1', 'place2', 'cmp3', 'cmp4', 'line3', 'line4', 'dockC', 'clockB', 'speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5', 'speed:L1:6', 'dockD', 'speed:L2:0', 'speed:L2:1', 'speed:L2:2', 'speed:L2:3', 'speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7', 'speed:L3:0', 'speed:L3:1', 'speed:L4:0', 'speed:L4:1', 'dockA', 'dockB', 'gardenA', 'gardenB', 'gardenC', 'clockA', 'money1', 'money2', 'lv:5', 'lv:6', 'lv:7', 'lv:8', 'lv:9', 'lv:10', 'lv:11', 'lv:12', 'lv:13', 'lv:14', 'lv:15'];   // 下标 = house.js 的 CREATURES
   const creatureOf = sid => CREATURE_IDS.indexOf(sid);
 
   function ensure(S) {

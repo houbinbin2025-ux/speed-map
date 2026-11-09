@@ -181,3 +181,10 @@ test('思维地点每档的建议级别（中控 11-08）有英文', () => {
   assert.equal(txt('建议第 3 级起'), 'Level 3+');
   assert.equal(txt('建议第 13 级起'), 'Level 13+');
 });
+
+test('家：三四年级伙伴图鉴的说明、「新本领」导航有英文（E 11-09）', () => {
+  assert.equal(txt('第 4–5 级新本领全部点亮后解锁').indexOf('unlock') > 0, true);
+  assert.ok(!I18N.ZH.test(txt('学会了第 15 级的全部新本领，全部隔 3 天还做对')));
+  assert.equal(txt('新本领'), 'New skills');
+  ['林间小鹿', '驼驼', '斑斑豹', '雪球熊', '墨墨章鱼', '岩角羊', '火尾蜥', '铠甲虫', '紫夜鸮', '云鲸', '小飞龙'].forEach(n => assert.ok(!I18N.ZH.test(txt(n)), n));
+});
