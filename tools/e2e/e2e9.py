@@ -55,7 +55,7 @@ with sync_playwright() as p:
                 t = pg.inner_text('#qBody') + pg.inner_text('#qWide'); check('✗' in t, sk + ' 答错没有提示：' + t[:40]); shot(pg, 'w-' + sk)
                 if st['input'] == 'pick' and sk != 'gardenC': check('应该是' in t, sk + ' 点选答错没有「应该是」：' + t[:60])
                 if sk.startswith('clock'): check(pg.locator('#qBody .pclock text, #qWide .pclock text').count() == 12, sk + ' 钟面没有 1—12')
-                check(pg.evaluate(f"Object.values(__sm.S.mistakes).some(m=>__sm.K.ITEM[m.uid]&&__sm.K.ITEM[m.uid].skill==='{sk}')") or st['input'] == 'pick', sk + ' 没进错题宝箱')
+                check(pg.evaluate(f"Object.values(__sm.S.mistakes).some(m=>__sm.K.ITEM[m.uid]&&__sm.K.ITEM[m.uid].skill==='{sk}')") or st['input'] == 'pick' or pg.evaluate(f"!!__sm.K.BY['{sk}'].fun"), sk + ' 没进错题宝箱')   # 趣味题按说明书不进错题本（v154 起开关打开）
                 pg.click('#qNext'); pg.wait_for_timeout(300)
                 if qst(pg): check(qst(pg)['id'].split(':')[0] == st['id'].split(':')[0], sk + ' 答错后没有当场再来一次')
             else: pg.wait_for_timeout(950)
