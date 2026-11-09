@@ -264,7 +264,7 @@
     if (p.kind === 'scan') { const got = G.placeAnswer(st, {ok: p.result !== 'wrong' && !p.dunno}); credit(p, got); save(); return {got, words: words(got || []), bolt: false}; }   // 秒答区摸底：同上
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
-    { const secs = G.effSecs((p.ms || 0) / 1000, limit); G.noteRest(st, secs, clock()); G.addSec(st, p.gemDay, secs); evRun = null; }
+    { const secs = G.effSecs((p.ms || 0) / 1000, limit); G.noteRest(st, secs, clock()); if (!S().oral) G.addSec(st, p.gemDay, secs); evRun = null; }   // 口答不算有效时间（和新流程 answerQ 一致，审查 R2）
     const got = G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', slow: p.result === 'slow', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay), rand: oddRand});
     credit(p, got);
     let more = null;
