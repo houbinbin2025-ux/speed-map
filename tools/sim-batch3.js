@@ -1,4 +1,4 @@
-// 第三批 门 2 最大风险验证（docs/说明书-第三批-草稿.md §三）：用真实排课引擎 E.session 跑每天 10 分钟，按级统计题数和每题用时，
+// 第三批 门 2 最大风险验证（docs/说明书-第三批.md §三）：用真实排课引擎 E.session 跑每天 10 分钟，按级统计题数和每题用时，
 // 再估算「趣味题穿插」占掉的时间、挤掉的计算题、题池多久被用完。8 个随机种子，报中位数和最差值。
 // 用法：node tools/sim-batch3.js [--backup <progress-backup.json>]
 //   带备份时：起点用真实存档（iPad 外壳的 progress-backup.json：{"speedmap.v2": "<进度 JSON 文字>", …}，或家长区导出的文字），

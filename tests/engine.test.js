@@ -173,7 +173,7 @@ test('没有新内容、没有到期的也有东西练：深红的格子按 7/14
   const S = C.blank(); S.placedAt = 1;
   K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => { const p = E.prog(S, it.id); p.lv = 3; p.d = [D(-40), D(-35), D(-30)]; p.last = D(-30); p.seen = 9; }));
   const {qs, s} = play(S, D(0), () => ok);
-  assert.ok(qs.length > 0 && qs.every(x => x.seg === 'fluency'));
+  assert.ok(qs.length > 0 && qs.every(x => x.seg === 'fluency' || x.fun));   // 打开趣味题（FUN_SEC=90）时中间会按规则插趣味题
   assert.ok(s.elapsed >= 590, '满 10 分钟');
   K.SKILLS.concat(K.HARD).forEach(s => s.items.forEach(it => { E.prog(S, it.id).lastDay = D(4); }));   // 全都刚复习过
   const again = play(S, D(5), () => ok);
@@ -668,7 +668,7 @@ test('审查第 2 轮阻断：已点亮的卡当天先错、再来一次做对�
     const wrong = {}, retried = [];
     play(S, D(0), x => { if (x.retry) { retried.push(x.inst.id); return ok; } if (!wrong[x.inst.id]) { wrong[x.inst.id] = 1; return bad; } return ok; });
     assert.ok(retried.length >= 5);
-    retried.forEach(id => assert.equal(E.lv(S, id), start, id + ' 靠再来一次升级了'));
+    retried.filter(id => !(K.BY[K.ITEM[id].skill] || {}).fun).forEach(id => assert.equal(E.lv(S, id), start, id + ' 靠再来一次升级了'));   // 趣味题型同一天会再出别的数字的新题，另有测试（fun-sched）
   }
 });
 test('题型的再来一次（同样的数）不进 8 次窗口', () => {

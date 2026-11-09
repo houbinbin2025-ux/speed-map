@@ -526,7 +526,67 @@
     千克和千米: 'Kilograms and kilometers', 多位数乘除一位数: 'Multiply and divide by 1 digit', 速度: 'Speed', 买东西: 'Shopping', 单价: 'Unit price', 年月日: 'Years, months, days',
     三位数乘两位数: '3-digit × 2-digit', 简便算: 'Shortcuts'});
   const LIST = [[/^[^、]+(、[^、]+)+$/, s => { const l = s.split('、').map(one); return l.some(x => x === null) ? null : l.join(', '); }]];
-  P.unshift(...P2A, ...P2B, ...P34);
+  // ---------- 第三批 3a 趣味题（docs/说明书-第三批.md §四）：数塔、幻方、植树、锯木头、谁最高、猜数、算式谜 ----------
+  const KID = {小林: 'Lin', 小方: 'Fang', 小月: 'Yue', 小冬: 'Dong', 小青: 'Qing', 小雨: 'Yu', 小石: 'Shi', 小禾: 'Hehe'};
+  const CMPW = {高: 'taller', 矮: 'shorter', 重: 'heavier', 轻: 'lighter', 跑得快: 'faster', 跑得慢: 'slower', 年纪大: 'older', 年纪小: 'younger'};
+  const ASKW = {'谁最高？': 'Who is the tallest?', '谁最矮？': 'Who is the shortest?', '谁最重？': 'Who is the heaviest?', '谁最轻？': 'Who is the lightest?', '谁跑得最快？': 'Who is the fastest?', '谁跑得最慢？': 'Who is the slowest?', '谁年纪最大？': 'Who is the oldest?', '谁年纪最小？': 'Who is the youngest?'};
+  const ORDW = {从高到矮: 'tallest to shortest', 从重到轻: 'heaviest to lightest', 从快到慢: 'fastest to slowest', 从大到小: 'oldest to youngest'};
+  const PLACE3 = {小路: ['a path', 'The path'], 河边: ['the river', 'The riverbank'], 操场边: ['the playground', 'The playground edge'], 小桥: ['a bridge', 'The bridge'], 一条小路: [0, 'A path'], 河边的路: [0, 'The path by the river'], 操场边的路: [0, 'The path by the playground']};
+  const ITEM3 = {树: ['tree', 'trees'], 路灯: ['street lamp', 'street lamps'], 旗子: ['flag', 'flags'], 花盆: ['flower pot', 'flower pots']};
+  const VERB3 = {种: 'planted', 装: 'put up', 插: 'put up', 摆: 'placed'};
+  const WHERE3 = {两头都: 'at both ends', 只在一头: 'at one end only', 两头都不: 'but not at either end'}, WHERE3C = {两头都: 'Both ends', 只在一头: 'One end only', 一头也: 'One end only', 两头都不: 'Neither end'};
+  const CUT3 = {木头: 'log', 绳子: 'rope', 面包: 'loaf of bread', 纸条: 'paper strip', 竹子: 'bamboo pole', 甘蔗: 'sugarcane stalk'};
+  const LINE3 = {第一行: 'top row', 第二行: 'middle row', 第三行: 'bottom row', 第一列: 'left column', 第二列: 'middle column', 第三列: 'right column', 斜线: 'diagonal'};
+  const FK3 = '(小林|小方|小月|小冬|小青|小雨|小石|小禾)', FC3 = '(高|矮|重|轻|跑得快|跑得慢|年纪大|年纪小)', FW3 = '(两头都不|两头都|只在一头|一头也)', FV3 = '(种|装|插|摆)', FI3 = '(树|路灯|旗子|花盆)', FU3 = '[棵盏面个]', FPL3 = '(小路|河边|操场边|小桥)', FT3 = '(木头|绳子|面包|纸条|竹子|甘蔗)';
+  const nn = (n, i) => pl(n, ITEM3[i][0], ITEM3[i][1]);
+  const ROAD3 = {一条小路: 'a path', 河边的路: 'the riverside path', 操场边的路: 'the path by the playground'}, FRD3 = '(一条小路|河边的路|操场边的路)', FRULE3 = '(一头也(?:种|装|插|摆)、另一头不(?:种|装|插|摆)|两头都不(?:种|装|插|摆))';
+  const RULE3 = r => (r.includes('一头也') ? 'and at one end of the path but not the other' : 'but not at either end of the path');
+  const restTree = (t, i) => { let m;
+    if ((m = new RegExp(`^${FI3}比段(多|少) 1，(\\d+) ([+−]) 1 = (\\d+)$`).exec(t))) return `${ITEM3[m[1]][1]} are 1 ${m[2] === '多' ? 'more' : 'fewer'} than sections, ${m[3]} ${m[4]} 1 = ${m[5]}`;
+    if ((m = new RegExp(`^段比${FI3}(多|少) 1，(\\d+) ([+−]) 1 = (\\d+)$`).exec(t))) return `sections are 1 ${m[2] === '多' ? 'more' : 'fewer'} than ${ITEM3[m[1]][1]}, ${m[3]} ${m[4]} 1 = ${m[5]}`;
+    if ((m = new RegExp(`^${FI3}和段一样多，是 (\\d+)$`).exec(t)) || (m = new RegExp(`^段和${FI3}一样多，是 (\\d+)$`).exec(t))) return `same number of ${ITEM3[m[1]][1]} and sections: ${m[2]}`;
+    if ((m = /^(\d+) ([+−]) 1 = (\d+)$/.exec(t))) return t;
+    if ((m = /^和段一样多，是 (\d+)$/.exec(t))) return `same as the sections: ${m[1]}`;
+    return null; };
+  const P3 = [
+    [/^下面两个数相加：(.+)$/, (m, e) => `Add the two below: ${e}`],
+    [/^上面的数减去旁边的数：(.+)$/, (m, e) => `The top number minus the one beside it: ${e}`],
+    [/^横、竖、斜，每条线上三个数加起来都是 (\d+)。问号是几？$/, (m, n) => `Every row, column and diagonal adds up to ${n}. What is the question mark?`],
+    [/^看(第一行|第二行|第三行|第一列|第二列|第三列|斜线)：(.+)$/, (m, l, e) => `Look at the ${LINE3[l]}: ${e}`],
+    [new RegExp(`^${FRD3}两头都${FV3}${FI3}，${FI3}和${FI3}之间有 (\\d+) 段。一共几${FU3}${FI3}？$`), (m, p, v, i, a, b, n) => `${cap(ITEM3[i][1])} are ${VERB3[v]} along ${ROAD3[p]}, including both ends. There are ${pl(n, 'section')} between them. How many ${ITEM3[i][1]} in all?`],
+    [new RegExp(`^${FRD3}两头都${FV3}${FI3}，一共 (\\d+) ${FU3}${FI3}。${FI3}和${FI3}之间有几段？$`), (m, p, v, i, n) => `${cap(ITEM3[i][1])} are ${VERB3[v]} along ${ROAD3[p]}, including both ends. There are ${nn(n, i)} in all. How many sections are between them?`],
+    [new RegExp(`^${FRD3}分成一样长的 (\\d+) 段，${FI3}${FV3}在段和段之间，${FRULE3}。一共几${FU3}？$`), (m, p, n, i, v, r) => `${cap(ROAD3[p])} is split into ${n} equal sections. ${cap(ITEM3[i][1])} are ${VERB3[v]} where the sections meet, ${RULE3(r)}. How many ${ITEM3[i][1]} in all?`],
+    [new RegExp(`^${FRD3}分成一样长的几段，${FI3}${FV3}在段和段之间，${FRULE3}，共 (\\d+) ${FU3}。分成了几段？$`), (m, p, i, v, r, n) => `${cap(ROAD3[p])} is split into equal sections. ${cap(ITEM3[i][1])} are ${VERB3[v]} where the sections meet, ${RULE3(r)}. There are ${nn(n, i)}. How many sections are there?`],
+    [/^共 (\d+) (段|棵|盏|面|个|次|刀)（图只画了一部分）$/, (m, n, u) => `${u === '段' ? pl(n, 'section') : u === '次' || u === '刀' ? pl(n, 'cut') : n} in all (only part is drawn)`], [/^（图只画了一部分）$/, () => '(only part is drawn)'],
+    [new RegExp(`^(一条小路|河边的路|操场边的路|小桥)长 (\\d+) 米，每隔 (\\d+) 米${FV3}一${FU3}${FI3}，(两头都不|两头都|一头也)${FV3}(?:、另一头不${FV3})?。一共几${FU3}？$`), (m, p, L, d, v, i, w) => `${cap(ROAD3[p] || 'the bridge')} is ${L} m long. A ${ITEM3[i][0]} is ${VERB3[v]} every ${d} m, ${w === '一头也' ? 'and at one end but not the other' : WHERE3[w]}. How many ${ITEM3[i][1]} in all?`],
+    [new RegExp(`^先算段数：(\\d+) ÷ (\\d+) = (\\d+) 段；(两头都不|两头都|一头也)${FV3}，(.+)$`), (m, L, d, g, w, v, t) => { const r = restTree(t); return r === null ? null : `Sections first: ${L} ÷ ${d} = ${g}. ${w === '一头也' ? 'One end' : WHERE3C[w]}: ${r}`; }],
+    [new RegExp(`^${FW3}${FV3}：(.+)$`), (m, w, v, t) => { const r = restTree(t); return r === null ? null : `${WHERE3C[w]}: ${r}`; }],
+    [new RegExp(`^把一根${FT3}(锯|剪|切|砍) (\\d+) (次|刀)，(锯|剪|切|砍)成几段？$`), (m, t, v, n) => `Cut a ${CUT3[t]} ${pl(n, 'time')}. How many pieces?`],
+    [new RegExp(`^要把一根${FT3}(锯|剪|切|砍)成 (\\d+) 段，要(锯|剪|切|砍)几(次|刀)？$`), (m, t, v, n) => `To cut a ${CUT3[t]} into ${n} pieces, how many cuts?`],
+    [/^(锯|剪|切|砍) 1 (次|刀)是 2 段，段比(次|刀)数多 1：(.+)$/, (m, a, b, c, e) => `1 cut makes 2 pieces. Pieces are 1 more than cuts: ${e}`],
+    [/^(次|刀)数比段少 1：(.+)$/, (m, a, e) => `Cuts are 1 fewer than pieces: ${e}`],
+    [new RegExp(`^${FK3}比${FK3}${FC3}，${FK3}比${FK3}${FC3}。(谁.+？)$`), (m, a, b, c, d, e, f, q) => ASKW[q] ? `${KID[a]} is ${CMPW[c]} than ${KID[b]}. ${KID[d]} is ${CMPW[f]} than ${KID[e]}. ${ASKW[q]}` : null],
+    [new RegExp(`^排一排，(从高到矮|从重到轻|从快到慢|从大到小)：${FK3}、${FK3}、${FK3}$`), (m, o, a, b, c) => `In order, ${ORDW[o]}: ${KID[a]}, ${KID[b]}, ${KID[c]}`],
+    [/^一个数(加上|减去|乘|除以) (\d+)，再(加上|减去) (\d+)，得 (\d+)。这个数是几？$/, (m, o1, a, o2, b, c) => `A number ${{加上: 'plus', 减去: 'minus', 乘: 'times', 除以: 'divided by'}[o1]} ${a}, then ${o2 === '加上' ? 'plus' : 'minus'} ${b}, makes ${c}. What is the number?`],
+    [new RegExp(`^(.+？) (${FK3}(、${FK3})+)$`), (m, q, l) => { const t = one(q); return t === null ? null : `${t} ${l.split('、').map(x => KID[x]).join(', ')}`; }],   // 错题标签：题干 + 选项
+    [/^倒着算：(.+)$/, (m, e) => (HAN.test(e) ? null : `Work backwards: ${e.replace(/，/g, ', ')}`)],
+    [/^(.+)，所以 □ 是 (\d+)$/, (m, e, d) => (HAN.test(e) ? null : `${e}, so the box is ${d}`)],
+  ];
+  Object.assign(D, KID, {
+    数塔: 'Number pyramid', '数塔（两位数）': 'Number pyramid (2-digit)', 幻方: 'Magic square', '植树（两头都种）': 'Planting trees (both ends)', 锯木头: 'Cutting logs',
+    '植树（只种一头、两头不种）': 'Planting trees (one end, no ends)', '植树（先算段数）': 'Planting trees (sections first)', 排顺序: 'Putting in order', '猜数（加减）': 'Mystery number (+ −)',
+    '猜数（乘除）': 'Mystery number (× ÷)', '算式谜（缺一个数字）': 'Missing digit', 植树: 'Planting trees', 猜数: 'Mystery numbers', 算式谜: 'Missing digits',
+    '上面的数是下面两个数的和。问号是几？': 'Each number is the sum of the two below it. What is the question mark?', 
+    植树的三种种法: 'Three ways to plant', 倒着算: 'Work backwards', 数塔示意: 'Number pyramid', 植树示意: 'Planting trees',
+    '路的两头都种树，树和树之间是一段': 'Trees at both ends of the path. The space between two trees is a section', '数一数：3 段': 'Count them: 3 sections',
+    '树有 4 棵，比段多 1：3 + 1 = 4': '4 trees, 1 more than the sections: 3 + 1 = 4', 一根木头: 'A log', '锯 1 次，变成 2 段': '1 cut makes 2 pieces',
+    '锯 3 次，变成 4 段：段比次数多 1': '3 cuts make 4 pieces: pieces are 1 more than cuts',
+    '路分成 3 段，两头都种：4 棵，树比段多 1': 'The path is split into 3 sections. Both ends planted: 4 trees, 1 more than the sections', '树种在段和段之间，一头也种：3 棵，树和段一样多': 'Trees where the sections meet, plus one end: 3 trees, the same as the sections',
+    '树种在段和段之间，两头都不种：2 棵，树比段少 1': 'Trees where the sections meet, not at the ends: 2 trees, 1 fewer than the sections',
+    '一个数加上 8，再减去 5，得 20': 'A number plus 8, then minus 5, makes 20', '倒着走：最后减了 5，先加回 5': 'Go backwards: the last step was minus 5, so add 5 back',
+    '前面加了 8，再减掉 8：这个数是 17': 'The first step was plus 8, so take 8 away: the number is 17', '代回去检查：17 加 8 再减 5，正好是 20': 'Check it: 17 plus 8 minus 5 is exactly 20',
+  });
+  P.unshift(...P2A, ...P2B, ...P34, ...P3);
   P.push(...LIST);
   const AFTER = [
     [/^ 个百$/, o => (o ? ' hundred' : ' hundreds')], [/^ 个十$/, o => (o ? ' ten' : ' tens')], [/^ 个一$/, o => (o ? ' one' : ' ones')],

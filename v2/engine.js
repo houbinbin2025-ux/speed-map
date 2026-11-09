@@ -205,13 +205,49 @@
   }
   // 这道题进错题本会用哪个键（addMistake 同一算法；不写进存档）
   const mistKeyOf = (S, inst) => { const s = skillOf(inst.id); return s.speed ? C.mkeyOf({id: inst.id, a: inst.q.a, op: inst.q.op, b: inst.q.b}) : K.mkey(inst); };
-  const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !(m.q && C.isLow(m.q));
+  const funOff = uid => K.FUN_SEC > 0 ? false : !!(K.BY[K.ITEM[uid].skill] || {}).fun;   // 关掉趣味题时，趣味错题不回炉（说明书-第三批 §4.3）
+  const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !funOff(m.uid) && !(m.q && C.isLow(m.q));
   // 手选难度时只回来选中级别的错题，其他的暂停不丢
   const mistOn = (S, m) => !!K.ITEM[m.uid] && activeItem(S, m.uid) && (!chosen(S) || chosen(S).includes(K.levelOf(instOfMistake(m))));
   const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && mistOn(S, m) && (!only || only(m.uid)))
     .sort((a, b) => a.due.localeCompare(b.due) || a.added.localeCompare(b.added));
   const dueCount = (S, day) => { let n = 0; for (const k in S.mistakes || {}) if (isDue(S.mistakes[k], day) && mistOn(S, S.mistakes[k])) n++; return n; };
   const instOfMistake = m => m.src ? K.make(m.uid, null, {q: m.q, ans: m.ans}) : {id: m.uid, q: {a: m.a, op: m.op, b: m.b}, ans: m.ans};
+
+  // ---------- 第三批趣味题：单独的插入通道（docs/说明书-第三批.md §4.3）----------
+  // 趣味技能不在 K.HARD（不进出熟练题、学新题、开级、挑战），只从这里插：FUN_SEC > 0；离上一道趣味题至少 FUN_GAP 道普通题；
+  // 这一段已用秒数 + 这道的秒答时间 ≤ FUN_SEC。st 是计数（每日练习放 S.daily，和再练一会共用；自由加练每次一份），funSec 按实际用时累加
+  const FUN_GAP = 5;
+  const isFunId = id => !!(K.ITEM[id] && (K.BY[K.ITEM[id].skill] || {}).fun);
+  const funLit = (S, p) => !!(S.known && S.known[p]) || (!!K.BY[p] && K.BY[p].items.filter(it => lv(S, it.id) >= 1).length / K.BY[p].items.length >= AUTO_PASS);   // 前置按点亮判，不看那一级开没开放
+  const funReady = (S, s) => s.pre.every(p => funLit(S, p));
+  function funChannel(S, day, st, o) {   // o = {r, room(id), group, mistOnly}
+    const q = (inst, extra) => Object.assign({kind: 'q', inst, seg: 'fun', fun: 1}, extra);
+    return {
+      pick() {
+        if (!(K.FUN_SEC > 0) || (!o.mistOnly && (st.sinceFun || 0) < FUN_GAP)) return null;   // 复习这一组只管 90 秒，不管间隔
+        const left = K.FUN_SEC - (st.funSec || 0); if (left <= 0) return null;
+        const fits = inst => K.fastMs(inst, {}) / 1000 <= left, inG = sid => !o.group || inGroup(K.BY[sid], o.group);
+        if (st.funRetry) { const inst = st.funRetry.inst; if (!fits(inst)) return null; st.funRetry = null; return q(inst, {retry: 1, credit: false}); }   // 答错只回来一次
+        if (o.mistOnly) return null;   // 趣味题不进错题本（说明书 §4.3 第 162–163 行，中控 11-09），复习这一组没有趣味题
+        st.funNew = st.funNew || [];
+        const rank = it => { const l = lv(S, it.id); return l === 3 ? -1 : l >= 1 ? 0 : peek(S, it.id).seen > 0 ? 1 : 2; };   // 能升级的 → 开始了没点亮的 → 新题型
+        const c = K.FUN.filter(s => inG(s.id) && funReady(S, s)).flatMap(s => s.items.map(it => ({s, it, k: rank(it)})))
+          .filter(x => x.k >= 0 && !outOf(S, x.it.id) && o.room(x.it.id) && (x.k < 2 || st.funNew.includes(x.s.id) || st.funNew.length < 1))   // 每天最多开始 1 个新的
+          .sort((a, b) => a.k - b.k || lastSeen(peek(S, a.it.id)).localeCompare(lastSeen(peek(S, b.it.id))));
+        for (const x of c) { const inst = makeLive(S, x.it.id, o.r, day); if (!inst || !fits(inst)) continue; if (x.k === 2 && !st.funNew.includes(x.s.id)) st.funNew.push(x.s.id); return q(inst, {}); }
+        return null;
+      },
+      answered(x, res) {
+        if (!(K.FUN_SEC > 0)) return;   // 关掉时什么都不记，存档和改动前一样
+        if (!x.fun) { st.sinceFun = (st.sinceFun || 0) + 1; return; }   // 错题穿插、当场再来的题都算普通题
+        st.sinceFun = 0; st.funSec = Math.round(((st.funSec || 0) + (res.secs || 0)) * 10) / 10;
+        if (!res.ok && !x.retry && !x.mkey) st.funRetry = {inst: x.inst};
+      },
+    };
+  }
+  // 新趣味题型第一次出：先放示范 / 讲解卡，不占计算讲解卡每天 2 张的名额
+  const funDemo = (S, x) => { const sid = K.ITEM[x.inst.id].skill; if (x.retry || x.mkey || lv(S, x.inst.id) > 0 || demoDone(S, sid) || (S.known && S.known[sid])) return null; const c = K.BY[sid].concept; return {skill: sid, concept: c && !S.demoSeen['c:' + c] ? c : undefined}; };
 
   // ---------- 统计（意图卡的指标） ----------
   function stat(S, day) { S.stats = S.stats || {}; return (S.stats[day] = S.stats[day] || {sec: 0, n: 0, ups: 0, over: 0, gap: 0}); }
@@ -294,12 +330,16 @@
       C.reviewMistake(S, x.mkey, r, day);
       if (note && r !== 'fast') C.noteMistake(S, x.mkey, ev(r === 'slow' ? 's' : res.dunno ? 'd' : 'w', false), day);
       if (S.mistakes[x.mkey] && S.mistakes[x.mkey].due === null) C.notePassed(S, x.mkey, day, skill);
-    } else if (!res.ok) {   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉
+    } else if (!res.ok && !(K.BY[skill] || {}).fun) {   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉；趣味题不进（只当场回来一次，说明书-第三批 §4.3）
       const k0 = mistKeyOf(S, x.inst), m0 = k0 && S.mistakes[k0], fresh = !m0 || m0.due === null;   // 先判断是不是新进本（已过关 / 下架的算新）
       const key = addMistake(S, x.inst, day);
       if (note) C.noteMistake(S, key, ev(res.dunno ? 'd' : 'w', fresh), day);
     }
     const st = stat(S, day); st.sec += res.secs || 0; st.n++; if (out.up) st.ups++;
+    if (K.BY[skill] && K.BY[skill].fun) {   // 第三批趣味题（说明书-第三批 §4.3）：和习惯记录 h 并列，合并、清洗归 F（core.importMerge）
+      st.funSec = Math.round(((st.funSec || 0) + (res.secs || 0)) * 10) / 10;   // 实际用时，再来一次也算：管每天 90 秒
+      if (note) { st.fun = st.fun || {}; const a = st.fun[skill] = Array.isArray(st.fun[skill]) ? st.fun[skill] : [0, 0]; a[0]++; if (res.dunno) a[1]++; }   // 按题型的作答数、「不会」数（不会率）；再来一次、看过提示不算，同能力观察口径
+    }
     st.over = dueCount(S, day); st.gap = gapNow(S, day);
     if (onTime) onTime(res.secs || 0);
     return out;
@@ -376,9 +416,10 @@
     const finished = () => { Dy.done = true; if (stat(S, day).n > 0) stat(S, day).done = 1; };   // 今天的题做完了：家的累计天数要用（说明书-v5-家）
     if (!Dy.seg || Dy.seg === 'review') Dy.seg = 'new';
     Dy.sinceM = Dy.sinceM || 0;
+    const FC = funChannel(S, day, Dy, {r, room: id => (Dy.asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA});
     // 到期错题不再集中在开头，穿插进练习（Ben 11-05）；错题积压时每隔 1 题插一道
     sweep(S, day); Dy.mistN = Dy.mistN || 0;
-    const nextMistake = () => { if (Dy.mistN >= MIST_DAY) return null; const m = dueMistakes(S, day).find(y => room(y.uid)); return m && {kind: 'q', inst: instOfMistake(m), mkey: m.key, seg: 'review'}; };
+    const nextMistake = () => { if (Dy.mistN >= MIST_DAY) return null; const m = dueMistakes(S, day).find(y => room(y.uid) && !isFunId(y.uid)); return m && {kind: 'q', inst: instOfMistake(m), mkey: m.key, seg: 'review'}; };   // 趣味错题走插入通道
     const started = sid => K.BY[sid].items.some(it => peek(S, it.id).seen > 0);
     // 学新的：同时最多 2 个技能（理解技能和秒答各占一个，缺一类时另一类补）；一天最多开始 3 个从没练过的技能
     function frontSkills() {
@@ -457,6 +498,8 @@
         if (Dy.sec < Dy.budget) {
           const rt = RT.due(false); if (rt) { cur = rt; return cur; }
           if (Dy.sinceM >= (dueCount(S, day) > BACKLOG ? 1 : MIST_EVERY)) { const m = nextMistake(); if (m) { Dy.sinceM = 0; cur = m; return cur; } }
+          const fq = FC.pick();
+          if (fq) { const dm = funDemo(S, fq); if (dm) { Dy.sec += DEMO_SEC; stat(S, day).sec += DEMO_SEC; pending.push(Object.assign({afterDemo: dm.skill, afterConcept: dm.concept}, fq)); cur = Object.assign({kind: 'demo'}, dm); return cur; } cur = fq; return cur; }
         }
         for (let guard = 0, skips = 0; guard < 6; guard++) {
           if (Dy.sec >= Dy.budget) { finished(); cur = null; return null; }
@@ -481,11 +524,12 @@
         if (!cur || cur.kind !== 'q') return null;
         const x = cur; cur = null;
         Dy.asked[x.inst.id] = (Dy.asked[x.inst.id] || 0) + 1;
-        recent.push(K.ITEM[x.inst.id].skill); const again = RT.answered(x, res);
-        if (x.seg !== 'review' && !x.retry) Dy.sinceM++;
+        recent.push(K.ITEM[x.inst.id].skill); const again = x.fun ? false : RT.answered(x, res);   // 趣味题不走当场再来（隔 3 / 8 题），只回来一次，见 funChannel
+        FC.answered(x, res);
+        if (x.seg !== 'review' && !x.retry && !x.fun) Dy.sinceM++;
         if (x.mkey) Dy.mistN++;
         const out = settle(S, x, asRetry(x, res), day, sec => { Dy.sec += sec; }); out.again = again;
-        if (!out.peeked && !x.retry) { Dy.tally.n++; if (out.pass) Dy.tally.pass++; }
+        if (!out.peeked && !x.retry && !x.fun) { Dy.tally.n++; if (out.pass) Dy.tally.pass++; }   // 趣味题不算进「今天做得好就多学新的」
         if (Dy.sec >= Dy.budget) Dy.done = true;
         return out;
       },
@@ -528,6 +572,7 @@
     }
     let cur = null, count = 0;
     const pending = [], RT = retrier(S, {}, id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + (K.ITEM[id].gen ? FREE_EXTRA : 0));
+    const FC = funChannel(S, day, {}, {r, group, mistOnly: !!opts.mistOnly, room: id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + FREE_EXTRA});   // 自由加练按组出、这一次另外封顶；复习这一组只管 90 秒
     const api = {
       demoTime(sec) { stat(S, day).sec += Math.max(0, Math.min(CARD_MAX_SEC, sec) - DEMO_SEC); },
       next() {
@@ -535,6 +580,8 @@
         const rt = RT.due(count >= n); if (rt) { cur = rt; return cur; }
         let x = null;
         if (count < n) {   // 错题穿插：每 2 道别的题插 1 道；别的题出完了就接着出错题
+          const fq = FC.pick();
+          if (fq) { const dm = funDemo(S, fq); if (dm) { stat(S, day).sec += DEMO_SEC; pending.push(Object.assign({afterDemo: dm.skill, afterConcept: dm.concept}, fq)); cur = Object.assign({kind: 'demo'}, dm); return cur; } cur = fq; return cur; }
           if (since >= MIST_EVERY && mist.length) { x = pick(mist); if (x) since = 0; }
           if (!x) x = pick(queue) || pick(mist);
         }
@@ -553,9 +600,10 @@
         if (!cur || cur.kind !== 'q') return null;
         const x = cur; cur = null;
         if (!x.retry) count++;
-        if (x.seg !== 'review' && !x.retry) since++;
+        if (x.seg !== 'review' && !x.retry && !x.fun) since++;
         asked[x.inst.id] = (asked[x.inst.id] || 0) + 1;
-        recent.push(K.ITEM[x.inst.id].skill); const again = RT.answered(x, res);
+        FC.answered(x, res);
+        recent.push(K.ITEM[x.inst.id].skill); const again = x.fun ? false : RT.answered(x, res);
         const out = settle(S, x, asRetry(x, res), day); out.again = again;
         return out;
       },

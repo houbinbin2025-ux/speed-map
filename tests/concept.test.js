@@ -3,7 +3,7 @@ const test = require('node:test'), assert = require('node:assert');
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), R = require('../v2/render.js');
 const D = n => C.addDays('2026-11-01', n);
 const seeded = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
-const ALL = K.SKILLS.concat(K.HARD);
+const ALL = K.SKILLS.concat(K.HARD, K.FUN);   // 趣味技能登记了但不进 HARD（B 的保险），讲解卡照样对得上
 // 手选第 8、9 级的新存档：会碰到条形图、周长、倍、线段图四个概念
 const fresh = () => { const S = C.blank(); S.placedAt = 1; S.settings = {levels: [8, 9], levelsV: 2}; return S; };
 function run(S, day, o) {

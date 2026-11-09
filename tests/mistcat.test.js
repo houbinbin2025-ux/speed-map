@@ -1,7 +1,7 @@
 // 错题按知识点分组（skills.js MIST_GROUPS / mistCat，家长页用）：每个技能、每个题型都有且只有一个类别；新加技能不写类别就拦
 const test = require('node:test'), assert = require('node:assert');
 const K = require('../v2/skills.js');
-const ALL = K.SKILLS.concat(K.HARD);
+const ALL = K.SKILLS.concat(K.HARD, K.FUN);   // 趣味技能登记了但不进 HARD（B 的保险）
 
 test('每个技能都在且只在一个类别里，类别里没有不存在的技能', () => {
   const seen = {};

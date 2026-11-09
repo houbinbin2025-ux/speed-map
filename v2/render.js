@@ -139,7 +139,41 @@
     if (a !== undefined) out += svgT(W / 2, H - 10, d.ask === 'perim' ? `周长 ${a} 厘米` : `面积 ${a} 平方厘米`, {fill: OK, size: 28, fit: W - 12});
     return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="长方形">${out}</svg>`;
   }
-  const FIGS = {bar: barSvg, chart: chartSvg, rect: rectSvg};
+  // ---------- 第三批趣味题的图（说明书-第三批 §四）----------
+  const QM = '#f2c14e';   // 问号格的颜色
+  const cell = (x, y, w, h, v, a) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${v === null ? '#3a3420' : '#2c2f36'}" stroke="${v === null ? QM : '#000'}" stroke-width="4"/>` + svgT(x + w / 2, y + h / 2 + 11, v === null ? (a === undefined ? '?' : a) : v, {size: 32, fill: v === null ? (a === undefined ? QM : OK) : TXT});
+  // 数塔：data.g = [[顶], [中, 中], [底, 底, 底]]，空格是 null
+  function pyrSvg(d, a) {
+    const w = 84, h = 58, gap = 8, n = d.g.length, W = n * w + (n - 1) * gap + 16;
+    const out = d.g.map((row, i) => { const x0 = (W - (row.length * w + (row.length - 1) * gap)) / 2; return row.map((v, j) => cell(x0 + j * (w + gap), 8 + i * (h + gap), w, h, v, a)).join(''); }).join('');
+    return `<svg class="fig2" viewBox="0 0 ${W} ${16 + n * h + (n - 1) * gap}" role="img" aria-label="数塔">${out}</svg>`;
+  }
+  // 幻方：data.g = 9 个数（null 是空格），data.sum
+  function magicSvg(d, a) {
+    const w = 74, gap = 6, W = 3 * w + 2 * gap + 16;
+    return `<svg class="fig2" viewBox="0 0 ${W} ${W}" role="img" aria-label="幻方">${d.g.map((v, i) => cell(8 + (i % 3) * (w + gap), 8 + Math.floor(i / 3) * (w + gap), w, w, v, a)).join('')}</svg>`;
+  }
+  // 植树、锯木头的示意图：kind = both / one / none / saw；题目里画 5 段（第 4 段是「……」），讲解卡用 o.n 画准确的段数，o.mark = 'seg' 标段、'tree' 标树
+  function treesSvg(d, a, o) {
+    o = o || {};
+    const S = o.n || 5, dots = !o.n, W = 460, H = o.mark || d.lab !== undefined ? 132 : 110, x0 = 34, x1 = W - 34, X = k => x0 + (x1 - x0) * k / S, gy = 84;
+    const tree = x => `<rect x="${x - 4}" y="${gy - 22}" width="8" height="22" fill="#8a5a2b"/><circle cx="${x}" cy="${gy - 34}" r="17" fill="#3f9a52" stroke="#000" stroke-width="3"/>`;
+    const end = x => `<line x1="${x}" y1="${gy - 18}" x2="${x}" y2="${gy + 10}" stroke="${FC.gray}" stroke-width="5"/>`;
+    let out = '';
+    if (d.kind === 'saw') {
+      for (let k = 0; k < S; k++) if (!(dots && k === 3)) out += `<rect x="${X(k) + 3}" y="${gy - 40}" width="${X(k + 1) - X(k) - 6}" height="38" rx="6" fill="#b07a45" stroke="#000" stroke-width="3"/>`;
+      for (let k = 1; k < S; k++) out += `<line x1="${X(k)}" y1="${gy - 52}" x2="${X(k)}" y2="${gy + 10}" stroke="${FC.red}" stroke-width="4" stroke-dasharray="7 5"/>`;
+    } else {
+      for (let k = 0; k < S; k++) if (!(dots && k === 3)) out += `<line x1="${X(k)}" y1="${gy}" x2="${X(k + 1)}" y2="${gy}" stroke="${TXT}" stroke-width="4"/>`;
+      for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S, has = d.kind === 'both' || (d.kind === 'one' && k < S) || (d.kind === 'none' && !edge); out += has ? tree(X(k)) : edge ? end(X(k)) : ''; }
+    }
+    if (dots) out += svgT((X(3) + X(4)) / 2, gy - 10, '……', {size: 28});
+    if (d.lab !== undefined && !o.mark) out += svgT(W / 2, gy + 38, `${d.lab}（图只画了一部分）`, {size: 22, fill: FC.gray});
+    if (o.mark === 'seg') for (let k = 0; k < S; k++) out += svgT((X(k) + X(k + 1)) / 2, gy + 34, k + 1, {size: 24, fill: QM});
+    if (o.mark === 'tree') { let c = 0; for (let k = 0; k <= S; k++) { const edge = k === 0 || k === S; if (d.kind === 'both' || (d.kind === 'one' && k < S) || (d.kind === 'none' && !edge)) out += svgT(X(k), gy + 34, ++c, {size: 24, fill: OK}); } }
+    return `<svg class="fig2" viewBox="0 0 ${W} ${H}" role="img" aria-label="${d.kind === 'saw' ? '锯木头' : '植树'}">${out}</svg>`;
+  }
+  const FIGS = {bar: barSvg, chart: chartSvg, rect: rectSvg, pyr: pyrSvg, magic: magicSvg, trees: treesSvg};
   // 讲解卡用的小图：一排苹果（可分组装盘）、分成 10 份的条、两行数（高亮共有的）
   function dotsSvg(n, per) {
     const g = per ? Math.ceil(n / per) : 1, W = 470, r = 13;
@@ -236,6 +270,23 @@
       [fracSvg({rows: [{n: 3, k: 2, label: '2/3'}, {n: 6, k: 4, label: '4/6'}]}), '两条一样长，涂的一样多'],
       [fracSvg({rows: [{n: 3, k: 2, label: '2/3'}, {n: 6, k: 4, label: '4/6'}]}), '分母乘 2，分子也乘 2：2/3 = 4/6'],
       [fracSvg({rows: [{n: 6, k: 4, label: '4/6'}, {n: 3, k: 2, label: '2/3'}]}), '反过来，上下都除以 2：4/6 = 2/3']]},
+    tree: {title: '植树', pages: [
+      [treesSvg({kind: 'both'}, undefined, {n: 3}), '路的两头都种树，树和树之间是一段'],
+      [treesSvg({kind: 'both'}, undefined, {n: 3, mark: 'seg'}), '数一数：3 段'],
+      [treesSvg({kind: 'both'}, undefined, {n: 3, mark: 'tree'}), '树有 4 棵，比段多 1：3 + 1 = 4']]},
+    saw: {title: '锯木头', pages: [
+      [treesSvg({kind: 'saw'}, undefined, {n: 1}), '一根木头'],
+      [treesSvg({kind: 'saw'}, undefined, {n: 2}), '锯 1 次，变成 2 段'],
+      [treesSvg({kind: 'saw'}, undefined, {n: 4, mark: 'seg'}), '锯 3 次，变成 4 段：段比次数多 1']]},
+    tree2: {title: '植树的三种种法', pages: [
+      [treesSvg({kind: 'both'}, undefined, {n: 3, mark: 'tree'}), '路分成 3 段，两头都种：4 棵，树比段多 1'],
+      [treesSvg({kind: 'one'}, undefined, {n: 3, mark: 'tree'}), '树种在段和段之间，一头也种：3 棵，树和段一样多'],
+      [treesSvg({kind: 'none'}, undefined, {n: 3, mark: 'tree'}), '树种在段和段之间，两头都不种：2 棵，树比段少 1']]},
+    riddle: {title: '倒着算', pages: [
+      [`<div class="eq num sm">? + 8 − 5 = 20</div>`, '一个数加上 8，再减去 5，得 20'],
+      [`<div class="eq num sm">20 + 5 = 25</div>`, '倒着走：最后减了 5，先加回 5'],
+      [`<div class="eq num sm">25 − 8 = ${ans(17)}</div>`, '前面加了 8，再减掉 8：这个数是 17'],
+      [`<div class="eq num sm">17 + 8 − 5 = 20</div>`, '代回去检查：17 加 8 再减 5，正好是 20']]},
     dec: {title: '小数', pages: [
       [tenthSvg(0, 3), '一条分成 10 份，涂了 3 份'],
       [tenthSvg(0, 3, '0.3'), '3 份就是 0.3，读作零点三'],
@@ -443,6 +494,7 @@
       body = s.input === 'pick' && q.view === 'choice' ? step(1, `<div class="cards2">${q.opts.map(t => `<b class="sm">${fr(t)}</b>`).join('')}</div>`, q.say) + arrow + step(2, `<div class="cards2"><b class="sm win">${fr(q.opts[ex.ans])}</b></div>`, '点它')
         : s.input === 'pick' ? step(1, `<div class="cards2"><b${q.la ? ' class="sm"' : ''}>${q.la || q.a}</b><b${q.la ? ' class="sm"' : ''}>${q.lb || q.b}</b></div>`, '两边比一比') + arrow + step(2, `<div class="say2">${pickWord(q, ex.ans)}</div>`, '点大的那个')
         : q.view === 'fracbar' ? step(1, `<div class="fig2w">${fracSvg(q.data)}</div>`, '看题') + arrow + step(2, `<div class="eq num sm">${fr(q.text, ans(ex.ans), .72)}</div>`, '写答案')   // 分数读图：图只画一次（demofit 812）
+        : s.fun ? step(1, `<div class="whysay" style="font-size:14px;line-height:1.25">${q.say}</div>` + (FIGS[q.view] ? FIGS[q.view](q.data).replace('<svg class="fig2"', '<svg class="fig2" style="height:64px;width:auto;max-width:100%"') : q.view === 'eq' ? `<div class="eq num sm">${q.text.replace('□', box)}</div>` : ''), '看题') + arrow + step(2, `<div class="eq num sm">${q.view === 'eq' ? q.text.replace('□', ans(ex.ans)) : ans(ex.ans)}</div>`, '写答案')   // 趣味题：示范里要有题目（答错讲解同样写 whysay）
         : step(1, hardFig(q), '看题') + arrow + step(2, hardFig(q, ex.ans), '写答案');
       foot = hasFr(q.why) ? fr(q.why) : q.why;
     } else if (s.speed) {

@@ -1,7 +1,7 @@
 // 定级审计：每一级实际出哪些技能 / 题型、各多少道，和 K.LEVELS 的说明对照（中控 11-08 派单，Ben：「新内容加入时定级没有增补和调整」）
 // 用法：node tools/level-audit.js [--md]   输出按级的清单；tests/levels.test.js 用同一套统计查「说明和实际一致」
 const K = require('../v2/skills.js'), C = require('../v2/core.js');
-const ALL = [...K.SKILLS, ...K.HARD];
+const ALL = [...K.SKILLS, ...K.HARD, ...(K.FUN_SEC > 0 ? K.FUN : [])];   // 趣味技能不在 HARD 里（B 的保险），打开时才出、才写进级别说明
 // 一个技能每级有几道题：卡 = 1 道；有题池的题型按池子逐题定级；秒答题型按池子大小
 function perLevel(s) {
   const out = {};
