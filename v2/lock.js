@@ -47,7 +47,7 @@
       isOpen: () => open,
       guarded: id => SCREENS.includes(id) && !open,
       // 输满 6 位才判；对了解锁并返回 true，错了返回 false（不锁死、不计次数）
-      tryPin(pin) { const s = String(pin || ''); if (s.length !== LEN || !/^\d+$/.test(s)) return false; open = sha256(s) === want; return open; },
+      tryPin(pin) { const s = String(pin || ''); if (s.length !== LEN || !/^\d+$/.test(s)) return false; if (sha256(s) === want) open = true; return sha256(s) === want; },   // 输错不会把已解开的锁再锁上（审查 R1）
     };
   }
   return {create, sha256, LEN, HASH, SCREENS};

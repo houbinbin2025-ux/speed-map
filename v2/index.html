@@ -1019,7 +1019,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v156:84d3685915e7 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v157:86bee142b4ba -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1029,27 +1029,27 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=156"></script>
-<script src="i18n.js?v=156"></script>
-<script src="bank.js?v=156"></script>
-<script src="hardbank.js?v=156"></script>
-<script src="placebank.js?v=156"></script>
-<script src="core.js?v=156"></script>
-<script src="ink.js?v=156"></script>
-<script src="skills.js?v=156"></script>
-<script src="engine.js?v=156"></script>
-<script src="render.js?v=156"></script>
-<script src="world.js?v=156"></script>
-<script src="home.js?v=156"></script>
-<script src="puzzles.js?v=156"></script>
-<script src="thinking.js?v=156"></script>
-<script src="house.js?v=156"></script>
-<script src="kongmine.js?v=156"></script>
-<script src="gems.js?v=156"></script>
-<script src="gemui.js?v=156"></script>
-<script src="vert.js?v=156"></script>
-<script src="lock.js?v=156"></script>
-<script src="mistview.js?v=156"></script>
+<script src="touchfix.js?v=157"></script>
+<script src="i18n.js?v=157"></script>
+<script src="bank.js?v=157"></script>
+<script src="hardbank.js?v=157"></script>
+<script src="placebank.js?v=157"></script>
+<script src="core.js?v=157"></script>
+<script src="ink.js?v=157"></script>
+<script src="skills.js?v=157"></script>
+<script src="engine.js?v=157"></script>
+<script src="render.js?v=157"></script>
+<script src="world.js?v=157"></script>
+<script src="home.js?v=157"></script>
+<script src="puzzles.js?v=157"></script>
+<script src="thinking.js?v=157"></script>
+<script src="house.js?v=157"></script>
+<script src="kongmine.js?v=157"></script>
+<script src="gems.js?v=157"></script>
+<script src="gemui.js?v=157"></script>
+<script src="vert.js?v=157"></script>
+<script src="lock.js?v=157"></script>
+<script src="mistview.js?v=157"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, LK = window.LOCK.create(), $ = id => document.getElementById(id);
@@ -1140,7 +1140,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     pinBuf = ''; pinDraw('密码错误', true); const d = $('pinDots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake');
   }
   $('pinPad').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) pinKey(b.dataset.k); });
-  addEventListener('keydown', e => { if ($('pinOv').hidden) return; if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key === 'Backspace') pinKey('d'); else if (e.key === 'Escape') pinKey('x'); else return; e.preventDefault(); });
+  addEventListener('keydown', e => { if ($('pinOv').hidden) return; if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key === 'Backspace') pinKey('d'); else if (e.key === 'Escape') pinKey('x'); else if (!['Enter', ' ', 'Tab'].includes(e.key)) return; e.preventDefault(); e.stopPropagation(); }, true);   // 浮层打开时回车、空格、Tab 不穿透到底下的按钮（审查 R1）
   function longPress(el, ms, onDone, onShort) {
     let timer = null, t0 = 0;
     const down = e => { e.preventDefault(); t0 = Date.now(); el.classList.add('hold'); timer = setTimeout(() => { timer = null; el.classList.remove('hold'); onDone(); }, ms); };

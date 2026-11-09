@@ -38,8 +38,8 @@ def flow(pg, tag):
     # 每个键都点得到、在屏内
     for k in '1234567890xd':
         h = pg.evaluate(HIT, f'#pinPad [data-k="{k}"]')
-        if not (h['ok'] and h['inView'] and h['w'] >= 44 and h['h'] >= 44): check(False, f'{tag} 键 {k} 点不到或出屏或太小 {h}')
-    check(True, f'{tag} 12 个键都点得到、在屏内、不小于 44×44')
+        if not (h['ok'] and h['inView'] and h['w'] >= 72 and h['h'] >= 56): check(False, f'{tag} 键 {k} 点不到或出屏或小于说明书的 72×56 {h}')
+    check(True, f'{tag} 12 个键都点得到、在屏内、不小于 72×56')
     # 输错：提示、清空、还在浮层
     typ(pg, '654321')
     check(pg.inner_text('#pinMsg') == '密码错误' and dots(pg) == 0 and pg.is_visible('#pinOv') and cur(pg) == 'island', f'{tag} 输错：提示「密码错误」、清空、进不去')
@@ -81,16 +81,18 @@ def flow(pg, tag):
     pg.wait_for_timeout(200); check(cur(pg) == 'parent', f'{tag} 键盘输对进家长区')
 
 def flow_en(pg, tag):
-    # 单日英文：浮层翻成英文
-    fresh(pg, en=True)
-    pg.evaluate("__sm.TH && 0"); t = pg.evaluate("__sm.today()")
-    hold(pg, '#gear', 2200)
-    title = pg.inner_text('#pinTitle'); msg = pg.inner_text('#pinMsg')
-    odd = int(t[-2:]) % 2 == 1
-    if odd: check(title == 'Parent passcode' and 'passcode' in msg, f'{tag} 英文日：{title} / {msg}')
-    else: check(title == '家长密码', f'{tag} 中文日：{title}')
-    typ(pg, '111111'); m2 = pg.inner_text('#pinMsg'); check(m2 == ('Incorrect passcode' if odd else '密码错误'), f'{tag} 输错提示：{m2}')
-    pg.screenshot(path=str(out / f'{tag}-3-英文.png'))
+    # 单日英文、双日中文：用测试条快进 0 天和 1 天，两种都走一遍
+    for step in (0, 1):
+        fresh(pg, en=True)
+        if step: pg.evaluate("document.querySelector('#testBar [data-t=\"day+1\"]').click()"); pg.wait_for_timeout(300); pg.reload(); pg.wait_for_timeout(900)
+        t = pg.evaluate("__sm.today()"); odd = int(t[-2:]) % 2 == 1
+        hold(pg, '#gear', 2200)
+        title = pg.inner_text('#pinTitle'); msg = pg.inner_text('#pinMsg')
+        if odd: check(title == 'Parent passcode' and msg == 'Enter the 6-digit parent passcode', f'{tag} 单日英文（{t}）：{title} / {msg}')
+        else: check(title == '家长密码' and msg == '输入 6 位家长密码', f'{tag} 双日中文（{t}）：{title} / {msg}')
+        typ(pg, '111111'); m2 = pg.inner_text('#pinMsg'); check(m2 == ('Incorrect passcode' if odd else '密码错误'), f'{tag} 输错提示（{t}）：{m2}')
+        btn = pg.inner_text('#pinPad [data-k="x"]'); check(btn == ('Cancel' if odd else '取消'), f'{tag} 取消键（{t}）：{btn}')
+        pg.screenshot(path=str(out / f'{tag}-3-{"英文" if odd else "中文"}.png'))
 
 with sync_playwright() as p:
     b = __import__('quiet').launch(p)   # 统一启动方式（tests/e2e-quiet.test.js）

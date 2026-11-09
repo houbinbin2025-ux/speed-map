@@ -28,6 +28,10 @@ test('家长区页面没解锁时被拦；解锁后放行；新建一把锁（= 
   assert.equal(L.create().guarded('parent'), true);
 });
 
+test('已经解锁后输错：返回 false，但不会重新锁上', () => {
+  const k = L.create(); k.tryPin('123456'); assert.equal(k.tryPin('000000'), false); assert.equal(k.isOpen(), true);
+});
+
 test('解锁状态不进任何存储：lock.js 里没有 localStorage / sessionStorage / cookie', () => {
   const src = fs.readFileSync(path.join(__dirname, '../v2/lock.js'), 'utf8');
   assert.ok(!/localStorage|sessionStorage|document\.cookie|indexedDB/.test(src));
