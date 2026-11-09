@@ -316,7 +316,7 @@
 .vq .vnote{min-height:22px;font-size:17px;color:#f0b46c;text-align:center;line-height:1.3}
 .vcard{background:#f7f4ec;border:3px solid #000;border-radius:12px;color:#2b2920;padding:18px 34px;display:flex;flex-direction:column;gap:6px;font-family:'PingFang SC',system-ui,sans-serif}
 .vrow{display:grid;gap:10px;align-items:center;text-align:center}
-.vlab{font-size:17px;color:#6b6555;font-weight:700;text-align:left;line-height:1.2}
+.vlab{font-size:max(17px, calc(15.3px * var(--ik, 1)));color:#6b6555;font-weight:700;text-align:left;line-height:1.2}
 .vdig{font-size:72px;font-weight:800;line-height:96px}
 .vline{border-bottom:5px solid #2b2920;padding-bottom:8px}
 .vq canvas{display:block;width:100%;height:100%;touch-action:none}
@@ -329,7 +329,7 @@
 .vboard .vbq{font-size:30px;line-height:1.4;color:#f3f1ea;zoom:1.25}
 .vboard.vb-word .vbq{zoom:1.75}.vboard.vb-word .vgrid{height:220px}
 .vboard:has(.fig2w) .vbq .nbsay{font-size:25px}.vboard:has(.fig2w) .vbq .spk{transform:scale(1.3)}.vboard:has(.fig2w) .fig2w{text-align:center}.vboard:has(.fig2w) .fig2{max-height:270px;width:auto;max-width:100%}.vboard:has(.fig2w) .vgrid{height:130px}.vboard:has(.fig2w) .vbq .eq{text-align:center;justify-content:center}.vboard.vb-fill .vbq .nbsay{font-size:25px;justify-content:center}.vboard.vb-fill .vbq .eq{justify-content:center}   /* .eq 是 flex，居中要 justify-content； 看图题（题面有图）：图限高、题干和应用题一样大、草稿区矮一点，整块不再缩到答案格 < 60 点（A 方案，中控 11-09） */
-.vboard .vcard{padding:14px 24px}.vdotc{align-self:end;justify-self:center;width:16px;height:16px;border-radius:50%;background:#2b2920;margin-bottom:14px}.vboard .vlab{font-size:22px}
+.vboard .vcard{padding:14px 24px}.vdotc{align-self:end;justify-self:center;width:16px;height:16px;border-radius:50%;background:#2b2920;margin-bottom:14px}.vboard .vlab{font-size:max(22px, calc(15.3px * var(--ik, 1)))}
 .vboard .vgrid{height:250px;background-color:#fbf9f3;background-image:linear-gradient(#e3dccb 1px,transparent 1px),linear-gradient(90deg,#e3dccb 1px,transparent 1px);background-size:64px 64px;border:2px solid #ddd6c5}
 .vboard .veq{display:flex;align-items:center;gap:14px;height:84px}.vboard .veq b{font-size:52px;width:66px;text-align:center}.vboard .veq .vplain{flex:1;height:76px;background-image:none;border-style:solid;border-width:0 0 2px;border-radius:0}
 .vls{font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:48px}.vls .vfillv{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;padding:0 6px;font-weight:400}
@@ -343,10 +343,10 @@
 .vq .vres .vfoot{flex:none;display:flex;align-items:center;gap:12px}
 .vq .vres .vfoot #qNext{flex:1}.vq .vres .vfoot .qnote{flex:1;font-size:17px}
 .vwk{background:#f7f4ec;color:#2b2920;border-radius:10px;padding:12px 18px;align-self:flex-start}
-.vwk h4{margin:0 0 6px;font-size:15px;color:#8b8676}
+.vwk h4{margin:0 0 6px;font-size:max(15px, calc(15.3px * var(--ik, 1)));color:#8b8676}
 .vg{display:grid;gap:3px 0;font-family:'Chalkboard SE','Comic Sans MS',cursive;font-size:30px;line-height:42px;text-align:center;align-items:center}
 .vg>div{min-height:42px;display:flex;align-items:center;justify-content:center}
-.vg>.vs{min-height:20px;font-size:16px;line-height:20px;color:#b4512e;font-weight:700}
+.vg>.vs{min-height:20px;font-size:max(16px, calc(13.3px * var(--ik, 1)));line-height:20px;color:#b4512e;font-weight:700}
 .vg .vu{border-bottom:3px solid #2b2920;align-self:stretch}
 .vg .vqa{color:#2f6db5;border:2px solid #2f6db5;border-radius:6px;background:#fff;margin:0 3px}
 .vg .vbr{border-left:3px solid #2b2920;border-top:3px solid #2b2920;border-top-left-radius:10px}
@@ -392,15 +392,25 @@
     const fitNow = () => {
       fitEl.style.transform = '';
       const rv = resEl(), w = area.clientWidth - (rv ? rv.offsetWidth : 0);
-      const k = Math.min(1.15, (w - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
+      // 整块等比缩放后标签不低于下限（docs/视觉规范.md 2.3，字号审查 11-09）：缩放倍数的倒数给 CSS（--ik），字变大版面略宽，再算一遍
+      let k = 1; fitEl.style.removeProperty('--ik');
+      for (let n = 0; n < 2; n++) { k = Math.min(1.15, (w - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight); fitEl.style.setProperty('--ik', (1 / Math.min(1, k)).toFixed(3)); }
+      k = Math.min(1.15, (w - 16) / fitEl.offsetWidth, (area.clientHeight - 16) / fitEl.offsetHeight);
       fitEl.style.transform = `translate(${Math.max(0, (w - fitEl.offsetWidth * k) / 2)}px,${Math.max(0, (area.clientHeight - fitEl.offsetHeight * k) / 2)}px) scale(${k})`;
       fitRes();
     };
     // 讲解栏放不下（iPad App 932×651）：整体按比例缩小，不用滑（捣蛋鬼第 1 轮第 7 条）；缩到 0.6 还放不下才允许滑
     const fitRes = () => {
       const rv = resEl(), c = rv && rv.querySelector('.vresc'), i = c && c.querySelector('.vresi'); if (!i) return;
-      i.style.zoom = ''; const k = Math.min(1, c.clientHeight / i.offsetHeight, c.clientWidth / i.scrollWidth);
-      if (k < 1) i.style.zoom = String(Math.max(0.6, Math.floor(k * 100) / 100));
+      i.style.zoom = ''; c.style.overflowY = ''; const k = Math.min(1, c.clientHeight / i.offsetHeight, c.clientWidth / i.scrollWidth);
+      // 缩小有底线（字号审查 11-09）：每个字缩完不低于它那一档；还放不下就在讲解栏里上下滚
+      let lo = 0.6; i.querySelectorAll('*').forEach(el => { const t = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.data).join('').trim(); if (!t) return;
+        const fs = parseFloat(getComputedStyle(el).fontSize), sc = el.offsetWidth ? el.getBoundingClientRect().width / el.offsetWidth : 1;
+        const fl = /^[\s\d+\-−×÷=.,·/%:?？□]+$/.test(t) ? 13 : /[，。？！；]|[.?!]$/.test(t) || t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length >= 6 || (t.match(/[\u3400-\u9fff]/g) || []).length >= 9 || el.closest('button') ? 17 : 15;
+        lo = Math.max(lo, fl / (fs * sc)); });
+      const z = Math.max(k, Math.min(1, lo));
+      if (z < 1) i.style.zoom = String(Math.floor(z * 100) / 100);
+      if (z > k + 0.005) c.style.overflowY = 'auto';
     };
     if (root.I18N && root.I18N.flush) root.I18N.flush();   // 英文日先翻好再量尺寸（英文题面更长）
     fitNow();
@@ -455,7 +465,9 @@
       clearTimeout(demoT);
       const db = wrap.querySelector('.vdb');
       db.innerHTML = `<div class="vwk">${d.title ? '' : `<h4>${L('ex', E)}</h4>`}${lastB.html}</div>`;
-      const wk = db.firstChild, z = Math.min(1.6, db.clientWidth / wk.offsetWidth, db.clientHeight / wk.offsetHeight);
+      const wk = db.firstChild, zf = () => Math.min(1.6, db.clientWidth / wk.offsetWidth, db.clientHeight / wk.offsetHeight);
+      for (let n = 0; n < 2; n++) wk.style.setProperty('--ik', (1 / Math.min(1, zf())).toFixed(3));   // 示范缩小后小字（「示范」、进位数字）不低于下限
+      const z = zf();
       wk.style.transform = `translate(${Math.max(0, (db.clientWidth - wk.offsetWidth * z) / 2)}px,${Math.max(0, (db.clientHeight - wk.offsetHeight * z) / 2)}px) scale(${z})`;
       tip.textContent = L('first', E); again.hidden = true;
       let k = 0;

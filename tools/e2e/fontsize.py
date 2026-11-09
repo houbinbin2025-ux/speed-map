@@ -44,7 +44,7 @@ SAMPLER = r"""(() => {
   const tierOf = (el, t) => {
     const inQ = el.closest(QSEL), num = /^[\s\d+\-−×x÷=.,/%%:：✓✗★·…()（）□?？<>]{1,6}$/.test(t);
     const n = (t.match(CJK) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length, sentence = n >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, ''));   // 句子：中文 ≥ 9 字、英文 ≥ 6 词或带标点（中英判法一致，名字和短标签算说明）
-    if (inQ) return el.closest(MAIN) && !el.closest('svg') ? '题目' : sentence ? '正文' : num ? '角标' : '说明';   // 题区：题干和讲解的句子算正文，图里的短标注算说明、数字刻度算角标
+    if (inQ) return el.closest(MAIN) && !el.closest('svg') && !el.closest('.vs') ? '题目' : num ? '角标' : sentence ? '正文' : '说明';   // 题区：题干和讲解的句子算正文，图里的短标注算说明、数字刻度算角标
     if (num && t.replace(/\s/g, '').length <= 4) return '角标';
     const bt = el.closest(BTN); if (bt) return bt === el || /^(B|STRONG)$/.test(el.tagName) ? '按钮' : '说明';   // 按钮里的副标题小字算说明
     if (el.closest('.qtag,.chip,.chip2,.zsk,.mq,.tag,.dcap')) return '说明';   // 标签、小签：不管几个词都算说明

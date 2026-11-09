@@ -11,11 +11,11 @@
 #think button[disabled]{opacity:.35}
 #think button.go{background:var(--go-dk);box-shadow:inset 0 -5px 0 #2c5a18,inset -5px 0 0 #2c5a18}
 #think .bar{display:flex;align-items:center;gap:8px;height:56px}
-#think .bar button{min-height:54px;font-size:24px;padding:0 10px}
+#think .bar button{min-height:54px;font-size:24px;padding:0 10px}#think .bar #say{min-width:54px;display:flex;align-items:center;justify-content:center}
 #think .tabs{display:flex;gap:4px;flex:1;min-width:0}
-#think .tabs button{flex:1;min-width:0;padding:0 2px;font-size:21px;font-weight:500;color:var(--mute);white-space:nowrap}
+#think .tabs button{flex:1 1 auto;min-width:0;padding:0 4px;font-size:21px;font-weight:500;color:var(--mute);white-space:nowrap}
 #think .tabs button.on{border-color:var(--warn);color:var(--ink);font-weight:700}
-#think .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.25}#think .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}#think .tabs .tlv{font-size:18px;font-weight:500;color:var(--dim)}
+#think .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;line-height:1.25}#think .tabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis}#think .tabs .tsub{display:flex;gap:6px;align-items:baseline;max-width:100%}#think .tabs .tpr{font-size:21px;font-weight:800;color:var(--warn)}   /* 当前档还差几题挪到第二行，标签名不被挤成省略号（字号审查 11-09） */#think .tabs .tlv{font-size:21px;font-weight:500;color:var(--dim)}
 #think .ore{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;padding:0 10px;height:46px;background:#000}
 #think .ore i{width:18px;height:18px;background:var(--warn);border:2px solid #7a5a12;display:block}
 #think .main{display:flex;gap:14px;height:300px;margin-top:4px}
@@ -27,7 +27,7 @@
 #think .fb.ok{color:var(--ok)}
 #think .fb.bad{color:var(--bad)}
 #think .eq{display:flex;align-items:center;justify-content:center;gap:7px;font-size:32px;font-weight:800;height:50px}
-#think .eq b{min-width:50px;height:46px;line-height:40px;text-align:center;background:var(--paper);color:#222;border:3px solid #000;font-size:28px}
+#think .eq b{min-width:50px;height:46px;line-height:40px;text-align:center;background:var(--paper);color:#222;border:3px solid #000;font-size:31px}
 #think .eq b.empty{color:transparent}
 #think .eq b.cur{border-color:var(--warn)}
 #think .keys{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
@@ -162,10 +162,10 @@ function tabsHtml() {   // 没开放的技能点不了；当前技能显示还�
   const pr = P.progress(o.S(), G.mod.id);
   // 每档的建议级别（A 定在 skills.js THINK_LEVEL，只作参考、不锁）：小字给家长看
   const lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
-  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > openUpTo(pr) ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</span>${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}</button>`).join('');
+  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > openUpTo(pr) ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : ''}</span>${lv[i] || (i === G.tier && pr.n[i] < P.PASS) ? `<div class="tsub">${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}${i === G.tier && pr.n[i] < P.PASS ? `<small class="tpr">${pr.n[i]}/${P.PASS}</small>` : ''}</div>` : ''}</button>`).join('');
 }
 function shell(say, sub) {
-  $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
+  $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读"><svg width="30" height="30" viewBox="0 0 11 11" shape-rendering="crispEdges" aria-hidden="true"><path fill="#f2c14e" d="M0 4h2v3H0zM2 3h1v5H2zM3 2h1v7H3zM4 1h1v9H4zM6 4h1v3H6zM8 2h1v7H8z"/></svg></button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
   $s.querySelector('#back').onclick = () => { hush(); cancelAuto(); o.onExit(); };
   paintTabs();
   return $s.querySelector('#main');

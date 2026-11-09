@@ -25,6 +25,8 @@ def layout(pg, tag):
     r = pg.evaluate(LAYOUT)
     for k in ('pairs', 'clip', 'over'): check(not r[k], f'{tag} {k}: {r[k]}')
     check(r['small'] == 0, f"{tag} 按钮太矮 {r['small']} 个")
+    cut = pg.evaluate("[...document.querySelectorAll('#think .tabs button>span')].filter(e => e.scrollWidth > e.clientWidth + 1).map(e => e.textContent)")
+    check(not cut, f'{tag} 档位名被截成省略号（字号审查 11-09）：{cut}')
 T = '#think '
 def tap(pg, sel): pg.click(T + sel)
 def q(pg): return pg.evaluate('JSON.parse(JSON.stringify(__sm.TH.G.q))')

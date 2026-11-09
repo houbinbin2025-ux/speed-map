@@ -45,7 +45,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .top h1{margin:0;font-size:22px;font-weight:900;white-space:nowrap}
 .lvtab{min-height:44px;padding:0 10px;font-weight:900;font-size:17px;color:var(--mute);white-space:nowrap}
 .lvtab.on{background:var(--ink);color:var(--cave)}
-.badge-pre{font-size:12px;color:var(--warn);border:1px dashed var(--warn);padding:4px 8px;white-space:nowrap}
+.badge-pre{font-size:15px;color:var(--warn);border:1px dashed var(--warn);padding:4px 8px;white-space:nowrap}
 .gear{width:44px;height:44px;padding:0;position:relative;overflow:hidden}
 .gear i{position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--warn)}
 .gear.hold i{width:100%;transition:width 2s linear}
@@ -71,7 +71,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 .b.l1{background:var(--lv1);color:#4a3d00}.b.l2{background:var(--lv2);color:#5a1410}.b.l3{background:var(--lv3);color:#fff}
 .b.new{outline:3px solid var(--warn);outline-offset:-5px}
 .b.tb{height:auto;min-height:56px;flex-direction:column;gap:1px;padding:4px;font-family:var(--f-cn);text-align:center}
-.b.tb strong{font-family:var(--f-num);font-size:17px}.b.tb span{font-size:15px;font-weight:700}.b.tb em{font-style:normal;font-size:15px}
+.b.tb strong{font-family:var(--f-num);font-size:17px}.b.tb span{font-size:17px;font-weight:700}.b.tb em{font-style:normal;font-size:15px}
 .testbar{background:#3b3420;border:2px solid var(--warn);padding:6px 8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px}
 .testbar button{min-height:32px;font-size:12px;padding:0 8px}
 
@@ -304,7 +304,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .col10{display:flex;flex-direction:column;gap:2px}
 .explain{display:flex;flex-direction:column;gap:10px}.qbody.scrolly .explain>.whysay{order:-2}.qbody.scrolly .explain>.why{order:-1}   /* 题面在栏内滚动时（字不再缩，docs/视觉规范.md 2.3）：讲解那句话排到图前面，关键行在上 */
 .explain .why{font-size:20px;font-weight:900}
-.cap{display:flex;gap:16px;font-size:15px;color:var(--mute)}
+.cap{display:flex;gap:16px;font-size:17px;color:var(--mute)}
 .cards2{display:flex;gap:16px}
 .cards2 b{min-width:110px;height:76px;display:flex;align-items:center;justify-content:center;background:var(--stone);border:3px solid #000;font-family:var(--f-num);font-size:48px;color:var(--dim)}
 .cards2 b.win{border-color:var(--ok);color:var(--ok)}
@@ -381,7 +381,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .srow .sn{width:120px;flex:none;font-size:17px;font-weight:700}
 .cells{display:flex;flex-wrap:wrap;gap:3px;flex:1}
 .cl{width:18px;height:18px;border:2px solid #000}
-.ty{min-width:120px;height:30px;border:2px solid #000;padding:2px 8px;display:flex;align-items:center;font-size:15px;white-space:nowrap}
+.ty{min-width:120px;height:30px;border:2px solid #000;padding:2px 8px;display:flex;align-items:center;font-size:17px;white-space:nowrap}
 .mgroups{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:17px}.mg .mh span{flex:1}
@@ -545,9 +545,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #forgeGo{width:100%;height:calc(min(15vh,60px));font-size:22px}
 /* iPhone Safari 的 vh 按收起地址栏后的高度算，横屏实际只剩约 290 点：锻造台按「看得见的高度」svh 算，不支持的浏览器用上面的 vh */
 @supports (height:1svh){#forgeSlots{grid-template-columns:repeat(4,calc(min(14svh,52px)));grid-auto-rows:calc(min(14svh,52px))}#forgeSlots.big{grid-template-columns:repeat(6,calc(min(8.4svh,34px)));grid-auto-rows:calc(min(8.4svh,34px))}#forgeGo{height:calc(min(15svh,60px))}}#forge.working #forgeGo{filter:brightness(.7)}#forge.working .forgeSide .btn{visibility:hidden}
-#forgeMsg{font-size:18px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
+#forgeMsg{font-size:21px;font-weight:900;min-height:26px;color:var(--warn);text-shadow:2px 2px 0 #000}
 #forgeMsg.pop{animation:fragLand .28s}
-#gemEv{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:calc(env(safe-area-inset-left) + 112px);z-index:30;min-height:44px;width:236px;padding:4px 10px;line-height:1.25;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;font-size:17px;font-weight:800;text-align:left}#gemEv[hidden]{display:none}#gemEv[disabled]{min-height:32px;font-size:17px;color:var(--warn);opacity:1}#gemEv.offer{background:var(--warn);color:#1b1d22;box-shadow:0 4px 0 #000;animation:fragLand .3s}
+#gemEv{position:absolute;top:calc(env(safe-area-inset-top) + 8px);left:calc(env(safe-area-inset-left) + 112px);z-index:30;min-height:44px;width:236px;padding:4px 10px;line-height:1.25;background:rgba(27,29,34,.92);color:#fff;border:3px solid #000;font-size:19px;font-weight:800;text-align:left}#gemEv[hidden]{display:none}#gemEv[disabled]{min-height:32px;font-size:19px;color:var(--warn);opacity:1}#gemEv.offer{background:var(--warn);color:#1b1d22;box-shadow:0 4px 0 #000;animation:fragLand .3s}
 #restOv{position:fixed;inset:0;z-index:75;background:var(--cave);display:flex;align-items:center;justify-content:center}#restOv[hidden]{display:none}#restOv h2{margin:0;font-size:24px}#restOv b{font-size:44px;color:var(--warn)}
 #exitOv{position:absolute;inset:0;z-index:45;background:rgba(10,10,12,.72);display:flex;align-items:center;justify-content:center;padding:12px}#exitOv[hidden]{display:none}#gemStats[hidden],#pDev[hidden]{display:none!important}
 .qfeel{display:flex;align-items:center;gap:6px;flex:none}.qfeel[hidden],.qgoal[hidden]{display:none}
@@ -568,7 +568,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #forgeToday{display:flex;align-items:center;gap:6px;background:rgba(27,29,34,.86);border:3px solid #000;padding:6px 8px;font-size:15px;color:#ddd}
 #forgeToday img{width:26px;image-rendering:pixelated}#forgeToday b{font-size:24px;color:#fff}
 #forgeToday.bump{animation:fragLand .3s}
-#forgeToday{flex-wrap:wrap;row-gap:2px}#forgeToday .ft14{width:100%;white-space:nowrap;font-size:15px;line-height:1.2}#forgeToday>span:not(.ft14){font-size:15px;white-space:nowrap}
+#forgeToday{flex-wrap:wrap;row-gap:2px}#forgeToday .ft14{width:100%;white-space:nowrap;font-size:18px;line-height:1.2}#forgeToday>span:not(.ft14){font-size:18px;white-space:nowrap}
 .flying{position:fixed;left:0;top:0;z-index:50;image-rendering:pixelated;pointer-events:none}
 .gempop{position:fixed;left:0;top:0;width:120px;height:120px;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center}
 .gempop img{width:84px;image-rendering:pixelated;position:relative;filter:drop-shadow(0 4px 0 #000)}
@@ -955,7 +955,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v145:6fd1631fbc5f -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v150:c93aa1d94049 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -965,25 +965,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=145"></script>
-<script src="i18n.js?v=145"></script>
-<script src="bank.js?v=145"></script>
-<script src="hardbank.js?v=145"></script>
-<script src="placebank.js?v=145"></script>
-<script src="core.js?v=145"></script>
-<script src="ink.js?v=145"></script>
-<script src="skills.js?v=145"></script>
-<script src="engine.js?v=145"></script>
-<script src="render.js?v=145"></script>
-<script src="world.js?v=145"></script>
-<script src="home.js?v=145"></script>
-<script src="puzzles.js?v=145"></script>
-<script src="thinking.js?v=145"></script>
-<script src="house.js?v=145"></script>
-<script src="kongmine.js?v=145"></script>
-<script src="gems.js?v=145"></script>
-<script src="gemui.js?v=145"></script>
-<script src="vert.js?v=145"></script>
+<script src="touchfix.js?v=150"></script>
+<script src="i18n.js?v=150"></script>
+<script src="bank.js?v=150"></script>
+<script src="hardbank.js?v=150"></script>
+<script src="placebank.js?v=150"></script>
+<script src="core.js?v=150"></script>
+<script src="ink.js?v=150"></script>
+<script src="skills.js?v=150"></script>
+<script src="engine.js?v=150"></script>
+<script src="render.js?v=150"></script>
+<script src="world.js?v=150"></script>
+<script src="home.js?v=150"></script>
+<script src="puzzles.js?v=150"></script>
+<script src="thinking.js?v=150"></script>
+<script src="house.js?v=150"></script>
+<script src="kongmine.js?v=150"></script>
+<script src="gems.js?v=150"></script>
+<script src="gemui.js?v=150"></script>
+<script src="vert.js?v=150"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -1651,7 +1651,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     wide.forEach(c => { const z = Math.max(Math.min(1, lowest(c)), W / c.scrollWidth); if (z < 0.99) { c.style.zoom = z.toFixed(3); c.dataset.fz = 1; } });
     // 第二步：高度不够，整块缩到底线为止；还放不下就在这一栏里上下滚
     const k = Math.min(1, b.clientHeight / b.scrollHeight);
-    if (k >= 0.99) return;
+    if (k >= 0.99) return fitSvgText();
     const z = Math.max(k, Math.min(1, lowest(b)));
     if (z < 0.99) b.style.zoom = z.toFixed(3);
     if (z > k + 0.005) {
