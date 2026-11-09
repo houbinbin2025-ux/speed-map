@@ -93,10 +93,10 @@
   const HARD = [];
   // 第三批趣味题的保险（说明书-第三批 §4.3「关掉 / 退回」）：每日趣味题时间上限；= 0 时 fun 技能完全不登记（不进 HARD / BY / ITEM），
   // 练习、挑战、开级、allOut 都一道不出，留在错题本里的趣味错题查不到题型就不回炉。和 A、C 同一次上线时改成 90
-  const FUN_SEC = (typeof process === 'object' && process.env && Number(process.env.FUN_SEC) > 0) ? Number(process.env.FUN_SEC) : 0;
+  const FUN_SEC = (typeof process === 'object' && process.env && Number(process.env.FUN_SEC) > 0) ? Number(process.env.FUN_SEC) : 0;   // 网页里永远是 0；node 测试可用 FUN_SEC=90 npm test 提前跑打开后的路径
   // 2b-2 分步作答（一题几个空）：B 的多格答题界面做完前关着——两个技能不登记、不出题、级别说明不写「带分数」、讲解卡不出；题库数据照样在 hardbank。
   // 网页里永远是 false；B 接好界面的那次提交改成 true。node 测试可用 MULTI_CELL=1 npm test 提前跑打开后的路径
-  const MULTI_CELL = typeof process === 'object' && !!process.env && process.env.MULTI_CELL === '1';   // 网页里永远是 0；node 测试可用 FUN_SEC=90 npm test 提前跑打开后的路径
+  const MULTI_CELL = typeof process === 'object' && !!process.env && process.env.MULTI_CELL === '1';
   const funAllowed = (o, sec) => !o.fun || sec > 0;
   const FUN = [];   // 趣味技能：登记进 BY / ITEM（内容、题库页、测试查得到），但永远不进 HARD —— 练习、挑战、开级、allOut 都从 HARD 取题；只走单独的插入通道（engine，FUN_SEC > 0 才出）
   const hard = o => { const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; (s.fun ? FUN : HARD).push(s); };
