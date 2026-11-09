@@ -24,7 +24,7 @@ with sync_playwright() as p:
             pg.goto(url); pg.evaluate("localStorage.clear()"); pg.evaluate(SEED, [lv, en]); pg.reload(); pg.wait_for_timeout(700)
             # 1 地块卡片：列出的技能 = R.skillsOf；格数一致；卡片在屏内
             for g in GROUPS:
-                pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{g}\"]').click()"); pg.wait_for_timeout(500)
+                pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{g}\"]').click()"); pg.wait_for_function("getComputedStyle(document.getElementById('zSheet')).transform.split(',')[5] == ' 0)'", timeout=20000); pg.wait_for_timeout(150)   # 等卡片滑到位再量
                 n = pg.locator('#zSkills .zsk').count(); want = pg.evaluate(f"__sm.R.skillsOf(__sm.S, '{g}').length")
                 ct = pg.inner_text('#zCt'); tot = pg.evaluate(f"__sm.R.groupStat(__sm.S, '{g}').total")
                 bb = pg.locator('#zSheet').bounding_box(); go = pg.locator('#zGo').bounding_box()
@@ -57,7 +57,7 @@ with sync_playwright() as p:
             if W == 844 and lv:
                 pg.reload(); pg.wait_for_timeout(700)
                 for mod in ['balance', 'target', 'clue', 'block']:
-                    pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{mod}\"]').click()"); pg.wait_for_timeout(400); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=9000); pg.wait_for_timeout(400)
+                    pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{mod}\"]').click()"); pg.wait_for_timeout(400); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=20000); pg.wait_for_timeout(400)
                     tier = pg.evaluate('__sm.TH.G.tier'); want = pg.evaluate(f"(() => {{ const top = Math.max(...{json.dumps(lv)}); let t = -1; SKILLS.THINK_LEVEL['{mod}'].forEach((n, i) => {{ if (n <= top) t = i; }}); return Math.max(0, t); }})()")
                     en = pg.evaluate("[...document.querySelectorAll('#think [data-t]')].filter(b => !b.disabled).length")
                     check(tier == want and en >= want + 1, f'{tag} 思维地点 {mod} 默认第 {tier} 档（应 {want}），能点 {en} 档')

@@ -2024,7 +2024,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     WORLD.sceneBg($('qsBg'), q.zone, innerWidth, innerHeight); WORLD.drawSprite($('qsHero'), WORLD.HERO, 'a'); WORLD.drawSprite($('qsDog'), WORLD.DOG, 'b');
     $('qsBag').querySelectorAll('i').forEach((b, i) => setTimeout(() => b.classList.add('in'), 250 + i * 60));
     // 回到岛上：这次点亮的格子所在的木牌闪一下
-    $('qsHome').addEventListener('click', () => { goIsland(); q.ups.forEach(id => { const s = K.BY[K.ITEM[id].skill], g = s.group, i = s.speed ? s.L : zoneSkills(g).indexOf(s); if (i >= 0) WD.pulse(g, i); }); });
+    $('qsHome').addEventListener('click', () => { goIsland(); q.ups.forEach(id => { const s = K.BY[K.ITEM[id].skill], g = s.group === 'speedH' ? 'speed' : s.group, i = s.speed ? s.L : zoneSkills(g).indexOf(s);   // 挑战的技能在高塔木牌上（4 张图都没题时） if (i >= 0) WD.pulse(g, i); }); });
     if (box) $('qsHouse').addEventListener('click', () => HS.enter());
     if (q.kind === 'free') $('qsAgain').addEventListener('click', () => begin(() => startQ('free', q.opts)));
   }
