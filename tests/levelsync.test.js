@@ -7,7 +7,8 @@
 const test = require('node:test'), assert = require('node:assert');
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), R = require('../v2/render.js');
 const HOME = require('../v2/home.js'), PZ = require('../v2/puzzles.js'), WORLD = require('../v2/world.js');
-const ALL = K.SKILLS.concat(K.HARD), LV = K.LEVELS.length;
+// 趣味技能（第三批）登记在 K.FUN、永远不进 K.HARD（B 的保险）；开关 FUN_SEC 打开时算进来——`FUN_SEC=90 npm test` 提前查打开后各模块接上没有
+const FUN = K.FUN_SEC > 0 ? (K.FUN || []) : [], ALL = K.SKILLS.concat(K.HARD, FUN), LV = K.LEVELS.length;
 const LAND = R.GROUPS.map(g => g.id).filter(g => g !== 'speed');   // 岛上的学习地（卡片走 R.skillsOf）
 const chosen = L => { const S = C.blank(); S.placedAt = 1; S.settings = {levels: [L], levelsV: 2}; return S; };
 
@@ -27,7 +28,7 @@ test('② 手选每一级：能出题的每个技能，岛上都看得到——�
     const playable = ALL.filter(s => s.items.some(it => E.itemOn(S, it.id)));
     playable.forEach(s => assert.ok(shown.has(s.id), `第 ${L} 级 ${s.id}（${s.name}）能出题，岛上看不到`));
     // 卡片里的高级技能都在这一级能出题（不显示没开放的）
-    LAND.concat('speedH').forEach(g => R.skillsOf(S, g).filter(s => s.hard).forEach(s => assert.ok(playable.includes(s), `第 ${L} 级 ${g} 卡片多了没开放的 ${s.id}`)));
+    LAND.concat('speedH').forEach(g => R.skillsOf(S, g).filter(s => s.hard || s.fun).forEach(s => assert.ok(playable.includes(s), `第 ${L} 级 ${g} 卡片多了没开放的 ${s.id}`)));
     // 秒答地图（index.html 的 zoneSkills / anyMap 同一判断）：能出题的老秒答技能都在 4 张图之一、那张图在这一级有题（高塔换图有地方可去）；
     // 4 张图都没题时高塔卡片改列挑战，挑战里能出题的技能都在
     const mapOn = m => K.speed.some(s => s.L === m && s.items.some(it => E.itemOn(S, it.id))), anyMap = C.LEVELS.some((_, m) => mapOn(m));
@@ -36,8 +37,9 @@ test('② 手选每一级：能出题的每个技能，岛上都看得到——�
   }
 });
 
-test('③ 家的奖励：铁锭金锭钻石数全部技能的格子；三四年级每个技能都落在某一级的奖状 / 伙伴组里', () => {
-  const st = HOME.stats(C.blank()), cells = ALL.flatMap(s => s.items).length;
+// 趣味题不进家的奖励：第三批说明书 4.6「不加新奖励」、中控 11-09「趣味题不是核心技能」；要改由 C 定，改了这里跟着改
+test('③ 家的奖励：铁锭金锭钻石数全部技能的格子（趣味题除外）；三四年级每个技能都落在某一级的奖状 / 伙伴组里', () => {
+  const st = HOME.stats(C.blank()), cells = K.SKILLS.concat(K.HARD).flatMap(s => s.items).length;
   assert.equal(st.total, cells, `家只数了 ${st.total} 格，全部技能有 ${cells} 格`);
   const inGroups = HOME.HARD_LV.reduce((n, g) => n + st.lvAll(g).n, 0), hard = K.HARD.flatMap(s => s.items).length;
   assert.equal(inGroups, hard, `三四年级 ${hard} 格，奖状 / 伙伴组只覆盖 ${inGroups} 格`);
