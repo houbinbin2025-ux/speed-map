@@ -1,6 +1,7 @@
 # 门 6 走查第 2 轮：手写模式（程序画 0–9 校准 + 作答）、暂停原题重出、返回手势不离开、示范卡播完、自由加练（点选）、v2 秒答练习
 import sys, json, pathlib, time, math
 from playwright.sync_api import sync_playwright
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 url = (root / 'v2' / 'index.html').as_uri() + '#test'
 known = {k: True for k in ['look1', 'look2', 'look3', 'look4', 'bond1', 'cmp1']}
@@ -118,7 +119,7 @@ with sync_playwright() as p:
     if cur(pg) == 'qsum': pg.click('#qsHome')
     # 家长区
     pg.wait_for_timeout(200)
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300); PIN(pg)
     shot(pg, 'e1-parent'); pg.click('#parBack')
     # v2 秒答练习照常能用
     pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.click('[data-series="add"]'); pg.wait_for_timeout(400)

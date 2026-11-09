@@ -3,6 +3,7 @@
 # 用法：python3 tools/e2e/e2e-sync.py <项目根> <截图目录>
 import sys, json, pathlib, time
 from playwright.sync_api import sync_playwright
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 url = (root / 'v2' / 'index.html').as_uri() + '?gems=1#test'
 PK, GK, SK = 'speedmap.v2.test', 'speedmap.test.gems', 'speedmap.v2.test.sync'
@@ -26,7 +27,7 @@ def open_dev(b, share=True):
     pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e))); pg.goto(url); pg.wait_for_timeout(500)
     return ctx, pg
 def parent(pg):
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + bb['width'] / 2, bb['y'] + bb['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(400)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + bb['width'] / 2, bb['y'] + bb['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(400); PIN(pg)
 def send(pg):
     pg.evaluate("window.__sent = null"); pg.locator('#btnSyncOut').scroll_into_view_if_needed(); pg.click('#btnSyncOut'); pg.wait_for_timeout(400)
     return pg.evaluate("window.__sent")

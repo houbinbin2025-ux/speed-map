@@ -401,6 +401,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:16px}.mg .mh span{flex:1}
 .mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
 .mq.later{opacity:.7;display:inline-flex;align-items:baseline;gap:6px}.mq.later i{font-style:normal;white-space:nowrap;font-family:inherit;font-size:12px;font-weight:700;color:var(--dim)}
+#pinOv{z-index:70}
+.pincard{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%;max-height:100%}
+.pinhead{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:200px}.pinhead b{font-size:22px}
+.pindots{display:flex;gap:12px}.pindots i{width:18px;height:18px;border:2px solid var(--mute);border-radius:50%}.pindots i.on{background:var(--ink);border-color:var(--ink)}
+.pinmsg{font-size:15px;color:var(--mute);min-height:22px}.pinmsg.bad{color:var(--bad)}
+.pindots.shake{animation:pinshake .3s}@keyframes pinshake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pinpad{display:grid;grid-template-columns:repeat(3,72px);grid-auto-rows:min(56px,calc((100vh - 60px) / 4));gap:8px}
+.pinpad button{font-size:24px;font-weight:800;background:var(--stone);color:var(--ink);border:3px solid #000;box-shadow:0 3px 0 #000;cursor:pointer;touch-action:manipulation}
+.pinpad button:active{transform:translateY(2px);box-shadow:0 1px 0 #000}.pinpad .pinfn{font-size:15px;font-weight:700}
 .ovl{position:fixed;inset:0;z-index:40;background:rgba(27,29,34,.97);display:flex;align-items:center;justify-content:center;padding:20px}
 .ovl .card{width:520px;max-width:100%;padding:24px 28px;background:var(--stone);border:4px solid #000;box-shadow:0 6px 0 #000;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
 .ovl .card h3{margin:0;font-size:28px;font-weight:900}
@@ -962,6 +971,14 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div class="top"><button class="btn" id="bankBack">返回</button><h1>题库</h1><div class="tabs" id="bankTabs" style="flex-wrap:wrap"></div></div>
   <div class="srows" id="bankList"></div>
 </div>
+<!-- 家长区密码（v2/lock.js；docs/说明书-家长区密码.md）：防孩子误入，不是安全防护 -->
+<div class="ovl" id="pinOv" hidden role="dialog" aria-modal="true" aria-labelledby="pinTitle"><div class="pincard">
+  <div class="pinhead"><b id="pinTitle">家长密码</b><div class="pindots" id="pinDots" aria-hidden="true"></div><div class="pinmsg" id="pinMsg" role="alert" aria-live="assertive">输入 6 位家长密码</div></div>
+  <div class="pinpad" id="pinPad">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="x" class="pinfn">取消</button><button data-k="0">0</button><button data-k="d" class="pinfn" aria-label="删除">删除</button>
+  </div>
+</div></div>
 <div class="ovl" id="ovQ" hidden><div class="card">
   <div class="top"><b id="qpTag" style="flex:1;font-size:17px"></b><span id="qpAns" class="muted"></span><button class="btn" id="qpX">关闭</button></div>
   <div class="qpg"><div><span class="muted">孩子看到的题</span><div class="qpb" id="qpQ"></div></div><div><span class="muted">答错时看到的</span><div class="qpb" id="qpE"></div></div></div>
@@ -1001,7 +1018,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v155:9f74b20cb3b6 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v156:84d3685915e7 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1011,29 +1028,30 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=155"></script>
-<script src="i18n.js?v=155"></script>
-<script src="bank.js?v=155"></script>
-<script src="hardbank.js?v=155"></script>
-<script src="placebank.js?v=155"></script>
-<script src="core.js?v=155"></script>
-<script src="ink.js?v=155"></script>
-<script src="skills.js?v=155"></script>
-<script src="engine.js?v=155"></script>
-<script src="render.js?v=155"></script>
-<script src="world.js?v=155"></script>
-<script src="home.js?v=155"></script>
-<script src="puzzles.js?v=155"></script>
-<script src="thinking.js?v=155"></script>
-<script src="house.js?v=155"></script>
-<script src="kongmine.js?v=155"></script>
-<script src="gems.js?v=155"></script>
-<script src="gemui.js?v=155"></script>
-<script src="vert.js?v=155"></script>
-<script src="mistview.js?v=155"></script>
+<script src="touchfix.js?v=156"></script>
+<script src="i18n.js?v=156"></script>
+<script src="bank.js?v=156"></script>
+<script src="hardbank.js?v=156"></script>
+<script src="placebank.js?v=156"></script>
+<script src="core.js?v=156"></script>
+<script src="ink.js?v=156"></script>
+<script src="skills.js?v=156"></script>
+<script src="engine.js?v=156"></script>
+<script src="render.js?v=156"></script>
+<script src="world.js?v=156"></script>
+<script src="home.js?v=156"></script>
+<script src="puzzles.js?v=156"></script>
+<script src="thinking.js?v=156"></script>
+<script src="house.js?v=156"></script>
+<script src="kongmine.js?v=156"></script>
+<script src="gems.js?v=156"></script>
+<script src="gemui.js?v=156"></script>
+<script src="vert.js?v=156"></script>
+<script src="lock.js?v=156"></script>
+<script src="mistview.js?v=156"></script>
 <script>
 (() => {
-  const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, $ = id => document.getElementById(id);
+  const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, LK = window.LOCK.create(), $ = id => document.getElementById(id);
   // ---------- 环境：预览（/v2/ 下）/ 测试（#test）/ 正式 ----------
   const TEST = location.hash === '#test';
   const PREVIEW = /\/v2\//.test(location.pathname);
@@ -1090,7 +1108,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const mode = () => S.oral ? 'oral' : 'write';
   const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'habit', 'mistp', 'bankv', 'house', 'forge', 'think'];
   let cur = 'island';
-  const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
+  const show = id => { if (LK.guarded(id)) return askPin(() => show(id));   // 家长区页面没解锁一律先问密码（兜底：以后新加的入口也锁住）
+    cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); GM.islandBtn(); show('island'); WD.layout(); };   // 显示之后再算一次：隐藏时量不到真实高度
   // 手写模式第一次练习前先校准
   const begin = (fn, back) => { if (!S.oral && !calibrated()) startCal(fn, back); else fn(); };
@@ -1102,6 +1121,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   }
 
   // ---------- 长按：结束练习 1 秒、家长区 2 秒 ----------
+  // ---------- 家长区密码（v2/lock.js）：解锁只在这次打开期间有效 ----------
+  let pinBuf = '', pinThen = null;
+  function pinDraw(msg, bad) { $('pinDots').innerHTML = Array.from({length: LK.LEN}, (_, i) => `<i class="${i < pinBuf.length ? 'on' : ''}"></i>`).join(''); if (msg !== undefined) { $('pinMsg').textContent = msg; $('pinMsg').classList.toggle('bad', !!bad); } }
+  function askPin(then) {
+    if (LK.isOpen()) return then();
+    pinBuf = ''; pinThen = then; pinDraw('输入 6 位家长密码', false); $('pinOv').hidden = false;
+  }
+  function pinKey(k) {
+    if ($('pinOv').hidden) return;
+    if (k === 'x') { $('pinOv').hidden = true; pinThen = null; pinBuf = ''; return; }
+    if (k === 'd') { pinBuf = pinBuf.slice(0, -1); return pinDraw(); }
+    if (!/^\d$/.test(k) || pinBuf.length >= LK.LEN) return;
+    pinBuf += k; pinDraw();
+    if (pinBuf.length < LK.LEN) return;
+    if (LK.tryPin(pinBuf)) { const go = pinThen; pinThen = null; pinBuf = ''; $('pinOv').hidden = true; if (go) go(); return; }
+    pinBuf = ''; pinDraw('密码错误', true); const d = $('pinDots'); d.classList.remove('shake'); void d.offsetWidth; d.classList.add('shake');
+  }
+  $('pinPad').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) pinKey(b.dataset.k); });
+  addEventListener('keydown', e => { if ($('pinOv').hidden) return; if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key === 'Backspace') pinKey('d'); else if (e.key === 'Escape') pinKey('x'); else return; e.preventDefault(); });
   function longPress(el, ms, onDone, onShort) {
     let timer = null, t0 = 0;
     const down = e => { e.preventDefault(); t0 = Date.now(); el.classList.add('hold'); timer = setTimeout(() => { timer = null; el.classList.remove('hold'); onDone(); }, ms); };
@@ -1232,7 +1270,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   });
   $('btnMore').addEventListener('click', () => { if (!WD.entering) walkThen(() => begin(() => startQ('today', {extra: 300}))); });
   $('btnMist').addEventListener('click', () => openMist());
-  longPress($('gear'), 2000, () => { renderParent(); show('parent'); });
+  longPress($('gear'), 2000, () => askPin(() => { renderParent(); show('parent'); }));
   $('piBack').addEventListener('click', goIsland);
   $('piGo').addEventListener('click', () => begin(() => startQ('place'), () => show('placeIntro')));
 

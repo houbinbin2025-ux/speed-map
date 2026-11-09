@@ -2,6 +2,7 @@
 # 11-05 审查清单：钟面有数字、错题宝箱不露答案、隔天错题都回炉且数字一致、底栏按钮都在屏内、家长题库和周报数字对、答错提示「应该是」
 # 用法：python3 tools/e2e/e2e9.py <项目根> <截图目录> [宽 高]
 import pathlib
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)
 fails = []
@@ -83,7 +84,7 @@ with sync_playwright() as p:
     pg.evaluate("__sm.HS.tap(__sm.HS.BOOK.x+6,50)"); pg.wait_for_timeout(400); shot(pg, 'g-book'); check(pg.locator('.bkc').count() == pg.evaluate("__sm.K.SKILLS.length + HOME.MEDALS.filter(m => m.kind === 'bronze' && m.lv && HOME.shown(__sm.S, m)).length"), '图鉴数量（基础技能 + 开放了的三四年级伙伴）')
     # 家长区：真实打开，题库页没有 undefined，周报是真实总数，新题预览有可读的选项和答案
     pg.evaluate("document.getElementById('h_btnOut') && document.getElementById('h_btnOut').click()"); pg.wait_for_timeout(800)
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300); PIN(pg)
     t = pg.inner_text('#parent'); check('19 个理解技能' not in t, '周报写死 19'); check(str(pg.evaluate('__sm.K.understand.length')) + ' 个理解技能' in t, '周报总数不对'); shot(pg, 'p-parent')
     pg.locator('[data-bg="garden"]').scroll_into_view_if_needed(); pg.click('[data-bg="garden"]'); pg.wait_for_timeout(300)
     for b0 in pg.locator('[data-bo]').all()[:1]: b0.click()

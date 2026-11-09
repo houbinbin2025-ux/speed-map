@@ -1,6 +1,7 @@
 # 门 6 真浏览器走查：932×430 横屏；口答模式走通 首次 → 摸底 → 今日练习（示范卡、三种作答、对错反馈）→ 结算 → 各页 → 异常
 import sys, json, pathlib, time
 from playwright.sync_api import sync_playwright
+PIN = lambda pg: ([pg.click(f'#pinPad [data-k="{d}"]') for d in '123456'], pg.wait_for_timeout(200)) if pg.is_visible('#pinOv') else None   # 家长区密码（v2/lock.js），走查统一用这个输
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 N = int(sys.argv[3]) if len(sys.argv) > 3 else 40
 url = (root / 'v2' / 'index.html').as_uri() + '#test'
@@ -82,7 +83,7 @@ with sync_playwright() as p:
         pg.click(f'.w-mini button[data-z="{g}"]'); pg.wait_for_timeout(600); pg.click('#zMap'); pg.wait_for_timeout(150); shot(pg, f'10-map-{g}'); pg.click('#smBack')
     pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(600); pg.click('#zGo'); pg.wait_for_timeout(200); shot(pg, '11-speedmap'); pg.click('#spBack')
     pg.click('#btnMist'); pg.wait_for_timeout(200); shot(pg, '12-mist'); pg.click('#mistBack')
-    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)
+    bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300); PIN(pg)
     shot(pg, '13-parent'); pg.click('#parBack')
     # 异常：暂停（切后台）、另一个页面、出错兜底
     pg.click('#btnStart') if vis(pg, 'btnStart') else pg.click('#btnMore') if vis(pg, 'btnMore') else None
