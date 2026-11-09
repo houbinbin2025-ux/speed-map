@@ -1,6 +1,6 @@
 // 家长「错题分析」统计（docs/说明书-错题分析.md §3–§6）
 const test = require('node:test'), assert = require('node:assert');
-const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), MV = require('../v2/mistview.js');
+const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js'), R = require('../v2/render.js'), MV = require('../v2/mistview.js');
 const T = '2026-11-20', D = n => C.addDays(T, n);
 const blank = () => { const S = C.blank(); S.placedAt = 1; S.demoSeen = Object.fromEntries(K.SKILLS.concat(K.HARD).map(s => [s.id, true])); return S; };
 const rnd = x => () => (x = (x * 16807) % 2147483647) / 2147483647;
@@ -49,7 +49,6 @@ test('分组按 K.mistCat；需要讲解 / 写错较多 / 速度慢 / 在好转 
   const S4 = blank(); C.addMistake(S4, C.inst({id: SUB}), D(-1));
   const v4 = MV.build(S4, T); assert.equal(v4.cats[0].tagText, '记录不全'); assert.equal(v4.cats[0].items[0].part, true); assert.equal(v4.cats[0].atLeast, true);
   // 排序：在好转排到写错较多后面
-  const k5 = speed(S, '2+4', [[-12, 'w', '5']]); S.mistakes[k5].passes = 2; S.mistakes[k5].due = D(3);
   const S5 = blank(); speed(S5, '2+4', [[-12, 'w', '5']]); const kk = Object.keys(S5.mistakes)[0]; S5.mistakes[kk].passes = 2; S5.mistakes[kk].due = D(3);
   typed(S5, 2, [[-1, 'w', '3']]);
   assert.deepEqual(MV.build(S5, T).cats.map(c => c.tagText), ['写错较多', '在好转']);
@@ -153,4 +152,48 @@ test('shelves：进度里混了坏条目不报错', () => {
   const S = blank(); speed(S, SUB, [[-1, 'w', '7']]); S.mistakes.bad = null; S.mistakes.bad2 = 3;
   assert.doesNotThrow(() => MV.shelves(S, T));
   assert.equal(MV.shelves(S, T).today.length, 1);
+});
+
+// ---------- 审查 R1 补充 ----------
+// 题型错题：按 id 造一道，答错一次（写的 = typed）
+function typeMist(S, id, typed, n = 1) {
+  const inst = K.make(id, rnd(n)), key = E.addMistake(S, inst, D(-1));
+  C.noteMistake(S, key, {k: 'w', w: typed, skill: K.ITEM[id].skill, fresh: true}, D(-1)); return S.mistakes[key];
+}
+test('正确答案和「写的」同一口径：选择题显示选项文字，不显示内部编号；秒答、小数、手写照常', () => {
+  const S = blank();
+  const half = typeMist(S, 'market:t:half', '4 点半'), dec = typeMist(S, 'cmp:g12:deccmp', '3.3'), pat = typeMist(S, 'garden:t:next', '红色');
+  const vh = R.question(K.make(half.uid, null, {q: half.q, ans: half.ans}));
+  assert.equal(MV.ansOf(half, R), String(vh.pickText[vh.pick.indexOf(half.ans)]));
+  assert.match(MV.ansOf(half, R), /点/);
+  assert.equal(MV.ansOf(dec, R), String(dec.q.opts[dec.ans])); assert.match(MV.ansOf(dec, R), /^\d+\.\d$/);
+  assert.match(MV.ansOf(pat, R), /色$/); assert.doesNotMatch(MV.ansOf(pat, R), /</);
+  const sp = S.mistakes[speed(S, SUB, [[-1, 'w', '7']])]; assert.equal(MV.ansOf(sp, R), '5');
+  assert.equal(MV.ansOf({src: 'x', uid: 'nope', q: {}, ans: 3}, R), '3');   // 找不到题型：按手写显示
+});
+
+test('典型错法：加法算成了减法；小数题差 1 也认；选择题不报「差 1」', () => {
+  const S = blank(); speed(S, '2+4', [[-3, 'w', '2'], [-2, 'w', '2']]);   // 2 + 4 写成 2
+  assert.equal(MV.build(S, T).cats[0].note, '加法算成了减法');
+  const S2 = blank(), m = typeMist(S2, 'cmp:g12:deccmp', '0', 1);   // 选择题
+  m.hist.push({d: D(-1), k: 'w', w: String(Number(m.ans) + 1)}); m.hist.push({d: D(-1), k: 'w', w: String(Number(m.ans) - 1)});
+  assert.equal(MV.build(S2, T).cats[0].note, null);
+  const S3 = blank(), x = speed(S3, SUB, [[-2, 'w', '4']]);   // 手写小数题：答案 143（dp 1）= 14.3
+  Object.assign(S3.mistakes[x], {src: 'speed', q: {a: 100, b: 43, op: '+', dp: 1}, ans: 143, hist: [{d: D(-2), k: 'w', w: '15.3'}, {d: D(-1), k: 'w', w: '13.3'}]});
+  assert.equal(MV.build(S3, T).cats[0].note, '写错多为差 1');
+});
+
+test('结论和建议的文字：错题都在好转；较上周少 / 多；三种建议', () => {
+  const S = blank(), k = speed(S, SUB, [[-12, 'w', '7']]); S.mistakes[k].passes = 2; S.mistakes[k].due = D(2);
+  assert.match(MV.build(S, T).summary, /^错题都在好转/); assert.deepEqual(MV.build(S, T).advice, []);
+  const S2 = blank(); speed(S2, SUB, [[-9, 'w', '7']]); speed(S2, ADD, [[-10, 'w', '5']]); speed(S2, '2+4', [[-1, 'w', '5']]);
+  assert.match(MV.build(S2, T).summary, /本周新增错题较上周少 1 道$/);
+  const S3 = blank(); speed(S3, SUB, [[-1, 'w', '7']]); speed(S3, ADD, [[-2, 'w', '5']]); speed(S3, '2+4', [[-9, 'w', '5']]);
+  assert.match(MV.build(S3, T).summary, /本周新增错题较上周多 1 道$/);
+  const S4 = blank(); typed(S4, 1, [[-1, 'd', null]]);
+  assert.deepEqual(MV.build(S4, T).advice, [`「${K.mistCat(TYPE)}」：先陪做 1–2 道，讲清思路，再让孩子独立做`]);
+  const S5 = blank(); speed(S5, SUB, [[-1, 'w', '9']]);
+  assert.deepEqual(MV.build(S5, T).advice, [`「${K.mistCat(SUB)}」：会做但易错，提醒写完检查一遍`]);
+  const S6 = blank(); speed(S6, SUB, [[-12, 'w', '7'], [-2, 's'], [-1, 's']]);
+  assert.deepEqual(MV.build(S6, T).advice, [`「${K.mistCat(SUB)}」：会做但不够快，正常练习即可，不需要讲`]);
 });

@@ -124,16 +124,23 @@ def run_mistp(pg, tag, url):
       sp('6-1', [[-3, 'w', '7'], [-1, 'w', '7']]); sp('1+5', [[-2, 'd', null]]);
       const ty = K.SKILLS.find(s => s.nb && s.input === 'write').items[0].id, inst = K.make(ty, () => 0.3), key = E.addMistake(S, inst, d(-1));
       C.noteMistake(S, key, {k: 'd', w: null, skill: K.ITEM[ty].skill, fresh: true}, d(-1));
-      C.addMistake(S, C.inst({id: '2+4'}), d(-1)); }""")
+      C.addMistake(S, C.inst({id: '2+4'}), d(-1));
+      const hi = K.make('market:t:half', () => 0.3), hk = E.addMistake(S, hi, d(-1)); C.noteMistake(S, hk, {k: 'w', w: '4 点半', skill: K.ITEM['market:t:half'].skill, fresh: true}, d(-1)); }""")
     parent(pg)
     info = pg.inner_text('#mistInfo'); check('今日复习' in info and '还没学会' in info, f'{tag} 家长区格子有错题概况：{info!r}')
     tap(pg, '#btnMistP', f'{tag} 查看错题分析'); check(pg.is_visible('#mistp'), f'{tag} 进了错题分析')
     t = pg.inner_text('#mistp')
     check('主要卡在' in t and '「' in t, f'{tag} 有结论句')
     check(all(x in t for x in ['本周新增', '今日复习', '反复错', '本周学会']), f'{tag} 四个数都在')
-    check('需要讲解' in t and '记录不全' in t and '本周建议' in t and '口径说明' in t, f'{tag} 类别标签、建议、口径说明都在')
+    tags = pg.evaluate("[...document.querySelectorAll('#mistp .mtag')].map(x => x.textContent)")
+    check('需要讲解' in tags and '写错较多' in tags, f'{tag} 类别标签（只看标签）：{tags}')
+    check('本周建议' in t and '口径说明' in t, f'{tag} 建议、口径说明都在')
+    tbl = pg.evaluate("[...document.querySelectorAll('#mistp .mtbl td')].map(x => x.textContent).join('|')")
+    check('错 2 次' in tbl and '记录不全' in tbl, f'{tag} 明细表里有「错 2 次」和「记录不全」')
+    half = pg.evaluate("(() => { const r = [...document.querySelectorAll('#mistp .mtbl tr')].find(x => x.textContent.includes('4 点半')); return r ? [...r.cells].map(c => c.textContent) : null; })()")
+    check(half is not None and '点' in half[2] and half[2] != half[1], f'{tag} 选择题的正确答案显示选项文字：{half}')
     cats = pg.evaluate("document.querySelectorAll('#mistp .mcat').length"); check(cats >= 2, f'{tag} {cats} 个类别')
-    check('减法算成了加法' in t and '错 2 次' in t, f'{tag} 典型错法和错几次显示出来')
+    check('减法算成了加法' in pg.evaluate("[...document.querySelectorAll('#mistp .mnote')].map(x => x.textContent).join('|')"), f'{tag} 典型错法显示出来')
     rows = pg.evaluate("[...document.querySelectorAll('#mistp .mcat[open] tr')].length"); check(rows >= 3, f'{tag} 展开的类别有明细表（{rows} 行）')
     ov = pg.evaluate("(() => { const b = document.getElementById('mistpBody'); return {sw: b.scrollWidth, cw: b.clientWidth}; })()")
     check(ov['sw'] <= ov['cw'] + 1, f'{tag} 没有横向滚动 {ov}')

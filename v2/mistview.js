@@ -53,14 +53,31 @@
     if (!e) return null;
     return {k: e.k, w: e.k === 'd' ? null : e.w, s: typeof e.s === 'number' ? e.s : null, o: !!e.o};
   }
-  // 典型错法：差 1；减法算成加法；加法算成减法（只看有 a/op/b 的秒答题和题面带 a、b 的题）
+  const isPick = m => { const it = K.ITEM[m.uid], s = it && K.BY[it.skill]; return !!s && s.input === 'pick'; };
+  // 正确答案的显示文字：和「写的」同一口径（选择题 = 选项文字，同 index.html pickTyped；小数按 q.dp 加小数点）。R = render.js
+  function ansOf(m, R) {
+    try {
+      if (!m.src) return String(m.ans);
+      const q = m.q || {};
+      if (isPick(m)) {
+        if (q.view === 'choice' && Array.isArray(q.opts)) return String(q.opts[m.ans]);
+        const v = R.question(K.make(m.uid, null, {q, ans: m.ans})), i = Array.isArray(v.pick) ? v.pick.indexOf(m.ans) : -1;
+        if (i >= 0 && v.pickAria) return String(v.pickAria[i]);
+        if (i >= 0 && v.pickText) return String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() || '--';
+        return '--';
+      }
+      return R.ansText(q, m.ans);
+    } catch (e) { return '--'; }
+  }
+  // 典型错法：差 1（只看手写题：选择题两个选项正好差 1 时会误报）；减法算成加法；加法算成减法
   function patternOf(items, from) {
     let n = 0, off1 = 0, flipSub = 0, flipAdd = 0;
     items.forEach(({m}) => {
-      const ans = Number(m.ans), q = m.src ? (m.q || {}) : m, a = Number(q.a), b = Number(q.b), op = q.op;
+      const q = m.src ? (m.q || {}) : m, dp = Number.isInteger(q.dp) && q.dp > 0 ? q.dp : 0;
+      const ans = Number(m.ans) / 10 ** dp, a = Number(q.a), b = Number(q.b), op = q.op, pick = isPick(m);   // 小数题答案存的是去掉小数点的整数
       histOf(m).filter(e => e.k === 'w' && e.d >= from && e.w !== null && e.w !== '').forEach(e => {
         const w = Number(e.w); if (!isFinite(w)) return; n++;
-        if (isFinite(ans) && Math.abs(w - ans) === 1) off1++;
+        if (!pick && isFinite(ans) && Math.round(Math.abs(w - ans) * 1e6) === 1e6) off1++;   // 小数相减有浮点误差
         if (op === '-' && isFinite(a) && isFinite(b) && w === a + b) flipSub++;
         if (op === '+' && isFinite(a) && isFinite(b) && w === Math.abs(a - b)) flipAdd++;
       });
@@ -115,5 +132,5 @@
   }
   // 家长区格子里的一句概况
   function brief(S, day) { const v = build(S, day); return {due: v.kpi.due, newW: v.kpi.newW, n: v.cats.reduce((n, c) => n + c.open, 0)}; }
-  return {build, brief, shelves, byCat, inGroup, stateOf, TAGS, OTHER};
+  return {build, brief, shelves, byCat, inGroup, stateOf, ansOf, TAGS, OTHER};
 });
