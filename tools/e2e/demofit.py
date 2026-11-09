@@ -17,6 +17,14 @@ CHECK = """() => { const res = []; const body = document.querySelector('#demoBox
   const foot = document.querySelector('#demoBox .dfoot'), fr = foot && (() => { const g = document.createRange(); g.selectNodeContents(foot); return [...g.getClientRects()]; })();
   if (hit(body.getBoundingClientRect()) || hit(head.getBoundingClientRect()) || (fr || []).some(hit)) res.push('和按钮重叠');
   if (D.bottom > innerHeight + 1) res.push('卡片超出屏幕');
+  if (foot && getComputedStyle(document.getElementById('ack').parentElement).position === 'absolute') { const fb = foot.getBoundingClientRect(), pr = parseFloat(getComputedStyle(foot).paddingRight);
+    if (fb.right - pr > ack.left - 8 && fb.bottom > ack.top) res.push('提示句的字区伸到按钮下面');   // 几何断言：中文提示句短、碰不到按钮时也能查出 CSS 坏了
+  }
+  // 图里的字（docs/视觉规范.md 2.3）：横向压缩不低于 0.8（不许压成扁字）；字不出图的 viewBox（不许被裁）
+  body.querySelectorAll('svg.fig2').forEach(svg => { const vb = svg.viewBox.baseVal;
+    svg.querySelectorAll('text').forEach(t => { const parts = t.querySelector('tspan') ? [...t.querySelectorAll('tspan')] : [t];
+      parts.forEach(e => { const L = e.getAttribute('textLength'); if (!L) return; e.removeAttribute('textLength'); const nat = e.getComputedTextLength(); e.setAttribute('textLength', L); if (+L / nat < 0.79) res.push(`图字压扁 ${(+L / nat).toFixed(2)} ${e.textContent.slice(0, 12)}`); });
+      const bb = t.getBBox(); if (vb && vb.width && (bb.x < vb.x - 2 || bb.y < vb.y - 2 || bb.x + bb.width > vb.x + vb.width + 2 || bb.y + bb.height > vb.y + vb.height + 2)) res.push('图字出框 ' + t.textContent.slice(0, 12)); }); });
   return res; }"""
 with sync_playwright() as p:
     b = __import__('quiet').launch(p)

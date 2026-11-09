@@ -557,7 +557,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .hsq{width:34px;height:34px;display:block;background:var(--warn);border:2px solid #000;background-image:linear-gradient(rgba(0,0,0,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.25) 1px,transparent 1px);background-size:6px 6px}
 .hto .rods{transform:scale(.72);transform-origin:top center;margin-bottom:-30px}
 .eq.sm{font-size:clamp(30px,6vw,42px)}.pickcard.expr{font-size:clamp(34px,6vw,50px);white-space:nowrap;min-height:0}/* 新关卡示范卡：题干放标题同一行，图和答案按矮屏收小 */.dnb .dhead{gap:12px}.dnb .dhead .dtitle{flex:none;font-size:17px}.dnb .nbsay{flex:1;min-width:0;justify-content:flex-end;font-size:17px}.dnb .nbsay .spk{width:36px;height:36px}.dnb .dstep{gap:4px;min-width:0}.dnb .dcap{font-size:15px;line-height:1.5}.dnb .pclock{width:min(76px,19vh);height:min(76px,19vh);flex:none}.dnb .say2{font-size:20px;line-height:1.2;white-space:nowrap}.dnb .say2 .ansv,.dnb .say2 b,.dnb .say2 span{font-size:28px}.dnb .nbthink{font-size:17px;line-height:1.25;max-width:min(240px,32vw)}@media (max-height:400px){html[lang=en] .dnb .dhead:has(.nbsay) .dtitle{display:none}}   /* 英文日矮屏：题干长，卡片名收起给题干让地方，字不缩（字号审查 11-09） */.dnb .pbox{padding:4px;gap:2px}.dnb .spr{width:26px;height:auto}.dnb .pore,.dnb .papple,.dnb .pbone{width:14px;height:14px}.dnb .pcell{width:26px}.dnb .pblk{width:22px;box-shadow:none;border-width:2px;font-size:15px}.dnb .pst{font-size:17px;padding:2px 6px}.dnb .eq{font-size:clamp(20px,3.6vw,26px)}.dnb .hto{zoom:.5}.dnb .h100,.dnb .hgrid{zoom:.55}.dnb .dbody svg:not(.arr):not(.pclock){max-height:90px}.dnb .dbody>.dstep:has(>svg.fig2,>.fig2w){align-self:stretch;justify-content:center;flex:1 1 0;min-height:0}.dnb .dbody>.dstep>svg.fig2{flex:1 1 0;min-height:0;max-height:none;width:100%;height:auto;display:block}.dnb .dbody>.dstep>.fig2w{flex:1 1 0;min-height:0;max-height:none;width:100%}.dnb .dbody>.dstep>.fig2w>svg.fig2{max-height:none}   /* 示范卡的图占满这一步的高（不再封顶 90px），图里的字靠图变大达标，不靠压扁（审查 R3） */
-@media (max-height:500px){#demo:has(.dnb) .ackrow{position:absolute;right:var(--padR);bottom:max(10px,env(safe-area-inset-bottom))}#demo:has(.dnb) #ack{width:180px;height:56px}#demo:has(.dnb) .dnb .dfoot{padding-right:196px;min-height:56px;display:flex;align-items:center}}   /* 手机横屏：示范卡「我知道了」挪到右下角和提示句同一行（同 #demo.card），把高度让给图，图里的字靠图变大达标（审查 R3） */
+@media (max-height:500px){#demo:has(.dnb) .ackrow{position:absolute;right:var(--padR);bottom:max(10px,env(safe-area-inset-bottom))}#demo:has(.dnb) #ack{width:180px;height:56px}#demo:has(.dnb) .dnb .dfoot{padding-right:196px;min-height:56px;display:block}}   /* 手机横屏：示范卡「我知道了」挪到右下角和提示句同一行（同 #demo.card），把高度让给图，图里的字靠图变大达标（审查 R3） */
 /* 示范卡的钟面：12 个数字不低于角标 13pt（审查 R2）。只有钟的一步，钟占满这一步的高；钟旁有题干或答案的一步，钟放左边、字放右边，不再上下叠着挤小钟 */
 .dnb .dbody .dstep:has(>.pclock){min-width:0;flex:1 1 0}
 html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
@@ -1785,7 +1785,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
       for (let pass = 0, prev = 0; pass < 10; pass++) {   // 拆行后图变高、在限高的框里会再缩一点：算到缩放不再变为止（最多 10 轮）
       const sc = svgScale(svg); if (!sc || Math.abs(sc - prev) < sc * 0.01) break; prev = sc; if (!sc0) sc0 = sc;
       svg.querySelectorAll('text').forEach(t => {
-        t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
+        t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust'); t.querySelectorAll('tspan').forEach(sp => { sp.removeAttribute('textLength'); sp.removeAttribute('lengthAdjust'); });   // 拆成两行的也要清，不然第 2 轮读到的是压过的长度（新方案审查）
         if (t.dataset.split && !t.dataset.fs0) delete t.dataset.split;
         if (!t.dataset.fs0) { t.dataset.fs0 = parseFloat(getComputedStyle(t).fontSize); t.dataset.w0 = t.getComputedTextLength(); }
         const fs0 = +t.dataset.fs0, need = txtFloor(svgTxt(t), t) * 1.02 / sc, big = fs0 < need;
@@ -1808,9 +1808,8 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
       });
       if (svg.querySelector('text[data-split],text[style*="font-size"]')) { const vb = svg.viewBox.baseVal, bb = svg.getBBox();   // 放大或拆成两行的标签：图往四边扩到装得下（贴顶的「12 cm」放大后不被裁，审查 R2）
         if (vb && vb.width && vb.height) { const x0 = Math.min(vb.x, Math.floor(bb.x - 2)), y0 = Math.min(vb.y, Math.floor(bb.y - 2)), x1 = Math.max(vb.x + vb.width, Math.ceil(bb.x + bb.width + 2)), y1 = Math.max(vb.y + vb.height, Math.ceil(bb.y + bb.height + 4));
-          const o = (svg.dataset.vb0 || '').split(/[\s,]+/).map(Number), ow = o[2] || vb.width, oh = o[3] || vb.height;   // 最多扩到原图的 1.3 倍：再扩图就缩得太小，字越放越大、图越转越小（审查 R3）
-          const W = Math.min(x1 - x0, ow * 1.3), H = Math.min(y1 - y0, oh * 1.3);
-          if (x0 < vb.x || y0 < vb.y || x1 > vb.x + vb.width || y1 > vb.y + vb.height) svg.setAttribute('viewBox', `${x0} ${y0} ${W} ${H}`); } }
+          // 不设扩图上限：字宽已被「横向最多压 0.8、再窄就缩字」封顶，不会越转越小；设上限只会把字裁掉、把问题藏起来（新方案审查）
+          if (x0 < vb.x || y0 < vb.y || x1 > vb.x + vb.width || y1 > vb.y + vb.height) svg.setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`); } }
         const w = svg.parentElement;   // 框是限高的：给框留出加高的那一截（最多 320），放不下由左栏上下滚。只管题面左栏（fitBody 每次会重置）；示范卡、iPad 竖式的图外面有固定最高，加高只会多出空白（审查 R2）
         if (sc0 && w.classList.contains('fig2w') && w.closest('#qBody') && !w.style.minHeight && svgScale(svg) < sc0 * 0.99) { const h = Math.min(320, Math.ceil(svg.viewBox.baseVal.height * sc0 / (effScale(svg) || 1))); if (h > w.clientHeight) { w.style.minHeight = h + 'px'; w.style.maxHeight = 'none'; } }
       }
