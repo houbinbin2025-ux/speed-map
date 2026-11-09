@@ -52,9 +52,12 @@ SAMPLER = r"""(() => {
   };
   const sample = () => {
     const out = [], w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+    // 正在做缩放动画（出场弹一下）的元素先不量，动画结束后的采样再量
+    const anim = document.getAnimations().filter(a => a.playState === 'running' && a.effect && a.effect.target && a.effect.getKeyframes().some(k => /scale/.test(k.transform || '') || k.zoom)).map(a => a.effect.target);
     while ((n = w.nextNode())) {
       const t = n.data.replace(/\s+/g, ' ').trim(); if (!t) continue;
       const el = n.parentElement; if (!el || ['SCRIPT', 'STYLE', 'TEXTAREA', 'TITLE'].includes(el.tagName) || el.closest(SKIP) || !vis(el)) continue;
+      if (anim.some(a => a.contains(el))) continue;
       const r = document.createRange(); r.selectNodeContents(n); const rr = r.getBoundingClientRect(); if (!(rr.width > 0) || rr.right <= 0 || rr.left >= innerWidth || rr.bottom <= 0 || rr.top >= innerHeight) continue;
       const css = parseFloat(getComputedStyle(el).fontSize), px = css * scaleOf(el);
       out.push({area: area(el), sig: sig(el), tier: tierOf(el, t), text: t.slice(0, 60), css: Math.round(css * 10) / 10, px: Math.round(px * 10) / 10, pt: Math.round(px * K * 10) / 10, lang: document.documentElement.lang});
@@ -107,6 +110,7 @@ GUIDES = [
     ('e2e-fun.py', ['{root}', '{out}']),         # 趣味题和它们的讲解卡
     ('e2e-vert.py', ['{root}', '{out}']),        # iPad 竖式
     ('demofit.py', ['{root}', '{out}']),         # 示范卡
+    ('e2e-mistkid.py', ['{root}', '{out}']),     # 错题宝箱三栏、复习、复习结算
 ]
 
 # ---------- A：题型逐个量 ----------

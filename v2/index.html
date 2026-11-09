@@ -394,7 +394,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .mshelf>b{font-size:16px;flex:none}
 .mshelf .mrow{background:none;border:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;overflow-y:auto;min-height:0}
 .mshelf.done .mq{opacity:.55}
-.mshelf .mmore{font-size:14px;color:var(--mute);align-self:center}
+.mshelf .mmore{font-size:15px;color:var(--mute);align-self:center}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:17px}.mg .mh span{flex:1}
 .mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
@@ -1714,7 +1714,8 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   function fitSvgText() {
     document.querySelectorAll('svg.fig2').forEach(svg => { try {
       if (!svg.getClientRects().length || svg.closest('.mq,.bq,#parent,#bankv,#ovQ')) return;   // 错题小签里的缩略图只认形状，不算
-      const m = svg.getScreenCTM(); const sc = m ? Math.hypot(m.c, m.d) : 0; if (!sc) return;
+      for (let pass = 0, prev = 0; pass < 4; pass++) {   // 拆行后图变高、在限高的框里会再缩一点：算到缩放不再变为止
+      const m = svg.getScreenCTM(); const sc = m ? Math.hypot(m.c, m.d) : 0; if (!sc || Math.abs(sc - prev) < sc * 0.01) break; prev = sc;
       svg.querySelectorAll('text').forEach(t => {
         t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
         if (t.dataset.split && !t.dataset.fs0) delete t.dataset.split;
@@ -1736,6 +1737,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
           const vb = svg.viewBox.baseVal, bb = svg.getBBox(); if (vb && vb.height && bb.y + bb.height > vb.y + vb.height) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${Math.ceil(bb.y + bb.height - vb.y + 4)}`);
         } else { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
       });
+      }
     } catch (e) {} });
   }
   let svgFitRaf = 0; new MutationObserver(() => { if (svgFitRaf) return; svgFitRaf = requestAnimationFrame(() => { svgFitRaf = 0; fitSvgText(); }); }).observe(document.body, {childList: true, subtree: true, characterData: true});
