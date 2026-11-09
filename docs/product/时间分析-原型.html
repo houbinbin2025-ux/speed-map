@@ -6,14 +6,14 @@
 <title>时间分析原型</title>
 <style>
 :root{--cave:#1b1d22;--stone:#2a2d34;--stone-hi:#3a3e47;--ink:#ecebe4;--mute:#b8bac3;--dim:#9a9ca6;--ok:#7bd88f;--warn:#f2c14e;--bad:#ffb4a8;
-  --c-p:#6aa8ff;--c-r:#9b8cff;--c-t:#4fd1c5;--c-f:#a3e07a;--c-g:#ff9f43;--c-h:#f78fb3;--c-w:#e17055;--c-k:#fdcb6e;--c-i:#8395a7;--c-s:#576574;--c-idle:#444851}
+  --c-p:#6aa8ff;--c-r:#9b8cff;--c-t:#4fd1c5;--c-f:#a3e07a;--c-g:#ff9f43;--c-h:#f78fb3;--c-w:#e17055;--c-k:#fdcb6e;--c-i:#8395a7;--c-s:#576574;--c-idle:#4b5059}
 *{box-sizing:border-box}
 body{margin:0;background:var(--cave);color:var(--ink);font:15px/1.55 -apple-system,"PingFang SC","Helvetica Neue",sans-serif}
 button{font:inherit;color:inherit}
-.top{position:sticky;top:0;z-index:5;background:var(--cave);display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--stone-hi)}
-.btn{background:var(--stone);border:2px solid #000;padding:8px 14px;min-height:44px;cursor:pointer}
+.top{position:sticky;top:0;z-index:5;background:var(--cave);display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 16px;border-bottom:1px solid var(--stone-hi)}
+.btn{background:var(--stone);border:2px solid #000;padding:8px 14px;min-height:44px;cursor:pointer;white-space:nowrap}
 .btn.on{border-color:var(--warn)}
-h1{font-size:20px;margin:0}
+h1{font-size:20px;margin:0;white-space:nowrap}
 .muted{color:var(--dim);font-size:13px}
 .seg{display:flex;gap:6px;margin-left:auto}
 .wrap{max-width:820px;margin:0 auto;padding:12px 16px 40px;display:flex;flex-direction:column;gap:12px}
@@ -25,27 +25,26 @@ h1{font-size:20px;margin:0}
 .tag{font-size:12px;padding:2px 8px;border:1px solid #000;white-space:nowrap}
 .t-ok{background:#24452f;color:#b5ecc4}.t-warn{background:#54451f;color:#ffe08a}.t-bad{background:#5a2c27;color:#ffcfc6}.t-na{background:var(--stone-hi);color:var(--mute)}
 .sum{grid-column:1/-1;border-left:6px solid var(--warn);padding-left:10px;font-size:15px}
-h2{font-size:14px;color:var(--dim);margin:6px 0 0;font-weight:600}
 /* 7 天柱 */
 .bars{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:190px;position:relative;margin-top:8px}
-.bar{display:flex;flex-direction:column-reverse;cursor:pointer;min-height:44px;height:100%;justify-content:flex-start;border:2px solid transparent;padding:0 2px}
+.bar{display:flex;flex-direction:column-reverse;cursor:pointer;min-height:44px;height:100%;justify-content:flex-start;border:2px solid transparent;padding:0 2px;background:none}
 .bar.sel{border-color:var(--warn)}
 .bar i{display:block;width:100%}
-.bar .none{height:100%;border:1px dashed var(--stone-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim);writing-mode:vertical-rl}
+.bar .none{height:100%;border:1px dashed var(--stone-hi);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim);writing-mode:vertical-rl;text-align:center}
 .xl{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;font-size:12px;color:var(--dim);text-align:center;margin-top:4px}
 .ref{position:absolute;left:0;right:0;border-top:1px dashed var(--mute);font-size:11px;color:var(--mute);pointer-events:none}
-.ref span{position:absolute;right:0;top:-16px;background:var(--stone);padding:0 4px}
+.ref span{position:absolute;left:0;top:-17px;background:var(--stone);padding:0 4px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mute);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:middle}
 /* 去向 */
 .hbar{display:flex;height:14px;background:var(--stone-hi);margin:8px 0}
 .hbar i{display:block;height:100%}
 .acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 20px;font-size:14px}
-.acts div{display:flex;align-items:center;gap:8px;min-height:28px}.acts b{margin-left:auto;font-variant-numeric:tabular-nums}
+.acts div{display:flex;align-items:center;gap:8px;min-height:28px}.acts b{margin-left:auto;font-variant-numeric:tabular-nums;text-align:right}
 .grp{grid-column:1/-1;color:var(--dim);font-size:12px;margin-top:6px;border-bottom:1px solid var(--stone-hi)}
-/* 漏斗 */
+/* 三层 */
 .funnel{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-.frow{display:grid;grid-template-columns:120px 1fr 90px;gap:10px;align-items:center;font-size:14px}
+.frow{display:grid;grid-template-columns:130px 1fr 110px;gap:10px;align-items:center;font-size:14px}
 .ftrack{height:16px;background:var(--stone-hi)}.ftrack i{display:block;height:100%;background:var(--c-p)}
 .frow b{text-align:right;font-variant-numeric:tabular-nums}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -53,16 +52,17 @@ h2{font-size:14px;color:var(--dim);margin:6px 0 0;font-weight:600}
 /* 健康度 */
 .hcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .hcard{background:var(--stone);border:2px solid #000;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
-.hcard .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.hcard .v{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.hcard .adj{font-size:12px;color:var(--mute)}
 .hcard details{font-size:12px;color:var(--mute)}.hcard summary{cursor:pointer;min-height:28px;display:flex;align-items:center;color:var(--dim)}
 table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:400;color:var(--dim);font-size:12px;text-align:left;padding:4px;border-bottom:1px solid var(--stone-hi)}
 td{padding:6px 4px;border-bottom:1px solid var(--stone-hi);font-variant-numeric:tabular-nums}
-.dn{color:var(--bad)}.up{color:var(--ok)}
-.hours{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:6px}.hours div{height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#111}
+.dn{color:var(--bad)}
+.hours{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;margin-top:6px}.hours div{height:30px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#111}
 .todo{margin:0;padding-left:20px;font-size:14px;line-height:1.7}
 .foot{font-size:12px;color:var(--dim);line-height:1.7}
 .proto{font-size:12px;color:var(--warn)}
-@media (max-width:560px){.acts{grid-template-columns:1fr}.frow{grid-template-columns:96px 1fr 70px}.bars{height:150px;gap:4px}.xl{gap:4px}.hero{grid-template-columns:1fr}}
+@media (max-width:560px){.acts{grid-template-columns:1fr}.frow{grid-template-columns:96px 1fr 90px}.bars{height:150px;gap:4px}.xl{gap:4px;font-size:11px}.hero{grid-template-columns:1fr}.seg{margin-left:0}.seg .btn{padding:6px 10px}}
 </style>
 </head>
 <body>
@@ -72,107 +72,115 @@ td{padding:6px 4px;border-bottom:1px solid var(--stone-hi);font-variant-numeric:
 </div>
 <div class="wrap" id="root"></div>
 <script>
-// ---------- 原型数据（不是代码实现；实施时由 v2/timelog.js 统计）----------
-// 活动：p 练习 r 错题复习 t 思维地点 f 趣味题 g 锻造 h 家 w 方块世界 k 伙伴乐园 i 岛上 s 家长区 idle 挂机（单位：分钟）
-const ACT = [['p','练习','学习'],['r','错题复习','学习'],['t','思维地点','学习'],['f','趣味题','学习'],['g','锻造','奖励玩法'],['h','家','奖励玩法'],['w','方块世界','奖励玩法'],['k','伙伴乐园','奖励玩法'],['i','岛上','其他'],['s','家长区','其他'],['idle','挂机','挂机']];
-const NAME = Object.fromEntries(ACT.map(a => [a[0], a[1]])), GRP = Object.fromEntries(ACT.map(a => [a[0], a[2]]));
-const BUDGET = 10, MC = 15, BASE = MC / BUDGET;   // 家长现在的设定：每日练习 10 分钟、方块世界 15 分钟 → 奖励占比基准 1.5 倍
+// ---------- 原型数据（不是实现；实施时由 v2/timelog.js 统计，口径见 docs/意图-时间分析.md）----------
+// 活动（分钟）：p 练习 r 错题复习 t 思维地点 f 趣味题 g 锻造台 h 空空的家 w 方块世界 k 小伙伴乐园 i 岛上 s 家长区 idle 无操作
+const ACT = [['p','练习','学习'],['r','错题复习','学习'],['t','思维地点','学习'],['f','趣味题','学习'],['g','锻造台','奖励玩法'],['h','空空的家','奖励玩法'],['w','方块世界','奖励玩法'],['k','小伙伴乐园','奖励玩法'],['i','岛上','其他'],['s','家长区','其他'],['idle','无操作','无操作']];
+const BUDGET = 10, MC = 15;   // 每日练习时长（排课里写死，engine.js BUDGET）；方块世界每日时长（家长区设定）
 const D = (d, a, x) => Object.assign({d, a}, x);
+// e 真在作答（readSecs，不含答后停留）、ok 其中答对、fast 其中秒答；seg = [开始的小时, 前半题, 前半正确率, 前半每题秒, 后半题, 后半正确率, 后半每题秒]
 const DEMO = [
-  D('11-10', {p:12,r:4,t:3,f:1,g:4,h:5,w:15,k:0,i:3,s:1,idle:2}, {e:15.5,ok:13.8,fast:7.2,n:142,acc:.89,fr:.46,dunno:4,ups:9,mp:2,seg:[[19,40,.92,6.1,40,.88,6.6]]}),
-  D('11-11', {p:10,r:3,t:0,f:1,g:3,h:2,w:15,k:4,i:2,s:0,idle:1}, {e:11.8,ok:10.6,fast:6.1,n:118,acc:.9,fr:.52,dunno:2,ups:7,mp:1,seg:[[18,35,.94,5.8,35,.91,6.0]]}),
-  D('11-12', {p:14,r:6,t:5,f:1,g:6,h:8,w:20,k:6,i:6,s:2,idle:9}, {e:17.1,ok:14.2,fast:6.0,n:150,acc:.83,fr:.4,dunno:9,ups:6,mp:3,seg:[[19,38,.9,6.2,37,.76,8.4],[20,20,.8,7.9,20,.7,9.5]]}),
-  D('11-13', {p:10,r:4,t:2,f:1,g:2,h:3,w:10,k:0,i:2,s:0,idle:1}, {e:13.1,ok:12.0,fast:7.4,n:130,acc:.92,fr:.57,dunno:2,ups:8,mp:2,seg:[[18,33,.94,5.9,32,.92,6.1]]}),
-  D('11-14', {p:11,r:4,t:4,f:1,g:3,h:4,w:15,k:3,i:3,s:0,idle:3}, {e:14.6,ok:13.0,fast:7.0,n:138,acc:.89,fr:.5,dunno:3,ups:7,mp:2,seg:[[19,36,.91,6.0,36,.86,7.0]]}),
-  D('11-15', {p:18,r:6,t:6,f:2,g:5,h:12,w:30,k:8,i:7,s:1,idle:6}, {e:22.4,ok:18.6,fast:8.1,n:205,acc:.83,fr:.39,dunno:8,ups:10,mp:3,seg:[[10,50,.9,6.3,50,.8,8.2],[15,25,.84,7.0,25,.74,8.8]]}),
-  D('11-16', {p:10,r:4,t:2,f:1,g:3,h:4,w:15,k:2,i:3,s:1,idle:2}, {e:13.4,ok:12.1,fast:6.9,n:128,acc:.9,fr:.51,dunno:3,ups:7,mp:2,seg:[[19,33,.92,6.0,32,.9,6.3]]}),
+  D('11-10', {p:12,r:4,t:3,f:1,g:4,h:5,w:15,k:0,i:3,s:1,idle:2}, {e:13.0,ok:11.4,fast:6.0,n:142,acc:.89,fr:.46,dunno:4,ups:9,mp:2,seg:[[19,40,.92,5.1,40,.88,5.6]]}),
+  D('11-11', {p:10,r:3,t:0,f:1,g:3,h:2,w:15,k:4,i:2,s:0,idle:1}, {e:10.0,ok:9.0,fast:5.3,n:118,acc:.9,fr:.52,dunno:2,ups:7,mp:1,seg:[[18,35,.94,4.9,35,.91,5.1]]}),
+  D('11-12', {p:14,r:6,t:5,f:1,g:6,h:8,w:20,k:6,i:6,s:2,idle:9}, {e:14.5,ok:11.2,fast:4.9,n:150,acc:.83,fr:.4,dunno:9,ups:6,mp:3,seg:[[19,38,.9,5.2,37,.76,7.3],[20,20,.8,6.8,20,.7,8.4]]}),
+  D('11-13', {p:10,r:4,t:2,f:1,g:2,h:3,w:10,k:0,i:2,s:0,idle:1}, {e:11.0,ok:10.1,fast:6.3,n:130,acc:.92,fr:.57,dunno:2,ups:8,mp:2,seg:[[18,33,.94,4.9,32,.92,5.1]]}),
+  D('11-14', {p:11,r:4,t:4,f:1,g:3,h:4,w:15,k:3,i:3,s:0,idle:3}, {e:12.3,ok:10.9,fast:6.0,n:138,acc:.89,fr:.5,dunno:3,ups:7,mp:2,seg:[[19,36,.91,5.0,36,.86,5.9]]}),
+  D('11-15', {p:18,r:6,t:6,f:2,g:5,h:12,w:30,k:8,i:7,s:1,idle:6}, {e:19.0,ok:15.2,fast:6.8,n:205,acc:.83,fr:.39,dunno:8,ups:10,mp:3,seg:[[10,50,.9,5.3,50,.8,7.1],[15,25,.84,6.0,25,.74,7.6]]}),
+  D('11-16', {p:10,r:4,t:2,f:1,g:3,h:4,w:15,k:2,i:3,s:1,idle:2}, {e:11.3,ok:10.2,fast:6.0,n:128,acc:.9,fr:.51,dunno:3,ups:7,mp:2,seg:[[19,33,.92,5.0,32,.9,5.3]]}),
 ];
-const DEMO_HR = {7:[.0,0],8:[0,0],9:[.62,.48],10:[.58,.44],11:[.5,.4],12:[0,0],13:[0,0],14:[.47,.38],15:[.45,.37],16:[.5,.42],17:[.52,.45],18:[.6,.53],19:[.56,.5],20:[.41,.33]};
-// 空空真实数据（iPad 备份 2026-11-08 13:48）：只有作答、家、方块世界、锻造次数、正确率；其余从上线起记录（null）
+const DEMO_HR = {9:[.62,.48],10:[.58,.44],11:[.5,.4],14:[.47,.38],15:[.45,.37],16:[.5,.42],17:[.52,.45],18:[.6,.53],19:[.56,.5],20:[.41,.33]};
+// 空空真实数据（iPad 备份 2026-11-08 13:48）。11-02~05 只有 S.log 的题数和升档；11-06~08 有作答（含停留）、空空的家、方块世界
 const REAL = [
-  D('11-02', null, {none:true}), D('11-03', null, {none:true}), D('11-04', null, {none:true}), D('11-05', null, {none:true}),
-  D('11-06', {p:7.0,h:7.4,w:0}, {e:7.0,n:67,acc:null,fr:null,ups:21,partial:true,forge:0}),
-  D('11-07', {p:41.2,h:11.0,w:24.3}, {e:41.2,n:366,acc:.89,fr:.06,dunno:6,ups:68,partial:true,forge:16}),
-  D('11-08', {p:19.2,h:0.7,w:0.7}, {e:19.2,n:134,acc:.89,fr:.45,dunno:3,ups:8,partial:true,forge:5,cut:'只到 13:48'}),
+  D('11-02', null, {log:true,n:1,ups:35}), D('11-03', null, {log:true,n:62,ups:75}), D('11-04', null, {log:true,n:0,ups:1}), D('11-05', null, {log:true,n:98,ups:136}),
+  D('11-06', {p:7.0,h:7.4}, {old:7.0,n:67,acc:null,fr:null,ups:21,partial:true}),
+  D('11-07', {p:41.2,h:11.0,w:24.3}, {old:41.2,n:366,acc:.89,fr:.06,dunno:6,ups:68,partial:true}),
+  D('11-08', {p:19.2,h:0.7,w:0.7}, {old:19.2,n:134,acc:.89,fr:.45,dunno:3,ups:8,partial:true,cut:'只到 13:48'}),
 ];
 let SRC = 'demo', SEL = 6;
 const sumA = a => Object.values(a || {}).reduce((x, y) => x + (y || 0), 0);
 const mins = m => m === null || m === undefined ? '--' : m >= 60 ? `${Math.floor(m / 60)} 小时 ${Math.round(m % 60)} 分` : `${Math.round(m)} 分钟`;
 const pct = x => x === null || x === undefined ? '--' : Math.round(x * 100) + '%';
+const has = (a, k) => !!a && a[k] !== undefined;
 const grp = (a, g) => ACT.filter(x => x[2] === g).reduce((n, x) => n + ((a || {})[x[0]] || 0), 0);
-const TAG = {ok: ['正常', 't-ok'], warn: ['注意', 't-warn'], bad: ['需调整', 't-bad'], na: ['从今天起记录', 't-na']};
-// ---------- 健康度 5 项（门槛见 docs/意图-时间分析.md §3）----------
+const TAG = {ok: ['正常', 't-ok'], warn: ['注意', 't-warn'], bad: ['需调整', 't-bad'], part: ['数据不全', 't-na'], na: ['上线前未记录', 't-na']};
+const NA = d => d.partial || d.log || !d.a ? (d.a ? 'part' : 'na') : null;   // 旧日子：有一部分 = 数据不全；完全没有 = 上线前未记录
+// ---------- 健康度 6 项（门槛见意图卡 §3）----------
 function health(d) {
-  const a = d.a, total = a && !d.partial ? sumA(a) - (a.idle || 0) : null, learn = a ? grp(a, '学习') : null, play = a ? grp(a, '奖励玩法') : null;
-  const H = [];
+  const a = d.a, miss = NA(d), learn = a ? grp(a, '学习') : 0, total = a ? sumA(a) - (a.idle || 0) : 0, H = [];
+  const card = (k, t, v, rule, src, adj) => H.push({k, t, v, rule, src, adj});
   // 1 每日时长
-  { let t = 'na', v = '--'; const lt = d.partial ? (a ? (a.p || 0) : null) : learn;
-    if (lt !== null) { const tot = total !== null ? total : sumA(a); v = `学习 ${mins(lt)} · ${d.partial ? '有记录的 ' : ''}总 ${mins(tot)}`;
-      t = tot > 120 ? 'bad' : (tot > 60 || lt < BUDGET / 2) ? 'warn' : 'ok'; }
-    H.push({k: '每日时长', t, v, rule: `正常：学习达到每日练习时长（${BUDGET} 分钟），总时长 ≤ 60 分钟。注意：学习不到一半，或总时长 60–120 分钟。需调整：总时长 > 120 分钟`, src: '美国儿科学会：6 岁以上要「一致的限制」，不设固定上限；加拿大 24 小时活动指南：娱乐性屏幕时间每天 ≤ 2 小时。60 分钟一档是产品设定'}); }
+  if (miss) card('每日时长', miss, d.a ? `作答（含停留）${mins(d.old)} · 有记录的 ${mins(sumA(a))}` : '--', '', '', '');
+  else card('每日时长', total > 120 ? 'bad' : (total > 60 || learn < BUDGET) ? 'warn' : 'ok', `学习 ${mins(learn)} · 总 ${mins(total)}`, '');
+  H[0].rule = `正常：学习 ≥ 每日练习时长（${BUDGET} 分钟）且总时长 ≤ 60 分钟。注意：学习不到每日练习时长，或总时长 60–120 分钟。需调整：总时长 > 120 分钟`;
+  H[0].src = '美国儿科学会：6 岁以上要「一致的限制」，不设固定上限。120 分钟借用加拿大 24 小时活动指南「娱乐性屏幕时间每天不超过 2 小时」。60 分钟一档是产品设定';
+  H[0].adj = '对应调整：每日练习时长';
   // 2 有效学习占比
-  { let t = 'na', v = '--'; if (!d.partial && d.ok != null && learn) { const r = d.ok / learn; v = pct(r); t = r >= .6 ? 'ok' : r >= .4 ? 'warn' : 'bad'; }
-    H.push({k: '有效学习占比', t, v, rule: '有效学习（答对的作答时间）÷ 学习时间（在练习、错题复习、思维地点、趣味题页面的时间）。正常 ≥ 60%，注意 40–60%，需调整 < 40%', src: '口径：学业学习时间（Fisher、Berliner 等，BTES 1972–1978）：分配时间里有多少是高成功率的投入；门槛是产品设定，上线 2 周后校准'}); }
-  // 3 奖励占比
-  { let t = 'na', v = '--'; if (play !== null && learn) { const r = play / (d.partial ? (a.p || 1) : learn); v = r.toFixed(2) + ' 倍' + (d.partial ? '（不含锻造）' : ''); t = r <= BASE ? 'ok' : r <= BASE + 1 ? 'warn' : 'bad'; }
-    H.push({k: '奖励占比', t, v, rule: `奖励玩法（锻造、家、方块世界、伙伴乐园）÷ 学习时间。基准 = 家长现在的设定：方块世界 ${MC} 分钟 ÷ 每日练习 ${BUDGET} 分钟 = ${BASE} 倍。正常 ≤ ${BASE} 倍，注意 ${BASE}–${BASE + 1} 倍，需调整 > ${BASE + 1} 倍（家长改设定，基准跟着变）`, src: '基准取家长自己的设定；依据 Ben「往有效利用时间上走」；反面案例：Prodigy 数学游戏被批评玩的时间远多于做题（家长个案）'}); }
-  // 4 越练越累
-  { let t = 'na', v = '--'; const s = (d.seg || []).filter(x => x[1] >= 6 && x[4] >= 6);
+  { const ok = !miss && d.ok != null && learn; card('有效学习占比', ok ? (d.ok / learn >= .5 ? 'ok' : d.ok / learn >= .35 ? 'warn' : 'bad') : (miss || 'na'), ok ? pct(d.ok / learn) : '--',
+      '有效学习（答对的作答时间，不含答后停留）÷ 学习时间。正常 ≥ 50%，注意 35–50%，需调整 < 35%（学习页面里本来就含讲解卡、答后停留和结算页）', '口径改编自学业学习时间（Fisher、Berliner 等，BTES 1972–1978）；门槛是产品设定，上线 2 周后校准', '对应调整：难度、讲解卡长度'); }
+  // 3 游戏时长（对照家长设定）
+  { const g = has(a, 'w') ? a.w : null, over = g === null ? null : (g - MC) / MC;
+    card('游戏时长', g === null ? (miss || 'na') : over <= 0 ? 'ok' : over <= .5 ? 'warn' : 'bad', g === null ? '--' : `方块世界 ${mins(g)} · 设定 ${MC} 分钟${has(a, 'k') ? ` · 小伙伴乐园 ${mins(a.k)}` : ''}`,
+      `方块世界对照家长设定的每日时长（现在 ${MC} 分钟，含当天加时）。正常 ≤ 设定，注意超出不到 50%，需调整超出 50% 以上。小伙伴乐园单独显示：是否和方块世界共用每日时长，等 C 模块确认`, '基准取家长自己的设定', '对应调整：方块世界每日时长（家长区）'); }
+  // 4 岛上奖励玩法
+  { const known = !miss && has(a, 'g'), r = known && learn ? ((a.g || 0) + (a.h || 0)) / learn : null;
+    card('岛上奖励玩法', r === null ? (miss || 'na') : r <= .5 ? 'ok' : r <= 1 ? 'warn' : 'bad', r === null ? (has(a, 'h') ? `空空的家 ${mins(a.h)} · 锻造台未记录` : '--') : r.toFixed(2) + ' 倍',
+      '（空空的家 + 锻造台）÷ 学习时间。正常 ≤ 0.5 倍，注意 0.5–1 倍，需调整 > 1 倍', '产品设定，依据 Ben「往有效利用时间上走」；反面案例：Prodigy 数学游戏被批评玩的时间远多于做题（家长个案）', '对应调整：锻造台每天次数'); }
+  // 5 后半段表现
+  { const s = (d.seg || []).filter(x => x[1] >= 6 && x[4] >= 6); let t = miss || 'na', v = '--';
     if (s.length) { const w = s.reduce((m, x) => { const da = (x[2] - x[5]) * 100, dt = (x[6] - x[3]) / x[3] * 100; return da + dt > m.da + m.dt ? {da, dt} : m; }, {da: -1e9, dt: -1e9});
-      v = `后半段正确率 ${w.da > 0 ? '降 ' + Math.round(w.da) : '持平'}${w.da > 0 ? ' 个百分点' : ''} · 每题用时 ${w.dt > 0 ? '增 ' + Math.round(w.dt) + '%' : '持平'}`;
-      const n = (w.da >= 10) + (w.dt >= 30); t = n === 2 ? 'bad' : n === 1 ? 'warn' : 'ok'; }
-    H.push({k: '越练越累', t, v, rule: '每段练习后半段比前半段：正确率降 ≥ 10 个百分点、每题用时增 ≥ 30%。都没有 = 正常，有一项 = 注意，两项 = 需调整（取当天最明显的一段）', src: '产品设定；学业学习时间要求「高成功率」，成功率掉下来，后面的时间就不算有效'}); }
-  // 5 挂机
-  { let t = 'na', v = '--'; if (!d.partial && a && total) { const r = (a.idle || 0) / (total + (a.idle || 0)); v = pct(r); t = r < .1 ? 'ok' : r <= .2 ? 'warn' : 'bad'; }
-    H.push({k: '挂机', t, v, rule: '连续 60 秒没有点按，之后的时间记挂机；切后台、熄屏不计。挂机 ÷ 在岛时间：正常 < 10%，注意 10–20%，需调整 > 20%', src: '60 秒来自 Imagine Learning（约 60 秒无操作暂停计时）；Khan Academy 也不计闲置。占比门槛是产品设定'}); }
+      v = `正确率${w.da >= 1 ? '降 ' + Math.round(w.da) + ' 个百分点' : '持平'} · 每题用时${w.dt >= 1 ? '增 ' + Math.round(w.dt) + '%' : '持平'}`; const n = (w.da >= 10) + (w.dt >= 30); t = n === 2 ? 'bad' : n === 1 ? 'warn' : 'ok'; }
+    card('后半段表现', t, v, '每段练习后半段比前半段：正确率降 ≥ 10 个百分点、每题用时增 ≥ 30%（取当天最明显的一段）。都没有 = 正常，一项 = 注意，两项 = 需调整', '产品设定；对照已有的休息规则：连续有效学习 30 分钟休息 5 分钟', '对应调整：每日练习时长、休息规则'); }
+  // 6 无操作
+  { const ok = !miss && has(a, 'idle'), r = ok ? a.idle / (total + a.idle) : null;
+    card('无操作', r === null ? (miss || 'na') : r < .1 ? 'ok' : r <= .2 ? 'warn' : 'bad', r === null ? '--' : pct(r),
+      '出题页超过单题上限（60 秒）、讲解卡超过 90 秒、其他页 60 秒不点屏幕，之后的时间记无操作；切后台、熄屏不计。无操作 ÷ 在岛时间：正常 < 10%，注意 10–20%，需调整 > 20%', '判定参照 Imagine Learning（约 60 秒无交互暂停计时，原文未核对）；占比门槛是产品设定', '提醒家长，不调设置'); }
   return H;
 }
 function conclusion(d, H) {
-  if (d.none) return '这一天没有记录';
-  const bad = H.filter(h => h.t === 'bad' || h.t === 'warn');
-  const parts = [];
-  if (d.partial) parts.push('旧日子只有作答、家、方块世界的记录，其余从今天起记录');
-  if (d.fr !== null && d.fr !== undefined && d.acc !== null && d.acc - d.fr > .3) parts.push(`答对 ${pct(d.acc)}，但秒答只有 ${pct(d.fr)}：会做、做得慢`);
-  bad.forEach(h => parts.push(`${h.k}${h.t === 'bad' ? '需调整' : '要注意'}（${h.v}）`));
-  return parts.length ? parts.join('；') : '各项正常';
+  if (!d.a) return d.log ? `上线前未记录时长；当天作答 ${d.n} 题、升档 ${d.ups} 次（来自每日记录）` : '这一天没有记录';
+  const flag = H.filter(h => h.t === 'bad' || h.t === 'warn').map(h => `${h.k}${h.t === 'bad' ? '需调整' : '要注意'}（${h.v}）`);
+  return (d.partial ? '旧日子只有作答（含停留）、空空的家、方块世界的记录，其余数据不全。' : '') + (flag.length ? flag.join('；') : (d.partial ? '' : '各项正常'));
 }
 function render() {
-  const days = SRC === 'demo' ? DEMO : REAL, d = days[SEL], H = health(d), okN = H.filter(h => h.t === 'ok').length, known = H.filter(h => h.t !== 'na').length;
+  const days = SRC === 'demo' ? DEMO : REAL, d = days[SEL], H = health(d), known = H.filter(h => !['na', 'part'].includes(h.t)), okN = known.filter(h => h.t === 'ok').length;
   document.getElementById('sub').textContent = SRC === 'demo' ? '近 7 天 · 示例数据（模拟）' : '空空真实数据 · iPad 备份 11-08 13:48';
   const max = Math.max(60, ...days.map(x => x.a ? sumA(x.a) : 0)), refPct = BUDGET / max * 100;
-  const bars = days.map((x, i) => `<div class="bar ${i === SEL ? 'sel' : ''}" data-i="${i}" title="${x.d}">${x.a ? ACT.map(([k]) => x.a[k] ? `<i style="height:${x.a[k] / max * 100}%;background:var(--c-${k})"></i>` : '').join('') : '<div class="none">从今天起记录</div>'}</div>`).join('');
-  const a = d.a || {}, tot = sumA(a);
-  const hasRec = g => ACT.some(x => x[2] === g && a[x[0]] !== undefined);
-  const actList = ['学习', '奖励玩法', '其他', '挂机'].map(g => `<div class="grp">${g} ${d.a && hasRec(g) ? mins(grp(a, g)) + (d.partial ? '（有记录的部分）' : '') : ''}</div>` + ACT.filter(x => x[2] === g).map(([k, n]) => `<div><i style="width:10px;height:10px;display:inline-block;background:var(--c-${k})"></i>${n}<b>${a[k] === undefined ? (d.partial ? '<span class="muted">从今天起记录</span>' : '--') : mins(a[k])}</b></div>`).join('')).join('');
-  const learnPage = d.partial ? null : grp(a, '学习');
-  const frow = (l, v, base, note) => `<div class="frow"><span>${l}</span><div class="ftrack"><i style="width:${v === null || !base ? 0 : Math.min(100, v / base * 100)}%"></i></div><b>${v === null ? '<span class="muted">从今天起记录</span>' : mins(v)}${note ? `<br><span class="muted">${note}</span>` : ''}</b></div>`;
-  const segRows = (d.seg || []).map(s => `<tr><td>${s[0]}:00 起</td><td>${s[1] + s[4]} 题</td><td>${pct(s[2])} → <span class="${s[5] < s[2] - .095 ? 'dn' : ''}">${pct(s[5])}</span></td><td>${s[3].toFixed(1)} → <span class="${s[6] > s[3] * 1.3 ? 'dn' : ''}">${s[6].toFixed(1)}</span> 秒</td></tr>`).join('');
+  const bars = days.map((x, i) => `<button class="bar ${i === SEL ? 'sel' : ''}" data-i="${i}" aria-label="${x.d}">${x.a ? ACT.map(([k]) => x.a[k] ? `<i style="height:${x.a[k] / max * 100}%;background:var(--c-${k})"></i>` : '').join('') : `<span class="none">${x.log ? x.n + ' 题 · 未记录时长' : '上线前未记录'}</span>`}</button>`).join('');
+  const a = d.a || {}, tot = sumA(a), miss = NA(d);
+  const hasG = g => ACT.some(x => x[2] === g && has(d.a, x[0]));
+  const actList = ['学习', '奖励玩法', '其他', '无操作'].map(g => `<div class="grp">${g} ${hasG(g) ? mins(grp(a, g)) + (miss ? '（有记录的部分）' : '') : ''}</div>` + ACT.filter(x => x[2] === g).map(([k, n]) => `<div><i style="width:10px;height:10px;display:inline-block;background:var(--c-${k})"></i>${n}<b>${has(d.a, k) ? mins(a[k]) : '<span class="muted">' + (miss ? '上线前未记录' : '--') + '</span>'}</b></div>`).join('')).join('');
+  const learnPage = miss ? null : grp(a, '学习');
+  const frow = (l, v, base, note) => `<div class="frow"><span>${l}</span><div class="ftrack"><i style="width:${v == null || !base ? 0 : Math.min(100, v / base * 100)}%"></i></div><b>${v == null ? '<span class="muted">上线前未记录</span>' : mins(v)}${note ? `<br><span class="muted">${note}</span>` : ''}</b></div>`;
+  const three = d.old != null
+    ? `${frow('作答（含停留）', d.old, d.old, '旧口径：含答后停留和讲解卡')}${frow('真在作答', null)}${frow('答对的作答', null, 0, d.acc != null ? '正确率 ' + pct(d.acc) : '')}${frow('其中秒答', null, 0, d.fr != null ? '秒答率 ' + pct(d.fr) : '')}`
+    : `${frow('在学习页面', learnPage, learnPage)}${frow('真在作答', d.e == null ? null : d.e, learnPage)}${frow('答对的作答', d.ok == null ? null : d.ok, learnPage, d.acc != null ? '正确率 ' + pct(d.acc) : '')}${frow('其中秒答', d.fast == null ? null : d.fast, learnPage, d.fr != null ? '秒答率 ' + pct(d.fr) : '')}`;
+  const per10 = d.e ? `<span class="chip">每 10 分钟作答 ${Math.round((d.n || 0) / d.e * 10)} 题、升档 ${((d.ups || 0) / d.e * 10).toFixed(1)} 次</span>` : '';
+  const segRows = (d.seg || []).map(s => `<tr><td>${s[0]}:00 起</td><td>${s[1] + s[4]} 题</td><td>${pct(s[2])} → <span class="${s[2] - s[5] >= .1 ? 'dn' : ''}">${pct(s[5])}</span></td><td>${s[3].toFixed(1)} → <span class="${s[6] >= s[3] * 1.3 ? 'dn' : ''}">${s[6].toFixed(1)}</span> 秒</td></tr>`).join('');
   const hrs = SRC === 'demo' ? Array.from({length: 14}, (_, i) => i + 7).map(h => { const v = DEMO_HR[h] || [0, 0]; return `<div style="background:${v[0] ? `rgba(123,216,143,${.2 + v[1] * 1.4})` : 'var(--stone-hi)'}" title="${h}:00 正确率 ${pct(v[0])} 秒答率 ${pct(v[1])}">${h}</div>`; }).join('') : '';
   document.getElementById('root').innerHTML = `
     <div class="panel hero">
-      <div><div class="muted">${d.d} 在岛时间${d.cut ? '（' + d.cut + '）' : ''}</div><div class="big">${d.none ? '--' : d.partial ? mins(tot) : mins(tot - (a.idle || 0))}<small>${d.partial ? '有记录的部分' : '不含挂机'}</small></div></div>
-      <div><div class="muted" style="margin-bottom:4px">健康度：${known ? `${known} 项有数据，${okN} 项正常` : '还没有数据'}</div><div class="health">${H.map(h => `<span class="tag ${TAG[h.t][1]}">${h.k} · ${TAG[h.t][0]}</span>`).join('')}</div></div>
+      <div><div class="muted">${d.d} 在岛时间${d.cut ? '（' + d.cut + '）' : ''}</div><div class="big">${!d.a ? '--' : miss ? mins(tot) : mins(tot - (a.idle || 0))}<small>${!d.a ? '上线前未记录' : miss ? '有记录的部分' : '不含无操作'}</small></div></div>
+      <div><div class="muted" style="margin-bottom:4px">健康度：${known.length ? `有数据的 ${known.length} 项里 ${okN} 项正常` : '还没有可判断的数据'}</div><div class="health">${H.map(h => `<span class="tag ${TAG[h.t][1]}">${h.k} · ${TAG[h.t][0]}</span>`).join('')}</div></div>
       <div class="sum">${conclusion(d, H)}</div>
     </div>
-    <div class="panel"><div style="display:flex;align-items:baseline;gap:10px"><b>近 7 天</b><span class="muted">点柱子看当天 · 虚线 = 每日练习时长 ${BUDGET} 分钟</span></div>
-      <div class="bars"><div class="ref" style="bottom:${refPct}%"><span>${BUDGET} 分</span></div>${bars}</div>
+    <div class="panel"><div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px"><b>近 7 天</b><span class="muted">点选日期查看当天 · 虚线：每日练习时长 ${BUDGET} 分钟</span></div>
+      <div class="bars"><div class="ref" style="bottom:${refPct}%"><span>${BUDGET} 分钟</span></div>${bars}</div>
       <div class="xl">${days.map(x => `<span>${x.d}</span>`).join('')}</div>
       <div class="legend">${ACT.map(([k, n]) => `<span><i style="background:var(--c-${k})"></i>${n}</span>`).join('')}</div></div>
     <div class="panel"><b>时间去向 · ${d.d}</b>
       ${d.a ? `<div class="hbar">${ACT.map(([k]) => a[k] ? `<i style="width:${a[k] / tot * 100}%;background:var(--c-${k})"></i>` : '').join('')}</div>` : ''}
-      <div class="acts">${d.none ? '<div class="muted">这一天没有记录</div>' : actList}</div></div>
-    <div class="panel"><b>练习里有效的有多少</b><span class="muted"> · 学业学习时间三层</span>
-      <div class="funnel">${frow('在学习页面', learnPage, learnPage)}${frow('真在作答', d.e === undefined ? null : d.e, learnPage || d.e)}${frow('答对的作答', d.ok === undefined ? null : d.ok, learnPage || d.e, d.acc != null ? '正确率 ' + pct(d.acc) : '')}${frow('其中秒答', d.fast === undefined ? null : d.fast, learnPage || d.e, d.fr != null ? '秒答率 ' + pct(d.fr) : '')}</div>
-      <div class="chips"><span class="chip">作答 ${d.n || '--'} 题</span><span class="chip">「不会」 ${d.dunno === undefined ? '--' : d.dunno} 次</span><span class="chip">新点亮 ${d.ups === undefined ? '--' : d.ups} 格</span><span class="chip">错题学会 ${d.mp === undefined ? '<span class="muted">从今天起记录</span>' : d.mp + ' 道'}</span>${d.e ? `<span class="chip">每 10 分钟作答 ${Math.round((d.n || 0) / d.e * 10)} 题、点亮 ${((d.ups || 0) / d.e * 10).toFixed(1)} 格</span>` : ''}</div></div>
-    <div class="hcards">${H.map(h => `<div class="hcard"><div style="display:flex;justify-content:space-between;gap:8px"><b>${h.k}</b><span class="tag ${TAG[h.t][1]}">${TAG[h.t][0]}</span></div><div class="v">${h.v}</div><details><summary>门槛和出处</summary>${h.rule}<br>出处：${h.src}</details></div>`).join('')}</div>
-    <div class="panel"><b>越练越累</b><span class="muted"> · 每段练习，前半段 → 后半段</span>
-      ${segRows ? `<table><tr><th>开始</th><th>题数</th><th>正确率</th><th>每题用时</th></tr>${segRows}</table>` : '<div class="muted" style="margin-top:6px">从今天起记录</div>'}</div>
+      <div class="acts">${!d.a ? '<div class="muted">上线前未记录时长</div>' : actList}</div></div>
+    <div class="panel"><b>练习里有效的有多少</b><span class="muted"> · 学业学习时间三层（改编）</span>
+      <div class="funnel">${three}</div>
+      <div class="chips"><span class="chip">作答 ${d.n == null ? '--' : d.n} 题</span><span class="chip">「不会」 ${d.dunno == null ? '--' : d.dunno} 次</span><span class="chip">升档 ${d.ups == null ? '--' : d.ups} 次</span><span class="chip">错题学会 ${d.mp == null ? '<span class="muted">上线前未记录</span>' : d.mp + ' 道'}</span>${per10}</div></div>
+    <div class="hcards">${H.map(h => `<div class="hcard"><div style="display:flex;justify-content:space-between;gap:8px"><b>${h.k}</b><span class="tag ${TAG[h.t][1]}">${TAG[h.t][0]}</span></div><div class="v">${h.v}</div><div class="adj">${h.adj}</div><details><summary>门槛和出处</summary>${h.rule}<br>出处：${h.src}</details></div>`).join('')}</div>
+    <div class="panel"><b>后半段表现</b><span class="muted"> · 每段练习，前半段 → 后半段</span>
+      ${segRows ? `<table><tr><th>开始</th><th>题数</th><th>正确率</th><th>每题用时</th></tr>${segRows}</table>` : `<div class="muted" style="margin-top:6px">${d.a || d.log ? '上线前未记录' : '--'}</div>`}</div>
     <div class="panel"><b>分时段效率</b><span class="muted"> · 近 14 天，颜色越深秒答率越高</span>
       ${hrs ? `<div class="hours">${hrs}</div><div class="muted" style="margin-top:6px">示例：上午 9–10 点和傍晚 6–7 点秒答率最高，晚上 8 点以后明显下降</div>` : '<div class="muted" style="margin-top:6px">数据不足：攒满 14 天后显示</div>'}</div>
     <div class="panel"><b>主要问题和建议</b><ol class="todo">${SRC === 'demo'
-      ? '<li>11-15（周六）在岛 1 小时 35 分：方块世界 30 分钟，是设定的 2 倍；家 12 分钟。建议周末也按平日的方块世界时长</li><li>11-12、11-15 两天后半段正确率降 10 个百分点以上：练到第 40 题左右开始累。建议每日练习满 40 题就进结算</li><li>晚上 8 点以后秒答率最低，建议练习放在晚饭前</li>'
-      : '<li>11-07 作答 41 分钟，是每日练习时长的 4 倍；加上家和方块世界，有记录的就有约 77 分钟</li><li>答对 89%，但 11-07 秒答只有 6%：会做、做得慢。这些时间推进「学会」很少（11-07 正好在改秒答标准，要用新数据再确认）</li><li>锻造用时、岛上闲逛、挂机、前后半段都没有记录，从上线起记</li>'}</ol></div>
-    <div class="foot">口径说明<br>在岛时间 = 数学岛在前台、且 60 秒内有点按的时间；切后台、熄屏不计 · 挂机 = 连续 60 秒没有点按之后的时间<br>真在作答 = 题目出现到交卷，单题最多 60 秒 · 答对的作答 = 其中答对的题 · 秒答 = 在秒答时间内答对<br>方块世界、伙伴乐园在另一个页面，数据截至上次打开数学岛 · 手机和 iPad 各记各的，互发进度后按天取大<br>健康度不打总分；每项门槛和出处点卡片里的「门槛和出处」</div>
+      ? '<li>11-15（周六）在岛 1 小时 35 分；方块世界 30 分钟，是设定的 2 倍。建议周末也按设定的方块世界时长</li><li>11-12、11-15 后半段正确率降 10 个百分点以上：每段练到第 35–50 题开始下降。建议每日练习满 40 题进结算</li><li>晚上 8 点以后秒答率最低，建议练习放在晚饭前</li>'
+      : '<li>11-07 作答（含停留）41 分钟；扣掉答后停留约 27 分钟，仍是每日练习时长的 2.7 倍。加上空空的家和方块世界，有记录的约 77 分钟</li><li>11-07 方块世界 24 分钟，超过现在的设定 15 分钟；当天设定和加时没有记录，原因待查</li><li>11-07 秒答率 6%、11-08 45%，但 11-07 每题反而更快：更可能是秒答标准在改，不据此判断快慢，等新数据</li>'}</ol></div>
+    <div class="foot">口径说明<br>在岛时间 = 数学岛在前台、且没有超过无操作上限的时间；切后台、熄屏不计 · 无操作 = 出题页超过单题上限（60 秒）、讲解卡超过 90 秒、其他页超过 60 秒不点屏幕之后的时间<br>真在作答 = 题目出现到交卷，不含答后停留，单题最多 60 秒 · 答对的作答 = 其中答对的题 · 秒答 = 在秒答时间内答对 · 升档 = 格子往上走一档<br>作答（含停留）= 旧记录的口径，含答后停留和讲解卡 · 每日练习时长现在是排课里写死的 10 分钟，点「再练一会」加 5 分钟<br>方块世界、小伙伴乐园在另一个页面，数据截至上次打开数学岛 · 手机和 iPad 各记各的，互发进度后按天取大，同一天两台都用时会少算<br>健康度不打总分；每项门槛和出处见卡片里的「门槛和出处」</div>
     <div class="proto">原型：示例数据为模拟；「空空真实数据」取自 iPad 备份。实施后数据来自 v2/timelog.js。</div>`;
   document.querySelectorAll('.bar').forEach(b => b.addEventListener('click', () => { SEL = +b.dataset.i; render(); }));
 }
