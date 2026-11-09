@@ -1,5 +1,5 @@
 // 第三批趣味题排课（docs/说明书-第三批.md §4.3，B）：单独的插入通道、每日练习 90 秒封顶、两道之间至少 5 道普通题、前置按点亮判、
-// 每天最多开始 1 个新趣味题型、答错只回来一次（5 道之后）、不占计算讲解卡名额、自由加练按组另封顶 90 秒、复习只管 90 秒、FUN_SEC = 0 时一道不出
+// 每天最多开始 1 个新趣味题型、答错只回来一次（5 道之后）且不进错题本（说明书 §4.3 第 162–163 行，中控 11-09）、不占计算讲解卡名额、自由加练按组另封顶 90 秒、FUN_SEC = 0 时一道不出
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict');
 const C = require('../v2/core.js'), K = require('../v2/skills.js'), E = require('../v2/engine.js');
@@ -51,24 +51,20 @@ test('每天最多开始 1 个新的趣味题型；趣味题的示范卡、讲�
   assert.ok(!(S.daily.cards || []).some(c => funConcepts.has(c)), '计算讲解卡名额里有趣味概念：' + S.daily.cards);
 }));
 
-test('趣味题答错：只回来一次，而且至少隔 5 道普通题；之后进错题本', () => withFun(90, () => {
+test('趣味题答错：只回来一次，而且至少隔 5 道普通题；不进错题本（不长期回炉）', () => withFun(90, () => {
   const S = ready(); let first = null;
   const log = run(E.session(S, D(0), {rnd: seeded(6)}), x => (isFun(x) && !first ? (first = x.inst, {ok: false, fast: false, secs: 15}) : okAll(x))).filter(x => x.kind === 'q');
   assert.ok(first, '要出过趣味题');
   const idx = log.map((x, i) => (x.inst === first || (isFun(x) && JSON.stringify(x.inst.q) === JSON.stringify(first.q)) ? i : -1)).filter(i => i >= 0);
   assert.equal(idx.length, 2, '原题 + 回来一次：' + idx);
   assert.ok(log.slice(idx[0] + 1, idx[1]).filter(x => !isFun(x)).length >= 5, '回来前至少 5 道普通题');
-  assert.ok(Object.values(S.mistakes).some(m => FUNIDS.has(m.uid)), '进了错题本');
+  assert.ok(!Object.values(S.mistakes).some(m => FUNIDS.has(m.uid)), '趣味题不进错题本');
 }));
 
-test('第二天：到期的趣味错题从插入通道回炉（不走普通错题穿插），也受 5 道间隔管', () => withFun(90, () => {
-  const S = ready(); let first = null;
-  run(E.session(S, D(0), {rnd: seeded(7)}), x => (isFun(x) && !first ? (first = x, {ok: false, fast: false, secs: 15}) : okAll(x)));
-  const due = Object.values(S.mistakes).find(m => FUNIDS.has(m.uid)); assert.ok(due);
-  const log = run(E.session(S, due.due, {rnd: seeded(8)}), okAll).filter(x => x.kind === 'q');
-  const i = log.findIndex(x => x.mkey === due.key); assert.ok(i >= 5, '趣味错题在第 ' + i + ' 道出现（前面至少 5 道普通题）');
-  assert.ok(isFun(log[i]) && log[i].fun, '走插入通道');
-}));
+test('关掉时不记间隔计数（和改动前的存档完全一样）', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+  const S = ready(); run(E.session(S, D(0), {rnd: seeded(7)}), okAll);
+  assert.ok(!('sinceFun' in S.daily) && !('funSec' in S.daily));
+});
 
 test('再练一会和每日练习共用 90 秒', () => withFun(90, () => {
   const S = ready(); run(E.session(S, D(0), {rnd: seeded(9)}), okAll);

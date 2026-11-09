@@ -229,9 +229,7 @@
         const left = K.FUN_SEC - (st.funSec || 0); if (left <= 0) return null;
         const fits = inst => K.fastMs(inst, {}) / 1000 <= left, inG = sid => !o.group || inGroup(K.BY[sid], o.group);
         if (st.funRetry) { const inst = st.funRetry.inst; if (!fits(inst)) return null; st.funRetry = null; return q(inst, {retry: 1, credit: false}); }   // 答错只回来一次
-        const fm = dueMistakes(S, day).find(m => isFunId(m.uid) && inG(K.ITEM[m.uid].skill) && o.room(m.uid) && fits(instOfMistake(m)));
-        if (fm) return q(instOfMistake(fm), {mkey: fm.key});
-        if (o.mistOnly) return null;
+        if (o.mistOnly) return null;   // 趣味题不进错题本（说明书 §4.3 第 162–163 行，中控 11-09），复习这一组没有趣味题
         st.funNew = st.funNew || [];
         const rank = it => { const l = lv(S, it.id); return l === 3 ? -1 : l >= 1 ? 0 : peek(S, it.id).seen > 0 ? 1 : 2; };   // 能升级的 → 开始了没点亮的 → 新题型
         const c = K.FUN.filter(s => inG(s.id) && funReady(S, s)).flatMap(s => s.items.map(it => ({s, it, k: rank(it)})))
@@ -241,6 +239,7 @@
         return null;
       },
       answered(x, res) {
+        if (!(K.FUN_SEC > 0)) return;   // 关掉时什么都不记，存档和改动前一样
         if (!x.fun) { st.sinceFun = (st.sinceFun || 0) + 1; return; }   // 错题穿插、当场再来的题都算普通题
         st.sinceFun = 0; st.funSec = Math.round(((st.funSec || 0) + (res.secs || 0)) * 10) / 10;
         if (!res.ok && !x.retry && !x.mkey) st.funRetry = {inst: x.inst};
@@ -331,7 +330,7 @@
       C.reviewMistake(S, x.mkey, r, day);
       if (note && r !== 'fast') C.noteMistake(S, x.mkey, ev(r === 'slow' ? 's' : res.dunno ? 'd' : 'w', false), day);
       if (S.mistakes[x.mkey] && S.mistakes[x.mkey].due === null) C.notePassed(S, x.mkey, day, skill);
-    } else if (!res.ok) {   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉
+    } else if (!res.ok && !(K.BY[skill] || {}).fun) {   // 10-29 Ben：写错的题都要进错题宝箱（含还在学的灰格），孩子才看得到、隔天能回炉；趣味题不进（只当场回来一次，说明书-第三批 §4.3）
       const k0 = mistKeyOf(S, x.inst), m0 = k0 && S.mistakes[k0], fresh = !m0 || m0.due === null;   // 先判断是不是新进本（已过关 / 下架的算新）
       const key = addMistake(S, x.inst, day);
       if (note) C.noteMistake(S, key, ev(res.dunno ? 'd' : 'w', fresh), day);
