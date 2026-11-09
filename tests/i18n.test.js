@@ -82,7 +82,7 @@ function childHtml() {
   let h = read('../v2/index.html');
   h = h.slice(h.indexOf('<body'), h.indexOf('<!-- 改了 core'));
   const cut = id => { const i = h.indexOf(`id="${id}"`); if (i < 0) throw new Error('页面没有 ' + id); const start = h.lastIndexOf('<', i); let depth = 0; const re = /<(\/?)div\b[^>]*>/g; re.lastIndex = start; let m; while ((m = re.exec(h))) { depth += m[1] ? -1 : 1; if (!depth) { h = h.slice(0, start) + h.slice(m.index + m[0].length); return; } } throw new Error('没配平 ' + id); };
-  ['parent', 'bankv', 'habit', 'ovQ', 'ovCrash', 'testBar'].forEach(cut);
+  ['parent', 'bankv', 'habit', 'mistp', 'ovQ', 'ovCrash', 'testBar'].forEach(cut);
   return h.replace(/<!--[\s\S]*?-->/g, '');
 }
 test('页面静态文字（家长区除外）都有英文', () => {
@@ -188,4 +188,8 @@ test('家：三四年级伙伴图鉴的说明、「新本领」导航有英文�
   assert.ok(!I18N.ZH.test(txt('学会了第 15 级的全部新本领，全部隔 3 天还做对')));
   assert.equal(txt('新本领'), 'New skills');
   ['林间小鹿', '驼驼', '斑斑豹', '冰冰熊', '泡泡海马', '岩角羊', '火尾蜥', '铜壳虫', '紫夜鸮', '云鲸', '小飞龙'].forEach(n => assert.ok(!I18N.ZH.test(txt(n)), n));
+});
+
+test('孩子错题宝箱（11-09 简化）三栏和按钮有英文', () => {
+  ['开始复习', '看全部错题', '今天要复习', '过几天再来', '已经学会', '今天没有', '还没有', '今天没有要复习的', '还有 5 道'].forEach(s => assert.ok(!I18N.ZH.test(txt(s)), s));
 });

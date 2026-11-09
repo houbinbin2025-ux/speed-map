@@ -383,10 +383,20 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .cl{width:18px;height:18px;border:2px solid #000}
 .ty{min-width:120px;height:30px;border:2px solid #000;padding:2px 8px;display:flex;align-items:center;font-size:12px;white-space:nowrap}
 .mgroups{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start}
+/* 孩子的错题宝箱（11-09 简化，原型 docs/原型/错题-家长视角）：一个「开始复习」+ 今天要复习 / 过几天再来 / 已经学会 三栏；统计和规则给家长区 */
+#mist h1 small{font-size:15px;color:var(--mute);font-weight:700;margin-left:8px}
+#mistGo{flex:none;height:64px;font-size:23px;width:100%}
+@media (max-height:340px){#mistGo{height:52px;font-size:21px}}
+.mshelves{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mshelf{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.mshelf>b{font-size:16px;flex:none}
+.mshelf .mrow{background:none;border:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;overflow-y:auto;min-height:0}
+.mshelf.done .mq{opacity:.55}
+.mshelf .mmore{font-size:14px;color:var(--mute);align-self:center}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:16px}.mg .mh span{flex:1}
 .mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
-.mq.later{opacity:.7;display:inline-flex;align-items:baseline;gap:6px}.mq.later i{font-style:normal;font-family:inherit;font-size:12px;font-weight:700;color:var(--dim)}
+.mq.later{opacity:.7;display:inline-flex;align-items:baseline;gap:6px}.mq.later i{font-style:normal;white-space:nowrap;font-family:inherit;font-size:12px;font-weight:700;color:var(--dim)}
 .ovl{position:fixed;inset:0;z-index:40;background:rgba(27,29,34,.97);display:flex;align-items:center;justify-content:center;padding:20px}
 .ovl .card{width:520px;max-width:100%;padding:24px 28px;background:var(--stone);border:4px solid #000;box-shadow:0 6px 0 #000;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
 .ovl .card h3{margin:0;font-size:28px;font-weight:900}
@@ -396,6 +406,26 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .pgrid .panel{overflow:visible}
 /* 三四年级：长算式、讲解里的题干 */
 .eq.xs{font-size:clamp(22px,4vw,28px);white-space:normal;flex-wrap:wrap;justify-content:center;gap:4px}.whysay{font-size:15px;line-height:1.3;font-weight:700;color:var(--mute);margin-bottom:6px}
+/* 家长区 · 错题分析 */
+.mpw{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px;padding-bottom:16px}
+.msum{background:var(--stone);border:2px solid #000;border-left:6px solid var(--warn);padding:10px 12px;font-size:15px;line-height:1.6}
+.mkpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.mkpi{background:var(--stone);border:2px solid #000;padding:8px 6px;text-align:center}.mkpi b{display:block;font-family:var(--f-num);font-size:24px;line-height:1.2}.mkpi span{display:block;font-size:12px;color:var(--dim)}.mkpi i{font-style:normal;font-size:12px}
+.mup{color:var(--bad)}.mdn{color:var(--ok)}
+.mh2{font-size:14px;color:var(--dim);margin:6px 0 0}
+.mcat{background:var(--stone);border:2px solid #000}
+.mcat>summary{list-style:none;cursor:pointer;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;min-height:44px}.mcat>summary::-webkit-details-marker{display:none}
+.mcn{font-weight:900;font-size:16px}.mtag{font-size:12px;padding:1px 8px;border:1px solid #000;white-space:nowrap;align-self:start}
+.mtag.teach{background:#5a2c27;color:#ffcfc6}.mtag.wrong,.mtag.slow{background:#54451f;color:#ffe08a}.mtag.better{background:#24452f;color:#b5ecc4}.mtag.few{background:var(--stone-hi);color:var(--mute)}
+.mmeta{grid-column:1/-1;font-size:13px;color:var(--dim)}
+.mbar{grid-column:1/-1;display:flex;height:8px;background:var(--stone-hi)}.mbar i{display:block}
+.mleg{grid-column:1/-1;font-size:12px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap}.mleg i{display:inline-block;width:8px;height:8px;margin-right:4px;vertical-align:middle}
+.mbody{border-top:1px solid var(--stone-hi);padding:8px 12px 10px}.mnote{font-size:14px;margin-bottom:6px}
+.mtbl{width:100%;border-collapse:collapse;font-size:14px}.mtbl th{font-weight:400;color:var(--dim);font-size:12px;text-align:left;padding:4px;border-bottom:1px solid var(--stone-hi)}
+.mtbl td{padding:6px 4px;border-bottom:1px solid var(--stone-hi);vertical-align:middle}.mtbl td.w{color:var(--bad);white-space:nowrap}.mtbl td.r{color:var(--ok);white-space:nowrap}.mtbl td.s{font-size:12px;color:var(--mute);white-space:nowrap}
+.mtbl .fig2{max-height:52px}
+.mtodo{background:var(--stone);border:2px solid #000;margin:0;padding:8px 12px 8px 32px;font-size:14px;line-height:1.6}
+.mfoot{font-size:12px;color:var(--dim);line-height:1.7}
 /* 家长区 · 能力观察 */
 .hskgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}.hskc{font-size:12px;line-height:1.4;text-align:center}.hsk{display:block;width:100%;aspect-ratio:1;background:var(--paper);border:2px solid #000}.hsk polyline{fill:none;stroke:#1b1d22;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.hslips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 /* 家长区 · 题库 */
@@ -814,12 +844,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <div class="scr" id="mist" hidden style="flex-direction:column;gap:10px">
   <div class="top">
     <button class="btn" id="mistBack">回到岛上</button>
-    <h1>错题宝箱</h1>
+    <h1>错题宝箱<small id="mistWhere"></small></h1>
     <span style="flex:1"></span>
-    <span style="font-size:16px">今天要复习 <b class="num" style="font-size:22px;color:var(--warn)" id="mistN">0</b> 道</span>
+    <button class="btn" id="mistAll" hidden>看全部错题</button>
   </div>
-  <div class="muted">写错的题会隔 1、2、4、7、15 天回来，每次都做对就过 1 次复习；过完 5 次就算真的会了。每天的练习会自动带上它们。</div>
-  <div class="mgroups" id="mGroups"></div>
+  <button class="gobig" id="mistGo">开始复习</button>
+  <div class="mshelves" id="mShelves"></div>
 </div>
 
 <!-- 10 家长区 -->
@@ -843,6 +873,11 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="ptitle">这周练得怎么样</div>
       <div class="kv" id="weekly"></div>
       <button class="btn" id="btnReplace">重新摸底</button>
+    </div>
+    <div class="panel" id="pMist">
+      <div class="ptitle">错题分析</div>
+      <div class="kv" id="mistInfo"></div>
+      <button class="btn" id="btnMistP">查看错题分析</button>
     </div>
     <div class="panel">
       <div class="ptitle">能力观察</div>
@@ -905,6 +940,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   </div>
 </div>
 
+<!-- 10c 家长区 · 错题分析（docs/说明书-错题分析.md；统计在 mistview.js，不翻译） -->
+<div class="scr" id="mistp" hidden data-i18n-skip style="flex-direction:column;gap:10px">
+  <div class="top"><button class="btn" id="mistpBack">返回</button><h1>错题分析</h1><span class="muted">近 14 天</span></div>
+  <div id="mistpBody" style="flex:1;min-height:0;overflow-y:auto"></div>
+</div>
+
 <!-- 10b 家长区 · 能力观察（只看不改；docs/说明书-习惯记录.md） -->
 <div class="scr" id="habit" hidden style="flex-direction:column;gap:10px">
   <div class="top"><button class="btn" id="habBack">返回</button><h1>能力观察</h1><span class="muted">近 14 天 · 只记录，不影响练习</span></div>
@@ -955,7 +996,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v149:4eaaf71cd07e -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v150:75ab6fe38570 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -965,28 +1006,29 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=149"></script>
-<script src="i18n.js?v=149"></script>
-<script src="bank.js?v=149"></script>
-<script src="hardbank.js?v=149"></script>
-<script src="placebank.js?v=149"></script>
-<script src="core.js?v=149"></script>
-<script src="ink.js?v=149"></script>
-<script src="skills.js?v=149"></script>
-<script src="engine.js?v=149"></script>
-<script src="render.js?v=149"></script>
-<script src="world.js?v=149"></script>
-<script src="home.js?v=149"></script>
-<script src="puzzles.js?v=149"></script>
-<script src="thinking.js?v=149"></script>
-<script src="house.js?v=149"></script>
-<script src="kongmine.js?v=149"></script>
-<script src="gems.js?v=149"></script>
-<script src="gemui.js?v=149"></script>
-<script src="vert.js?v=149"></script>
+<script src="touchfix.js?v=150"></script>
+<script src="i18n.js?v=150"></script>
+<script src="bank.js?v=150"></script>
+<script src="hardbank.js?v=150"></script>
+<script src="placebank.js?v=150"></script>
+<script src="core.js?v=150"></script>
+<script src="ink.js?v=150"></script>
+<script src="skills.js?v=150"></script>
+<script src="engine.js?v=150"></script>
+<script src="render.js?v=150"></script>
+<script src="world.js?v=150"></script>
+<script src="home.js?v=150"></script>
+<script src="puzzles.js?v=150"></script>
+<script src="thinking.js?v=150"></script>
+<script src="house.js?v=150"></script>
+<script src="kongmine.js?v=150"></script>
+<script src="gems.js?v=150"></script>
+<script src="gemui.js?v=150"></script>
+<script src="vert.js?v=150"></script>
+<script src="mistview.js?v=150"></script>
 <script>
 (() => {
-  const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
+  const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, $ = id => document.getElementById(id);
   // ---------- 环境：预览（/v2/ 下）/ 测试（#test）/ 正式 ----------
   const TEST = location.hash === '#test';
   const PREVIEW = /\/v2\//.test(location.pathname);
@@ -1041,7 +1083,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   const cs = id => C.cs(S, id);
   const curL = () => (S.level >= 0 && S.level < C.LEVELS.length ? S.level : 0);
   const mode = () => S.oral ? 'oral' : 'write';
-  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'habit', 'bankv', 'house', 'forge', 'think'];
+  const SCREENS = ['island', 'placeIntro', 'placeResult', 'qplay', 'demo', 'qsum', 'skillmap', 'home', 'calib', 'play', 'summary', 'mist', 'parent', 'habit', 'mistp', 'bankv', 'house', 'forge', 'think'];
   let cur = 'island';
   const show = id => { cur = id; SCREENS.forEach(k => { $(k).hidden = k !== id; }); document.body.classList.toggle('write', !S.oral); };
   const goIsland = () => { renderIsland(); GM.islandBtn(); show('island'); WD.layout(); };   // 显示之后再算一次：隐藏时量不到真实高度
@@ -1138,7 +1180,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const zNone = z.id !== 'speed' && E.groupEmpty(S, z.id), zOut = z.id !== 'speed' && !zNone && E.groupOut(S, z.id, today());
     $('zGo').textContent = z.id === 'speed' ? '去秒答地图' : zNone ? (E.chosen(S) ? '这个难度没有题' : '还没开放') : zOut ? '全部通关' : '练这一块'; $('zGo').disabled = zOut || zNone; $('zMap').hidden = z.id === 'speed';
     if (z.id === 'speed' && !anyMap()) { const off = E.groupEmpty(S, 'speedH'); $('zGo').textContent = off ? (E.chosen(S) ? '这个难度没有题' : '还没开放') : '去挑战'; $('zGo').disabled = off; }
-    const nm = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.mistOn(S, m) && m.due !== null && m.due <= today() && !(m.q && C.isLow(m.q)) && (z.id === 'speed' ? !m.src : m.src === z.id)).length;
+    const nm = MGROUPS.filter(g => g.id === z.id || (z.id === 'speed' && g.id.startsWith('speed'))).reduce((n, g) => n + MV.shelves(S, today(), g.id).today.length, 0);   // 和点进去的「今天要复习」同一口径（秒答含进阶口算）
     $('zMist').textContent = nm ? `这里的错题（${nm}）` : '这里的错题';
     $('zSheet').classList.add('open'); $('lead').style.visibility = 'hidden'; document.querySelector('.w-mini').style.visibility = 'hidden';
   }
@@ -1176,7 +1218,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     closeZone(); Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
   });
   $('zMap').addEventListener('click', () => { const g = zCur; closeZone(); if (g) openSkillMap(g); });
-  $('zMist').addEventListener('click', () => { const g = zCur; closeZone(); openMist(g === 'speed' ? 'speed:L1' : g); });
+  $('zMist').addEventListener('click', () => { const g = zCur; closeZone(); openMist(g); });
   const walkThen = fn => { const g = todayZone() || 'look'; Zone = g; $('btnStart').classList.add('busy'); if (!WD.go(g, () => { $('btnStart').classList.remove('busy'); fn(); })) $('btnStart').classList.remove('busy'); };
   $('btnStart').addEventListener('click', () => {
     if (WD.entering) return;
@@ -2076,22 +2118,30 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     .concat(C.LEVELS.map((LV, L) => ({id: 'speed:L' + (L + 1), name: '秒答 · ' + LV.name, has: m => !m.src && m.L === L})));
   const backOn = (due, t) => { const n = Math.round((new Date(due) - new Date(t)) / 864e5); return n <= 1 ? '明天' : n === 2 ? '后天' : n + ' 天后'; };
   let mistFocus = null;
+  // 看哪些组：不带组 = 全部；'speed' = 秒答四张图和挑战（岛上秒答高塔进来）；其余 = 这一组
+  const mistGroups = () => MGROUPS.filter(g => !mistFocus || g.id === mistFocus || (mistFocus === 'speed' && g.id.startsWith('speed')));
+  // 三栏分组：F 的纯函数（不在页面里另算）
+  const shelvesOf = (S0, t) => { if (!mistFocus) return MV.shelves(S0, t); const sh = {today: [], later: [], done: []}; mistGroups().forEach(g => { const r = MV.shelves(S0, t, g.id); ['today', 'later', 'done'].forEach(k => sh[k].push(...r[k])); }); return sh; };
   function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
+  const MQMAX = 12;
+  const chipsOf = (ms, tag) => ms.slice(0, MQMAX).map(m => `<span class="mq${tag ? ' later' : ''}">${R.mistLabel(m)}${tag ? `<i>${tag(m)}</i>` : ''}</span>`).join('') + (ms.length > MQMAX ? `<span class="mmore">还有 ${ms.length - MQMAX} 道</span>` : '');
   function renderMist() {
-    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.mistOn(S, m) && !(m.q && C.isLow(m.q)));
-    const due = m => m.due !== null && m.due <= t;
-    $('mistN').textContent = Math.min(all.filter(due).length, E.MIST_DAY);
-    const order = MGROUPS.slice().sort((a, b) => (b.id === mistFocus) - (a.id === mistFocus));
-    $('mGroups').innerHTML = order.map(g => {
-      const ms = all.filter(g.has), d = ms.filter(due), doing = ms.filter(m => m.due !== null && m.due > t), done = ms.filter(m => m.due === null);
-      if (!ms.length && g.id !== mistFocus) return '';
-      return `<div class="mg"><div class="mh"><b>${g.name}</b><span class="muted">今天 ${d.length} · 复习中 ${doing.length} · 会了 ${done.length}</span></div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">${d.slice(0, 6).map(m => `<span class="mq">${R.mistLabel(m)}</span>`).join('') || '<span class="muted">今天没有要复习的</span>'}</div>
-        ${doing.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">${doing.sort((a, b) => a.due.localeCompare(b.due)).slice(0, 8).map(m => `<span class="mq later">${R.mistLabel(m)}<i>${backOn(m.due, t)}</i></span>`).join('')}${doing.length > 8 ? `<span class="muted">还有 ${doing.length - 8} 道</span>` : ''}</div>` : ''}
-        <button class="btn" data-rv="${g.id}" ${d.length ? '' : 'disabled style="opacity:.45"'}>复习这一组</button></div>`;
-    }).join('') || '<div class="muted">还没有错题</div>';
+    const t = today(), sh = shelvesOf(S, t), g = mistFocus && MGROUPS.find(x => x.id === mistFocus);
+    $('mistWhere').textContent = mistFocus === 'speed' ? '秒答' : g ? g.name : '';
+    $('mistAll').hidden = !mistFocus;
+    $('mistGo').disabled = !sh.today.length; $('mistGo').textContent = sh.today.length ? '开始复习' : '今天没有要复习的';
+    $('mShelves').innerHTML = `<div class="mshelf"><b>今天要复习</b><div class="mrow">${chipsOf(sh.today) || '<span class="muted">今天没有</span>'}</div></div>
+      <div class="mshelf"><b>过几天再来</b><div class="mrow">${chipsOf(sh.later, m => backOn(m.due, t)) || '<span class="muted">还没有</span>'}</div></div>
+      <div class="mshelf done"><b>已经学会</b><div class="mrow">${chipsOf(sh.done) || '<span class="muted">还没有</span>'}</div></div>`;
   }
-  $('mGroups').addEventListener('click', e => { const b = e.target.closest('[data-rv]'); if (b && !b.disabled) begin(() => startQ('review', {group: b.dataset.rv}), () => openMist(b.dataset.rv)); });
+  // 开始复习：把要看的各组的「复习这一组」依次接起来（引擎按组出到期错题，出完就停）
+  function reviewSess() {
+    const day = today(), ss = mistGroups().map(g => E.review(S, day, g.id)); let i = 0, cur = null;
+    return {next: () => { while (i < ss.length) { const x = ss[i].next(); if (x) { cur = ss[i]; return x; } i++; } return null; },
+      answer: r => cur.answer(r), demoTime: s => cur && cur.demoTime && cur.demoTime(s)};
+  }
+  $('mistGo').addEventListener('click', () => { if ($('mistGo').disabled) return; const f = mistFocus; begin(() => startQ('review', {sess: reviewSess(), group: f || undefined}), () => openMist(f)); });
+  $('mistAll').addEventListener('click', () => openMist());
   $('mistBack').addEventListener('click', goIsland);
 
   // ---------- 10 家长区 ----------
@@ -2118,6 +2168,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     $('oralBox').checked = !!S.oral;
     renderBi();
     renderLevels();
+    try { const b = MV.brief(S, t); $('mistInfo').innerHTML = `今日复习 ${b.due} 道 · 还没学会 ${b.n} 道${b.newW !== null ? `<br>本周新增 ${b.newW} 道` : ''}`; } catch (e) { $('mistInfo').textContent = '暂无数据'; }
     try { const hb = E.habit(S, t).now; $('habInfo').innerHTML = `熟题失误率（近 14 天）${pctOf(hb.ks, hb.k)}<br>最近 14 天作答 ${hb.a} 题`; } catch (e) { $('habInfo').textContent = '暂无数据'; }
     const n = Object.values(INKS.t || {}).map(a => a.length), ist = INKS.stats || [];
     $('inkInfo').innerHTML = calibrated() ? `已认识空空的笔迹 · 每个数字 ${Math.min(...n)}–${Math.max(...n)} 个样本<br>写一个数字约 ${((INKS.speed || 1000) / 1000).toFixed(1)} 秒${ist.length ? `<br>最近 ${ist.length} 次不用确认就认出 ${ist.reduce((a, b) => a + b, 0)} 次` : ''}` : '还没校准笔迹（第一次练习时会自动开始）';
@@ -2163,6 +2214,31 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近失误的题</div>${h.slips.length ? `<div class="hslips">${h.slips.map(m => `<span class="mq">${R.mistLabel(m)}<small class="muted"> ${String(m.d).slice(5)}</small></span>`).join('')}</div>` : '<div class="kv">暂无失误记录</div>'}</div>
       <div class="panel" style="grid-column:1/-1"><div class="ptitle">最近写的字（评分为试运行）</div>${recent.length ? `<div class="hskgrid">${recent.map(r => `<div class="hskc">${inkSvg(r.g)}<div class="muted">${String(r.d).slice(5)} · 认定为 ${r.a}</div><div>评分 ${r.s.map(x => (x === null ? '--' : x)).join('、')}</div></div>`).join('')}</div>` : '<div class="kv">暂无书写记录</div>'}</div>`;
   }
+  // ---------- 10c 错题分析（docs/说明书-错题分析.md）----------
+  const escH = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  const MSTATE = {due: '今日复习', doing: '复习中', paused: '暂停', done: '已学会'};
+  const cmpWeek = (a, b, upBad) => (a === null ? '' : a === b ? '<i>与上周持平</i>' : `<i class="${(a > b) === upBad ? 'mup' : 'mdn'}">较上周 ${a > b ? '▲' : '▼'}${Math.abs(a - b)}</i>`);
+  function mistTyped(t) { if (!t) return '--'; if (t.o) return '口答'; const w = t.k === 'd' ? '「不会」' : t.w === null || t.w === '' ? '--' : escH(t.w); return t.s !== null && t.k !== 'd' ? `${w} · ${t.s} 秒` : w; }
+  function renderMistP() {
+    let v; try { v = MV.build(S, today()); } catch (e) { $('mistpBody').innerHTML = '<div class="mpw"><div class="msum">无法统计错题。请导出进度后联系维护人员。</div></div>'; return; }
+    const k = v.kpi, num = x => (x === null ? '--' : x);
+    const bar = r => { const t = r.w + r.d + r.s; if (!t) return ''; const p = x => (x / t * 100).toFixed(1) + '%';
+      return `<span class="mbar"><i style="width:${p(r.d)};background:var(--bad)"></i><i style="width:${p(r.w)};background:var(--warn)"></i><i style="width:${p(r.s)};background:#6aa8ff"></i></span>
+        <span class="mleg">${r.d ? `<span><i style="background:var(--bad)"></i>不会 ${r.d}</span>` : ''}${r.w ? `<span><i style="background:var(--warn)"></i>写错 ${r.w}</span>` : ''}${r.s ? `<span><i style="background:#6aa8ff"></i>慢 ${r.s}</span>` : ''}</span>`; };
+    const row = it => `<tr><td>${R.mistLabel(it.m)}</td><td class="w">${mistTyped(it.typed)}</td><td class="r">${escH(MV.ansOf(it.m, R))}</td><td class="s">${MSTATE[it.state]}${it.state === 'doing' ? ` ${it.passes}/5` : ''}${it.wrongs >= 2 ? `<br>错 ${it.wrongs} 次` : ''}${it.part ? '<br>记录不全' : ''}</td></tr>`;
+    const cat = (c, i) => `<details class="mcat"${i < 2 && c.tag !== 'better' && c.tag !== 'few' ? ' open' : ''}><summary><span class="mcn">${escH(c.name)}</span><span class="mtag ${c.tag}">${c.tagText}</span>
+      <span class="mmeta">${c.n} 道 · 共错 ${c.atLeast ? '至少 ' : ''}${c.wrongs} 次${c.done ? ` · 已学会 ${c.done} 道` : ''}</span>${bar(c.reasons)}</summary>
+      <div class="mbody">${c.note ? `<div class="mnote">典型错法：${c.note}</div>` : ''}<table class="mtbl"><tr><th>题目</th><th>写的</th><th>正确</th><th>状态</th></tr>${c.items.map(row).join('')}</table></div></details>`;
+    $('mistpBody').innerHTML = `<div class="mpw">
+      <div class="msum">${escH(v.summary)}${v.paused ? `<br><span class="muted">另有 ${v.paused} 道错题因难度设置暂停复习</span>` : ''}</div>
+      <div class="mkpis"><div class="mkpi"><b>${num(k.newW)}</b><span>本周新增</span>${cmpWeek(k.newW, k.newP, true)}</div><div class="mkpi"><b>${k.due}</b><span>今日复习</span></div>
+        <div class="mkpi"><b>${k.rep}</b><span>反复错</span><i class="muted">错 2 次及以上</i></div><div class="mkpi"><b>${num(k.passW)}</b><span>本周学会</span>${cmpWeek(k.passW, k.passP, false)}</div></div>
+      ${v.cats.length ? `<div class="mh2">按类别 · 需要关注的在前</div>${v.cats.map(cat).join('')}` : ''}
+      ${v.advice.length ? `<div class="mh2">本周建议</div><ol class="mtodo">${v.advice.map(a => `<li>${escH(a)}</li>`).join('')}</ol>` : ''}
+      <div class="mfoot">口径说明<br>不会 = 点了「不会」 · 写错 = 答案不对 · 慢 = 复习时答对但没到秒答时间<br>反复错 = 同一道题错 2 次及以上 · 学会 = 隔 1、2、4、7、15 天各秒答一次，共 5 次<br>记录不全 = 开始记录之前进错题本的题，没有写的内容和错误次数<br>写错较多、需要讲解、速度慢按近 14 天的记录判断</div></div>`;
+  }
+  $('btnMistP').addEventListener('click', () => { renderMistP(); show('mistp'); $('mistpBody').scrollTop = 0; });
+  $('mistpBack').addEventListener('click', () => { renderParent(); show('parent'); });
   $('btnHabit').addEventListener('click', () => { renderHabit(); show('habit'); $('habBody').scrollTop = 0; });
   $('habBack').addEventListener('click', () => { renderParent(); show('parent'); });
 
