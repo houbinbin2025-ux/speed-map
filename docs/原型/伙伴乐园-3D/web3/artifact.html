@@ -149,7 +149,7 @@ body.touch.play #mode{top:calc(14px + env(safe-area-inset-top,0px));right:calc(1
   <div><b>I / K</b>抬头 / 低头</div>
   <div><b>J / L</b>向左转 / 向右转</div>
   <div><b>F / 左键</b>摸摸伙伴</div>
-  <div><b>G / 右键</b>用手里的东西（拿粮 · 倒粮 · 倒水 · 扔球）</div>
+  <div><b>G / 右键</b>用手里的东西（拿粮 · 倒粮 · 倒水 · 扔球）· 对着伙伴：跟我走 / 回家</div>
   <div><b>Z / X</b>快捷栏 上一格 / 下一格</div>
   <div><b>1~4</b>快捷栏 直接选格</div>
   <div><b>空格</b>跳跃</div>
@@ -624,13 +624,13 @@ function findTarget() {
   if (id === 'ball' && ball.mode === 'hand') return { kind: 'throw', label: '扔球', at: null };
   let best = null, bd = 2.3;
   for (const p of PETS) { const d = flatD(front, petPos(p)); if (d < bd) { bd = d; best = p; } }
-  if (best) return { kind: 'pet', p: best, label: '摸摸' + best.id, at: () => best.tagPt.getWorldPosition(V3()).add(V3(0, .35, 0)) };
+  if (best) return { kind: 'call', p: best, label: best.follow ? '回家' : '跟我走', at: () => best.tagPt.getWorldPosition(V3()).add(V3(0, .35, 0)) };
   return null;
 }
 function addHearts(p, n, t) { for (let i = 0; i < n; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthTest: false })); fx.add(s); hearts.push({ s, p, t0: t + i * .14, x: (i - (n - 1) / 2) * .35 }); } }
 function gainAff(p, v) {
   const before = p.aff; p.aff = Math.min(3, p.aff + v);
-  if (before < 1 && p.aff >= 1) toast(`${p.id}会跟着你走了`);
+  if (before < 1 && p.aff >= 1) toast(`${p.id}愿意跟你走了：对着它按 ${IS_TOUCH ? '🧱' : 'G'}`);
   else if (before < 2 && p.aff >= 2) toast(`${p.id}学会接球了：换成小球，按 ${IS_TOUCH ? '🧱' : 'G'} 扔`);
   else if (before < 3 && p.aff >= 3) toast(`${p.id}送你一件装饰`);
 }
@@ -660,6 +660,13 @@ function interact(how = 'use') {
     for (let i = 0; i < 16; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(w === 'food' ? .045 : .035, 8, 6), w === 'food' ? clay({ color: 0xb8793e }) : new THREE.MeshStandardMaterial({ color: 0x6fc8ec, roughness: .1 })); scene.add(m); parts.push({ m, from, to: to.clone().add(V3((Math.random() - .5) * .3, .1, (Math.random() - .5) * .3)), t0: t + .2 + i * .035, d: .45 }); }
     setTimeout(() => { p[w] = 6; p.grow = { kind: w, t0: clock.elapsedTime }; p.act = { kind: 'eat', what: w, t0: -1 }; ui(); stats(); hud(); }, 800);
     hud(); return;
+  }
+  if (T.kind === 'call') {
+    const p = T.p; P.act = { kind: 'pet', t0: t }; P.lock = .35;
+    if (p.follow) { p.follow = false; p.goHome = true; toast(`${p.id}回家了`); return; }
+    if (mood(p) === 'wilt') return toast(`${p.id}饿得走不动，先喂吃的和水`);
+    if (p.aff < 1) return toast(`${p.id}还不够熟，再摸摸它（亲密度 1 颗心）`);
+    p.follow = true; p.goHome = false; p.wiggleT = t; toast(`${p.id}跟着你走`); return;
   }
   if (T.kind === 'pet') {
     const p = T.p; P.act = { kind: 'pet', t0: t }; P.lock = .55;
@@ -772,8 +779,8 @@ function stepPetPlay(p, t, dt) {
     if (petMove(p, me, 4.6, dt, 1.7)) { ball.mode = 'rest'; ball.pet = null; ball.vel.set(0, 0, 0); ball.mesh.position.copy(p.head.localToWorld(V3(0, 0, .6))).setY(.3); p.act = null; p.joyT = t; addHearts(p, 2, t); gainAff(p, .25); }
     return true;
   }
-  if (p.aff >= 1 && m !== 'wilt' && dMe < 3.6 && !p.follow) p.follow = true;
-  if (p.follow && (dMe > 20 || m === 'wilt')) p.follow = false;
+  if (p.follow && m === 'wilt') { p.follow = false; p.goHome = true; toast(`${p.id}饿了，先回家`); }
+  if (p.goHome) { if (petMove(p, p.home, 3.6, dt, .2)) { p.goHome = false; p.walk.to = 0; p.walk.wait = 1.5; } return true; }   // 回家路上不停下来看空空
   if (p.follow) { if (dMe > 2.4) { const k = PETS.indexOf(p), side = V3(-Math.cos(P.yaw), 0, Math.sin(P.yaw)).multiplyScalar((k - 1) * 1.1); petMove(p, toLocal(p, P.pos.clone().add(side)), dMe > 6 ? 5 : 3.6, dt, 1.6); return true; }
     facePet(p, Math.atan2(me.x - pos.x, me.z - pos.z), dt); return true; }
   if (dMe < 4.5) { facePet(p, Math.atan2(me.x - pos.x, me.z - pos.z), dt); return true; }   // 看着空空
@@ -782,7 +789,7 @@ function stepPetPlay(p, t, dt) {
 // 键入 / 点击时的提示
 function stepHint() {
   target = MODE === 'play' && !fly ? findTarget() : null;
-  const h = $('hint'); if (!target || !target.at) { h.hidden = true; } else { const w = typeof target.at === 'function' ? target.at() : target.at, v = w.project(cam); if (v.z > 1) h.hidden = true; else { h.hidden = false; h.innerHTML = `<kbd>${target.kind === 'pet' ? (IS_TOUCH ? '⛏️' : 'F') : (IS_TOUCH ? '🧱' : 'G')}</kbd>${target.label}`; h.style.left = (v.x * .5 + .5) * innerWidth + 'px'; h.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; } }
+  const h = $('hint'); if (!target || !target.at) { h.hidden = true; } else { const w = typeof target.at === 'function' ? target.at() : target.at, v = w.project(cam); if (v.z > 1) h.hidden = true; else { h.hidden = false; h.innerHTML = (target.kind === 'call' ? `<kbd>${IS_TOUCH ? '⛏️' : 'F'}</kbd>摸摸　` : '') + `<kbd>${IS_TOUCH ? '🧱' : 'G'}</kbd>${target.label}`; h.style.left = (v.x * .5 + .5) * innerWidth + 'px'; h.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; } }
   // 附近的伙伴卡
   let np = null, nd = 6; for (const p of PETS) { const d = flatD(petPos(p), P.pos); if (d < nd) { nd = d; np = p; } }
   $('near').hidden = !np || MODE !== 'play';
@@ -790,7 +797,7 @@ function stepHint() {
     $('nF').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < np.food ? 'on' : ''}"></i>`).join('');
     $('nW').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < np.water ? 'on' : ''}"></i>`).join('');
     [...$('nHearts').querySelectorAll('.fill')].forEach((f, i) => f.style.opacity = np.aff >= i + 1 ? 1 : np.aff >= i + .5 ? .45 : 0);
-    $('nUnlock').textContent = np.aff >= 3 ? '已解锁：跟着走 · 接球 · 装饰' : np.aff >= 2 ? '已解锁：跟着走 · 接球' : np.aff >= 1 ? '已解锁：跟着走 · 下一颗心学接球' : m === 'wilt' ? '饿坏了，先喂吃的和水' : '多摸摸它，1 颗心会跟着你走';
+    $('nUnlock').textContent = np.aff >= 3 ? '已解锁：跟着走 · 接球 · 装饰' : np.aff >= 2 ? '已解锁：跟着走 · 接球' : np.aff >= 1 ? '已解锁：跟着走 · 下一颗心学接球' : m === 'wilt' ? '饿坏了，先喂吃的和水' : '多摸摸它，1 颗心可以叫它跟你走';
     if (sel !== np) { sel = np; ui(); } }
 }
 hud();
