@@ -250,6 +250,7 @@
     const b = c && c.$('btnForge'); if (!b) return;
     b.hidden = !on || !c.canWrite(); if (b.hidden) return;
     c.$('forgeIco').src = gemURL(); c.$('forgeN').textContent = (st.days[c.today()] || {}).forged || 0;
+    b.classList.toggle('spent', !G.forgeLeft(st, c.today()));   // 今天 5 次用完：按钮变暗，点了只提示明天再来
   }
   function parentStats() {
     if (!on) return '';
@@ -300,7 +301,7 @@
       <div class="gemline">${allChips(g, '+') || '<span>没有新碎片</span>'}${set.bonus ? `<span>认真奖励 ${'★'.repeat(set.stars)}</span>${chip('m')}<span>+${set.bonus}</span>` : ''}${ticket ? '<span>挑战券 +1</span>' : ''}</div>
       <div class="gemline muted"><span>背包</span>${allChips(st.inv, '')}<span>挑战券 ${st.tickets}</span></div>
       ${pct !== null || run.effSec || run.crit || run.qcWon ? `<div class="gemline">${pct !== null ? `<span>这次专注 ${pct}%</span>` : ''}${run.effSec ? `<span>有效答题 ${mins(run.effSec)}</span>` : ''}${run.crit ? `<span>暴击 ${run.crit} 次</span>` : ''}${run.qcWon ? `<span>限时挑战宝石 +${run.qcWon}</span>` : ''}</div>` : ''}
-      <div class="gembtns"><button class="btn go" data-gem="forge">去锻造</button>${more ? `<button class="btn" data-gem="more">${S().oral ? '再练一会' : '再练一会 · 得 1 张挑战券'}</button>` : ''}${st.tickets > 0 && !S().oral ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
+      <div class="gembtns">${forgeBtn('data-gem="forge"')}${more ? `<button class="btn" data-gem="more">${S().oral ? '再练一会' : '再练一会 · 得 1 张挑战券'}</button>` : ''}${st.tickets > 0 && !S().oral ? `<button class="btn" data-gem="challenge">挑战 · 大碎片</button>` : ''}</div>
     </div>`;
   }
   function bind(root, from) {
@@ -332,10 +333,10 @@
       <div style="font-size:18px">秒答 ${won} / ${G.CH_N} 题</div>
       ${r.big ? `<div class="bigwin"><span class="rays"></span><img src="${shardURL('l')}" alt=""></div><div style="font-size:18px;font-weight:900;color:var(--warn)">大碎片 +1</div>` : ''}
       <div class="gemline">${allChips(q.gem || {}, '+')}</div>
-      <div class="gembtns"><button class="btn go" id="chForge">去锻造</button><button class="btn" id="chHome">回到岛上</button></div></div>`;
+      <div class="gembtns">${forgeBtn('id="chForge"')}<button class="btn" id="chHome">回到岛上</button></div></div>`;
     c.show('qsum');
     if (r.big) blip([[523, 0, 0.1], [659, 0.1, 0.1], [784, 0.2, 0.1], [1046, 0.3, 0.3]]);
-    c.$('chForge').addEventListener('click', () => openForge('island'));
+    c.$('chForge').addEventListener('click', () => openForge('island'));   // 用完时按钮是灰的、点不了（审查建议 1）
     c.$('chHome').addEventListener('click', () => c.goIsland());
   }
 
@@ -436,7 +437,24 @@
 
   // ---------- 锻造台：炉子里不显示合计，要自己算 ----------
   let busy = false, hold = 0;
-  function openForge(from) { if (!on || !c.canWrite()) return; back = from || 'island'; slots = []; msg = ''; mode = 'gem'; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene(); }
+  // 锻造室每天只能进 5 次（Ben 11-09）：进门就算一次；用完了不进门，在当前页面提示明天再来
+  function openForge(from) {
+    if (!on || !c.canWrite()) return;
+    const r = G.forgeEnter(st, c.today());
+    if (!r.ok) { toast(`今天的 ${G.FORGE_DAY} 次锻造已用完，明天再来`); islandBtn(); return; }
+    save(); back = from || 'island'; slots = []; msg = ''; mode = 'gem'; c.$('forgeWarn').hidden = true; c.show('forge'); draw(); startScene();
+    toast(r.left ? `今天还可进入锻造室 ${r.left} 次` : '这是今天最后一次进入锻造室', true); islandBtn();
+  }
+  // 结算页、挑战结束页的「去锻造」：今天 5 次用完就换成灰色的「今天锻造次数已用完」，点不了（审查建议 1：亮绿按钮会让孩子反复点）
+  const forgeBtn = attr => (G.forgeLeft(st, c.today()) ? `<button class="btn go" ${attr}>去锻造</button>` : `<button class="btn" ${attr} disabled>今天锻造次数已用完</button>`);
+  const forgeBlocked = () => (on && st && c.canWrite() && !G.forgeLeft(st, c.today()) ? `今天的 ${G.FORGE_DAY} 次锻造已用完，明天再来` : '');   // 家里熔炉先问一下，用完了留在家里提示（审查建议 2）
+  // 顶部居中的短提示，岛上 2.5 秒、锻造室里 1.5 秒后消失（锻造室里放在炉子格子上，短一点免得挡住放碎片，审查建议 3）（锻造次数用）
+  let toastT = 0;
+  function toast(text, mid) {   // mid：锻造室里放在中间（刚进门炉子格子是空的），不盖住上面的「炼宝石 / 炼大碎片」
+    let el = document.getElementById('gemToast');
+    if (!el) { el = document.createElement('div'); el.id = 'gemToast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+    el.textContent = text; el.classList.toggle('mid', !!mid); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, mid ? 1500 : 2500);
+  }
   function setMode(m) { if (busy || m === mode) return; mode = m; slots = []; msg = ''; blip([[440, 0, 0.05]]); draw(); }
   const slotN = () => (mode === 'big' ? G.BIG_SLOTS : G.SLOTS);
   const placed = t => slots.filter(x => x === t).length;
@@ -542,6 +560,7 @@
     $('forgeMsg').textContent = msg;
     const today = c.today(), done = (st.days[today] ? st.days[today].forged : 0) - hold, items = G.items(st, today), left = G.unsent(st, today);
     $('forgeToday').innerHTML = `<img src="${gemURL()}" alt=""><b class="num">${done}</b><span>今天炼出</span><span class="ft14">近 ${G.RECENT_DAYS} 天 ${G.recentForged(st, today) - hold}</span>`;
+    const fl = G.forgeLeft(st, today), fe = $('forgeLeft'); if (fe) fe.textContent = fl ? `今天还可进入 ${fl} 次` : '今天最后一次进入';   // 锻造每天 5 次（Ben 11-09）
     const b = $('forgeClaim');
     b.hidden = !c.canClaim || !items || hold > 0; const keep = G.jarWant(st, today); b.textContent = !left ? '再领一次' : keep ? (left > keep ? `留 ${keep} 颗给伙伴罐，领 ${left - keep} 颗` : `留 ${keep} 颗给伙伴罐`) : `领 ${left} 颗宝石`;
     b.classList.toggle('go', left > 0);
@@ -554,7 +573,7 @@
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
   // api.total：碎片个数（家长一键同步的结果用；按个数和孩子看到的对得上）
-  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), forgeBlocked: safe(forgeBlocked, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();

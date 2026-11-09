@@ -1,9 +1,10 @@
 // 趣味题打开后的碎片层保险（Ben 11-09「先打开，补完再升级」；C 对中控的承诺）：
 // ① 两种挑战（弹出的双倍 / 限时挑战 pickEv、挑战券 pickChallenge）只从 K.SKILLS + K.HARD 选题，趣味题一道不出——趣味题只走插入通道，每天 90 秒
 // ② 趣味题答对照样给碎片（碎片层不按题型挡）
-// 本文件按「趣味题打开」跑：先把环境变量 FUN_SEC 设成 90 再加载题库（node --test 每个文件单独一个进程，不影响别的测试）
+// 本文件总是按「趣味题打开」跑：加载题库前把环境变量 FUN_SEC 设成 90（`FUN_SEC=0 npm test` 时也一样，中控 11-09；
+// node --test 每个文件单独一个进程，不影响别的测试。开关关着时的保险在 fun-guard.test.js）
 'use strict';
-process.env.FUN_SEC = process.env.FUN_SEC || '90';
+if (!(Number(process.env.FUN_SEC) > 0)) process.env.FUN_SEC = '90';
 const test = require('node:test'), assert = require('node:assert/strict');
 const K = require('../v2/skills.js'), C = require('../v2/core.js'), E = require('../v2/engine.js'), G = require('../v2/gems.js');
 const open = Array.isArray(K.FUN) && K.FUN.length > 0;   // main 上第三批合进来之前 K.FUN 还是空的
