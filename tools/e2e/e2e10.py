@@ -9,7 +9,7 @@ def check(ok, msg):
 W = int(sys.argv[3]) if len(sys.argv) > 3 else 844; H = int(sys.argv[4]) if len(sys.argv) > 4 else 390
 OUT = "(g=>{const {K,E,S}=__sm;K.SKILLS.concat(K.HARD).filter(s=>s.group===g||(g==='ALL')||(g==='speed'&&s.speed)).forEach(s=>s.items.forEach(i=>{const q=E.prog(S,i.id);q.lv=3;q.d=['2026-09-01','2026-09-02','2026-09-06'];if(i.gen)q.out=1;}));})"
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)
     pg.evaluate("__sm.S.oral = true; document.body.classList.remove('write')")

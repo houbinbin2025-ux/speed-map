@@ -51,7 +51,7 @@ def do_answer(pg, right):
         pg.mouse.move(r[0] + r[2] * t, r[1] + 122); pg.mouse.down(); pg.mouse.up(); pg.wait_for_timeout(1500)
 SNAP = "JSON.stringify({m: __sm.S.mistakes, sk: Object.entries(__sm.S.skills).map(([k, v]) => [k, v.lv]).sort(), c: Object.entries(__sm.S.cards).filter(([k, v]) => v.seen).map(([k, v]) => [k, v.lv]).sort(), h: __sm.S.home && __sm.S.home.got})"
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate("localStorage.clear()")
     # 种子：单日；两个技能已深红（家里有战利品箱、奖状、伙伴可看），练过 8 天；没有 bilingual 字段 = 默认开

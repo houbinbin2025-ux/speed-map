@@ -11,7 +11,7 @@ def check(ok, msg):
 NO_RESIZE = "const a=window.addEventListener; window.addEventListener=function(t,f,o){ if(t==='resize') return; return a.call(this,t,f,o); };"
 SCENE = "(()=>{const r=document.getElementById('island'), c=[...r.querySelectorAll('*')].filter(e=>e.style&&e.style.height&&e.style.width&&parseFloat(e.style.width)>parseFloat(e.style.height)*2).sort((x,y)=>parseFloat(y.style.width)-parseFloat(x.style.width))[0];return {h:parseFloat(c.style.height),root:r.clientHeight,inner:innerHeight}})()"
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for name, a, c in [('竖着打开再横过来', (390, 844), (844, 390)), ('iPad 页面宽度晚生效', (1194, 834), (932, 651)), ('工具栏收起', (844, 340), (844, 390))]:
         ctx = b.new_context(viewport={'width': a[0], 'height': a[1]}); pg = ctx.new_page()
         pg.add_init_script(NO_RESIZE + f"localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); localStorage.setItem('speedmap.ink.test', '{{\"done\":true,\"samples\":[]}}');")

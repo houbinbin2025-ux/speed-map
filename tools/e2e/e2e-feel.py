@@ -34,7 +34,7 @@ M = """([feel, mode]) => { const {K, R} = window.__sm, $ = id => document.getEle
   return res; }"""
 bad = 0
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for name, opt in CASES:
         for en in (False, True):
             ctx = b.new_context(has_touch=True, **opt); pg = ctx.new_page()

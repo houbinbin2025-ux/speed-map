@@ -10,7 +10,7 @@ def tap_art(pg, x, y): pg.evaluate(f"__sm.HS.tap({x}, {y})")   # 屋内像素坐
 def lit_count(pg): return pg.evaluate("[...Object.values(__sm.S.skills || {}), ...Object.values(__sm.S.cards || {})].filter(c => c && c.lv > 0).length")
 old = dict(seed); old['skills'] = {}; old['stats'] = {}; old['log'] = {}
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate("localStorage.clear()")
     # 旧存档：骰子点 + 乱点全部深红，练过 8 天；没有 home 字段

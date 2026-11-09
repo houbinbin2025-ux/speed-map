@@ -10,7 +10,7 @@ def go(pg, items, oral=False):
     pg.wait_for_timeout(500)
 def hist(pg, id): return pg.evaluate(f"(() => {{ const m = Object.values(__sm.S.mistakes).find(m => m.uid === {json.dumps(id)}); return m && {{wrongs: m.wrongs, hist: m.hist}}; }})()")
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); {NODEMO}"); pg.reload(); pg.wait_for_timeout(500)
     # 手机写错小数：记「14.4」

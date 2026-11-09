@@ -14,7 +14,7 @@ PE = """window.pe = (el, type, id, primary) => { const r = el.getBoundingClientR
 def opened(pg): return pg.evaluate("$('island').hidden || getComputedStyle($('island')).display === 'none'")
 def panel(pg): return pg.evaluate("[...document.querySelectorAll('#island .w-zone, #zone, #zGo')].some(e => e.getClientRects().length > 0 && e.getBoundingClientRect().width > 0 && e.offsetParent !== null)")
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     def fresh():
         ctx = b.new_context(viewport={'width': 844, 'height': 340}); pg = ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))

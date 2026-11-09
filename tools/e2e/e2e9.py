@@ -8,7 +8,7 @@ fails = []
 def check(ok, msg):
     if not ok: fails.append(msg)
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': int(sys.argv[3]) if len(sys.argv) > 3 else 844, 'height': int(sys.argv[4]) if len(sys.argv) > 4 else 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': int(sys.argv[3]) if len(sys.argv) > 3 else 844, 'height': int(sys.argv[4]) if len(sys.argv) > 4 else 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)
     pg.evaluate("__sm.S.oral = true; document.body.classList.remove('write')")

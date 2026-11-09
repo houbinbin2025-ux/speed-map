@@ -38,7 +38,7 @@ def q(pg): return pg.evaluate('window.__p2.Q && {id: __p2.Q.id, done: __p2.Q.don
 def cardnext(pg): pg.click('#cNext'); pg.wait_for_timeout(560)
 def write(pg, s): pg.evaluate(DRAW, s); pg.wait_for_timeout(1100)
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for W, H in SIZES:
         pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True); pg.on('pageerror', lambda e: errs.append(f'{W}x{H} ' + str(e)))
         pg.on('console', lambda m: errs.append(f'{W}x{H} console ' + m.text) if m.type == 'error' else None)

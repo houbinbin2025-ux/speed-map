@@ -17,7 +17,7 @@ def dbl(pg, id, touch):
 QS = "() => { const Q = window.__sm.Q; return Q && {n: Q.n, phase: Q.phase, input: Q.v && Q.v.input, mist: Object.keys(window.__sm.S.mistakes).length}; }"
 PS = "() => { const P = window.__sm.P; return P && {i: P.i, phase: P.phase}; }"
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for W, H in [(932, 430), (844, 390), (667, 375)]:
         pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
         pg.on('pageerror', lambda e: errs.append(str(e)))

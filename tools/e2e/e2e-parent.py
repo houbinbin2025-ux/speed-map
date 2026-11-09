@@ -152,7 +152,7 @@ def run_gems(pg, tag, url):
     check(g['top'] < 60, f'{tag} 碎片开着时标题仍在最上面（y={g["top"]:.0f}）')
 
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for tag, vw in [('iphone', {'width': 844, 'height': 390}), ('ipad', {'width': 1194, 'height': 834})]:
         ctx = b.new_context(viewport=vw, has_touch=True, permissions=['clipboard-read', 'clipboard-write']); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
         run(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_broken_nocopy(pg, tag, base + '#test'); run_nogems(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')

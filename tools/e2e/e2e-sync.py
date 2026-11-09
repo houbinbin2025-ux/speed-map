@@ -38,7 +38,7 @@ def receive(pg, path):
 def state(pg):   # 两边要一致的：每格档位、错题（整条比，审查 R1：只比编号测不出过关状态不一致）、碎片背包
     return pg.evaluate("({lv: Object.fromEntries(Object.entries(__sm.S.skills).map(([k, v]) => [k, v.lv]).sort()), mist: JSON.stringify(Object.keys(__sm.S.mistakes).sort().map(k => __sm.S.mistakes[k])),  inv: GEMUI.state().inv, lit: [__sm.S.cards, __sm.S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0)})")
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     ca, A = open_dev(b); cb, B = open_dev(b)
     seed(A, [['look1', 2], ['cmp1', 1]], [['cmp1', 1]], {'a': 5, 'b': 0, 'g': 0, 's': 0, 'm': 0, 'h': 0, 'l': 0}); A.reload(); A.wait_for_timeout(800)
     seed(B, [['look1', 3], ['look3', 2]], [['look3', 2]], {'a': 1, 'b': 0, 'g': 0, 's': 4, 'm': 0, 'h': 0, 'l': 0}); B.reload(); B.wait_for_timeout(800)
