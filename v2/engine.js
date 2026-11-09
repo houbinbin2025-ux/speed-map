@@ -205,7 +205,8 @@
   }
   // 这道题进错题本会用哪个键（addMistake 同一算法；不写进存档）
   const mistKeyOf = (S, inst) => { const s = skillOf(inst.id); return s.speed ? C.mkeyOf({id: inst.id, a: inst.q.a, op: inst.q.op, b: inst.q.b}) : K.mkey(inst); };
-  const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !(m.q && C.isLow(m.q));
+  const funOff = uid => K.FUN_SEC > 0 ? false : !!(K.BY[K.ITEM[uid].skill] || {}).fun;   // 关掉趣味题时，趣味错题不回炉（说明书-第三批 §4.3）
+  const isDue = (m, day) => m.due !== null && m.due <= day && !!K.ITEM[m.uid] && !funOff(m.uid) && !(m.q && C.isLow(m.q));
   // 手选难度时只回来选中级别的错题，其他的暂停不丢
   const mistOn = (S, m) => !!K.ITEM[m.uid] && activeItem(S, m.uid) && (!chosen(S) || chosen(S).includes(K.levelOf(instOfMistake(m))));
   const dueMistakes = (S, day, only) => Object.values(S.mistakes || {}).filter(m => isDue(m, day) && mistOn(S, m) && (!only || only(m.uid)))

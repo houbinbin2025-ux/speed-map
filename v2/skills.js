@@ -95,7 +95,8 @@
   // 练习、挑战、开级、allOut 都一道不出，留在错题本里的趣味错题查不到题型就不回炉。和 A、C 同一次上线时改成 90
   const FUN_SEC = (typeof process === 'object' && process.env && Number(process.env.FUN_SEC) > 0) ? Number(process.env.FUN_SEC) : 0;   // 网页里永远是 0；node 测试可用 FUN_SEC=90 npm test 提前跑打开后的路径
   const funAllowed = (o, sec) => !o.fun || sec > 0;
-  const hard = o => { if (!funAllowed(o, FUN_SEC)) return; const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; HARD.push(s); };
+  const FUN = [];   // 趣味技能：登记进 BY / ITEM（内容、题库页、测试查得到），但永远不进 HARD —— 练习、挑战、开级、allOut 都从 HARD 取题；只走单独的插入通道（engine，FUN_SEC > 0 才出）
+  const hard = o => { const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; (s.fun ? FUN : HARD).push(s); };
   hard({id: 'lookH1', group: 'look', name: '几排几个', ids: ['look:h:grid']});
   hard({id: 'lookH2', group: 'look', name: '百格图数数', pre: ['lookH1'], ids: ['look:h:h100']});
   hard({id: 'bondH1', group: 'bond', name: '整十分合', ids: ['bond:h:tens']});
@@ -143,6 +144,12 @@
   // 第二批 2b-1 分数：只问一个整数（说明书-到四年级第二批 §2b-1）
   g2('dock', '分数读图', ['dock:g11:fracbar'], 'frac'); g2('speedH', '同分母加减', ['speed:g12:fracadd'], 'fracadd'); g2('cmp', '分数比大小', ['cmp:g12:fraccmp'], 'fraccmp', {input: 'pick'});
   g2('cmp', '同分子比大小', ['cmp:g15:fraccmp2'], 'fraccmp2', {input: 'pick'}); g2('speedH', '等值分数', ['speed:g15:equiv'], 'equiv');
+  // 第三批 3a 趣味题（说明书-第三批 §四）：fun = 趣味题，排课走单独的插入通道（B），挑战不选（C）；fastClass = 秒答类别「读题题」（B 的 fastClass() 先看它）
+  const fun = (group, name, id, pre, concept, o) => g2(group, name, [id], concept, Object.assign({fun: true, fastClass: 'word', pre}, o));
+  fun('garden', '数塔', 'garden:g4:pyr', ['bondH3', 'speed:L2:1', 'speed:L2:4']); fun('garden', '数塔（两位数）', 'garden:g7:pyr2', ['speedH2']); fun('garden', '幻方', 'garden:g7:magic', ['speedH2']);
+  fun('dock', '植树（两头都种）', 'dock:g5:tree', ['cmp4'], 'tree'); fun('dock', '锯木头', 'dock:g5:saw', ['cmp4'], 'saw'); fun('dock', '植树（只种一头、两头不种）', 'dock:g7:tree2', ['g34:g5:tree', 'speedH2'], 'tree2');
+  fun('dock', '植树（先算段数）', 'dock:g9:tree3', ['g34:g5:tree', 'g34:g7:tree2', 'speedH5']); fun('dock', '排顺序', 'dock:g5:order', ['cmp3'], undefined, {input: 'pick'});
+  fun('dock', '猜数（加减）', 'dock:g7:riddle', ['speedH2'], 'riddle'); fun('dock', '猜数（乘除）', 'dock:g9:riddle2', ['g34:g7:riddle', 'speedH5']); fun('dock', '算式谜（缺一个数字）', 'dock:g7:cipher', ['speedH2']);
   // 第一批已上线、当时没讲解的技能也挂上概念（第二批 §2）
   Object.entries({'g34:g10:rem': 'rem', 'g34:g11:div': 'rem', 'g34:g10:remain': 'rem', 'g34:g11:perim': 'perim', 'g34:g12:area': 'area', 'g34:g11:times': 'times', 'g34:g14:avg': 'avg', 'g34:g15:lcm': 'factor', 'g34:g15:gcd': 'factor', 'g34:g12:dec': 'dec', 'g34:g11:part': 'frac'}).forEach(([id, c]) => { if (BY[id]) BY[id].concept = c; });   // 关掉的趣味技能没登记：跳过，不让页面加载时崩
 
@@ -154,12 +161,12 @@
     ['10 以内的数与分合', ['看数', '比大小', '数线', '6–9 分合', '整点', '接规律', '加减应用题', '10 以内秒答']],
     ['凑十', ['凑十', '缺数算式', '加减应用题', '10 以内秒答']],
     ['20 以内的数', ['十格框', '比大小', '数线', '十几加减几', '20 以内分合']],
-    ['20 以内进位退位', ['过十加减', '过十准备', '20 以内分合', '半点', '付钱', '找零', '应用题']],
-    ['100 以内的数', ['数位', '比大小', '前后数', '数线', '跳着数', '找错的', '几排几个']],
+    ['20 以内进位退位', ['过十加减', '过十准备', '20 以内分合', '半点', '付钱', '找零', '应用题', '数塔']],
+    ['100 以内的数', ['数位', '比大小', '前后数', '数线', '跳着数', '找错的', '几排几个', '植树', '锯木头', '排顺序']],
     ['两位数加减一位数', ['进退位加减', '连加连减', '整十分合', '算式比大小', '付钱', '3 和 4 跳着数', '应用题']],
-    ['两位数加减两位数', ['进退位加减', '两位数加减两位数', '凑一百', '百格图', '几点几分', '找零', '倒着跳', '应用题', '线段图']],
+    ['两位数加减两位数', ['进退位加减', '两位数加减两位数', '凑一百', '百格图', '几点几分', '找零', '倒着跳', '应用题', '线段图', '数塔', '幻方', '植树', '猜数', '算式谜']],
     ['三位数与乘法入门', ['百十个', '三位数比大小', '0—1000 数线', '乘法入门', '乘法应用题', '条形图', '边长相加']],
-    ['表内乘除', ['全部口诀', '表内除法', '乘法应用题', '除法应用题', '条形图比较', '倍的线段图', '和倍入门']],
+    ['表内乘除', ['全部口诀', '表内除法', '乘法应用题', '除法应用题', '条形图比较', '倍的线段图', '和倍入门', '植树', '猜数']],
     ['万以内的数与有余数除法', ['余数', '三位数加减', '千位', '千克和千米', '经过时间', '余数应用题', '两步应用题', '一格代表几']],
     ['乘除一位数', ['多位数乘除一位数', '周长', '看图求周长', '倍', '速度', '买东西', '一半和四分之一', '分数读图']],
     ['两位数乘法与小数入门', ['两位数乘两位数', '一位小数', '小数比大小', '面积', '数方格求面积', '单价', '24 时', '年月日', '同分母加减', '分数比大小']],
@@ -167,7 +174,7 @@
     ['运算律与两位小数', ['简便算', '两位小数', '两位小数比大小', '小数点移动', '小数换算', '平均数', '相遇', '内角和']],
     ['综合应用', ['公倍数', '公因数', '多步应用题', '和差', '和倍差倍', '和差线段图', '鸡兔同笼', '年龄', '同分子比大小', '等值分数']],
   ];
-  const LEVELS = LEVEL_TOPICS.map(([name, topics], i) => ({n: i + 1, name, topics, what: topics.join('、')}));
+  let LEVELS = [];   // 在 TOPIC 之后算（要知道哪些内容词只属于趣味技能）
   // 技能 → 内容词。秒答地图的世界按所在级别统一写
   const TOPIC = {
     look1: '看数', look3: '看数', look4: '十格框', cmp1: '比大小', cmp2: '比大小', cmp3: '比大小', cmp4: '前后数', line1: '数线', line2: '数线', line3: '数线', line4: '数线',
@@ -184,10 +191,15 @@
     'g34:g15:lcm': '公倍数', 'g34:g15:gcd': '公因数', 'g34:g15:three': '多步应用题', 'g34:g15:sumdiff': '和差', 'g34:g15:timessum': '和倍差倍', 'g34:g15:legs': '鸡兔同笼', 'g34:g15:age': '年龄',
     'g34:g7:bar': '线段图', 'g34:g8:chart': '条形图', 'g34:g8:side': '边长相加', 'g34:g9:chart2': '条形图比较', 'g34:g9:times': '倍的线段图', 'g34:g9:sumtimes': '和倍入门', 'g34:g10:chart5': '一格代表几',
     'g34:g11:perim2': '看图求周长', 'g34:g12:area2': '数方格求面积', 'g34:g12:deccmp': '小数比大小', 'g34:g14:deccmp': '两位小数比大小', 'g34:g15:barsum': '和差线段图',
+    'g34:g4:pyr': '数塔', 'g34:g7:pyr2': '数塔', 'g34:g7:magic': '幻方', 'g34:g5:tree': '植树', 'g34:g7:tree2': '植树', 'g34:g9:tree3': '植树', 'g34:g5:saw': '锯木头', 'g34:g5:order': '排顺序',
+    'g34:g7:riddle': '猜数', 'g34:g9:riddle2': '猜数', 'g34:g7:cipher': '算式谜',
     'g34:g11:fracbar': '分数读图', 'g34:g12:fracadd': '同分母加减', 'g34:g12:fraccmp': '分数比大小', 'g34:g15:fraccmp2': '同分子比大小', 'g34:g15:equiv': '等值分数',
   };
   // 秒答地图（speed:Lx:y）按级别：第 1–2 级「10 以内秒答」，第 3 级十几加减几，第 4 级过十加减，第 6–7 级进退位加减
   const SPEED_TOPIC = {1: '10 以内秒答', 2: '10 以内秒答', 3: '十几加减几', 4: '过十加减', 6: '进退位加减', 7: '进退位加减'};
+  // 关掉趣味题（FUN_SEC = 0）时，只属于趣味技能的内容词不写进级别说明（说明 = 这一级实际出的内容）
+  const funOnly = w => FUN.some(f => TOPIC[f.id] === w) && !Object.keys(TOPIC).some(id => TOPIC[id] === w && BY[id] && !BY[id].fun);
+  LEVELS = LEVEL_TOPICS.map(([name, topics0], i) => { const topics = FUN_SEC > 0 ? topics0 : topics0.filter(w => !funOnly(w)); return {n: i + 1, name, topics, what: topics.join('、')}; });
   const topicOf = (s, lv) => s.speed ? SPEED_TOPIC[lv] : TOPIC[s.id];
   // ---------- 错题按知识点分组（家长页用，F 的 docs/方案-错题数据字段.md；中控 11-08）----------
   // 类别 → 技能；家长看得懂的说法，粒度参考 docs/原型/错题-家长视角。同一技能里题型知识点不同的，在 MIST_CAT_ITEM 按题型单独归。
@@ -216,6 +228,7 @@
     ['条形图读数', ['g34:g8:chart', 'g34:g9:chart2', 'g34:g10:chart5']],
     ['周长', ['g34:g8:side', 'g34:g11:perim', 'g34:g11:perim2']], ['面积', ['g34:g12:area', 'g34:g12:area2']], ['三角形内角和', ['g34:g14:tri']],
     ['公倍数和公因数', ['g34:g15:lcm', 'g34:g15:gcd']],
+    ['数塔和幻方', ['g34:g4:pyr', 'g34:g7:pyr2', 'g34:g7:magic']], ['植树和锯木头', ['g34:g5:tree', 'g34:g7:tree2', 'g34:g9:tree3', 'g34:g5:saw']], ['比一比排顺序', ['g34:g5:order']], ['猜数和算式谜', ['g34:g7:riddle', 'g34:g9:riddle2', 'g34:g7:cipher']],
   ];
   const MIST_CAT = {}; MIST_GROUPS.forEach(([cat, ids]) => ids.forEach(id => { MIST_CAT[id] = cat; }));
   const MIST_CAT_ITEM = {'speed:g11:divrem': '有余数除法'};   // 「除以一位数」里商和余数一起写的题型
@@ -298,6 +311,7 @@
     'speed:g14:law': 12, 'speed:g14:lawfill': 6, 'speed:g14:dec2': 12, 'speed:g14:move': 5, 'dock:g14:avg': 20, 'dock:g14:meet': 25, 'dock:g14:tri': 6, 'market:g14:unit': 4,
     'dock:g7:bar': 8, 'dock:g8:chart': 5, 'place:g8:side': 10, 'dock:g9:chart2': 8, 'dock:g9:times': 10, 'dock:g9:sumtimes': 15, 'dock:g10:chart5': 8, 'dock:g11:perim2': 12, 'place:g12:area2': 10, 'cmp:g12:deccmp': 6, 'cmp:g14:deccmp': 8, 'dock:g15:barsum': 20,
     'dock:g11:fracbar': 6, 'speed:g12:fracadd': 6, 'cmp:g12:fraccmp': 5, 'cmp:g15:fraccmp2': 5, 'speed:g15:equiv': 8,   // 2b-1 分数：A 估计值，B 按真实用时定
+    'garden:g4:pyr': 4, 'garden:g7:pyr2': 6, 'garden:g7:magic': 6, 'dock:g5:tree': 8, 'dock:g5:saw': 8, 'dock:g7:tree2': 8, 'dock:g9:tree3': 13, 'dock:g5:order': 8, 'dock:g7:riddle': 12, 'dock:g9:riddle2': 15, 'dock:g7:cipher': 10,   // 第三批趣味题：A 估计值，门 5 真人试后回填
     'place:g15:lcm': 10, 'place:g15:gcd': 10, 'dock:g15:three': 30, 'dock:g15:sumdiff': 20, 'dock:g15:timessum': 20, 'dock:g15:legs': 25, 'dock:g15:age': 8,
   };
   const READ_MS = 400, EN_READ = 1.5;   // 题面每个汉字；英文日读得慢，多给一半（按中文字数估）
@@ -382,6 +396,6 @@
   }
 
   HARD.forEach(s => { s.pre = s.pre.filter(p => BY[p]); });   // 高级题的前置也只留登记了的（关掉的趣味技能不登记，写进前置会让 ready() 查不到而崩，审查 R1）
-  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, thinkMs, fastLabel,
+  return {LEVELS, TOPIC, topicOf, THINK_LEVEL, MIST_GROUPS, MIST_CAT, mistCat, levelOf, levelOfQ, itemLevels, pool, rawPool, SKILLS: SK, HARD, BY, ITEM, judge, make, mkey, isType, example, topoOk, tolOf, LINE_TOL, fastThink, fastMs, slowWrite, FAST_CLASS, fastClass, FUN_SEC, funAllowed, FUN, thinkMs, fastLabel,
     understand: SK.filter(s => !s.speed), speed: SK.filter(s => s.speed)};
 });

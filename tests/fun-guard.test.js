@@ -1,6 +1,6 @@
-// 第三批趣味题的保险（docs/说明书-第三批.md §4.3「关掉 / 退回」，中控 11-09）：FUN_SEC = 0 时趣味技能完全不登记
-// —— 不进 K.HARD / K.BY / K.ITEM，所以每日练习、自由加练、两种挑战（gems.js 从 K.HARD 选题）、开级、allOut、todayZone 都一道不出；
-// 错题本里已有的趣味错题 K.ITEM 查不到就不回炉（同已剔除的题型），记录不丢。A 的趣味题型合进来之前，这条必须先在
+// 第三批趣味题的保险（docs/说明书-第三批.md §4.3「关掉 / 退回」，中控 11-09）：趣味技能登记进 K.BY / K.ITEM，但永远不进 K.HARD（单独放 K.FUN），
+// 每日练习、自由加练、两种挑战（gems.js 从 K.HARD 选题）、开级、allOut、todayZone 都从 HARD 取题，所以一道不出；只走插入通道且要 FUN_SEC > 0。
+// 关掉时：错题本里的趣味错题不回炉、级别说明不写趣味内容词。A 的趣味题型合进来之前，这条必须先在
 'use strict';
 const test = require('node:test'), assert = require('node:assert/strict');
 const K = require('../v2/skills.js'), C = require('../v2/core.js'), E = require('../v2/engine.js');
@@ -13,17 +13,32 @@ test('登记闸门：fun 技能只有 FUN_SEC > 0 才登记；非 fun 技能不�
   assert.equal(K.funAllowed({fun: true}, 90), true);
   assert.equal(K.funAllowed({}, 0), true); assert.equal(K.funAllowed({fun: false}, 0), true);
 });
-test('FUN_SEC = 0：题表里没有任何 fun 技能（练习、挑战、开级、allOut 都从这里取题）', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+test('趣味技能永远不进 K.SKILLS / K.HARD（练习、挑战、开级、allOut 都从这里取题），单独在 K.FUN 里', () => {
   assert.ok(K.SKILLS.concat(K.HARD).every(s => !s.fun));
-  assert.ok(Object.values(K.BY).every(s => !s.fun));
-  assert.ok(Object.values(K.ITEM).every(it => !(K.BY[it.skill] || {}).fun));
+  assert.ok(K.FUN.length > 0 && K.FUN.every(s => s.fun && K.BY[s.id] === s && s.items.every(it => K.ITEM[it.id])));
+});
+test('关掉时：级别说明里没有只属于趣味技能的内容词', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+  const funWords = new Set(K.FUN.map(s => K.TOPIC[s.id]).filter(w => !K.SKILLS.concat(K.HARD).some(t => K.TOPIC[t.id] === w)));
+  K.LEVELS.forEach(L => L.topics.forEach(w => assert.ok(!funWords.has(w), `第 ${L.n} 级说明里有趣味内容词「${w}」`)));
+});
+test('关掉时：每日练习、自由加练、复习、挑战选题的全集里没有趣味题，趣味错题不回炉', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+  const S = C.blank(); S.placedAt = 1; S.settings = {levels: [4, 5, 7, 9], levelsV: 2};
+  const f = K.FUN[0], it = f.items[0], inst = K.make(it.id, () => 0.4), key = K.mkey(inst);
+  S.mistakes[key] = {key, uid: it.id, src: f.group, q: inst.q, ans: inst.ans, passes: 0, due: '2026-11-01', added: '2026-10-30', last: '2026-10-30'};
+  const seen = new Set();
+  [E.session(S, '2026-11-02', {rnd: () => 0.5}), E.free(S, '2026-11-02', f.group), E.review(S, '2026-11-02', f.group)].forEach(s => {
+    for (let x = s.next(), g = 0; x && g < 300; x = s.next(), g++) if (x.kind === 'q') { seen.add(x.inst.id); s.answer({ok: true, fast: true, secs: 3}); }
+  });
+  const funIds = new Set(K.FUN.flatMap(s => s.items.map(i => i.id)));
+  assert.ok(![...seen].some(id => funIds.has(id)), '出了趣味题：' + [...seen].filter(id => funIds.has(id)));
+  assert.ok(S.mistakes[key], '趣味错题记录还在');
 });
 test('趣味题的秒答时间归「读题题」类（3–30 秒，放得下 12–25 秒）', () => {
   K.BY['fun:test'] = {id: 'fun:test', fun: true, input: 'write', items: []}; K.ITEM['fun:t:x'] = {id: 'fun:t:x', skill: 'fun:test'};
   try { assert.equal(K.fastClass('fun:t:x'), 'word'); assert.ok(K.FAST_CLASS.word.lo <= 12 && K.FAST_CLASS.word.hi >= 25); }
   finally { delete K.BY['fun:test']; delete K.ITEM['fun:t:x']; }
 });
-test('错题本里有趣味题（关掉以后留下的）：不回炉、不报错、记录不丢', () => {
+test('错题本里有查不到题型的错题：不回炉、不报错、记录不丢', () => {
   const S = C.blank(); S.placedAt = 1;
   S.mistakes['fun:t:x|1'] = {key: 'fun:t:x|1', uid: 'fun:t:x', src: 'dock', q: {view: 'story', text: '□', say: '植树'}, ans: 5, passes: 0, due: '2026-11-01', added: '2026-10-30', last: '2026-10-30'};
   const s = E.session(S, '2026-11-02', {rnd: () => 0.5}); const seen = [];

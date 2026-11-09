@@ -2,7 +2,8 @@
 const test = require('node:test'), assert = require('node:assert');
 const K = require('../v2/skills.js'), HB = require('../v2/hardbank.js');
 const FRAC = ['frac', 'fracadd', 'fraccmp', 'fraccmp2', 'equiv'];   // 2b-1 分数另在 batch2b.test.js 查
-const LATE = K.HARD.filter(s => s.late && !FRAC.includes(s.concept)), IDS = LATE.flatMap(s => s.items.map(it => it.id));
+const LATE = K.HARD.filter(s => s.late && !s.fun && !FRAC.includes(s.concept))   // 第三批趣味题另在 fun.test.js 查
+, IDS = LATE.flatMap(s => s.items.map(it => it.id));
 const sum = l => l.reduce((a, b) => a + b, 0);
 const nums = s => (String(s).match(/\d+(\.\d+)?/g) || []).map(Number);
 
