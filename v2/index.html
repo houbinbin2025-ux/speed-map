@@ -995,7 +995,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v145:511ed86a4774 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v146:2b97c1931c96 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1005,26 +1005,26 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=145"></script>
-<script src="i18n.js?v=145"></script>
-<script src="bank.js?v=145"></script>
-<script src="hardbank.js?v=145"></script>
-<script src="placebank.js?v=145"></script>
-<script src="core.js?v=145"></script>
-<script src="ink.js?v=145"></script>
-<script src="skills.js?v=145"></script>
-<script src="engine.js?v=145"></script>
-<script src="render.js?v=145"></script>
-<script src="world.js?v=145"></script>
-<script src="home.js?v=145"></script>
-<script src="puzzles.js?v=145"></script>
-<script src="thinking.js?v=145"></script>
-<script src="house.js?v=145"></script>
-<script src="kongmine.js?v=145"></script>
-<script src="gems.js?v=145"></script>
-<script src="gemui.js?v=145"></script>
-<script src="vert.js?v=145"></script>
-<script src="mistview.js?v=145"></script>
+<script src="touchfix.js?v=146"></script>
+<script src="i18n.js?v=146"></script>
+<script src="bank.js?v=146"></script>
+<script src="hardbank.js?v=146"></script>
+<script src="placebank.js?v=146"></script>
+<script src="core.js?v=146"></script>
+<script src="ink.js?v=146"></script>
+<script src="skills.js?v=146"></script>
+<script src="engine.js?v=146"></script>
+<script src="render.js?v=146"></script>
+<script src="world.js?v=146"></script>
+<script src="home.js?v=146"></script>
+<script src="puzzles.js?v=146"></script>
+<script src="thinking.js?v=146"></script>
+<script src="house.js?v=146"></script>
+<script src="kongmine.js?v=146"></script>
+<script src="gems.js?v=146"></script>
+<script src="gemui.js?v=146"></script>
+<script src="vert.js?v=146"></script>
+<script src="mistview.js?v=146"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, $ = id => document.getElementById(id);
@@ -2119,7 +2119,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   // 看哪些组：不带组 = 全部；'speed' = 秒答四张图和挑战（岛上秒答高塔进来）；其余 = 这一组
   const mistGroups = () => MGROUPS.filter(g => !mistFocus || g.id === mistFocus || (mistFocus === 'speed' && g.id.startsWith('speed')));
   // 三栏分组：F 的纯函数（不在页面里另算）
-  const shelvesOf = (S0, t) => { const sh = {today: [], later: [], done: []}; mistGroups().forEach(g => { const r = MIST_SHELVES(S0, t, g.id); ['today', 'later', 'done'].forEach(k => sh[k].push(...r[k])); }); return sh; };
+  const shelvesOf = (S0, t) => { if (!mistFocus) return MV.shelves(S0, t); const sh = {today: [], later: [], done: []}; mistGroups().forEach(g => { const r = MV.shelves(S0, t, g.id); ['today', 'later', 'done'].forEach(k => sh[k].push(...r[k])); }); return sh; };
   function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
   const MQMAX = 12;
   const chipsOf = (ms, tag) => ms.slice(0, MQMAX).map(m => `<span class="mq${tag ? ' later' : ''}">${R.mistLabel(m)}${tag ? `<i>${tag(m)}</i>` : ''}</span>`).join('') + (ms.length > MQMAX ? `<span class="mmore">还有 ${ms.length - MQMAX} 道</span>` : '');
