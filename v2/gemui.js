@@ -156,7 +156,8 @@
     const fire = c.$('qFire'); fire.classList.toggle('on', F.lit); fire.classList.toggle('low', F.lit && !!F.low);
     const fb = fire.querySelector('b'), ft = F.lit ? '×2' : ''; if (fb.textContent !== ft) fb.textContent = ft;
     const cb = c.$('qCombo'), key = crit ? 'c' + Math.ceil(C.until - t) : `${C.e}/${need}`;
-    if (cb.dataset.k !== key) { cb.dataset.k = key; cb.classList.toggle('crit', crit); cb.innerHTML = crit ? `<span>暴击时刻 ${Math.ceil(C.until - t)}</span>` : Array.from({length: need}, (_, i) => `<i${i < C.e ? ' class="on"' : ''}></i>`).join(''); }
+    if (cb.dataset.k !== key) { cb.dataset.k = key; cb.classList.toggle('crit', crit); const grew = !crit && cb.dataset.e !== undefined && C.e > +cb.dataset.e; cb.dataset.e = crit ? '' : C.e;   // 刚加的那一格闪一下（答对那一刻看得见能量到账）
+      cb.innerHTML = crit ? `<span>暴击时刻 ${Math.ceil(C.until - t)}</span>` : Array.from({length: need}, (_, i) => `<i${i < C.e ? (grew && i === C.e - 1 ? ' class="on new"' : ' class="on"') : ''}></i>`).join(''); }
     const g = c.$('qGoal'), gt = q.goal && !q.goal.shown ? (q.goal.kind === 'combo' ? '目标 暴击时刻' : `目标 ${Math.min(q.goal.n, (q.gAns || 0) - q.goal.from)}/${q.goal.n}`) : '';
     g.hidden = !gt; if (g.textContent !== gt) g.textContent = gt;
   }
@@ -276,6 +277,12 @@
   }
 
   // ---------- 结算页的碎片区块 ----------
+  // 摸底结果页：这次摸底拿到的碎片（每答对一题 1 个小碎片；摸底不进当天统计，不结算认真奖励，中控 11-09）
+  function placeLine(run) {
+    if (!on) return '';
+    const got = allChips(run.gem || {}, '+');
+    return got ? `<div class="gemline" id="prGems"><span>这次的碎片</span>${got}</div>` : '';
+  }
   function summary(run, day, opts) {
     evRun = null;
     if (!on || !c.canWrite()) return '';   // 只读时不结算；Boss、摸底也结算（拿到的碎片要看得到）
@@ -546,7 +553,7 @@
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
   // api.total：碎片个数（家长一键同步的结果用；按个数和孩子看到的对得上）
-  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();

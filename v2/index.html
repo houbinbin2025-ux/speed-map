@@ -262,8 +262,10 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 /* 宽版（选择题、iPad 竖式）没有写字板，顶栏铺满整行，右上角是矿石数：挪到题签那一行的右端 */
 #qplay.wide #qFeel{top:calc(env(safe-area-inset-top) + 62px);right:var(--padR)}
 @media (max-width:700px){#qplay.wide .qtag{max-width:calc(100% - 250px)}}
-/* 写字板顶上出提示（描红、你写的是几、对勾、笔迹提示）或宽版出警告条时，碎片条先藏起来，下一题再出（审查 R2：浮层盖住这些字） */
-#qplay:has(#qPadTip:not([hidden]), #qCheck:not([hidden]), #qConfirm:not([hidden]), #qGhost:not([hidden])) #qFeel, #qplay.wide:has(#qWarn:not([hidden])) #qFeel{visibility:hidden}   /* 窄屏宽版：题签右边给碎片条留位置，长题签换行，不钻到下面 */
+/* 写字板顶上出提示（描红、你写的是几、笔迹提示）或宽版出警告条时，碎片条先藏起来，下一题再出（审查 R2：浮层盖住这些字） */
+/* 答对出对勾时不藏，挪到对勾正下方：能量格加一格、小目标变化就在这一刻看得见（中控 11-09，C 待办 P2） */
+#qplay:not(.wide):has(#qCheck:not([hidden])) #qFeel{top:calc(env(safe-area-inset-top) + 94px)}
+#qplay:has(#qPadTip:not([hidden]), #qConfirm:not([hidden]), #qGhost:not([hidden])) #qFeel, #qplay.wide:has(#qWarn:not([hidden])) #qFeel{visibility:hidden}   /* 窄屏宽版：题签右边给碎片条留位置，长题签换行，不钻到下面 */
 #qQuit{flex:none;white-space:nowrap}#qplay .qtop .tbar{min-width:70px}
 .qbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0}
 .qnote{font-size:14px;color:var(--mute)}
@@ -556,6 +558,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .qfire.on i{background:linear-gradient(#fff3b0,#f5c935 45%,#e0762a)}.qfire.low i{animation:fblink .5s steps(2) infinite}@keyframes fblink{50%{opacity:.25}}
 .qcombo{display:flex;align-items:center;gap:2px;height:28px;padding:0 5px;background:var(--cave);border:2px solid #000;white-space:nowrap}
 .qcombo i{width:5px;height:14px;display:block;background:#2a2d34;border:1px solid #000}.qcombo i.on{background:#1fc8b8}
+.qcombo i.new{animation:cpop .6s ease-out}@keyframes cpop{0%{transform:scale(2.2);background:#fff}100%{transform:none}}   /* 刚加的那一格闪一下：答对时看得见能量到账 */
 .qcombo.crit{background:var(--warn);color:#1b1d22;font-weight:900;font-size:13px}
 .qgoal{display:flex;align-items:center;height:28px;padding:0 6px;background:var(--warn);color:#1b1d22;border:2px solid #000;font-weight:900;font-size:12px;white-space:nowrap}
 #qplay.crit::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:25;box-shadow:inset 0 0 0 5px var(--warn),inset 0 0 36px rgba(245,201,53,.55);animation:critglow .8s ease-in-out infinite alternate}@keyframes critglow{to{box-shadow:inset 0 0 0 3px var(--warn),inset 0 0 18px rgba(245,201,53,.3)}}
@@ -955,7 +958,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v143:b3260941fbc4 -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v144:d7869f1ccd94 -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -965,25 +968,25 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=143"></script>
-<script src="i18n.js?v=143"></script>
-<script src="bank.js?v=143"></script>
-<script src="hardbank.js?v=143"></script>
-<script src="placebank.js?v=143"></script>
-<script src="core.js?v=143"></script>
-<script src="ink.js?v=143"></script>
-<script src="skills.js?v=143"></script>
-<script src="engine.js?v=143"></script>
-<script src="render.js?v=143"></script>
-<script src="world.js?v=143"></script>
-<script src="home.js?v=143"></script>
-<script src="puzzles.js?v=143"></script>
-<script src="thinking.js?v=143"></script>
-<script src="house.js?v=143"></script>
-<script src="kongmine.js?v=143"></script>
-<script src="gems.js?v=143"></script>
-<script src="gemui.js?v=143"></script>
-<script src="vert.js?v=143"></script>
+<script src="touchfix.js?v=144"></script>
+<script src="i18n.js?v=144"></script>
+<script src="bank.js?v=144"></script>
+<script src="hardbank.js?v=144"></script>
+<script src="placebank.js?v=144"></script>
+<script src="core.js?v=144"></script>
+<script src="ink.js?v=144"></script>
+<script src="skills.js?v=144"></script>
+<script src="engine.js?v=144"></script>
+<script src="render.js?v=144"></script>
+<script src="world.js?v=144"></script>
+<script src="home.js?v=144"></script>
+<script src="puzzles.js?v=144"></script>
+<script src="thinking.js?v=144"></script>
+<script src="house.js?v=144"></script>
+<script src="kongmine.js?v=144"></script>
+<script src="gems.js?v=144"></script>
+<script src="gemui.js?v=144"></script>
+<script src="vert.js?v=144"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, $ = id => document.getElementById(id);
@@ -2041,6 +2044,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
             <span style="font-size:13px;color:${known.length ? 'var(--ok)' : 'var(--mute)'}">${known.length ? known.join('、') + ' 会了' : '以后会教你'}</span></div>`;
         }).join('')}
       </div>
+      ${GM.placeLine(q)}
       <div style="display:flex;align-items:center;gap:16px">
         <span style="flex:1;font-size:15px;color:var(--mute)">${quit && S.placement ? '还没测完，下次接着看 · ' : ''}${left ? `还有 ${left} 分钟，接着练今天的` : '今天的时间用完啦'}</span>
         <button class="gobig" id="prGo" style="width:280px;height:72px;font-size:24px">${left ? '开始练习' : '回到岛上'}</button>
