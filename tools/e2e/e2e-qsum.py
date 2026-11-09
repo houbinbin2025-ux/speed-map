@@ -92,6 +92,25 @@ with sync_playwright() as p:
                 check(pg.evaluate("document.documentElement.lang") == 'en' and not zh, f'{W}x{H} 英文日结算页没有中文：{zh}')
             check(pg.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), f'{W}x{H} {mode} 没有横向溢出')
             ctx.close()
+    # 秒答地图的 Boss 结算页（#summary，台账：667 宽右边超出）：口答答 19 题后长按结束
+    BSEED = "localStorage.clear(); localStorage.setItem('speedmap.v2.test', JSON.stringify({v:2,savedAt:0,cards:{},boss:{},log:{},level:0,mistakes:{},lastBackup:Date.now(),placedAt:1,known:{},skills:{},stats:{},settings:{bilingual:false},oral:true})); localStorage.setItem('speedmap.ink.test', JSON.stringify({done:true,samples:[],speed:800}))"
+    for W, H in [(667, 375), (844, 390), (932, 651), (1194, 834)]:
+        ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True); pg = ctx.new_page()
+        pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.goto(url); pg.evaluate(BSEED); pg.reload(); pg.wait_for_timeout(800)
+        pg.click('.w-mini button[data-z="speed"]'); pg.wait_for_timeout(700); pg.click('#zGo'); pg.wait_for_timeout(700)
+        pg.evaluate("(()=>{const b=document.querySelector('[data-boss]'); b.disabled=false; b.click();})()"); pg.wait_for_timeout(1500)
+        for _ in range(19):
+            pg.evaluate("document.getElementById('oralTap').click()"); pg.wait_for_timeout(200); pg.evaluate("document.getElementById('btnOralNext').click()"); pg.wait_for_timeout(700)
+        bb = pg.locator('#btnQuit').bounding_box(); pg.mouse.move(bb['x'] + 5, bb['y'] + 5); pg.mouse.down(); pg.wait_for_timeout(1300); pg.mouse.up(); pg.wait_for_timeout(800)
+        check(cur(pg) == 'summary', f'{W}x{H} Boss 结算页')
+        pg.screenshot(path=str(out / f'boss-{W}x{H}.png'))
+        over = pg.evaluate("[...document.querySelectorAll('#summary *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1}).map(e=>e.id||e.className||e.tagName).slice(0,5)")
+        check(not over and pg.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), f'{W}x{H} Boss 结算页右边不超出：{over}')
+        for sel, name in [('#sumHome', '回到地图'), ('#sumHouse', '回家打开'), ('#summary .sumR > :first-child', '右栏第一行')]:
+            if pg.locator(sel).count(): r = pg.evaluate(VIS, sel); check(r == 'ok', f'{W}x{H} Boss 结算页 {name} 不用滚动就看得见：{r}')
+        check(pg.locator('#summary').inner_text().find('墙上') < 0, f'{W}x{H} Boss 结算页不再提墙上的地图')
+        ctx.close()
     b.close()
 print('页面报错：', errs[:5])
 if errs: fails.append('页面报错')
