@@ -317,7 +317,9 @@
   function cellsFig(q, a) {
     const t = String(q.text || ''), p = a === undefined ? null : cellParts(q, a); let i = 0, slot;
     const t2 = t.replace(/□/g, (m, off) => { const k = i++; const inFr = t[off + 1] === '/' || t[off - 1] === '/'; if (inFr) { if (p) slot = ans(p[k]); return m; } return `\u0001${k}\u0002`; });
-    const body = (hasFr(t2) ? fr(t2, slot, p ? .72 : undefined) : t2).replace(/\u0001(\d+)\u0002/g, (m, k) => (p ? ans(p[+k]) : box));
+    // 排版不缩字（E 全站字号审查 11-09）：在等号前切成两段，每段内部不断行——放得下就一行，放不下只在等号前换行，「= □ 余 □」始终在一起
+    const nw = x => `<span style="white-space:nowrap">${(hasFr(x) ? fr(x, slot, p ? .72 : undefined) : x).replace(/\u0001(\d+)\u0002/g, (m, k) => (p ? ans(p[+k]) : box))}</span>`;
+    const at = t2.indexOf(' = '), body = at > 0 ? `${nw(t2.slice(0, at))} ${nw(t2.slice(at + 1))}` : nw(t2);
     return `<div class="eq num sm${/[\u4e00-\u9fff]/.test(t) ? ' tw' : ''}">${body}</div>` + (a === undefined && q.read ? `<div class="nbsay" style="justify-content:center"><button class="spk" type="button" data-say="${q.read}" aria-label="朗读题目">${SPK}</button></div>` : '');
   }
   const hardFig = (q, a) => {
@@ -433,6 +435,8 @@
     if (s.nb) return pack(`${q.view === 'clock' ? clockSvg(q.h, q.m) : ''}<div class="say2">${s.input === 'pick' && q.view !== 'bad' ? '应该是 ' : ''}${nbAns(q, a)}</div>`, q.why);
     if (s.hard && s.input === 'pick' && q.view === 'choice') return pack(`<div class="say2">应该是 <span class="num" style="font-size:32px">${hasFr(q.opts[a]) ? fr(q.opts[a]) : q.opts[a]}</span></div>`, q.why);
     if (s.hard && s.input === 'pick') return pack(`<div class="say2"><span class="num" style="font-size:32px">${pickWord(q, a)}</span> 更大</div>`, q.why);
+    // 分步作答的讲解句按「：」「，」切成几段、每段不断行：换行只落在语义断点上，不会把最后一个字甩到下一行（11-09）
+    if (s.hard && s.input === 'write' && q.cells) return pack(hardFig(q, a), q.why.split(/(?<=[：，])/).map(x => `<span style="white-space:nowrap">${x}</span>`).join(''));
     if (s.hard && s.input === 'write') return pack((q.qk && q.say ? `<div class="whysay">${q.say}</div>` : '') + hardFig(q, a), q.view === 'fracbar' ? q.why.replace(/：[^：]*$/, '') : q.why);   // 分数读图：算式行已写出答案，讲解句不再重复分数（矮屏放得下）
     if (s.speed) return pack(`<div class="eq num">${q.a} ${opSign(q.op)} ${q.b} = ${ans(a)}</div>`, speedWhy(q.a, q.op, q.b, a));
     if (s.group === 'look') {
