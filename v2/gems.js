@@ -36,7 +36,7 @@
   // 谜题水晶（方案 7，中控 11-09 批准）：趣味题答对 1 道给 1 颗，只收藏、不进锻造（不影响宝石比例）；同一题型答对 PUZZLE_BADGE 道得这个题型的徽章。
   // 存 st.puzzle = {n, by: {题型: 答对数}}，第一次答对才建。合并与清洗按 F 11-09 定的规则（cleanPuzzle / mergeBackup）
   const PUZZLE_BADGE = 3;
-  const natural = v => Number.isInteger(v) && v >= 0;
+  const natural = v => Number.isSafeInteger(v) && v >= 0;   // 安全整数：两个极大的数相加不会变成无穷大（审查建议 4）
   const sumBy = by => Object.keys(by).reduce((n, k) => n + by[k], 0);
   function cleanPuzzle(x) {   // 不是对象当没有；by 里不是非负整数的删掉；跳过 __proto__；查不到的题型保留；n 不是非负整数当 0，且不比 by 的总和小
     if (!isObj(x)) return undefined;
@@ -109,7 +109,7 @@
     for (const d in b.sent) M.sent[d] = max(M.sent[d], b.sent[d]);
     {   // 谜题水晶（F 11-09）：by 按题型取大、不相加；n = max(本机, 备份, by 的总和)。b 已经过 parse 清洗
       const L = cleanPuzzle(M.puzzle), R = cleanPuzzle(b.puzzle);
-      if (L || R) { const by = Object.assign({}, (L || {}).by); Object.keys((R || {}).by || {}).forEach(k => { by[k] = Math.max(by[k] || 0, R.by[k]); }); M.puzzle = {n: Math.max((L || {}).n || 0, (R || {}).n || 0, sumBy(by)), by}; }
+      if (L || R) { const by = Object.assign({}, (L || {}).by); Object.keys((R || {}).by || {}).forEach(k => { const had = Object.prototype.hasOwnProperty.call(by, k) ? by[k] : 0; by[k] = Math.max(had, R.by[k]); }); M.puzzle = {n: Math.max((L || {}).n || 0, (R || {}).n || 0, sumBy(by)), by}; }
     }
     if (isObj(b.palJar)) {
       const J = M.palJar = isObj(M.palJar) ? M.palJar : {bal: 0, moved: {}, target: 0, res: {day: '', n: 0}}, BJ = b.palJar;

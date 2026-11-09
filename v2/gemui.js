@@ -578,7 +578,7 @@
   function puzzleState() {
     if (!on || !st) return null;
     const K = window.SKILLS, lv = id => (c.E && c.E.lv ? c.E.lv(S(), id) || 0 : 0);
-    const badges = G.puzzleBadges(st, Object.keys(PUZZLE_NAME)).map(b => { const sk = K && K.BY && K.BY[b.sid]; return Object.assign(b, {name: PUZZLE_NAME[b.sid], shiny: !!(sk && sk.items.length && sk.items.every(it => lv(it.id) >= 3))}); });
+    const badges = G.puzzleBadges(st, Object.keys(PUZZLE_NAME)).map(b => { const sk = K && K.BY && K.BY[b.sid]; return Object.assign(b, {name: PUZZLE_NAME[b.sid], shiny: b.got && !!(sk && sk.items.length && sk.items.every(it => lv(it.id) >= 3))}); });   // 闪光要先有普通徽章（审查建议 1：旧进度格子已深红、水晶不补发时不会只闪光没徽章）
     return {n: G.puzzleCount(st), badges, master: badges.every(b => b.got)};
   }
   // 水晶从题目飞到左上角矿石数那里（和碎片同一套飞入），声音高一点和碎片区分
@@ -588,7 +588,7 @@
   // 碎片出任何问题都不能挡住练习：关掉碎片，练习照常
   const safe = (fn, dflt) => (...a) => { try { return fn(...a); } catch (e) { on = false; return dflt; } };
   // api.total：碎片个数（家长一键同步的结果用；按个数和孩子看到的对得上）
-  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), puzzle: safe(puzzleState, null), forgeBlocked: safe(forgeBlocked, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
+  const api = {init: safe(init), enabled: () => on, exportState: safe(exportState, null), total: safe(() => (on && st ? Object.keys(st.inv).reduce((n, t) => n + (G.worth([t]) > 0 ? st.inv[t] || 0 : 0), 0) : null), null), importBackup: safe(importBackup, false), answerThink: safe(answerThink, null), syncNow: safe(syncNow), answerQ: safe(answerQ), answerP: safe(answerP), summary: safe(summary, ''), puzzle: safe(puzzleState, null), puzzleNames: () => Object.assign({}, PUZZLE_NAME), forgeBlocked: safe(forgeBlocked, ''), placeLine: safe(placeLine, ''), bind: safe(bind), openForge: safe(openForge), state: () => st,
     parentStats, islandBtn: safe(islandBtn), askQuit: (q, done) => { let held = false; try { held = on && gateQuit(q, done); } catch (e) { held = false; } if (!held) done(); }, finishChallenge: q => { try { return finishChallenge(q); } catch (e) { on = false; c.goIsland(); } }};
   window.GEMUI = api;
 })();

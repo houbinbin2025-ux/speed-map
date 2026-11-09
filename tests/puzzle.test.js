@@ -62,13 +62,35 @@ test('⑤ 整份替换以备份为准，并过清洗', () => {
   assert.deepEqual(st.puzzle, {n: 2, by: {ok: 2}});
 });
 
-test('⑥ 清空进度：和碎片一样不碰（清空只清学习进度，碎片存档另存）', () => {
-  // 清空进度在 index.html 只重置学习进度（S），不调碎片模块；这里锁住碎片存档里没有「清空」接口会动 puzzle
-  assert.equal(typeof G.reset, 'undefined');
+test('⑥ 清空进度：和碎片一样不碰（家长区「确认清空」只重置学习进度，不删碎片存档、不改 GEMUI 状态）', () => {
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'v2', 'index.html'), 'utf8');
+  const m = html.match(/\$\('btnResetYes'\)\.addEventListener\('click', \(\) => \{([^\n]*)\}\);/);
+  assert.ok(m, '找不到「确认清空」的处理');
+  assert.ok(!/gems|GEMS\.|removeItem|localStorage\.clear/.test(m[1]), '确认清空碰到了碎片存档：' + m[1]);
+  assert.deepEqual((m[1].match(/GM\.\w+/g) || []), ['GM.syncNow'], '只允许先同步一次碎片，不许清');
 });
 
 test('合并时备份坏了不影响本机', () => {
   const st = G.blank(); G.puzzleAnswer(st, 'a');
   const M = G.mergeBackup(st, Object.assign(G.blank(), {puzzle: 'x'}));
   assert.deepEqual(M.puzzle, {n: 1, by: {a: 1}});
+});
+
+test('F 审查：备份里题型编号叫 constructor / toString / hasOwnProperty 时，合并后 n 和 by 都是数字', () => {
+  const st = G.blank(); st.puzzle = {n: 2, by: {x: 2}};
+  const backup = JSON.parse('{"inv":{"a":0,"b":0,"g":0,"s":0,"m":0,"h":0,"l":0},"puzzle":{"n":6,"by":{"x":1,"constructor":2,"toString":3,"hasOwnProperty":1}}}');
+  const M = G.mergeBackup(st, backup);
+  assert.ok(Number.isInteger(M.puzzle.n), 'n 是 ' + M.puzzle.n);
+  Object.keys(M.puzzle.by).forEach(k => assert.ok(Number.isInteger(M.puzzle.by[k]), `${k} 是 ${M.puzzle.by[k]}`));
+  assert.deepEqual(JSON.parse(JSON.stringify(M.puzzle)), {n: 8, by: {x: 2, constructor: 2, toString: 3, hasOwnProperty: 1}});
+});
+
+test('徽章名单和趣味技能一一对应，英文徽章名齐全（以后加趣味题型时拦住漏名字，审查建议 6）', () => {
+  process.env.FUN_SEC = process.env.FUN_SEC > 0 ? process.env.FUN_SEC : '90';
+  for (const k of ['../v2/skills.js', '../v2/i18n.js', '../v2/gemui.js']) delete require.cache[require.resolve(k)];
+  const K = require('../v2/skills.js'), I = require('../v2/i18n.js');
+  global.window = {}; require('../v2/gemui.js'); const names = global.window.GEMUI.puzzleNames();
+  assert.deepEqual(Object.keys(names).sort(), K.FUN.map(s => s.id).sort());
+  Object.values(names).forEach(n => assert.notEqual(I.text('新徽章 ' + n), '新徽章 ' + n, `「${n}」没有英文`));
+  assert.equal(I.text('谜题水晶 +1'), 'Puzzle crystal +1'); assert.equal(I.text('谜题水晶 +2'), 'Puzzle crystals +2');
 });
