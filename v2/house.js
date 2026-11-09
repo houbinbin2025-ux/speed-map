@@ -347,7 +347,8 @@
   for (let i = 0; i < 22; i++) FS.push({id: 'F' + i, t: 'F', x: 431 + i * 24, y: FLOOR - 16});
   for (let i = 0; i < 18; i++) WS.push({id: 'W' + i, t: 'W', x: 431 + i * 24, y: 16});
   const SLOTS = {}; FS.concat(WS).forEach(s => { SLOTS[s.id] = s; });
-  const placeable = () => E0.items.filter(i => !i.part);
+  // 还没画图的道具先不摆（C 方案 4 乙丙的新道具、新摆设等 E 画；不加这道判断，第 354 行取 A.ITEM[id].t 会报错，一进家就卡住）
+  const placeable = () => E0.items.filter(i => !i.part && A.ITEM[i.id]);
   function autoPlace() {
     const pl = S.home.place, used = new Set();
     Object.keys(pl).forEach(k => { if (used.has(pl[k])) delete pl[k]; else used.add(pl[k]); });   // 备份合并可能把两件放到同一格
