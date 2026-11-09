@@ -16,7 +16,7 @@ cur = lambda pg: pg.evaluate("[...document.querySelectorAll('.scr')].filter(e=>!
 GROUPS = ['look', 'bond', 'place', 'cmp', 'line', 'garden', 'market', 'dock']
 with sync_playwright() as p:
     b = p.chromium.launch()
-    RUNS = [(W, H, lv, False) for W, H in [(667, 375), (844, 390), (874, 297), (1194, 834)] for lv in [[], [1], [2], [4], [5], [8], [9], [12], list(range(1, 16))]]
+    RUNS = [(W, H, lv, False) for W, H in [(667, 375), (844, 390), (874, 297), (1194, 834)] for lv in [[], [1], [2], [4], [5], [8], [9], [12], list(range(3, 9)), list(range(9, 13)), list(range(1, 16))]]
     RUNS += [(W, H, lv, True) for W, H in [(667, 375), (874, 297)] for lv in [[9], list(range(1, 16))]]   # 英文日：字长，卡片更高
     for W, H, lv, en in RUNS:
             pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True); tag = f'{W}x{H} ' + (f'第 {lv[0]}–{lv[-1]} 级' if lv else '自动') + (' 英文' if en else '')
@@ -54,14 +54,20 @@ with sync_playwright() as p:
                         pg.click('#zGo'); pg.wait_for_timeout(2500)
                         check(cur(pg) in ('qplay', 'demo') and pg.evaluate("__sm.Q && String(__sm.Q.opts && __sm.Q.opts.group)") == 'speedH', f'{tag} 点了直接进挑战（{cur(pg)}）')
             # 4 思维地点
-            if W == 844 and lv:
-                pg.reload(); pg.wait_for_timeout(700)
-                for mod in ['balance', 'target', 'clue', 'block']:
-                    pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{mod}\"]').click()"); pg.wait_for_timeout(400); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=20000); pg.wait_for_timeout(400)
-                    tier = pg.evaluate('__sm.TH.G.tier'); want = pg.evaluate(f"(() => {{ const top = Math.max(...{json.dumps(lv)}); let t = -1; SKILLS.THINK_LEVEL['{mod}'].forEach((n, i) => {{ if (n <= top) t = i; }}); return Math.max(0, t); }})()")
-                    en = pg.evaluate("[...document.querySelectorAll('#think [data-t]')].filter(b => !b.disabled).length")
-                    check(tier == want and en >= want + 1, f'{tag} 思维地点 {mod} 默认第 {tier} 档（应 {want}），能点 {en} 档')
-                    pg.click('#think #back'); pg.wait_for_timeout(600)
+            if W == 844:   # 思维地点：按进度，夹在所选范围里（中控 11-09）；分「刚开始」和「四个地点全部学会」两种进度各走一遍
+                for done in (False, True):
+                    pg.evaluate(f"(() => {{ const S = JSON.parse(localStorage.getItem('speedmap.v2.test')); if ({'true' if done else 'false'}) {{ S.think = {{}}; PUZZLES.MODULES.forEach(m => {{ S.think[m.id] = m.tiers.map(() => PUZZLES.PASS); }}); }} else delete S.think; localStorage.setItem('speedmap.v2.test', JSON.stringify(S)); }})()")
+                    pg.reload(); pg.wait_for_timeout(700)
+                    for mod in ['balance', 'target', 'clue', 'block']:
+                        pg.evaluate(f"document.querySelector('.w-mini button[data-z=\"{mod}\"]').click()"); pg.wait_for_timeout(400); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=20000); pg.wait_for_timeout(400)
+                        tier = pg.evaluate('__sm.TH.G.tier')
+                        want, n = pg.evaluate(f"""(() => {{ const lv = SKILLS.THINK_LEVEL['{mod}'], sel = {json.dumps(lv)}, pt = PUZZLES.progress(__sm.S, '{mod}').tier;
+                          if (!sel.length) return [pt, lv.length];
+                          const at = top => {{ let t = -1; lv.forEach((n, i) => {{ if (n <= top) t = i; }}); return t; }}, lo = at(Math.min(...sel)), hi = at(Math.max(...sel));
+                          return [Math.max(0, Math.min(Math.max(pt, lo), Math.max(hi, lo))), lv.length]; }})()""")
+                        en = pg.evaluate("[...document.querySelectorAll('#think [data-t]')].filter(b => !b.disabled).length")
+                        check(tier == want and en >= want + 1 and (not done or en == n), f'{tag} 思维地点 {mod}（{"全部学会" if done else "刚开始"}）默认第 {tier} 档（应 {want}），能点 {en} 档')
+                        pg.click('#think #back'); pg.wait_for_timeout(600)
             pg.close()
     b.close()
 print('页面报错：', errs[:5])

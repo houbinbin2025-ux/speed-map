@@ -118,14 +118,18 @@ const autoNext = () => { cancelAuto(); G.autoT = setTimeout(() => { G.autoT = nu
 document.addEventListener('visibilitychange', () => { if (document.hidden) { hush(); cancelAuto(); } });
 addEventListener('popstate', () => { hush(); cancelAuto(); });
 
-// 家长手选了级别：默认停在「建议级别 ≤ 所选最高级」的最后一档，这一档以前的都能点（分级同步，A 11-09）；不锁，往后照样按进度开。没手选 = -1，按进度
-function lvTier() {
-  const top = o.levelTop ? o.levelTop() : 0, lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
-  let t = -1; if (top) lv.forEach((n, i) => { if (n <= top) t = i; });
-  return t;
+// 家长手选了级别时的默认档（中控 11-09）：按进度，再夹到「所选最低级对应的档」和「所选最高级对应的档」之间
+// （某级对应的档 = 建议级别 ≤ 这一级的最后一档）。全选 1–15 = 按进度；只选 9–12 = 至少从第 9 级那档起；选 3–8 = 按进度、最多停在第 8 级那档。
+// 只管进门停在哪：进度已经开放的档、默认档以前的档都能点，不锁、不倒退。没手选 = 按进度
+function lvRange() {
+  const r = o.levelRange ? o.levelRange() : [0, 0], lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
+  const at = top => { let t = -1; lv.forEach((n, i) => { if (n <= top) t = i; }); return t; };
+  return r[1] ? {lo: at(r[0]), hi: at(r[1])} : null;
 }
+function startTier(pt) { const r = lvRange(); if (!r) return pt; return Math.max(0, Math.min(Math.max(pt, r.lo), Math.max(r.hi, r.lo))); }
+function openUpTo(pt) { const r = lvRange(); return Math.max(pt, r ? Math.max(r.lo, startTier(pt)) : -1); }
 function enter(id) {
-  G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = Math.max(P.progress(o.S(), id).tier, lvTier()); G.tap = performance.now() + 500;
+  G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = startTier(P.progress(o.S(), id).tier); G.tap = performance.now() + 500;
   o.show(); fit(); next();
 }
 function next() { hush(); cancelAuto(); if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; G.t0 = performance.now(); render(); }
@@ -152,7 +156,7 @@ function tabsHtml() {   // 没开放的技能点不了；当前技能显示还�
   const pr = P.progress(o.S(), G.mod.id);
   // 每档的建议级别（A 定在 skills.js THINK_LEVEL，只作参考、不锁）：小字给家长看
   const lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
-  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > Math.max(pr.tier, lvTier()) ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</span>${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}</button>`).join('');
+  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > openUpTo(pr.tier) ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</span>${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}</button>`).join('');
 }
 function shell(say, sub) {
   $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;
