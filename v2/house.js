@@ -543,7 +543,7 @@
     el('h_bkClose').onclick = closeBook;
     v.querySelector('.bkg').onclick = e => {
       const b = e.target.closest('.bkc'); if (!b) return; const i = b.dataset.i, s = skOf(i), has = L.includes(i); blip(SND.tap);
-      if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · ${s.level ? s.name.replace('伙伴', '') + '新本领全部点亮后解锁' : `学会「${s.name}」后解锁`}</span><button class="btn go" id="h_bkGo">${s.level ? '开始今天的探险' : '去练这一块'}</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
+      if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · ${s.level ? s.name.replace('伙伴', '') + '新本领全部点亮后解锁' : `学会「${s.name}」后解锁`}</span><button class="btn go" id="h_bkGo">${s.level ? goLabel() : '去练这一块'}</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
       const at = (S.home.pets || []).includes(i);
       el('h_bkD').innerHTML = `<span><b>${crOf(i).n}${isGold(i) ? ' · 附魔' : ''}</b>${crOf(i).d ? ' · ' + crOf(i).d : ''}<br><small class="muted">${s.level ? '学会了' + s.name.replace('伙伴', '') + '的全部新本领' : `学会了「${s.name}」`}${isGold(i) ? '，全部隔 3 天还做对' : ''}</small></span><button class="btn go" id="h_bkPet">${at ? '留在图鉴' : '带回家'}</button>`;
       el('h_bkPet').onclick = () => { const p = S.home.pets = S.home.pets || []; if (at && p.length <= 1) { toast('至少带一个伙伴回家'); blip(SND.tap); return; }   // 不能全部取消：空列表只代表旧漏洞（C 模块，中控 11-08）

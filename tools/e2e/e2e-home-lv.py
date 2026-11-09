@@ -34,12 +34,16 @@ with sync_playwright() as p:
                 pg.wait_for_timeout(300)
                 check(pg.evaluate("!document.getElementById('house').hidden") and not [e for e in errs if e.startswith(tag)], tag + ' 进得了家、没有报错：' + str([e for e in errs if e.startswith(tag)][:2]))
                 # 开箱：点箱子 → 列表里有新奖状、新伙伴的小图 → 收下，接着连弹的奖状大图都关掉
+                if pg.evaluate("(__sm.S.home.loot || []).length"):
+                    pg.evaluate("__sm.HS.tap(__sm.HS.LOOT.x + 6, 55)"); pg.wait_for_timeout(500)   # 点屋里的战利品箱
+                    check(pg.is_visible('#h_lootC'), tag + ' 有新奖励时点得开战利品箱')
                 if pg.locator('#h_lootC').count() and pg.is_visible('#h_lootC'):
                     pg.click('#h_lootC'); pg.wait_for_timeout(1800)
                     if hard: check(pg.locator('#h_lootL canvas').count() > 0, tag + f' 开箱列表有小图（{pg.locator("#h_lootL canvas").count()} 个）')
                     if pg.is_visible('#h_lootOk'): pg.click('#h_lootOk'); pg.wait_for_timeout(500)
-                for _ in range(4):
-                    if pg.evaluate("!document.getElementById('h_certV').hidden"): pg.evaluate("document.getElementById('h_certV').click()"); pg.wait_for_timeout(300)
+                for _ in range(12):   # 收下以后最多连弹 3 张奖状大图，一张张关掉
+                    if pg.evaluate("!document.getElementById('h_certV').hidden"): pg.evaluate("document.getElementById('h_cClose').click()"); pg.wait_for_timeout(500)
+                    else: pg.wait_for_timeout(300)
                 st = pg.evaluate("(() => { const H = HOME, S = __sm.S, lv = H.CERTS.filter(c => c.lv), sh = lv.filter(c => H.shown(S, c)); return {shown: sh.length, got: sh.filter(c => S.home.got[c.id]).length, tC: document.getElementById('h_tC').textContent, tM: document.getElementById('h_tM').textContent, nav: [...document.querySelectorAll('#h_nav button')].map(b => b.textContent)}; })()")
                 want_lv = {0: 0, 8: 8, 15: 22}[hard]
                 check(st['shown'] == want_lv, tag + f' 显示的三四年级奖状 {st["shown"]} 张（应 {want_lv}）')
@@ -54,7 +58,7 @@ with sync_playwright() as p:
                     pg.evaluate("__sm.HS.tap(996, 14)"); pg.wait_for_timeout(500)   # 新墙第一张（第 4–5 级「全部点亮」，屋内像素坐标）
                     check(pg.evaluate("!document.getElementById('h_certV').hidden") and ('林间' in pg.inner_text('#h_certV') or 'Forest' in pg.inner_text('#h_certV') or 'Woodland' in pg.inner_text('#h_certV') or len(pg.inner_text('#h_certV')) > 4), tag + ' 点新墙上的奖状能打开大图：' + pg.inner_text('#h_certV')[:30].replace(chr(10), ' '))
                     pg.screenshot(path=str(out / f'{W}x{H}-{hard}{"-en" if en else ""}-cert.png'))
-                    pg.evaluate("document.getElementById('h_certV').click()"); pg.wait_for_timeout(300)
+                    pg.evaluate("document.getElementById('h_cClose').click()"); pg.wait_for_timeout(300)
                     # 图鉴：总数只算显示的伙伴，新伙伴点得开、不报错
                     pg.evaluate("__sm.HS.tap(372, 50)"); pg.wait_for_timeout(600)
                     if pg.evaluate("!document.getElementById('h_book').hidden"):
