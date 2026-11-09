@@ -14,10 +14,38 @@
   const sum = (st, days, f) => days.reduce((n, d) => n + (st[d] && Number.isInteger(st[d][f]) ? st[d][f] : 0), 0);
   const has = (st, days, f) => days.some(d => st[d] && Number.isInteger(st[d][f]));
 
-  function stateOf(S, m, day) {
+  // ---------- 孩子「错题宝箱」和家长「错题分析」共用的口径（中控 11-09：E 直接调用，不另算）----------
+  // 上页的错题：题库里还有、不是全 ≤ 5 的简单题（运行时剔除，同 engine isDue）
+  const okMist = m => !!m && typeof m === 'object' && !!K.ITEM[m.uid] && !(m.q && C.isLow(m.q));
+  // 组：和 index.html 的 MGROUPS 同一套 id——地点 / 'speedH' 看 m.src；'speed:L1'…'speed:L4' 看秒答错题的级别 m.L
+  function inGroup(m, group) {
+    if (!group) return true;
+    const L = /^speed:L(\d+)$/.exec(group);
+    return L ? !m.src && m.L === +L[1] - 1 : m.src === group;
+  }
+  const dueSet = (S, day) => { try { return new Set(E.dueMistakes(S, day)); } catch (e) { return null; } };
+  // 每道错题的状态：due 今日复习（= E.dueMistakes，孩子今天真的会做到的）/ doing 复习中 / paused 暂停（难度设置或趣味题关掉）/ done 已学会
+  function stateOf(S, m, day, due) {
     if (m.due === null) return 'done';
-    if (!E.mistOn(S, m)) return 'paused';
-    return m.due <= day ? 'due' : 'doing';
+    if (due ? due.has(m) : (m.due <= day && E.mistOn(S, m))) return 'due';
+    if (!E.mistOn(S, m) || m.due <= day) return 'paused';
+    return 'doing';
+  }
+  // 孩子错题宝箱三栏：today 今天要复习（按复习先后，不截到每天上限）、later 过几天再来（按日期从近到远）、done 已经学会（最近学会的在前）
+  // 暂停的不进三栏（孩子做不到）；group 不传 = 全部
+  function shelves(S, day, group) {
+    const due = dueSet(S, day), out = {today: [], later: [], done: []};
+    const ms = Object.values(S.mistakes || {}).filter(m => okMist(m) && inGroup(m, group));
+    if (due) out.today = [...due].filter(m => ms.includes(m));
+    ms.forEach(m => { const st = stateOf(S, m, day, due); if (st === 'doing') out.later.push(m); else if (st === 'done') out.done.push(m); else if (st === 'due' && !due) out.today.push(m); });
+    out.later.sort((a, b) => String(a.due).localeCompare(String(b.due)));
+    out.done.sort((a, b) => String(b.pd || b.last || '').localeCompare(String(a.pd || a.last || '')));
+    return out;
+  }
+  // 按知识点分组（K.mistCat，顺序同 K.MIST_GROUPS，找不到归「其他」放最后）
+  function byCat(ms) {
+    const g = {}; ms.forEach(m => { const c = K.mistCat(m.uid) || OTHER; (g[c] = g[c] || []).push(m); });
+    return Object.keys(g).sort((a, b) => (a in catOrder ? catOrder[a] : 1e9) - (b in catOrder ? catOrder[b] : 1e9) || a.localeCompare(b)).map(name => ({name, items: g[name]}));
   }
   // 写的：最近一次写错或「不会」
   function typedOf(m) {
@@ -46,12 +74,12 @@
   function build(S, day) {
     const st = S.stats || {}, days = n0 => Array.from({length: 7}, (_, i) => C.addDays(day, -(n0 + i)));
     const week = days(0), prev = days(7), from14 = C.addDays(day, -13), from7 = C.addDays(day, -6);
-    const cats = {}; let paused = 0;
+    const cats = {}, due = dueSet(S, day); let paused = 0;
     for (const key in S.mistakes || {}) {
       const m = S.mistakes[key];
-      if (!m || typeof m !== 'object' || !K.ITEM[m.uid] || m.out) continue;
+      if (!okMist(m) || m.out) continue;
       if (m.due === null && String(m.pd || m.last || '') < from14) continue;
-      const state = stateOf(S, m, day); if (state === 'paused') paused++;
+      const state = stateOf(S, m, day, due); if (state === 'paused') paused++;
       const cat = K.mistCat(m.uid) || OTHER, c = cats[cat] = cats[cat] || {name: cat, items: []};
       c.items.push({key, m, state, wrongs: posInt(m.wrongs) ? m.wrongs : null, part: !!m.part || !posInt(m.wrongs), typed: typedOf(m), passes: m.passes || 0});
     }
@@ -73,7 +101,7 @@
     // 四个数
     const kpi = {
       newW: has(st, week.concat(prev), 'mn') ? sum(st, week, 'mn') : null, newP: has(st, week.concat(prev), 'mn') ? sum(st, prev, 'mn') : null,
-      due: (() => { try { return E.dueMistakes(S, day).length; } catch (e) { return list.reduce((n, c) => n + c.items.filter(i => i.state === 'due').length, 0); } })(),   // 和孩子看到的一致；进度里混了坏条目时用自己的计数
+      due: list.reduce((n, c) => n + c.items.filter(i => i.state === 'due').length, 0),   // 和孩子宝箱的「今天要复习」同一口径（shelves）
       rep: list.reduce((n, c) => n + c.items.filter(i => i.state !== 'done' && i.wrongs >= 2).length, 0),
       passW: has(st, week.concat(prev), 'mp') ? sum(st, week, 'mp') : null, passP: has(st, week.concat(prev), 'mp') ? sum(st, prev, 'mp') : null,
     };
@@ -87,5 +115,5 @@
   }
   // 家长区格子里的一句概况
   function brief(S, day) { const v = build(S, day); return {due: v.kpi.due, newW: v.kpi.newW, n: v.cats.reduce((n, c) => n + c.open, 0)}; }
-  return {build, brief, TAGS, OTHER};
+  return {build, brief, shelves, byCat, inGroup, stateOf, TAGS, OTHER};
 });

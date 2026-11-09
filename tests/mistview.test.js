@@ -100,3 +100,57 @@ test('旧存档、坏数据不报错', () => {
   assert.doesNotThrow(() => MV.build(S, T));
   assert.equal(MV.build(S, T).cats[0].tagText, '记录不全');
 });
+
+// ---------- 孩子错题宝箱三栏（E 调用，中控 11-09）----------
+test('shelves：今天要复习 = E.dueMistakes；过几天再来按日期排；已经学会最近的在前；暂停和全 ≤ 5 的简单题不进三栏', () => {
+  const S = blank();
+  const a = speed(S, SUB, [[-1, 'w', '7']]);                       // 今天到期
+  const b = speed(S, ADD, [[-1, 'w', '5']]); S.mistakes[b].due = D(4);
+  const c = speed(S, '2+4', [[-1, 'w', '5']]); S.mistakes[c].due = D(2);
+  const d = speed(S, '3+4', [[-30, 'w', '6']]); pass(S, d, -10);
+  const e = speed(S, '3+5', [[-30, 'w', '6']]); pass(S, e, -2);
+  const f = speed(S, '4+5', [[-30, 'w', '6']]); S.mistakes[f].due = null; S.mistakes[f].out = 1;   // 秒答下架也算学会
+  const sh = MV.shelves(S, T);
+  assert.deepEqual(sh.today.map(m => m.key), E.dueMistakes(S, T).map(m => m.key));
+  assert.deepEqual(sh.today.map(m => m.key), [a]);
+  assert.deepEqual(sh.later.map(m => m.key), [c, b]);
+  assert.deepEqual(sh.done.map(m => m.key).slice(0, 2), [e, d]); assert.ok(sh.done.some(m => m.key === f));
+  assert.equal(MV.build(S, T).kpi.due, sh.today.length);   // 家长页的「今日复习」和孩子页一致
+  // 简单题：题型错题的题面全 ≤ 5 → 不进
+  const S2 = blank(); assert.equal(C.isLow({a: 1, b: 2}), true);   // 前提
+  S2.mistakes.lowq = {key: 'lowq', uid: TYPE, src: K.ITEM[TYPE].skill, q: {a: 1, b: 2}, ans: 3, passes: 0, due: D(0), added: D(-1), last: D(-1)};
+  S2.mistakes.okq = Object.assign({}, S2.mistakes.lowq, {key: 'okq', q: {a: 7, b: 8}, ans: 15});
+  const sh2 = MV.shelves(S2, T), all2 = sh2.today.concat(sh2.later, sh2.done).map(m => m.key);
+  assert.ok(!all2.includes('lowq')); assert.ok(all2.includes('okq'));
+  assert.ok(!MV.build(S2, T).cats.some(c => c.items.some(i => i.key === 'lowq')));
+  // 暂停：只选第 15 级
+  S.settings = {levels: [15], levelsV: 2};
+  const sh3 = MV.shelves(S, T);
+  assert.deepEqual(sh3.today, []); assert.deepEqual(sh3.later, []);
+  assert.equal(MV.build(S, T).kpi.due, 0);
+});
+
+test('shelves 按组：speed:L1 只看秒答第 1 级；地点组看 m.src；不传组 = 全部', () => {
+  const S = blank(); const a = speed(S, SUB, [[-1, 'w', '7']]); const t = typed(S, 1, [[-1, 'd', null]]);
+  const src = S.mistakes[t].src;
+  assert.deepEqual(MV.shelves(S, T, 'speed:L1').today.map(m => m.key), [a]);
+  assert.deepEqual(MV.shelves(S, T, src).today.map(m => m.key), [t]);
+  assert.deepEqual(MV.shelves(S, T, 'speed:L2').today, []);
+  assert.equal(MV.shelves(S, T).today.length, 2);
+  assert.ok(MV.inGroup(S.mistakes[a], 'speed:L1') && !MV.inGroup(S.mistakes[a], src) && MV.inGroup(S.mistakes[t], null));
+});
+
+test('byCat：按 K.MIST_GROUPS 顺序分组，找不到的归「其他」放最后', () => {
+  const S = blank(); speed(S, SUB, [[-1, 'w', '7']]); typed(S, 1, [[-1, 'd', null]]);
+  const ms = Object.values(S.mistakes).concat([{uid: 'zz:none'}]);
+  const g = MV.byCat(ms), names = g.map(x => x.name), order = K.MIST_GROUPS.map(x => x[0]);
+  assert.equal(names[names.length - 1], '其他');
+  assert.ok(order.indexOf(names[0]) < order.indexOf(names[1]));
+  assert.equal(g.reduce((n, x) => n + x.items.length, 0), ms.length);
+});
+
+test('shelves：进度里混了坏条目不报错', () => {
+  const S = blank(); speed(S, SUB, [[-1, 'w', '7']]); S.mistakes.bad = null; S.mistakes.bad2 = 3;
+  assert.doesNotThrow(() => MV.shelves(S, T));
+  assert.equal(MV.shelves(S, T).today.length, 1);
+});
