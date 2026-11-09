@@ -383,6 +383,15 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .cl{width:18px;height:18px;border:2px solid #000}
 .ty{min-width:120px;height:30px;border:2px solid #000;padding:2px 8px;display:flex;align-items:center;font-size:12px;white-space:nowrap}
 .mgroups{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start}
+/* 孩子的错题宝箱（11-09 简化，原型 docs/原型/错题-家长视角）：一个「开始复习」+ 今天要复习 / 过几天再来 / 已经学会 三栏；统计和规则给家长区 */
+#mist h1 small{font-size:15px;color:var(--mute);font-weight:700;margin-left:8px}
+#mistGo{flex:none;height:64px;font-size:23px;width:100%}
+.mshelves{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mshelf{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:0}
+.mshelf>b{font-size:16px;flex:none}
+.mshelf .mrow{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;overflow-y:auto;min-height:0}
+.mshelf.done .mq{opacity:.55}
+.mshelf .mmore{font-size:14px;color:var(--mute);align-self:center}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:16px}.mg .mh span{flex:1}
 .mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
@@ -814,12 +823,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 <div class="scr" id="mist" hidden style="flex-direction:column;gap:10px">
   <div class="top">
     <button class="btn" id="mistBack">回到岛上</button>
-    <h1>错题宝箱</h1>
+    <h1>错题宝箱<small id="mistWhere"></small></h1>
     <span style="flex:1"></span>
-    <span style="font-size:16px">今天要复习 <b class="num" style="font-size:22px;color:var(--warn)" id="mistN">0</b> 道</span>
+    <button class="btn" id="mistAll" hidden>看全部错题</button>
   </div>
-  <div class="muted">写错的题会隔 1、2、4、7、15 天回来，每次都做对就过 1 次复习；过完 5 次就算真的会了。每天的练习会自动带上它们。</div>
-  <div class="mgroups" id="mGroups"></div>
+  <button class="gobig" id="mistGo">开始复习</button>
+  <div class="mshelves" id="mShelves"></div>
 </div>
 
 <!-- 10 家长区 -->
@@ -1176,7 +1185,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     closeZone(); Zone = g; WD.go(g, () => begin(() => startQ('free', {group: g}), goIsland));
   });
   $('zMap').addEventListener('click', () => { const g = zCur; closeZone(); if (g) openSkillMap(g); });
-  $('zMist').addEventListener('click', () => { const g = zCur; closeZone(); openMist(g === 'speed' ? 'speed:L1' : g); });
+  $('zMist').addEventListener('click', () => { const g = zCur; closeZone(); openMist(g); });
   const walkThen = fn => { const g = todayZone() || 'look'; Zone = g; $('btnStart').classList.add('busy'); if (!WD.go(g, () => { $('btnStart').classList.remove('busy'); fn(); })) $('btnStart').classList.remove('busy'); };
   $('btnStart').addEventListener('click', () => {
     if (WD.entering) return;
@@ -2075,22 +2084,30 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     .concat(C.LEVELS.map((LV, L) => ({id: 'speed:L' + (L + 1), name: '秒答 · ' + LV.name, has: m => !m.src && m.L === L})));
   const backOn = (due, t) => { const n = Math.round((new Date(due) - new Date(t)) / 864e5); return n <= 1 ? '明天' : n === 2 ? '后天' : n + ' 天后'; };
   let mistFocus = null;
+  // 看哪些组：不带组 = 全部；'speed' = 秒答四张图和挑战（岛上秒答高塔进来）；其余 = 这一组
+  const mistGroups = () => MGROUPS.filter(g => !mistFocus || g.id === mistFocus || (mistFocus === 'speed' && g.id.startsWith('speed')));
+  // 三栏分组：F 的纯函数（不在页面里另算）
+  const shelvesOf = (S0, t) => { const sh = {today: [], later: [], done: []}; mistGroups().forEach(g => { const r = MIST_SHELVES(S0, t, g.id); ['today', 'later', 'done'].forEach(k => sh[k].push(...r[k])); }); return sh; };
   function openMist(focus) { mistFocus = focus || null; renderMist(); show('mist'); }
+  const MQMAX = 12;
+  const chipsOf = (ms, tag) => ms.slice(0, MQMAX).map(m => `<span class="mq${tag ? ' later' : ''}">${R.mistLabel(m)}${tag ? `<i>${tag(m)}</i>` : ''}</span>`).join('') + (ms.length > MQMAX ? `<span class="mmore">还有 ${ms.length - MQMAX} 道</span>` : '');
   function renderMist() {
-    const t = today(), all = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.mistOn(S, m) && !(m.q && C.isLow(m.q)));
-    const due = m => m.due !== null && m.due <= t;
-    $('mistN').textContent = Math.min(all.filter(due).length, E.MIST_DAY);
-    const order = MGROUPS.slice().sort((a, b) => (b.id === mistFocus) - (a.id === mistFocus));
-    $('mGroups').innerHTML = order.map(g => {
-      const ms = all.filter(g.has), d = ms.filter(due), doing = ms.filter(m => m.due !== null && m.due > t), done = ms.filter(m => m.due === null);
-      if (!ms.length && g.id !== mistFocus) return '';
-      return `<div class="mg"><div class="mh"><b>${g.name}</b><span class="muted">今天 ${d.length} · 复习中 ${doing.length} · 会了 ${done.length}</span></div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">${d.slice(0, 6).map(m => `<span class="mq">${R.mistLabel(m)}</span>`).join('') || '<span class="muted">今天没有要复习的</span>'}</div>
-        ${doing.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">${doing.sort((a, b) => a.due.localeCompare(b.due)).slice(0, 8).map(m => `<span class="mq later">${R.mistLabel(m)}<i>${backOn(m.due, t)}</i></span>`).join('')}${doing.length > 8 ? `<span class="muted">还有 ${doing.length - 8} 道</span>` : ''}</div>` : ''}
-        <button class="btn" data-rv="${g.id}" ${d.length ? '' : 'disabled style="opacity:.45"'}>复习这一组</button></div>`;
-    }).join('') || '<div class="muted">还没有错题</div>';
+    const t = today(), sh = shelvesOf(S, t), g = mistFocus && MGROUPS.find(x => x.id === mistFocus);
+    $('mistWhere').textContent = mistFocus === 'speed' ? '秒答' : g ? g.name : '';
+    $('mistAll').hidden = !mistFocus;
+    $('mistGo').disabled = !sh.today.length; $('mistGo').textContent = sh.today.length ? '开始复习' : '今天没有要复习的';
+    $('mShelves').innerHTML = `<div class="mshelf"><b>今天要复习</b><div class="mrow">${chipsOf(sh.today) || '<span class="muted">今天没有</span>'}</div></div>
+      <div class="mshelf"><b>过几天再来</b><div class="mrow">${chipsOf(sh.later, m => backOn(m.due, t)) || '<span class="muted">还没有</span>'}</div></div>
+      <div class="mshelf done"><b>已经学会</b><div class="mrow">${chipsOf(sh.done) || '<span class="muted">还没有</span>'}</div></div>`;
   }
-  $('mGroups').addEventListener('click', e => { const b = e.target.closest('[data-rv]'); if (b && !b.disabled) begin(() => startQ('review', {group: b.dataset.rv}), () => openMist(b.dataset.rv)); });
+  // 开始复习：把要看的各组的「复习这一组」依次接起来（引擎按组出到期错题，出完就停）
+  function reviewSess() {
+    const day = today(), ss = mistGroups().map(g => E.review(S, day, g.id)); let i = 0, cur = null;
+    return {next: () => { while (i < ss.length) { const x = ss[i].next(); if (x) { cur = ss[i]; return x; } i++; } return null; },
+      answer: r => cur.answer(r), demoTime: s => cur && cur.demoTime && cur.demoTime(s)};
+  }
+  $('mistGo').addEventListener('click', () => { if ($('mistGo').disabled) return; const f = mistFocus; begin(() => startQ('review', {sess: reviewSess(), group: f || undefined}), () => openMist(f)); });
+  $('mistAll').addEventListener('click', () => openMist());
   $('mistBack').addEventListener('click', goIsland);
 
   // ---------- 10 家长区 ----------
