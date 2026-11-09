@@ -5,8 +5,8 @@
 const test = require('node:test'), assert = require('node:assert/strict');
 const K = require('../v2/skills.js'), C = require('../v2/core.js'), E = require('../v2/engine.js');
 
-test('FUN_SEC 是常量，现在是 0（趣味题和 A、C 同一次上线时再改成 90）', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
-  assert.equal(typeof K.FUN_SEC, 'number'); assert.equal(K.FUN_SEC, 0);
+test('FUN_SEC 是常量，网页里是 90（Ben 11-09 拍板打开）', { skip: process.env.FUN_SEC != null && process.env.FUN_SEC !== '' }, () => {
+  assert.equal(typeof K.FUN_SEC, 'number'); assert.equal(K.FUN_SEC, 90);
 });
 test('登记闸门：fun 技能只有 FUN_SEC > 0 才登记；非 fun 技能不受影响', () => {
   assert.equal(K.funAllowed({fun: true}, 0), false); assert.equal(K.funAllowed({fun: true}, undefined), false);
@@ -17,11 +17,11 @@ test('趣味技能永远不进 K.SKILLS / K.HARD（练习、挑战、开级、al
   assert.ok(K.SKILLS.concat(K.HARD).every(s => !s.fun));
   assert.ok(K.FUN.length > 0 && K.FUN.every(s => s.fun && K.BY[s.id] === s && s.items.every(it => K.ITEM[it.id])));
 });
-test('关掉时：级别说明里没有只属于趣味技能的内容词', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+test('关掉时：级别说明里没有只属于趣味技能的内容词', { skip: K.FUN_SEC > 0 }, () => {
   const funWords = new Set(K.FUN.map(s => K.TOPIC[s.id]).filter(w => !K.SKILLS.concat(K.HARD).some(t => K.TOPIC[t.id] === w)));
   K.LEVELS.forEach(L => L.topics.forEach(w => assert.ok(!funWords.has(w), `第 ${L.n} 级说明里有趣味内容词「${w}」`)));
 });
-test('关掉时：每日练习、自由加练、复习、挑战选题的全集里没有趣味题，趣味错题不回炉', { skip: Number(process.env.FUN_SEC) > 0 }, () => {
+test('关掉时：每日练习、自由加练、复习、挑战选题的全集里没有趣味题，趣味错题不回炉', { skip: K.FUN_SEC > 0 }, () => {
   const S = C.blank(); S.placedAt = 1; S.settings = {levels: [4, 5, 7, 9], levelsV: 2};
   const f = K.FUN[0], it = f.items[0], inst = K.make(it.id, () => 0.4), key = K.mkey(inst);
   S.mistakes[key] = {key, uid: it.id, src: f.group, q: inst.q, ans: inst.ans, passes: 0, due: '2026-11-01', added: '2026-10-30', last: '2026-10-30'};
@@ -49,8 +49,10 @@ test('错题本里有查不到题型的错题：不回炉、不报错、记录�
 test('关掉时前置里写了趣味技能也不崩：所有技能（含高级题）的前置都只留登记了的（审查 R1）', () => {
   K.SKILLS.concat(K.HARD).forEach(s => s.pre.forEach(p => assert.ok(K.BY[p], `${s.id} 的前置 ${p} 没登记`)));
 });
-test('测试开关：环境变量 FUN_SEC 只在 node 里生效（npm test 时 FUN_SEC=90 可以提前跑打开后的路径），网页里永远按代码里的常量', () => {
-  assert.equal(K.FUN_SEC, Number(process.env.FUN_SEC) > 0 ? Number(process.env.FUN_SEC) : 0);
+test('测试开关：环境变量 FUN_SEC 只在 node 里生效（FUN_SEC=0 npm test 跑关掉时的路径），网页里永远按代码里的常量 90', () => {
+  const e = process.env.FUN_SEC; assert.equal(K.FUN_SEC, e != null && e !== '' ? Math.max(0, Number(e) || 0) : 90);
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../v2/skills.js'), 'utf8');
+  assert.match(src, /const FUN_ON = 90;/, '网页默认值');   // 网页里没有 process，走 FUN_ON
 });
 
 // 第三批存档字段（B 写记录一侧；合并、清洗归 F，见交接 F-审-第三批存档字段合并规则.md）：S.stats[日].funSec、S.stats[日].fun = {题型: [作答, 不会]}，和习惯记录 h 并列

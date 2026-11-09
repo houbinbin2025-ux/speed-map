@@ -92,17 +92,58 @@ test('⑥ 趣味题开关：关着时卡片里一个趣味技能都没有；打�
   }
 });
 
-// 开关打开时，「这块地这一级只有趣味题」（第 4 级规律花园只有数塔、第 5 级故事码头只有植树 / 锯木头 / 排顺序）：
-// 卡片列了趣味技能，但 E.groupEmpty 只看 HARD → 按钮写「这个难度没有题」；自由加练要先隔 5 道普通题，这块地没有普通题 → 一道趣味题也出不来。
-// 每日练习不受影响（趣味题照样插）。要 B 定规则（groupEmpty 算不算趣味题、只有趣味题时间隔怎么放），已报中控；B 改好后去掉 todo 转正。
-test('⑦ 开关打开时，只有趣味题的地块也能练（待办：等 B）', {todo: K.FUN_SEC > 0 ? '等 B：只有趣味题的地块（第 4 级规律花园、第 5 级故事码头）' : false}, () => {
+// 开关打开时，「这块地这一级只有趣味题」（第 4 级规律花园只有数塔、第 5 级故事码头只有植树 / 锯木头 / 排顺序）。
+// 规则（B 定、中控认可，11-09）：E.groupEmpty 也算趣味题；自由加练这一组这一级没有普通题时，趣味题不用先隔 5 道、可以连着出，90 秒封顶不变
+// （封顶算法：这一段已用秒数 + 这道的秒答时间 ≤ 90，所以断言不留余量）。
+test('⑦ 开关打开时，只有趣味题的地块也能练：按钮不是「没有题」，自由加练连着出趣味题、不超过 90 秒', () => {
   if (!(K.FUN_SEC > 0)) return;
+  let seen = 0;
   for (let L = 1; L <= LV; L++) {
     const S = chosen(L); S.known = Object.fromEntries(ALL.map(s => [s.id, true]));
     LAND.forEach(g => {
-      const fun = R.skillsOf(S, g).filter(s => s.fun); if (!fun.length || !E.groupEmpty(S, g)) return;
-      assert.fail(`第 ${L} 级 ${g} 只有趣味题（${fun.map(s => s.id).join('、')}），按钮显示没有题、自由加练出不来`);
+      const fun = R.skillsOf(S, g).filter(s => s.fun);
+      const normal = R.skillsOf(S, g).filter(s => !s.fun && s.items.some(it => E.itemOn(S, it.id)));
+      if (!fun.length || normal.length) return;   // 只看「这一级只有趣味题」的地块（现在是第 4 级规律花园、第 5 级故事码头）
+      seen++;
+      assert.equal(E.groupEmpty(S, g), false, `第 ${L} 级 ${g} 只有趣味题，按钮不该是「没有题」`);
+      const sess = E.free(S, '2026-11-10', g); let n = 0, sec = 0, other = 0;
+      for (let i = 0; i < 40; i++) { const x = sess.next(); if (!x) break; if (x.kind !== 'q') continue;
+        const f = !!(K.BY[K.ITEM[x.inst.id].skill] || {}).fun, t = K.fastMs(x.inst, {speed: 900}) / 1000;
+        if (f) { n++; sec += t; } else other++;
+        sess.answer({ok: true, fast: true, secs: t}); }
+      assert.ok(n >= 2, `第 ${L} 级 ${g} 自由加练只出了 ${n} 道趣味题（应能连着出）`);
+      assert.ok(sec <= K.FUN_SEC, `第 ${L} 级 ${g} 趣味题用了 ${Math.round(sec)} 秒，超过 90 秒封顶`);
+      assert.equal(other, 0, `第 ${L} 级 ${g} 没有普通题，却出了 ${other} 道普通题`);
     });
   }
+  assert.ok(seen >= 2, '应该至少碰到第 4 级规律花园、第 5 级故事码头两处');
 });
 
+test('⑦ 开关关着时，只有趣味题的地块照旧显示没有题（和改动前一样）', () => {
+  if (K.FUN_SEC > 0) return;
+  [[4, 'garden'], [5, 'dock']].forEach(([L, g]) => {
+    const S = chosen(L); S.known = Object.fromEntries(ALL.map(s => [s.id, true]));
+    if (R.skillsOf(S, g).some(s => s.items.some(it => E.itemOn(S, it.id)))) return;   // 这一级其实有普通题：不是这条要管的情况
+    assert.equal(E.groupEmpty(S, g), true, `第 ${L} 级 ${g}`);
+  });
+});
+
+
+// 审查 R1（只有趣味题的地块）：按钮能点就一定出得了题；趣味题都练完了显示「全部通关」，不是「没有题」
+test('⑦ 只有趣味题的地块：趣味题型深红但没下架时按钮不能点（全部通关），点得了就一定出题；全部下架时也是通关、不是没有题', () => {
+  if (!(K.FUN_SEC > 0)) return;
+  const at = (L, g, set) => { const S = chosen(L); S.known = Object.fromEntries(ALL.map(s => [s.id, true])); set(S); return S; };
+  const its = (S, g) => R.skillsOf(S, g).filter(s => s.fun).flatMap(s => s.items).filter(it => E.itemOn(S, it.id));
+  [[4, 'garden'], [5, 'dock']].forEach(([L, g]) => {
+    const red = at(L, g, S => its(S, g).forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, d: ['2026-11-01', '2026-11-03', '2026-11-07'], seen: 9, lastDay: '2026-11-07'})));
+    assert.ok(its(red, g).length && its(red, g).every(it => !E.outOf(red, it.id)), `第 ${L} 级 ${g}：深红、没下架`);
+    assert.equal(E.groupEmpty(red, g), false, `第 ${L} 级 ${g} 深红：不是「没有题」`);
+    assert.equal(E.groupOut(red, g, '2026-11-10'), true, `第 ${L} 级 ${g} 深红：全部通关（按钮不能点）`);
+    const out = at(L, g, S => its(S, g).forEach(it => Object.assign(E.prog(S, it.id), {lv: 3, out: 1})));
+    assert.equal(E.groupEmpty(out, g), false, `第 ${L} 级 ${g} 全部下架：不是「没有题」`);
+    assert.equal(E.groupOut(out, g, '2026-11-10'), true, `第 ${L} 级 ${g} 全部下架：全部通关`);
+    // 只深红一部分：按钮能点，点进去一定出题
+    const half = at(L, g, S => { const a = its(S, g); Object.assign(E.prog(S, a[0].id), {lv: 3, d: ['2026-11-01', '2026-11-03', '2026-11-07'], seen: 9, lastDay: '2026-11-07'}); });
+    if (its(half, g).length > 1) { assert.equal(E.groupOut(half, g, '2026-11-10'), false); const x = E.free(half, '2026-11-10', g).next(); assert.ok(x, `第 ${L} 级 ${g} 按钮能点却出不了题`); }
+  });
+});
