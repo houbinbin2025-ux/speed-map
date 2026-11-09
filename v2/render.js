@@ -22,8 +22,8 @@
   const GNAME = Object.fromEntries(GROUPS.map(g => [g.id, g.name])); GNAME.speedH = '秒答';
   // 一块地的技能 = 老技能（一直显示，是这块地的底图）+ 当前级别开放的高级技能（和技能地图的 hardOn 同一口径；11-09 分级同步审查第 1 条，E 和 A 对好）
   // 地块卡片（index.html zoneSkills）、「亮了 x / y 格」、新关卡结算都从这里取；'speed' 只有秒答地图的老技能，'speedH' 是高塔挑战，不进地块卡片
-  // 第三批趣味技能（K.FUN，永远不进 HARD）：开关 FUN_SEC 打开时，这块地这一级能出的趣味技能也列进卡片（自由加练按地出趣味题，第三批说明书 4.3）；关着时一个不显示
-  const funOf = (S, g) => (K.FUN_SEC > 0 ? (K.FUN || []).filter(s => s.group === g && s.items.some(it => E.itemOn(S, it.id))) : []);
+  // 第三批趣味技能（K.FUN，永远不进 HARD）：开关 FUN_SEC 打开时，这块地这一级开放、前置已点亮的趣味技能也列进卡片（自由加练按地出趣味题，第三批说明书 4.3）；关着时一个不显示
+  const funOf = (S, g) => (K.FUN_SEC > 0 ? (K.FUN || []).filter(s => s.group === g && s.items.some(it => E.itemOn(S, it.id)) && E.funReady(S, s)) : []);   // 和自由加练的插入通道同一个前置判断（E.funReady）
   const skillsOf = (S, g) => K.SKILLS.filter(s => s.group === g).concat(E.hardOn(S).filter(s => s.group === g), funOf(S, g));
   const itemsOf = (S, g) => skillsOf(S, g).flatMap(s => s.items);
   // 每块地的格子统计：counts[档位]、亮了几格、共几格

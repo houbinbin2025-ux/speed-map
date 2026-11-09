@@ -25,7 +25,7 @@ test('② 手选每一级：能出题的每个技能，岛上都看得到——�
   for (let L = 1; L <= LV; L++) {
     const S = chosen(L), shown = new Set();
     LAND.concat('speed', 'speedH').forEach(g => R.skillsOf(S, g).forEach(s => shown.add(s.id)));
-    const playable = ALL.filter(s => s.items.some(it => E.itemOn(S, it.id)));
+    const playable = ALL.filter(s => s.items.some(it => E.itemOn(S, it.id)) && (!s.fun || E.funReady(S, s)));   // 趣味技能还要前置已点亮（自由加练的插入通道同一判断）
     playable.forEach(s => assert.ok(shown.has(s.id), `第 ${L} 级 ${s.id}（${s.name}）能出题，岛上看不到`));
     // 卡片里的高级技能都在这一级能出题（不显示没开放的）
     LAND.concat('speedH').forEach(g => R.skillsOf(S, g).filter(s => s.hard || s.fun).forEach(s => assert.ok(playable.includes(s), `第 ${L} 级 ${g} 卡片多了没开放的 ${s.id}`)));
@@ -68,3 +68,41 @@ test('⑤ 每一级至少有一块学习地有题；每一级的说明词都能�
     K.LEVELS[L - 1].topics.forEach(t => assert.ok(topics.has(t), `第 ${L} 级说明里的「${t}」岛上找不到`));
   }
 });
+
+test('⑥ 趣味题开关：关着时卡片里一个趣味技能都没有；打开时卡片列的趣味技能 = 这一级开放且前置已点亮的（和自由加练同一个判断），前置都点亮后自由加练真能出', () => {
+  for (let L = 1; L <= LV; L++) {
+    const S = chosen(L);
+    LAND.forEach(g => {
+      const fun = R.skillsOf(S, g).filter(s => s.fun);
+      if (!(K.FUN_SEC > 0)) { assert.equal(fun.length, 0, `开关关着，第 ${L} 级 ${g} 卡片列了趣味技能`); return; }
+      const want = (K.FUN || []).filter(s => s.group === g && s.items.some(it => E.itemOn(S, it.id)) && E.funReady(S, s));
+      assert.deepEqual(fun.map(s => s.id).sort(), want.map(s => s.id).sort(), `第 ${L} 级 ${g}`);
+    });
+  }
+  if (!(K.FUN_SEC > 0)) return;
+  // 前置全部点亮（摸底判会）后，每块地有趣味技能就列出来，自由加练多跑几轮至少出一道
+  for (let L = 1; L <= LV; L++) {
+    const S = chosen(L); S.known = Object.fromEntries(ALL.map(s => [s.id, true]));
+    LAND.forEach(g => {
+      const fun = R.skillsOf(S, g).filter(s => s.fun); if (!fun.length || E.groupEmpty(S, g)) return;   // 这块地这一级只有趣味题的情况另见 ⑦（待办）
+      let got = false;
+      for (let k = 0; k < 6 && !got; k++) { const sess = E.free(S, C.addDays('2026-11-10', k), g); for (let i = 0; i < 80; i++) { const x = sess.next(); if (!x) break; if (x.kind !== 'q') continue; if (fun.some(s => s.id === K.ITEM[x.inst.id].skill)) { got = true; break; } sess.answer({ok: true, fast: true, secs: 3}); } }
+      assert.ok(got, `第 ${L} 级 ${g} 卡片列了趣味技能，自由加练 6 天都没出`);
+    });
+  }
+});
+
+// 开关打开时，「这块地这一级只有趣味题」（第 4 级规律花园只有数塔、第 5 级故事码头只有植树 / 锯木头 / 排顺序）：
+// 卡片列了趣味技能，但 E.groupEmpty 只看 HARD → 按钮写「这个难度没有题」；自由加练要先隔 5 道普通题，这块地没有普通题 → 一道趣味题也出不来。
+// 每日练习不受影响（趣味题照样插）。要 B 定规则（groupEmpty 算不算趣味题、只有趣味题时间隔怎么放），已报中控；B 改好后去掉 todo 转正。
+test('⑦ 开关打开时，只有趣味题的地块也能练（待办：等 B）', {todo: K.FUN_SEC > 0 ? '等 B：只有趣味题的地块（第 4 级规律花园、第 5 级故事码头）' : false}, () => {
+  if (!(K.FUN_SEC > 0)) return;
+  for (let L = 1; L <= LV; L++) {
+    const S = chosen(L); S.known = Object.fromEntries(ALL.map(s => [s.id, true]));
+    LAND.forEach(g => {
+      const fun = R.skillsOf(S, g).filter(s => s.fun); if (!fun.length || !E.groupEmpty(S, g)) return;
+      assert.fail(`第 ${L} 级 ${g} 只有趣味题（${fun.map(s => s.id).join('、')}），按钮显示没有题、自由加练出不来`);
+    });
+  }
+});
+
