@@ -12,7 +12,7 @@ def check(ok, msg):
     if not ok: fails.append(msg)
 total = lambda pg: pg.evaluate("Object.values(GEMUI.state().inv).reduce((n, x) => n + (x || 0), 0)")
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     # 1 摸底（新孩子第一次进来）：真点按钮进摸底，答对一题
     fresh = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'lastBackup': 0, 'known': {}, 'settings': {'bilingual': False}}

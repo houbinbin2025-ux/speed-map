@@ -22,7 +22,7 @@ def tapCheck(pg, sel, where):
 for mode, init in (('App', NAT), ('网页', WEB)):
     tested = {'demo': 0, 'qplay': 0}
     with sync_playwright() as p:
-        b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+        b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.add_init_script(init)
         pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)

@@ -19,7 +19,7 @@ CHK = """() => {
 }"""
 bad = []
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for W, H in [(932, 430), (844, 390), (667, 375)]:
         pg = b.new_page(viewport={'width': W, 'height': H})
         pg.on('pageerror', lambda e: errs.append(str(e)))

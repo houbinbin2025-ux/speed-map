@@ -29,7 +29,7 @@ SCAN = """async ([n]) => { const {K, R} = window.__sm, $ = id => document.getEle
   return bad; }"""
 out = {}
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for w, h in SIZES:
         pg = b.new_page(viewport={'width': w, 'height': h})
         errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))

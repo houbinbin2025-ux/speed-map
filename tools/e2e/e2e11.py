@@ -36,7 +36,7 @@ def quit_home(pg):
         bb = pg.locator('#qQuit' if cur(pg) == 'qplay' else '#dQuit').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(1200); pg.mouse.up(); pg.wait_for_timeout(500)
     if cur(pg) == 'qsum': pg.click('#qsHome'); pg.wait_for_timeout(400)
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)
     pg.evaluate("__sm.S.oral = true; document.body.classList.remove('write')")

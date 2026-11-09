@@ -77,7 +77,7 @@ def run(pg, n, tag, wrong_every=4):
         pg.wait_for_timeout(150)
     return k, res
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     pg = b.new_page(viewport={'width': 932, 'height': 430}, device_scale_factor=1)
     pg.on('pageerror', lambda e: errs.append('pageerror ' + str(e)))
     pg.on('console', lambda m: m.type == 'error' and errs.append('console ' + m.text))

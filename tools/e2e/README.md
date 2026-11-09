@@ -16,6 +16,8 @@ python3 tools/e2e/e2e-en.py . /tmp/e2e-en 844 390   # 单双日语言：英文�
 python3 tools/e2e/e2e-fast.py . /tmp/e2e-fast       # 秒答时间：时间条时长、超时答对不算学会没矿石、秒答有矿石
 python3 tools/e2e/overflow.py . 30            # 遮盖扫描：每种题的题面 + 答错图解 × 6 种 iPhone 横屏尺寸，超出左栏 / 钻到写字板下 / 出屏 = 失败（退出码 1）
 ```
+**静音（11-09）**：浏览器一律用 `__import__('quiet').launch(p)` 启动（`quiet.py`），不要直接 `p.chromium.launch()`——否则跑回归时扬声器会外放朗读。`quiet.py` 加 `--mute-audio`，并把系统朗读换成不出声的假朗读（事件、`speaking` 照常）。新脚本照此写。
+
 每个脚本最后打印"错误 无"才算过；截图在第二个参数的目录里，逐张看。
 
 `overflow.py . 10 en`、`demofit.py . <目录> en` 强制英文日跑一遍，英文长了也不许溢出。现有脚本的种子都设了 `settings.bilingual=false`，不受当天单双日影响。

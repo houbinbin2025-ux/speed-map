@@ -18,7 +18,7 @@ def hold(pg, sel, ms):
 mc = lambda pg: pg.evaluate("JSON.parse(localStorage.getItem('mc_unlock') || 'null')")
 panel = lambda pg: pg.inner_text('#worldPanel')
 with sync_playwright() as p:
-    b = p.chromium.launch(); ctx = b.new_context(viewport={'width': 1210, 'height': 834}, has_touch=True)
+    b = __import__('quiet').launch(p); ctx = b.new_context(viewport={'width': 1210, 'height': 834}, has_touch=True)
     ctx.add_init_script(APP)
     pg = ctx.new_page(); pg.on('pageerror', lambda e: None if 'pointer lock' in str(e).lower() else errs.append(str(e)))   # 桌面 Chromium 的鼠标锁定提示，iPad 没这个接口
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(800)

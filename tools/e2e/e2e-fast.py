@@ -20,7 +20,7 @@ def oral(pg, late):
     if late: pg.evaluate("__sm.Q.t0 -= 120000; __sm.Q.shownAt -= 120000")
     pg.click('#qOral'); pg.wait_for_timeout(150); pg.click('#qOralNext'); pg.wait_for_timeout(200)
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)
     pg.evaluate("__sm.S.oral = true; document.body.classList.remove('write')")

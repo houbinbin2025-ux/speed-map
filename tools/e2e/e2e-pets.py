@@ -16,7 +16,7 @@ def seed_with(pg, pets, skills):
 def enter(pg):
     pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2200)
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url)
     # 1 真 iPad 现在的样子：学会了 4 个技能，伙伴列表是空的 → 进屋自动带 3 只回家

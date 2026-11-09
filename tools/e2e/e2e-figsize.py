@@ -19,7 +19,7 @@ def go(pg, it):
     pg.evaluate(f"(() => {{ const s = ({SETUP})([]); const L = [{json.dumps(it)}]; __sm.startQ('free', {{sess: {{next: () => L.length ? {{kind: 'q', seg: 'new', inst: L.shift()}} : null, answer: () => undefined}}, group: 'speedH'}}); }})()")
     pg.wait_for_timeout(600)
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for name, kw, k in [('App', {'viewport': {'width': 932, 'height': 651}, 'screen': {'width': 1194, 'height': 834}}, 1194 / 932), ('Safari', {'viewport': {'width': 1194, 'height': 834}}, 1)]:
         pg = b.new_page(has_touch=True, **kw); pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); {NODEMO}"); pg.reload(); pg.wait_for_timeout(500)
