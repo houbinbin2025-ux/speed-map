@@ -396,7 +396,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .mg{background:var(--stone);border:2px solid #000;padding:10px;display:flex;flex-direction:column;gap:6px}
 .mg .mh{display:flex;align-items:center;gap:8px}.mg .mh b{font-size:16px}.mg .mh span{flex:1}
 .mq{font-family:var(--f-num);font-weight:900;font-size:17px;background:var(--stone-hi);border:2px solid #000;padding:3px 8px}
-.mq.later{opacity:.7;display:inline-flex;align-items:baseline;gap:6px}.mq.later i{font-style:normal;font-family:inherit;font-size:12px;font-weight:700;color:var(--dim)}
+.mq.later{opacity:.7;display:inline-flex;align-items:baseline;gap:6px}.mq.later i{font-style:normal;white-space:nowrap;font-family:inherit;font-size:12px;font-weight:700;color:var(--dim)}
 .ovl{position:fixed;inset:0;z-index:40;background:rgba(27,29,34,.97);display:flex;align-items:center;justify-content:center;padding:20px}
 .ovl .card{width:520px;max-width:100%;padding:24px 28px;background:var(--stone);border:4px solid #000;box-shadow:0 6px 0 #000;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
 .ovl .card h3{margin:0;font-size:28px;font-weight:900}
@@ -1180,7 +1180,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     const zNone = z.id !== 'speed' && E.groupEmpty(S, z.id), zOut = z.id !== 'speed' && !zNone && E.groupOut(S, z.id, today());
     $('zGo').textContent = z.id === 'speed' ? '去秒答地图' : zNone ? (E.chosen(S) ? '这个难度没有题' : '还没开放') : zOut ? '全部通关' : '练这一块'; $('zGo').disabled = zOut || zNone; $('zMap').hidden = z.id === 'speed';
     if (z.id === 'speed' && !anyMap()) { const off = E.groupEmpty(S, 'speedH'); $('zGo').textContent = off ? (E.chosen(S) ? '这个难度没有题' : '还没开放') : '去挑战'; $('zGo').disabled = off; }
-    const nm = Object.values(S.mistakes || {}).filter(m => K.ITEM[m.uid] && E.mistOn(S, m) && m.due !== null && m.due <= today() && !(m.q && C.isLow(m.q)) && (z.id === 'speed' ? !m.src : m.src === z.id)).length;
+    const nm = MGROUPS.filter(g => g.id === z.id || (z.id === 'speed' && g.id.startsWith('speed'))).reduce((n, g) => n + MV.shelves(S, today(), g.id).today.length, 0);   // 和点进去的「今天要复习」同一口径（秒答含进阶口算）
     $('zMist').textContent = nm ? `这里的错题（${nm}）` : '这里的错题';
     $('zSheet').classList.add('open'); $('lead').style.visibility = 'hidden'; document.querySelector('.w-mini').style.visibility = 'hidden';
   }
