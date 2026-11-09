@@ -80,23 +80,37 @@ body.play .map-only,body.map .play-only{display:none!important}
 #hotbar svg{width:28px;height:28px}
 #hotbar .n{position:absolute;right:4px;top:2px;font-size:12px;font-weight:800}
 #hotbar .k{position:absolute;left:5px;top:2px;font-size:10px;color:var(--mute)}
-#acts{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:flex-end;padding:8px;background:transparent;box-shadow:none;border:0}
-#acts button{font:inherit;font-weight:800;border:0;border-radius:50%;cursor:pointer;box-shadow:0 4px 14px rgba(40,50,30,.2);color:var(--ink);background:rgba(255,253,246,.95);touch-action:none}
-#bAct{width:96px;height:96px;font-size:16px;background:#ffd76a!important;padding:6px}
-#bAct:disabled{background:rgba(255,253,246,.8)!important;color:var(--mute)}
-#bJump{width:68px;height:68px;font-size:15px}#bView{width:56px;height:56px;font-size:13px}
-#joy{position:fixed;z-index:5;left:calc(28px + env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px));width:132px;height:132px;border-radius:50%;background:rgba(255,253,246,.35);border:2px solid rgba(255,253,246,.75);touch-action:none;display:none}
-#joy i{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(255,253,246,.92);box-shadow:0 3px 10px rgba(0,0,0,.2)}
-@media (pointer:coarse){#joy{display:block}#keys{display:none}}
-#keys{position:fixed;z-index:4;left:calc(16px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));font-size:12px;line-height:1.7;color:rgba(30,30,30,.7);background:rgba(250,248,241,.75);padding:6px 10px;border-radius:10px}
-#keys kbd{font:inherit;font-weight:800;background:#fff;border-radius:4px;padding:0 5px;box-shadow:0 1px 0 rgba(0,0,0,.2)}
 #hint{position:fixed;z-index:4;left:0;top:0;transform:translate(-50%,-100%);background:#2b2a27;color:#fff;border-radius:999px;padding:6px 14px;font-size:15px;font-weight:800;white-space:nowrap;pointer-events:none}
 #hint kbd{font:inherit;background:#ffd76a;color:#2b1a00;border-radius:6px;padding:0 6px;margin-right:6px}
-@media (pointer:coarse){#hint kbd{display:none}}
 #toast{position:fixed;z-index:6;left:50%;top:calc(90px + env(safe-area-inset-top,0px));transform:translateX(-50%) translateY(-8px);opacity:0;transition:opacity .3s,transform .3s;background:rgba(43,42,39,.9);color:#fff;padding:9px 18px;border-radius:14px;font-size:16px;font-weight:700;pointer-events:none;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%)}
-@media (max-width:820px){#hotbar button{width:52px;height:52px}#hotbar svg{width:22px;height:22px}#hotbar .lb{display:none}#bAct{width:80px;height:80px;font-size:14px}#near{width:190px}}
+@media (max-width:820px){#near{width:190px}}
 @media (max-height:500px){#near{top:calc(76px + env(safe-area-inset-top,0px));padding:6px 10px}#gems{top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}#mode{top:calc(70px + env(safe-area-inset-top,0px))}#clock{display:none}#mode{top:calc(14px + env(safe-area-inset-top,0px))}}
+/* 以下照搬方块世界（minecraft-web）的准星、快捷栏、物品名、操作说明、触屏控件 */
+#crosshair{position:fixed;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none;mix-blend-mode:difference;z-index:5}
+#crosshair::before,#crosshair::after{content:"";position:absolute;background:#ddd}
+#crosshair::before{left:9px;top:0;width:3px;height:22px}#crosshair::after{left:0;top:9px;width:22px;height:3px}
+body.touch #crosshair{width:18px;height:18px}
+#hotbar{left:50%!important;transform:translateX(-50%)!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;display:flex;gap:0!important;padding:2px!important;background:rgba(0,0,0,.35)!important;border:2px solid rgba(0,0,0,.6)!important;border-radius:0!important;box-shadow:none!important}
+#hotbar button{position:relative;width:46px!important;height:46px!important;background:rgba(60,60,60,.82)!important;border:2px solid!important;border-color:#2c2c2c #6f6f6f #6f6f6f #2c2c2c!important;border-radius:0!important;margin:1px;padding:0;display:block!important;cursor:pointer}
+#hotbar button.on{border:3px solid #fff!important;margin:0;box-shadow:0 0 0 1px #000}
+#hotbar button svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:32px!important;height:32px!important;pointer-events:none}
+#hotbar .lb,#hotbar .k{display:none}
+#hotbar .n{position:absolute;right:2px!important;bottom:0;top:auto!important;color:#fff;font-size:14px;font-weight:bold;text-shadow:2px 2px 0 #3f3f3f;pointer-events:none}
+#itemName{position:fixed;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);color:#fff;font-size:18px;text-shadow:2px 2px 0 rgba(0,0,0,.7);opacity:0;transition:opacity .4s;pointer-events:none;z-index:6}
+#controls{position:fixed;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.25);border-radius:4px;padding:10px 14px;color:#fff;font-size:13px;line-height:1.9;z-index:6;pointer-events:none;text-shadow:1px 1px 0 #000}
+#controls h4{font-size:14px;color:#ffe24a;margin:0 0 4px}#controls b{display:inline-block;min-width:96px;color:#9fd6ff;font-weight:bold}
+#controls.hide{display:none}
+#touchUI{display:none}body.touch #touchUI{display:block}body.touch #controls{display:none}
+body.touch #controls.tshow{display:block;pointer-events:auto;right:auto;left:50%;transform:translate(-50%,-50%);z-index:30;font-size:16px}
+#joyZone{position:fixed;left:calc(20px + env(safe-area-inset-left,0px));bottom:calc(96px + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.32);z-index:8;touch-action:none}
+#joyKnob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:rgba(255,255,255,.38);pointer-events:none}
+#tBtns{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(100px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;z-index:8}
+.tbtn{width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.42);border:2px solid rgba(255,255,255,.45);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+#btnTHelp,#btnTView{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));width:50px;height:50px;font-size:22px;z-index:16}
+#btnTHelp{right:calc(16px + env(safe-area-inset-right,0px))}#btnTView{right:calc(76px + env(safe-area-inset-right,0px))}
+body.touch.play #clock{display:none}
+body.touch.play #mode{top:calc(14px + env(safe-area-inset-top,0px));right:calc(136px + env(safe-area-inset-right,0px))}
 @media (prefers-reduced-motion:reduce){#stats b.bump{animation:none}}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/jsm/"}}</script>
@@ -133,9 +147,33 @@ body.play .map-only,body.map .play-only{display:none!important}
   <div id="nUnlock"></div>
 </div>
 <div class="card play-only" id="hotbar"></div>
-<div class="card play-only" id="acts"><button id="bView">视角</button><button id="bJump">跳</button><button id="bAct" disabled>互动</button></div>
-<div id="joy" class="play-only"><i></i></div>
-<div id="keys" class="play-only"><kbd>W A S D</kbd> 走 · <kbd>空格</kbd> 跳 · 拖动 转向 · <kbd>E</kbd> 互动 · <kbd>1</kbd>–<kbd>4</kbd> 换物品 · <kbd>V</kbd> 视角 · <kbd>M</kbd> 俯瞰</div>
+<div id="crosshair" class="play-only"></div>
+<div id="itemName" class="play-only"></div>
+<div id="controls" class="play-only">
+  <h4>操作说明（H 键隐藏/显示）</h4>
+  <div><b>↑ ↓ ← → / WASD</b>移动</div>
+  <div><b>I / K</b>抬头 / 低头</div>
+  <div><b>J / L</b>向左转 / 向右转</div>
+  <div><b>F / 左键</b>摸摸伙伴</div>
+  <div><b>G / 右键</b>用手里的东西（拿粮 · 倒粮 · 倒水 · 扔球）</div>
+  <div><b>Z / X</b>快捷栏 上一格 / 下一格</div>
+  <div><b>1~4</b>快捷栏 直接选格</div>
+  <div><b>空格</b>跳跃</div>
+  <div><b>Ctrl</b>疾跑</div>
+  <div><b>Shift</b>潜行</div>
+  <div><b>V / F5</b>切换第一/第三人称</div>
+  <div style="margin-top:4px;opacity:.65">（点一下画面锁定鼠标：移动转视角 · Esc 松开）</div>
+</div>
+<div id="touchUI" class="play-only">
+  <div id="joyZone"><div id="joyKnob"></div></div>
+  <div id="tBtns">
+    <div class="tbtn" id="btnTMine">⛏️</div>
+    <div class="tbtn" id="btnTUse">🧱</div>
+    <div class="tbtn" id="btnTJump">⬆️</div>
+  </div>
+  <div class="tbtn" id="btnTHelp">❓</div>
+  <div class="tbtn" id="btnTView">👁️</div>
+</div>
 <div id="hint" hidden></div>
 <div id="toast"></div>
 <div class="burst" id="burst"><svg viewBox="0 0 150 110"><polygon id="burstPoly" fill="#ffd23f" stroke="#2b1a00" stroke-width="4" stroke-linejoin="round"/></svg><b id="burstT">送粮啦</b></div>

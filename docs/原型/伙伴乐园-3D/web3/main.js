@@ -302,7 +302,7 @@ const kp = n => KN['空空' + n] || KN['空空/' + n];
 const K = { head: kp('头'), armL: kp('左臂'), armR: kp('右臂'), legL: kp('左腿'), legR: kp('右腿') };
 const handArm = [K.armL, K.armR].sort((a, b) => a.position.x - b.position.x)[0];   // 面朝 +Z 时，右手在 -X 一侧
 const otherArm = handArm === K.armL ? K.armR : K.armL;
-const P = { pos: V3(2.6, 0, 7.6), vy: 0, yaw: Math.PI + .2, pitch: .32, ground: true, view: 1, slot: 0, ph: 0, sp: 0, lock: 0, act: null };
+const P = { pos: V3(2.6, 0, 7.6), vy: 0, yaw: Math.PI + .2, pitch: .25, ground: true, view: 1, slot: 0, ph: 0, sp: 0, lock: 0, act: null };
 const INV = { food: 1, water: 1, gems: 6 };
 // 手里的东西
 const held = {};
@@ -333,50 +333,91 @@ function hud() {
 }
 let toastT = 0; function toast(msg) { $('toast').textContent = msg; $('toast').classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('on'), 2400); }
 
-// ---------- 输入：键盘 + 拖动转向 + 摇杆 ----------
-const KEY = {}, joy = { x: 0, y: 0, id: null };
-addEventListener('keydown', e => {
-  if (MODE !== 'play') { if (e.code === 'KeyM') setMode('play'); return; }
+// ---------- 输入：照搬方块世界（minecraft-web/index.html 的 setupInput / setupTouch），不另加操作 ----------
+// 键盘：WASD/方向键 走 · 空格 跳（按住连跳）· Ctrl 疾跑 · Shift 潜行 · I/K 抬头低头 · J/L 左右转 · F 按住 挖/攻击（这里=摸摸）· G 放/用（这里=用手里的东西）
+//       Z/X 快捷栏上一格下一格 · 1~9 选格 · V/F5 切视角 · H 显示/隐藏操作说明
+// 鼠标：点画面锁定鼠标，移动转视角 · 左键=F · 右键=G · 滚轮切格（累积 + 冷却）· Ctrl+滚轮缩放视野
+// 触屏：左下摇杆（推到边=疾跑）· 拖屏转视角 · 双指捏合缩放 · ⛏️ 🧱 ⬆️ 三个按钮 · 右上 👁️ 视角 · ❓ 说明
+const IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+if (IS_TOUCH) document.body.classList.add('touch');
+const KEY = {}, touchJoy = { active: false, dx: 0, dy: 0, sprint: false };
+let locked = false, zoomFactor = 1, wheelAcc = 0, lastWheelSwitch = 0;
+const canPlay = () => MODE === 'play' && !fly;
+let nameT = 0; function popItemName() { const el = $('itemName'); el.textContent = SLOTS[P.slot].name; el.style.opacity = 1; clearTimeout(nameT); nameT = setTimeout(() => el.style.opacity = 0, 1500); }
+const cv = renderer.domElement;
+document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cv; });
+document.addEventListener('mousemove', e => { if (!locked) return; P.yaw -= e.movementX * .0023; P.pitch = THREE.MathUtils.clamp(P.pitch + e.movementY * .0023, -1.55, 1.55); });
+document.addEventListener('mousedown', e => { if (!locked || !canPlay()) return; if (e.button === 0) interact('hit'); else if (e.button === 2) interact('use'); });
+document.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('click', () => { if (MODE === 'play' && !locked && !IS_TOUCH) { try { const r = cv.requestPointerLock(); r && r.catch && r.catch(() => {}); } catch (e) {} } });
+document.addEventListener('wheel', e => {
+  if (MODE !== 'play') return;
+  if (e.ctrlKey) { e.preventDefault(); zoomFactor = Math.min(3.5, Math.max(1, zoomFactor * Math.exp(-e.deltaY * .012))); return; }
+  e.preventDefault();
+  if (Math.sign(e.deltaY) !== Math.sign(wheelAcc)) wheelAcc = 0;
+  wheelAcc += e.deltaY; const now = performance.now();
+  if (Math.abs(wheelAcc) >= 100 && now - lastWheelSwitch > 220) { setSlot(P.slot + (wheelAcc > 0 ? 1 : -1)); wheelAcc = 0; lastWheelSwitch = now; popItemName(); }
+}, { passive: false });
+document.addEventListener('keydown', e => {
+  if (MODE !== 'play') return;
   KEY[e.code] = true;
-  if (e.code === 'Space') { e.preventDefault(); jump(); }
-  if (e.code === 'KeyE' || e.code === 'KeyF') interact();
-  if (e.code === 'KeyV' || e.code === 'F5') { e.preventDefault(); cycleView(); }
-  if (e.code === 'KeyM') setMode('map');
-  if (/^Digit[1-4]$/.test(e.code)) setSlot(+e.code.slice(5) - 1);
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.code === 'KeyH') $('controls').classList.toggle('hide');
+  if (e.code === 'KeyF' && !e.repeat) interact('hit');
+  if (e.code === 'KeyG' && !e.repeat) interact('use');
+  if (e.code === 'KeyZ') { setSlot(P.slot - 1); popItemName(); }
+  if (e.code === 'KeyX') { setSlot(P.slot + 1); popItemName(); }
+  if (e.code === 'KeyV' || e.code === 'F5') { P.view = (P.view + 1) % 3; e.preventDefault(); }
+  if (e.code.startsWith('Digit')) { const n = +e.code.slice(5); if (n >= 1 && n <= SLOTS.length) { setSlot(n - 1); popItemName(); } }
 });
-addEventListener('keyup', e => { KEY[e.code] = false; });
+document.addEventListener('keyup', e => { KEY[e.code] = false; });
 addEventListener('blur', () => { for (const k in KEY) KEY[k] = false; });
-renderer.domElement.addEventListener('wheel', e => { if (MODE === 'play') setSlot(P.slot + Math.sign(e.deltaY)); }, { passive: true });
-renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
-const look = { id: null, x: 0, y: 0, moved: 0 };
-renderer.domElement.addEventListener('pointerdown', e => { if (MODE !== 'play' || look.id !== null) return; look.id = e.pointerId; look.x = e.clientX; look.y = e.clientY; look.moved = 0; look.btn = e.button; });
-addEventListener('pointermove', e => { if (e.pointerId !== look.id) return; const dx = e.clientX - look.x, dy = e.clientY - look.y; look.x = e.clientX; look.y = e.clientY; look.moved += Math.abs(dx) + Math.abs(dy);
-  const k = e.pointerType === 'touch' ? .007 : .005; P.yaw -= dx * k; P.pitch = THREE.MathUtils.clamp(P.pitch + dy * k, -.6, 1.15); });
-addEventListener('pointerup', e => { if (e.pointerId !== look.id) return; look.id = null; if (look.moved < 6 && MODE === 'play') { if (look.btn === 2 || clickPet(e)) interact(); } });
-function clickPet(e) { ptr.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(ptr, cam); return PETS.some(p => ray.intersectObject(p.root, true).length); }
-{ const J = $('joy'), knob = J.firstElementChild;
-  const upd = e => { const r = J.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = e.clientX - cx, dy = e.clientY - cy; const L = Math.hypot(dx, dy), m = r.width / 2 - 10; if (L > m) { dx *= m / L; dy *= m / L; } joy.x = dx / m; joy.y = -dy / m; knob.style.transform = `translate(${dx}px,${dy}px)`; };
-  J.addEventListener('pointerdown', e => { joy.id = e.pointerId; J.setPointerCapture(e.pointerId); upd(e); });
-  J.addEventListener('pointermove', e => { if (e.pointerId === joy.id) upd(e); });
-  const end = e => { if (e.pointerId !== joy.id) return; joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; };
-  J.addEventListener('pointerup', end); J.addEventListener('pointercancel', end); }
-$('bJump').onpointerdown = e => { e.preventDefault(); jump(); };
-$('bAct').onclick = () => interact();
-$('bView').onclick = () => cycleView();
-$('mPlay').onclick = () => setMode('play'); $('mMap').onclick = () => setMode('map');
-function jump() { if (P.ground && !P.lock) { P.vy = 7.4; P.ground = false; } }
-function cycleView() { P.view = (P.view + 1) % 3; toast(['第一人称', '第三人称 · 背后', '第三人称 · 正面'][P.view]); }
+// 触屏：拖屏转视角 + 双指捏合缩放
+{ const looks = new Map(); let pinchD = 0;
+  cv.addEventListener('touchstart', e => { if (MODE !== 'play') return; e.preventDefault();
+    for (const t of e.changedTouches) looks.set(t.identifier, { x: t.clientX, y: t.clientY });
+    if (looks.size === 2) { const [a, b] = [...looks.values()]; pinchD = Math.hypot(a.x - b.x, a.y - b.y); } }, { passive: false });
+  cv.addEventListener('touchmove', e => { if (MODE !== 'play') return; e.preventDefault();
+    for (const t of e.changedTouches) { const p = looks.get(t.identifier); if (!p) continue;
+      if (looks.size === 1) { P.yaw -= (t.clientX - p.x) * .0046; P.pitch = THREE.MathUtils.clamp(P.pitch + (t.clientY - p.y) * .0046, -1.55, 1.55); }
+      p.x = t.clientX; p.y = t.clientY; }
+    if (looks.size === 2) { const [a, b] = [...looks.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinchD > 0) zoomFactor = Math.min(3.5, Math.max(1, zoomFactor * (d / pinchD))); pinchD = d; } }, { passive: false });
+  const lookEnd = e => { for (const t of e.changedTouches) looks.delete(t.identifier); if (looks.size < 2) pinchD = 0; };
+  cv.addEventListener('touchend', lookEnd); cv.addEventListener('touchcancel', lookEnd); }
+// 虚拟摇杆
+{ const zone = $('joyZone'), knob = $('joyKnob'); let joyId = null;
+  const joyMove = t => { const r = zone.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = (t.clientX - cx) / 46, dy = (t.clientY - cy) / 46; const len = Math.hypot(dx, dy); if (len > 1) { dx /= len; dy /= len; }
+    touchJoy.dx = dx; touchJoy.dy = dy; touchJoy.sprint = len > .92; knob.style.transform = `translate(${dx * 40}px,${dy * 40}px)`; };
+  zone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; joyId = t.identifier; touchJoy.active = true; joyMove(t); }, { passive: false });
+  zone.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) if (t.identifier === joyId) joyMove(t); }, { passive: false });
+  const joyEnd = e => { for (const t of e.changedTouches) if (t.identifier === joyId) { joyId = null; touchJoy.active = false; touchJoy.dx = touchJoy.dy = 0; touchJoy.sprint = false; knob.style.transform = ''; } };
+  zone.addEventListener('touchend', joyEnd); zone.addEventListener('touchcancel', joyEnd); }
+// 动作按钮
+const bindBtn = (id, down, up) => { const el = $(id);
+  el.addEventListener('touchstart', e => { e.preventDefault(); down(); }, { passive: false });
+  const u = e => { e.preventDefault(); up && up(); }; el.addEventListener('touchend', u, { passive: false }); el.addEventListener('touchcancel', u, { passive: false });
+  el.addEventListener('mousedown', e => { if (!IS_TOUCH) { e.preventDefault(); down(); } }); el.addEventListener('mouseup', e => { if (!IS_TOUCH) up && up(); }); };
+bindBtn('btnTJump', () => KEY.Space = true, () => KEY.Space = false);
+bindBtn('btnTMine', () => interact('hit'));
+bindBtn('btnTUse', () => interact('use'));
+bindBtn('btnTView', () => { P.view = (P.view + 1) % 3; });
+bindBtn('btnTHelp', () => $('controls').classList.toggle('tshow'));
+$('controls').addEventListener('click', () => $('controls').classList.remove('tshow'));
+$('mPlay').onclick = () => setMode('play'); $('mMap').onclick = () => { if (document.pointerLockElement) document.exitPointerLock(); setMode('map'); };
 
-// ---------- 镜头 ----------
+// ---------- 镜头（照方块世界：第一人称 / 身后 3.6 米 / 面前，撞到东西就缩近）----------
+// 朝向约定：P.yaw 时空空面朝 (sin yaw, 0, cos yaw)；P.pitch 正数 = 低头
 const lookDir = () => V3(Math.sin(P.yaw) * Math.cos(P.pitch), -Math.sin(P.pitch), Math.cos(P.yaw) * Math.cos(P.pitch));
-const headPos = () => P.pos.clone().add(V3(0, 1.62 * KS, 0));
+const eyePos = () => P.pos.clone().add(V3(0, (KEY.ShiftLeft || KEY.ShiftRight ? .83 : .9) * 1.94 * KS, 0));
+const headPos = eyePos;
 function camWant() {
-  const h = headPos(), L = lookDir();
-  if (P.view === 0) { const e = P.pos.clone().add(V3(0, 1.58 * KS, 0)).addScaledVector(V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), .12); return { pos: e, tgt: e.clone().add(L) }; }
-  if (P.view === 2) { const f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)); return { pos: h.clone().addScaledVector(f, 3.6).add(V3(0, .5, 0)), tgt: h }; }
-  let d = 5.2; const pos = h.clone().addScaledVector(L, -d);
-  for (let k = 1; k <= 22; k++) { const q = h.clone().addScaledVector(L, -d * k / 22); if (q.y < .15 || camHit(q)) { d = Math.max(.7, d * (k - 1.5) / 22); break; } }   // 镜头别穿进屋子、树里
-  return { pos: h.clone().addScaledVector(L, -d), tgt: h.clone().add(V3(0, .15, 0)) };
+  const eye = eyePos(), fwd = lookDir();
+  P.camD = 9; if (P.view === 0) { if (P.moving && P.ground) eye.y += Math.sin(P.walkT * 2) * .045; return { pos: eye, tgt: eye.clone().add(fwd) }; }
+  const sgn = P.view === 1 ? 1 : -1, dist = 3.6; let dd = dist;
+  for (let s = .4; s < dist; s += .3) { const q = eye.clone().addScaledVector(fwd, -s * sgn); if (q.y < .1 || camHit(q)) { dd = s - .3; break; } }
+  P.camD = dd; const pos = eye.clone().addScaledVector(fwd, -dd * sgn).add(V3(0, .35, 0));
+  return { pos, tgt: P.view === 1 ? pos.clone().add(fwd) : pos.clone().add(V3(-fwd.x, fwd.y, -fwd.z)) };
 }
 // 镜头和空空之间有东西就拉近（按零件外包盒判断，宁可近一点也别被挡住）
 function camHit(q) { if (Math.hypot(q.x - POND.x, q.z - POND.z) > 999) return false;
@@ -386,7 +427,7 @@ function setMode(m) {
   if (MODE === m || fly) return;
   MODE = m; document.body.classList.toggle('play', m === 'play'); document.body.classList.toggle('map', m === 'map');
   $('mPlay').classList.toggle('on', m === 'play'); $('mMap').classList.toggle('on', m === 'map');
-  cam.fov = m === 'play' ? 58 : 30; cam.updateProjectionMatrix();
+  cam.fov = m === 'play' ? 75 : 30; cam.updateProjectionMatrix();
   if (m === 'play') { ctl.enabled = false; ctl.autoRotate = false; const w = camWant(); flyTo(w.pos, w.tgt, 1100); dof.uniforms.aperture.value = .0003; }
   else { ctl.enabled = true; kong.visible = true; ctl.target.copy(headPos()); flyTo(HOME.pos, HOME.tgt, 1100); dof.uniforms.aperture.value = .0008; idleT = 0; }
   hud();
@@ -415,13 +456,19 @@ function addHearts(p, n, t) { for (let i = 0; i < n; i++) { const s = new THREE.
 function gainAff(p, v) {
   const before = p.aff; p.aff = Math.min(3, p.aff + v);
   if (before < 1 && p.aff >= 1) toast(`${p.id}会跟着你走了`);
-  else if (before < 2 && p.aff >= 2) toast(`${p.id}学会接球了：换成小球，按 E 扔`);
+  else if (before < 2 && p.aff >= 2) toast(`${p.id}学会接球了：换成小球，按 ${IS_TOUCH ? '🧱' : 'G'} 扔`);
   else if (before < 3 && p.aff >= 3) toast(`${p.id}送你一件装饰`);
 }
 const parts = [];
-function interact() {
-  if (MODE !== 'play' || P.lock > 0) return;
-  const t = clock.elapsedTime, T = target; if (!T) return;
+function petInFront() { const f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), front = P.pos.clone().addScaledVector(f, .7); let best = null, bd = 2.3;
+  for (const p of PETS) { const d = flatD(front, petPos(p)); if (d < bd) { bd = d; best = p; } } return best; }
+// how = 'hit'（F / 左键 / ⛏️，方块世界里是挖和攻击，这里是摸摸）或 'use'（G / 右键 / 🧱，用手里的东西）
+function interact(how = 'use') {
+  if (MODE !== 'play' || fly || P.lock > 0) return;
+  const t = clock.elapsedTime;
+  let T = how === 'use' ? target : null;
+  if (how === 'hit') { const p = petInFront(); if (p) T = { kind: 'pet', p }; else { P.act = { kind: 'pet', t0: t }; P.lock = 0; return; } }
+  if (!T) return;
   if (T.kind === 'shop') {
     if (INV.gems <= 0) return toast('宝石不够了，做题可以赚宝石');
     const id = SLOTS[P.slot].id;
@@ -482,24 +529,35 @@ function stepBall(dt) {
   }
 }
 function stepPlayer(dt, t) {
-  let fw = 0, st = 0;
-  if (MODE === 'play' && !fly) {
-    fw = (KEY.KeyW || KEY.ArrowUp ? 1 : 0) - (KEY.KeyS || KEY.ArrowDown ? 1 : 0) + joy.y;
-    st = (KEY.KeyD || KEY.ArrowRight ? 1 : 0) - (KEY.KeyA || KEY.ArrowLeft ? 1 : 0) + joy.x;
-    if (KEY.KeyQ) P.yaw += 2.2 * dt; if (KEY.KeyR) P.yaw -= 2.2 * dt;
-  }
-  if (P.lock > 0) { P.lock -= dt; fw = st = 0; }
+  const mk = canPlay() ? KEY : {};
+  if (mk.KeyI) P.pitch = Math.max(-1.55, P.pitch - dt * 1.8);      // 抬头
+  if (mk.KeyK) P.pitch = Math.min(1.55, P.pitch + dt * 1.8);       // 低头
+  if (mk.KeyJ) P.yaw += dt * 2.4; if (mk.KeyL) P.yaw -= dt * 2.4;
+  const sprint = mk.ControlLeft || mk.ControlRight || (canPlay() && touchJoy.sprint), sneak = mk.ShiftLeft || mk.ShiftRight;
+  const speed = sneak ? 1.4 : sprint ? 5.7 : 4.3;
+  let ix = 0, iz = 0;
+  if (mk.ArrowUp || mk.KeyW) iz -= 1; if (mk.ArrowDown || mk.KeyS) iz += 1; if (mk.ArrowLeft || mk.KeyA) ix -= 1; if (mk.ArrowRight || mk.KeyD) ix += 1;
+  if (canPlay() && touchJoy.active) { ix += touchJoy.dx; iz += touchJoy.dy; }
+  const len = Math.hypot(ix, iz); if (len > 1) { ix /= len; iz /= len; }
+  if (P.lock > 0) { P.lock -= dt; ix = iz = 0; }
+  // 输入 → 世界方向：前 = 面朝方向，右 = 面朝方向右手边
   const f = V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), r = V3(-Math.cos(P.yaw), 0, Math.sin(P.yaw));
-  const mv = f.multiplyScalar(fw).addScaledVector(r, st); let L = mv.length(); if (L > 1) { mv.divideScalar(L); L = 1; }
-  const sp = 4.3 * (KEY.ShiftLeft ? 1.35 : 1), nx = P.pos.x + mv.x * sp * dt, nz = P.pos.z + mv.z * sp * dt, y = P.pos.y;
-  if (L > .02) { if (!blocked(nx, y, nz)) { P.pos.x = nx; P.pos.z = nz; } else if (!blocked(nx, y, P.pos.z)) P.pos.x = nx; else if (!blocked(P.pos.x, y, nz)) P.pos.z = nz; }
-  P.vy -= 22 * dt; let ny = y + P.vy * dt;
+  const tx = (f.x * -iz + r.x * ix) * speed, tz = (f.z * -iz + r.z * ix) * speed;
+  const kv = 1 - Math.exp(-dt * (P.ground ? 14 : 3.5)); P.vx = (P.vx || 0) + (tx - (P.vx || 0)) * kv; P.vz = (P.vz || 0) + (tz - (P.vz || 0)) * kv;
+  const nx = P.pos.x + P.vx * dt, nz = P.pos.z + P.vz * dt, y = P.pos.y;
+  if (Math.abs(P.vx) + Math.abs(P.vz) > .01) { if (!blocked(nx, y, nz)) { P.pos.x = nx; P.pos.z = nz; } else if (!blocked(nx, y, P.pos.z)) { P.pos.x = nx; P.vz = 0; } else if (!blocked(P.pos.x, y, nz)) { P.pos.z = nz; P.vx = 0; } else { P.vx = P.vz = 0; } }
+  P.vy -= 25 * dt; if (mk.Space && P.ground) { P.vy = 8.5; P.ground = false; }
+  let ny = y + P.vy * dt;
   const g = groundAt(P.pos.x, Math.max(y, ny), P.pos.z);
   if (ny <= g) { ny = g; P.vy = 0; P.ground = true; } else if (ny > g + .05) P.ground = false;
-  P.pos.y = ny; P.sp += (L - P.sp) * Math.min(1, dt * 10);
+  P.pos.y = ny;
+  const hs = Math.hypot(P.vx, P.vz); P.moving = (Math.abs(tx) > .1 || Math.abs(tz) > .1) && P.ground; if (P.moving) P.walkT = (P.walkT || 0) + dt * speed * 1.7;
+  const L = Math.min(1, hs / 4.3); P.sp += (L - P.sp) * Math.min(1, dt * 10);
+  const targetFov = (sprint && P.moving ? 82 : 75) / zoomFactor;
+  if (MODE === 'play' && !fly && Math.abs(cam.fov - targetFov) > .2) { cam.fov += (targetFov - cam.fov) * Math.min(1, dt * 8); cam.updateProjectionMatrix(); }
   // 空空的动作：走路摆臂摆腿、跳起来抬腿、拿东西抬手、摸摸、倒、扔
   kong.position.copy(P.pos); kong.rotation.y = P.yaw;
-  P.ph += dt * 9 * P.sp; const sw = Math.sin(P.ph) * .75 * P.sp;
+  const sw = P.moving ? Math.sin(P.walkT * 2) * .5 : 0;   // 方块世界的摆臂摆腿幅度
   K.legL.rotation.x = sw; K.legR.rotation.x = -sw;
   if (!P.ground) { K.legL.rotation.x = -.45; K.legR.rotation.x = .3; }
   otherArm.rotation.x = (handArm === K.armL ? sw : -sw) * .9; otherArm.rotation.z = 0;
@@ -511,16 +569,16 @@ function stepPlayer(dt, t) {
   else if (A && A.kind === 'throw' && k < .35) ha = -2.6 + k / .35 * 2.4;
   else handArm.rotation.z = 0;
   handArm.rotation.x = ha;
-  K.head.rotation.x = THREE.MathUtils.clamp(P.pitch * .45 - .12, -.3, .45); K.head.rotation.y = 0;
-  kong.visible = !(MODE === 'play' && P.view === 0 && !fly);
-  if (P.ground && L < .02) kong.position.y += Math.sin(t * 2.2) * .006;
+  K.head.rotation.x = THREE.MathUtils.clamp(P.pitch * .5, -.45, .45); K.head.rotation.y = 0;
+  kong.visible = !(MODE === 'play' && !fly && (P.view === 0 || (P.camD ?? 9) < 1.1));   // 镜头被挡得贴脸时先不画空空，免得钻进头里
+  if (P.ground && !P.moving) kong.position.y += Math.sin(t * 2.2) * .006;
 }
 function stepParts(t) { for (let i = parts.length - 1; i >= 0; i--) { const q = parts[i], u = (t - q.t0) / q.d; if (u < 0) { q.m.visible = false; continue; } q.m.visible = true; if (u >= 1) { scene.remove(q.m); parts.splice(i, 1); continue; } q.m.position.copy(arc(q.from, q.to, u, .25)); } }
 // 伙伴：见到空空会转头看、开心地蹦；亲密度 1 颗心以上会跟着走；2 颗心会接球；倒了粮会跑过来吃
 function stepPetPlay(p, t, dt) {
   const me = toLocal(p, P.pos), pos = p.root.position, dMe = Math.hypot(me.x - pos.x, me.z - pos.z), m = mood(p), A = p.act;
   p.moving = 0; p.near = dMe;
-  if (dMe < 1.1 && dMe > .01) { const push = pos.clone().sub(me).setY(0).normalize(); pos.addScaledVector(push, (1.1 - dMe) * Math.min(1, dt * 8)); }
+  if (dMe < 1.5 && dMe > .01) { const push = pos.clone().sub(me).setY(0).normalize(); pos.addScaledVector(push, (1.5 - dMe) * Math.min(1, dt * 8)); }
   if (A && A.kind === 'eat') {
     const spot = (A.what === 'food' ? p.bowlLocal : p.troughLocal).clone(), toMe = pos.clone().sub(spot).setY(0).normalize();
     const stand = spot.clone().addScaledVector(toMe.lengthSq() ? toMe : V3(0, 0, 1), .55);
@@ -549,8 +607,7 @@ function stepPetPlay(p, t, dt) {
 // 键入 / 点击时的提示
 function stepHint() {
   target = MODE === 'play' && !fly ? findTarget() : null;
-  const b = $('bAct'); b.disabled = !target; b.textContent = target ? target.label : '互动';
-  const h = $('hint'); if (!target || !target.at) { h.hidden = true; } else { const w = typeof target.at === 'function' ? target.at() : target.at, v = w.project(cam); if (v.z > 1) h.hidden = true; else { h.hidden = false; h.innerHTML = `<kbd>E</kbd>${target.label}`; h.style.left = (v.x * .5 + .5) * innerWidth + 'px'; h.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; } }
+  const h = $('hint'); if (!target || !target.at) { h.hidden = true; } else { const w = typeof target.at === 'function' ? target.at() : target.at, v = w.project(cam); if (v.z > 1) h.hidden = true; else { h.hidden = false; h.innerHTML = `<kbd>${target.kind === 'pet' ? (IS_TOUCH ? '⛏️' : 'F') : (IS_TOUCH ? '🧱' : 'G')}</kbd>${target.label}`; h.style.left = (v.x * .5 + .5) * innerWidth + 'px'; h.style.top = (-v.y * .5 + .5) * innerHeight + 'px'; } }
   // 附近的伙伴卡
   let np = null, nd = 6; for (const p of PETS) { const d = flatD(petPos(p), P.pos); if (d < nd) { nd = d; np = p; } }
   $('near').hidden = !np || MODE !== 'play';
@@ -602,7 +659,7 @@ function frame() { FR++;
   stepPlayer(dt, t); stepBall(dt); stepParts(t);
   if (MODE === 'map') { ctl.update(); idleT += dt; if (idleT > 6 && !busy && !fly && !REDUCE) ctl.autoRotate = true; }
   else if (fly) cam.lookAt(ctl.target);
-  else { const w = camWant(); if (P.view === 0) cam.position.copy(w.pos); else cam.position.lerp(w.pos, 1 - Math.exp(-dt * 14)); ctl.target.copy(w.tgt); cam.lookAt(w.tgt); }
+  else { const w = camWant(); cam.position.copy(w.pos); ctl.target.copy(w.tgt); cam.lookAt(w.tgt); }
   // 时间
   if (lapse) { const u = (t - lapse.t0) / 12; const h = (lapse.h0 + u * 24) % 24; applyHour(h); clockText(h); if (u >= 1) { lapse = null; $('tDay').classList.remove('on'); $('clock').classList.remove('fast'); applyHour(realHour()); clockText(realHour()); } }
   else if (frames === 0) clockText(realHour());
@@ -650,13 +707,13 @@ function frame() { FR++;
   requestAnimationFrame(frame);
 }
 addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
-window.__park = { P, INV, ball, setMode, interact, findTarget: () => target, COL, KEY, kong, MERGE, PETS, select, flyTo, flyPet, applyHour, cam, ctl, N, THREE, HOME, layout };
+window.__park = { P, INV, ball, setMode, interact, findTarget: () => target, COL, KEY, touchJoy, kong, MERGE, PETS, select, flyTo, flyPet, applyHour, cam, ctl, N, THREE, HOME, layout };
 window.__ready = true;
 // ---------- 测速（?bench=1）：自动走一圈各模式，把帧率回传给本机测速服务 ----------
 if (Q.get('bench')) {
   const log = d => fetch('/log', { method: 'POST', body: JSON.stringify({ ...d, ua: navigator.userAgent.slice(0, 80), dpr: devicePixelRatio, w: innerWidth, h: innerHeight }) }).catch(() => {});
   addEventListener('error', e => log({ err: String(e.message) + ' @' + e.lineno }));
-  const phases = [['走走·站着', () => { }], ['走走·走路', () => { joy.y = 1; }], ['走走·第一人称', () => { P.view = 0; }], ['俯瞰', () => { joy.y = 0; P.view = 1; setMode('map'); }], ['俯瞰·看一天', () => $('tDay').click()]];
+  const phases = [['走走·站着', () => { }], ['走走·走路', () => { touchJoy.active = true; touchJoy.dy = -1; }], ['走走·第一人称', () => { P.view = 0; }], ['俯瞰', () => { touchJoy.active = false; touchJoy.dy = 0; P.view = 1; setMode('map'); }], ['俯瞰·看一天', () => $('tDay').click()]];
   let i = 0; const run = () => { if (i >= phases.length) return log({ done: true }); const [name, fn] = phases[i++]; fn(); let f0 = 0, t0 = 0, min = 99;
     const tick = () => { /* 每帧转一点方向，走成一圈 */ if (name === '走走·走路' || name === '走走·第一人称') P.yaw += .012; };
     const iv = setInterval(tick, 16);
