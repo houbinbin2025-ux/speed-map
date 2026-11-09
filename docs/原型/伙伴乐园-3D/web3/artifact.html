@@ -105,7 +105,7 @@ body.play .map-only,body.map .play-only{display:none!important}
   <p id="pLine"></p>
   <div class="bar">食盆<div class="cells f" id="bF"></div></div>
   <div class="bar">水槽<div class="cells w" id="bW"></div></div>
-  <div class="acts"><button class="food" id="aF">倒粮</button><button class="water" id="aW">倒水</button></div>
+  <p class="tip">喂食和摸摸：切到「走走」，走到它身边。</p>
 </div>
 <div class="card map-only" id="tools">
   <button id="tHome"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>全景</button>
@@ -199,8 +199,8 @@ flat(new THREE.RingGeometry(5.4, 7.0, 96), SAND);                               
 const walks = [];
 for (const p of layout.plots) {                                                     // 通往各家的小路（偏开传送带一点）
   const t = p.angle * Math.PI / 180, dir = V3(Math.cos(t), 0, -Math.sin(t)), side = V3(-dir.z, 0, dir.x);
-  const a = dir.clone().multiplyScalar(6.8).addScaledVector(side, -1.1), b = dir.clone().multiplyScalar(11.8).addScaledVector(side, -1.1);
-  const L = a.distanceTo(b), m = flat(new THREE.PlaneGeometry(L, 1.4), SAND, .02); m.position.x = (a.x + b.x) / 2; m.position.z = (a.z + b.z) / 2; m.rotation.z = Math.atan2(-(b.z - a.z), b.x - a.x);
+  const a = dir.clone().multiplyScalar(6.8), b = dir.clone().multiplyScalar(11.8);   // 原来传送带的位置，改成小路
+  const L = a.distanceTo(b), m = flat(new THREE.PlaneGeometry(L, 1.6), SAND, .02); m.position.x = (a.x + b.x) / 2; m.position.z = (a.z + b.z) / 2; m.rotation.z = Math.atan2(-(b.z - a.z), b.x - a.x);
   walks.push([a, b]);
 }
 const POND = { x: -8.5, z: 13, r: 3.0 };
@@ -386,8 +386,6 @@ function ui() {
   $('pName').textContent = sel.id; $('pLine').textContent = sel.line; $('pSt').textContent = MOOD[m]; $('pSt').className = 'st ' + m;
   $('bF').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < sel.food ? 'on' : ''}"></i>`).join('');
   $('bW').innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < sel.water ? 'on' : ''}"></i>`).join('');
-  $('aF').disabled = busy || sel.food >= 6; $('aW').disabled = busy || sel.water >= 6;
-  $('aF').textContent = sel.food >= 6 ? '食盆已满' : '倒粮'; $('aW').textContent = sel.water >= 6 ? '水槽已满' : '倒水';
   [...$('tabs').children].forEach((b, i) => b.classList.toggle('on', PETS[i] === sel));
   for (const p of PETS) { const mm = mood(p); p.tag.el.className = 'pill ' + (mm === 'happy' ? '' : mm) + (p === sel ? ' sel' : ''); p.tag.el.querySelector('small').textContent = MOOD[mm]; }
 }
@@ -419,50 +417,9 @@ renderer.domElement.addEventListener('pointerup', e => { if (MODE !== 'map' || !
 let burst = null;
 function popBurst(text, worldPos, ms = 1600) { $('burstT').textContent = text; burst = { pos: worldPos.clone(), t0: clock.elapsedTime, ms: ms / 1000 }; }
 
-// ---------- 送粮：粮箱从小卖部上传送带，镜头跟拍，跳进食盆 ----------
-const crateTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.fillStyle = '#d9a35e'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#e8892e'; g.fillRect(54, 0, 20, 128); g.fillRect(0, 54, 128, 20); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
-const crateM = new THREE.MeshStandardMaterial({ map: crateTex, roughness: .8 });
+// （第 2 版的传送带送粮已去掉：Ben 11-09，喂食只在走走模式里亲手倒）
 let busy = false, job = null;
-function makeCrate(kind) {
-  const g = new THREE.Group(), b = new THREE.Mesh(new THREE.BoxGeometry(.55, .45, .55), kind === 'food' ? crateM : new THREE.MeshStandardMaterial({ color: 0x6fb6de, roughness: .35 }));
-  b.castShadow = true; g.add(b); if (kind === 'water') { const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .1, 16), clay({ color: 0xf7f1e3 })); cap.position.y = .27; g.add(cap); }
-  scene.add(g); return g;
-}
-function deliver(kind) {
-  if (busy) return; busy = true; ctl.autoRotate = false; ui();
-  const p = sel, crate = makeCrate(kind), shop = V3(layout.shop[0], 1.3, layout.shop[2]);
-  const [b0, b1] = p.belt, bowl = (kind === 'food' ? p.bowlN : p.troughN).getWorldPosition(V3());
-  const bowlW = bbCenter(kind === 'food' ? p.bowlN : p.troughN).setY(.55);
-  crate.position.copy(shop); crate.scale.setScalar(.001);
-  // 先把镜头带到小卖部
-  const toShop = b0.clone().sub(shop).setY(0).normalize();
-  flyTo(shop.clone().addScaledVector(toShop, -10).addScaledVector(V3(-toShop.z, 0, toShop.x), 4).add(V3(0, 9, 0)), shop.clone().addScaledVector(toShop, 2), 800, () => {
-    popBurst(kind === 'food' ? '送粮啦' : '送水啦', shop.clone().add(V3(0, 1.4, 0)));
-    job = { p, kind, crate, shop, b0, b1, bowlW, t0: clock.elapsedTime, legs: [.45, .55, 2.6, .7] };
-  });
-}
-$('aF').onclick = () => deliver('food'); $('aW').onclick = () => deliver('water');
-function arc(a, b, u, h) { const v = a.clone().lerp(b, u); v.y += Math.sin(u * Math.PI) * h; return v; }
-function runJob(t) {
-  const J = job, k = t - J.t0, [d0, d1, d2, d3] = J.legs, c = J.crate;
-  if (k < d0) { const u = k / d0; c.scale.setScalar(backOut(u)); c.position.copy(J.shop).add(V3(0, u * .3, 0)); }   // 冒出来
-  else if (k < d0 + d1) { const u = (k - d0) / d1; c.scale.setScalar(1); c.position.copy(arc(J.shop.clone().add(V3(0, .3, 0)), J.b0.clone().add(V3(0, .23, 0)), u, 1.2)); }   // 跳上传送带
-  else if (k < d0 + d1 + d2) { const u = (k - d0 - d1) / d2; c.position.copy(J.b0.clone().lerp(J.b1, u)).add(V3(0, .23 + Math.abs(Math.sin(u * 40)) * .02, 0)); }   // 传送带上走
-  else if (k < d0 + d1 + d2 + d3) { const u = (k - d0 - d1 - d2) / d3; c.position.copy(arc(J.b1.clone().add(V3(0, .23, 0)), J.bowlW, u, 1.0)); c.rotation.z = u * Math.PI * 2; c.scale.setScalar(1 - u * .6); }   // 跳进食盆
-  else { scene.remove(c); finishJob(t); return; }
-  // 镜头跟拍：低机位，在粮箱后上方
-  if (k > d0) { const dir = J.b1.clone().sub(J.b0).setY(0).normalize(), side = V3(-dir.z, 0, dir.x);
-    const want = c.position.clone().addScaledVector(dir, -7).addScaledVector(side, 3.5).add(V3(0, 4.8, 0));
-    cam.position.lerp(want, .08); ctl.target.lerp(c.position, .12); }
-}
-function finishJob(t) {
-  const J = job; job = null;
-  if (J.kind === 'food') J.p.food = 6; else J.p.water = 6;
-  J.p.joyT = t; J.p.grow = { kind: J.kind, t0: t };
-  for (let i = 0; i < 3; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: heartTex, transparent: true, depthTest: false })); fx.add(s); hearts.push({ s, p: J.p, t0: t + .25 + i * .14, x: (i - 1) * .35 }); }
-  ui(); stats();
-  setTimeout(() => { busy = false; ui(); flyPet(J.p); }, 900);
-}
+function arc(a, b, u, h) { const v = a.clone().lerp(b, u); v.y += Math.sin(u * Math.PI) * h; return v; }   // 抛物线（倒粮的颗粒用）
 const heartTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = '#ff6f8f'; g.beginPath(); g.moveTo(32, 54); g.bezierCurveTo(4, 32, 14, 8, 32, 22); g.bezierCurveTo(50, 8, 60, 32, 32, 54); g.fill(); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
 const hearts = [];
 
@@ -779,7 +736,6 @@ let FR = 0;
 function frame() { FR++;
   const dt = Math.min(clock.getDelta(), .05), t = clock.elapsedTime; grassU.time.value = t;
   if (fly) { const k = Math.min(1, (performance.now() - fly.s) / fly.ms), e = ease(k); cam.position.lerpVectors(fly.p0, fly.p1, e); ctl.target.lerpVectors(fly.t0, fly.t1, e); if (k >= 1) { const d = fly.done; fly = null; d && d(); } }
-  if (job) runJob(t);
   stepPlayer(dt, t); stepBall(dt); stepParts(t);
   if (MODE === 'map') { ctl.update(); idleT += dt; if (idleT > 6 && !busy && !fly && !REDUCE) ctl.autoRotate = true; }
   else if (fly) cam.lookAt(ctl.target);
@@ -831,7 +787,7 @@ function frame() { FR++;
   requestAnimationFrame(frame);
 }
 addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
-window.__park = { P, INV, ball, setMode, interact, findTarget: () => target, COL, KEY, kong, MERGE, PETS, select, deliver, flyTo, flyPet, applyHour, cam, ctl, N, THREE, HOME, layout };
+window.__park = { P, INV, ball, setMode, interact, findTarget: () => target, COL, KEY, kong, MERGE, PETS, select, flyTo, flyPet, applyHour, cam, ctl, N, THREE, HOME, layout };
 window.__ready = true;
 // ---------- 测速（?bench=1）：自动走一圈各模式，把帧率回传给本机测速服务 ----------
 if (Q.get('bench')) {
