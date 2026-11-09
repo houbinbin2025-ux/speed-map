@@ -13,8 +13,8 @@ START = """([id, k, card]) => { const {K} = window.__sm; const x = K.rawPool(id)
   const list = (card && K.BY[sk].concept ? [{kind: 'demo', concept: K.BY[sk].concept, skill: sk}] : []).concat([{kind: 'q', seg: 'new', inst: {id, q: x.q, ans: x.ans}}]);
   window.__sm.startQ('free', {sess: {next: () => list.shift() || null, answer: () => undefined}, group: K.BY[sk].group}); }"""
 OVER = """(id => { const e = document.getElementById(id), vw = innerWidth, vh = innerHeight, bad = [];
-  if (!e) return bad; if (e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2) bad.push(id + ' 内容超出');
-  e.querySelectorAll('svg.fig2, .nbsay, .eq, .frac, .pickcard').forEach(x => { const b = x.getBoundingClientRect(); if (b.width && (b.right > vw + 1 || b.bottom > vh + 1 || b.left < -1)) bad.push((x.className.baseVal || x.className) + ' 出屏'); });
+  if (!e) return bad; if (e.classList.contains('scrolly')) { const r = e.getBoundingClientRect(), w = e.querySelector('.why'); if (r.bottom > vh + 1) bad.push(id + ' 滚动区出屏'); if (w && w.getBoundingClientRect().bottom > r.bottom + 1) bad.push(id + ' 讲解句不在滚动区可见范围'); if (e.scrollWidth > e.clientWidth + 2) bad.push(id + ' 内容超出'); } else if (e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2) bad.push(id + ' 内容超出');
+  e.querySelectorAll('svg.fig2, .nbsay, .eq, .frac, .pickcard').forEach(x => { const b = x.getBoundingClientRect(); if (b.width && (b.right > vw + 1 || (b.bottom > vh + 1 && !x.closest('.qbody.scrolly')) || b.left < -1)) bad.push((x.className.baseVal || x.className) + ' 出屏'); });
   return bad; })"""
 ZHLEFT = "(() => { const t = document.getElementById('qplay').innerText + ' ' + [...document.querySelectorAll('#qplay [aria-label], #qplay [data-say]')].map(e => (e.getAttribute('aria-label') || '') + (e.getAttribute('data-say') || '')).join(' '); return (t.match(/[\\u4e00-\\u9fff]+/g) || []).filter(w => !/长按结束/.test(w)).slice(0, 5); })()"
 def setup(pg, en):

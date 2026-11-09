@@ -17,8 +17,8 @@ def choose(pg, lvs):
     for n in lvs: pg.locator(f'#lvBoxes [data-lv="{n}"]').scroll_into_view_if_needed(); pg.click(f'#lvBoxes [data-lv="{n}"]')
     pg.wait_for_timeout(100); pg.evaluate("document.getElementById('parBack').click()"); pg.wait_for_timeout(400)
 OVER = """(id => { const e = document.getElementById(id), vw = innerWidth, vh = innerHeight, bad = [];
-  if (e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2) bad.push(id + ' 内容超出');
-  e.querySelectorAll('svg.fig2, .nbsay, .eq, .nrows').forEach(x => { const b = x.getBoundingClientRect(); if (b.width && (b.right > vw + 1 || b.bottom > vh + 1 || b.height < 40)) bad.push(x.className.baseVal || x.className); });
+  if (e.classList.contains('scrolly')) { const r = e.getBoundingClientRect(), w = e.querySelector('.why'); if (r.bottom > vh + 1) bad.push(id + ' 滚动区出屏'); if (w && w.getBoundingClientRect().bottom > r.bottom + 1) bad.push(id + ' 讲解句不在滚动区可见范围'); if (e.scrollWidth > e.clientWidth + 2) bad.push(id + ' 内容超出'); } else if (e.scrollHeight > e.clientHeight + 2 || e.scrollWidth > e.clientWidth + 2) bad.push(id + ' 内容超出');
+  e.querySelectorAll('svg.fig2, .nbsay, .eq, .nrows').forEach(x => { const b = x.getBoundingClientRect(); if (b.width && (b.right > vw + 1 || (b.bottom > vh + 1 && !x.closest('.qbody.scrolly')) || b.height < 40)) bad.push(x.className.baseVal || x.className); });
   return bad; })"""
 FIGQ = "(()=>{const Q=__sm.Q;return Q&&Q.x&&Q.x.kind==='q'&&Q.x.inst.q?Q.x.inst.q.view:null})()"
 def card_checks(pg, cards):
