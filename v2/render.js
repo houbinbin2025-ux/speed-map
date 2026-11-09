@@ -20,11 +20,14 @@
     {id: 'dock', name: '故事码头', rule: '看图想一想，写答案'},
   ];
   const GNAME = Object.fromEntries(GROUPS.map(g => [g.id, g.name])); GNAME.speedH = '秒答';
-  const itemsOf = g => K.SKILLS.filter(s => s.group === g).flatMap(s => s.items);
+  // 一块地的技能 = 老技能（一直显示，是这块地的底图）+ 当前级别开放的高级技能（和技能地图的 hardOn 同一口径；11-09 分级同步审查第 1 条，E 和 A 对好）
+  // 地块卡片（index.html zoneSkills）、「亮了 x / y 格」、新关卡结算都从这里取；'speed' 只有秒答地图的老技能，'speedH' 是高塔挑战，不进地块卡片
+  const skillsOf = (S, g) => K.SKILLS.filter(s => s.group === g).concat(E.hardOn(S).filter(s => s.group === g));
+  const itemsOf = (S, g) => skillsOf(S, g).flatMap(s => s.items);
   // 每块地的格子统计：counts[档位]、亮了几格、共几格
   function groupStat(S, g) {
     const counts = [0, 0, 0, 0];
-    itemsOf(g).forEach(it => counts[Math.min(3, Math.max(0, E.lv(S, it.id) || 0))]++);
+    itemsOf(S, g).forEach(it => counts[Math.min(3, Math.max(0, E.lv(S, it.id) || 0))]++);
     return {counts, lit: counts[1] + counts[2] + counts[3], total: counts.reduce((a, b) => a + b, 0)};
   }
   const skillOf = id => K.BY[K.ITEM[id].skill];
@@ -526,5 +529,5 @@
     return `数线 · ${q.target}`;
   }
 
-  return {ansText, fr, hasFr, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
+  return {ansText, fr, hasFr, gName, setSprite, card, cardPage, CONCEPTS: Object.keys(CARDS), barSvg, chartSvg, rectSvg, speedWhy, GROUPS, GNAME, groupStat, skillsOf, itemsOf, tagOf, question, explain, okWords, demo, lineHint, miniLine, scatPos, TYPE_LABEL, label, mistLabel};
 });
