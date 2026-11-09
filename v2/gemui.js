@@ -13,7 +13,7 @@
 
   // 思维地点答对（10.2，中控 11-08）：按一道题给碎片、算有效时间。key 区分题目，同一题当天再做只给普通小碎片
   function answerThink(o) {
-    if (!on || !c.canWrite() || S().oral) return null;
+    if (!on || !c.canWrite()) return null;   // 口答模式也给（Ben 11-08：所有题都有激励）
     const secs = Math.max(0, +o.secs || 0), got = G.thinkAnswer(st, {day: c.today(), key: o.key, wrong: o.wrong, secs});
     G.noteRest(st, G.effSecs(secs, 10000), clock()); save();
     (got || []).forEach((t, i) => floatShard(t, i));
@@ -62,7 +62,8 @@
   const evOn = q => on && !!q && ['today', 'free', 'review'].includes(q.kind) && !S().oral && c.canWrite();
   // limitMs = 这道题的标准时间（秒答时限）：有效时间最多算它的 3 倍
   function answerQ(q, x, r, secs, limitMs) {
-    if (!on || q.kind === 'place' || !c.canWrite()) return null;
+    if (!on || !c.canWrite()) return null;   // 摸底也给（Ben 11-08：所有题都有激励）
+    if (q.kind === 'place') { const got = G.placeAnswer(st, {ok: r.ok && !r.dunno && !q.peeked}); credit(q, got); save(); return {got, words: words(got || []), bolt: false, rep: false}; }   // 摸底：固定 1 个小碎片，不进当天统计
     let got = null, more = null;
     const evc = q.opts && q.opts.evc;
     secs = G.effSecs(secs, limitMs); q.effSec = (q.effSec || 0) + secs; q.limitMs = limitMs;
@@ -83,7 +84,7 @@
       const mult = fx ? 1 + (fx.F.lit ? 1 : 0) + (G.critOn(fx.C, now) ? 1 : 0) : undefined;   // 火苗只在今日练习、练这一块、复习里有；其他练习按金色算
       got = G.answer(st, {day: q.day, inst: x.inst, ok: r.ok, slow: r.ok && !r.fast, top: topOf(q), lv: G.levelOfCell(st, S(), x.inst.id), dunno: r.dunno, peeked: q.peeked, oral: S().oral, retry: x.retry, mistake: !!x.mkey, rand: oddRand, mult});
       credit(q, got);
-      if (got && !got.rep && r.fast) { more = G.speedBonus(st, q.day, r.bolt, mult); credit(q, more.extra, got.length); }
+      if (got && !got.rep && r.fast && !S().oral) { more = G.speedBonus(st, q.day, r.bolt, mult); credit(q, more.extra, got.length); }
       if (fx) afterAnswer(q, x, r, got, now, !!(got && got.rep));
     }
     save();
@@ -258,15 +259,17 @@
     const avg = k => Math.round(l.reduce((n, x) => n + (x[k] || 0), 0) / l.length), low = l.filter(x => x.act < G.TUNE.focusOn * 100).length;
     return `<div>专注度：最近 ${l.length} 次平均 ${avg('act')}%，火苗亮的时间 ${avg('on')}%，低于 ${Math.round(G.TUNE.focusOn * 100)}% 的 ${low} 次</div>`;
   }
-  function answerP(p, inst, c0, limit) {   // 老秒答流程。Boss 和摸底不给
-    if (!on || p.kind === 'boss' || p.kind === 'scan' || p.kind === 'final' || !c.canWrite()) return null;
+  function answerP(p, inst, c0, limit) {   // 老秒答流程：今日练习、Boss、摸底都给（Ben 11-08：所有题都有激励）
+    if (!on || !c.canWrite()) return null;
+    if (p.kind === 'scan') { const got = G.placeAnswer(st, {ok: p.result !== 'wrong' && !p.dunno}); credit(p, got); save(); return {got, words: words(got || []), bolt: false}; }   // 秒答区摸底：同上
     p.gemDay = p.gemDay || c.today();
     const m = c0.mkey && S().mistakes[c0.mkey];
-    { const secs = G.effSecs((p.ms || 0) / 1000, limit); G.noteRest(st, secs, clock()); G.addSec(st, p.gemDay, secs); evRun = null; }
+    { const secs = G.effSecs((p.ms || 0) / 1000, limit); G.noteRest(st, secs, clock()); if (!S().oral) G.addSec(st, p.gemDay, secs); evRun = null; }   // 口答不算有效时间（和新流程 answerQ 一致，审查 R2）
     const got = G.answer(st, {day: p.gemDay, inst, ok: p.result !== 'wrong', slow: p.result === 'slow', top: topOf(p), lv: G.levelOfCell(st, S(), inst.id), dunno: p.dunno, oral: S().oral, mistake: !!(m && m.due !== null && m.due <= p.gemDay), rand: oddRand});
     credit(p, got);
     let more = null;
-    if (got && !got.rep && p.result === 'fast') { more = G.speedBonus(st, p.gemDay, p.ms <= limit * G.BOLT); credit(p, more.extra, got.length); }
+    if (got && !got.rep && p.result === 'fast' && !S().oral) {   // 口答不算秒答，没有秒答奖励
+      more = G.speedBonus(st, p.gemDay, p.ms <= limit * G.BOLT); credit(p, more.extra, got.length); }
     save();
     const all = (got || []).concat(more ? more.extra : []);
     return {got: all.length ? all : null, words: words(all), bolt: !!more && more.bolt};
@@ -275,7 +278,7 @@
   // ---------- 结算页的碎片区块 ----------
   function summary(run, day, opts) {
     evRun = null;
-    if (!on || !c.canWrite() || run.kind === 'boss' || run.kind === 'scan' || run.kind === 'final') return '';   // Boss、摸底不算；只读时不结算
+    if (!on || !c.canWrite()) return '';   // 只读时不结算；Boss、摸底也结算（拿到的碎片要看得到）
     opts = opts || {};
     const set = G.settle(st, day), g = run.gem || {}, F = run.focus;
     if (F && evOn(run)) G.noteFocus(st, day, F);
