@@ -161,11 +161,11 @@ test('审查 2 轮：「练这一块」前置已满足的先出，不够 12 题�
   }
 });
 
-test('审查 3 轮：排着队时下架的题不再出；下架错题不算「过完 5 次复习」', () => {
+test('审查 3 轮：排着队时下架的题不再出；下架错题在家里算「错题真的会了」（C 方案 4 甲，11-09 F、中控同意，原来不算）', () => {
   const H = require('../v2/home.js'), S = blank(), inst = K.make(card.id, rnd), day = '2026-11-05';
   E.addMistake(S, inst, '2026-11-01'); Object.assign(E.prog(S, card.id), {lv: 3, d: ['2026-10-01', '2026-10-02', '2026-10-06']});
   E.sweep(S); const m = Object.values(S.mistakes)[0];
-  assert.equal(m.due, null); assert.equal(m.out, 1); assert.equal(H.stats(S).solved, 0);
+  assert.equal(m.due, null); assert.equal(m.out, 1); assert.equal(H.stats(S).solved, 1);
   const seen = []; const s = E.session(S, day, {rnd});
   for (let x = s.next(), g = 0; x && g < 200; x = s.next(), g++) { if (x.kind !== 'q') continue; seen.push(x.inst.id); s.answer({ok: true, fast: true, secs: 3}); }
   assert.ok(!seen.includes(card.id));

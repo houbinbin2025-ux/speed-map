@@ -24,7 +24,7 @@ PROBE = """() => { const a = document.getElementById('ack'), r = a.getBoundingCl
     if (b.right > vw + 1 || b.bottom > vh + 1) bad.push((e.classList.contains('spk') ? '喇叭' : '说明句') + '出屏'); });
   return bad; }"""
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for en in (False, True):
         for W, H, scr in SIZES:
             ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True)

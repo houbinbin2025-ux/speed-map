@@ -14,7 +14,7 @@ CHECK = """() => { const res = []; const body = document.querySelector('#demoBox
   const ack = document.getElementById('ack').getBoundingClientRect(), D = document.querySelector('#demoBox .demo').getBoundingClientRect(); if (ack.bottom > innerHeight + 1 || D.bottom > ack.top + 1) res.push('和按钮重叠或超出屏幕');
   return res; }"""
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for w, h in [(956, 440), (932, 430), (852, 393), (844, 390), (812, 375), (667, 375)]:
         pg = b.new_page(viewport={'width': w, 'height': h}); pg.goto(url); pg.evaluate("en => localStorage.setItem('speedmap.v2.test', JSON.stringify({v: 2, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}, placedAt: 1, known: {}, settings: {bilingual: en}, testDays: en && !I18N.isEn({}, SM.dayOf(Date.now(), 0)) ? 1 : 0}))", EN); pg.reload(); pg.wait_for_timeout(300)
         if EN: assert pg.evaluate("document.documentElement.lang") == 'en'

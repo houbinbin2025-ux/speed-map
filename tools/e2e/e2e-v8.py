@@ -80,7 +80,7 @@ def enter(pg, mod):
     check(not pg.is_visible('#zMap') and not pg.is_visible('#zMist'), f'{mod} 卡片不显示格子和错题入口')
     pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=9000); pg.wait_for_timeout(650)
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for W, H in SIZES:
         pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True)
         pg.on('pageerror', lambda e: errs.append(f'{W}x{H} ' + str(e)))

@@ -26,7 +26,7 @@ def answer(pg, ans, rem=None):
     for i, ch in enumerate(s): write(pg, cells.nth(n - len(s) + i), int(ch))
     if rem is not None: write(pg, cells.nth(n), rem)
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 1194, 'height': 834}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 1194, 'height': 834}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.wait_for_timeout(300)
     kinds = pg.evaluate("KINDS")

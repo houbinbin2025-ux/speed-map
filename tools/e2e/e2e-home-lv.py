@@ -18,7 +18,7 @@ SEED = """([levels, hard]) => { const S = {v: 2, savedAt: 0, cards: {}, boss: {}
   localStorage.setItem('speedmap.v2.test', JSON.stringify(S)); }"""
 CASES = [('没开三四年级', [1, 2, 3], 0), ('手选 3–8 级、学到第 8 级', [3, 4, 5, 6, 7, 8], 8), ('手选 1–15 级、全部学会', list(range(1, 16)), 15)]
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for W, H in [(667, 375), (844, 390), (874, 297), (932, 651), (1194, 834)]:
         for name, levels, hard in CASES:
             for en in ([False, True] if W == 844 and hard == 15 else [False]):

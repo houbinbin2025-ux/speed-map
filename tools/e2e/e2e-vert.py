@@ -44,7 +44,7 @@ def fit_ok(pg):
     return pg.evaluate("""(() => { const a = document.querySelector('.vq .varea').getBoundingClientRect(), c = document.querySelector('.vq .vcard').getBoundingClientRect();
       return c.left >= a.left - 1 && c.right <= a.right + 1 && c.top >= a.top - 1 && c.bottom <= a.bottom + 1 && c.right <= innerWidth && c.bottom <= innerHeight; })()""")
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     # ---------- iPad Safari 1194×834 ----------
     pg = b.new_page(viewport={'width': 1194, 'height': 834}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))

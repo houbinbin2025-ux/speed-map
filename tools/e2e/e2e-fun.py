@@ -1,6 +1,6 @@
 # 第三批 3a 趣味题（docs/说明书-第三批.md §四）：11 个题型真点一遍——讲解卡逐页（植树、锯木头、三种种法、倒着算）、题面、
 # 手写答对、点「不会」看讲解（讲解里有答案）、选择题点错再看讲解；中文和英文日；不溢出、无报错。排课规则（90 秒、隔 5 道）是 B 的，另测
-# 用法：python3 tools/e2e/e2e-fun.py <项目根> <截图目录> [宽 高]
+# 用法：python3 tools/e2e/e2e-fun.py <项目根> <截图目录> [宽 高]；iPad 尺寸（如 1194 834）走蓝框格子作答
 import pathlib, re
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)
@@ -26,7 +26,7 @@ def setup(pg, en):
             for r in range(3): draw(pg, '#calPad', str(d)); pg.wait_for_timeout(1050)
         pg.wait_for_timeout(400)
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for en in (False, True):
         L = 'en' if en else 'zh'; TAG = f'{W}x{H} {L}'
         pg = b.new_page(viewport={'width': W, 'height': H}, has_touch=True); pg.on('pageerror', lambda e: errs.append(str(e)))
@@ -53,6 +53,19 @@ with sync_playwright() as p:
                 check(pg.evaluate("__sm.Q.x.inst.q.opts[__sm.Q.x.inst.ans]") in pg.inner_text('#qWide') or en, f'{TAG} {id} 讲解里没有正确答案')
                 if en: z = pg.evaluate(ZHLEFT); check(not z, f'{TAG} {id} 讲解有中文 {z}')
                 shot(pg, f'{L}-{W}-bad-{nm}', True); pg.wait_for_timeout(500); pg.click('#qNext'); pg.wait_for_timeout(300)
+            elif pg.locator('.vcell').count():   # iPad（屏幕短边 ≥ 700）：蓝框格子，逐位写进右边几格，再点「写好了」
+                a = str(st['ans']); n = pg.locator('.vcell').count(); check(n >= len(a), f'{TAG} {id} 蓝框只有 {n} 格，写不下 {a}')
+                for i, ch in enumerate(a): draw(pg, f'.vcell >> nth={n - len(a) + i}', ch); pg.wait_for_timeout(150)
+                pg.wait_for_timeout(400); pg.click('.vdone')
+                try: pg.wait_for_function("() => { const Q = window.__sm.Q; return !Q || Q.phase !== 'q'; }", timeout=6000)
+                except Exception: check(False, f'{TAG} {id} 蓝框写完没交')
+                pg.wait_for_timeout(400); check(pg.locator('.vcell.ok').count() > 0 or pg.evaluate("!!document.querySelector('#qBody .okbig')"), f'{TAG} {id} 蓝框写对了没判对')
+                shot(pg, f'{L}-{W}-ok-{nm}', True)
+                pg.wait_for_timeout(2000)
+                pg.evaluate(START, [id, 1, False]); pg.wait_for_function("__sm.Q && __sm.Q.phase === 'q'", timeout=5000); pg.wait_for_timeout(400); pg.click('.vdunno'); pg.wait_for_timeout(900)
+                ans = pg.evaluate("String(__sm.Q.x.inst.ans)"); check(ans in pg.inner_text('#qplay'), f'{TAG} {id} 蓝框「不会」的讲解里没有答案 {ans}')
+                if en: z = pg.evaluate(ZHLEFT); check(not z, f'{TAG} {id} 讲解有中文 {z}')
+                shot(pg, f'{L}-{W}-dunno-{nm}', True); pg.click('.vres #qNext'); pg.wait_for_timeout(500)
             else:
                 draw(pg, '#qPad', str(st['ans']))
                 try: pg.wait_for_function("() => { const Q = window.__sm.Q; return !Q || Q.phase !== 'q'; }", timeout=6000)

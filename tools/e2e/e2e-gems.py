@@ -39,7 +39,7 @@ def unfold(pg):   # 手机横屏结算页的碎片明细收成一行（E 模块�
 def start_today(pg):
     pg.click('#btnStart', force=True); pg.wait_for_timeout(1800)
 with sync_playwright() as p:
-    b = p.chromium.launch(); ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True); pg = ctx.new_page()
+    b = __import__('quiet').launch(p); ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True); pg = ctx.new_page()
     ctx.add_init_script('window.__gemRand = () => 0.99')
     ctx.add_init_script("addEventListener('DOMContentLoaded', () => { if (window.GEMS) GEMS.TUNE.exitRate = 0; })")   # 退出挽留是随机的：回归里默认关掉，单独测   # 回归里关掉杂色碎片，数量才断言得准；杂色碎片单独测（第 12 组）
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)

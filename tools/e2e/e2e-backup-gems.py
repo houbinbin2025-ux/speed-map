@@ -31,7 +31,7 @@ def do_import(pg, text, kind='btnImport'):
 inv = lambda pg: pg.evaluate("GEMUI.state().inv")
 stored = lambda pg: pg.evaluate(f"JSON.parse(localStorage.getItem('{GK}'))")
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     # 0 导出：带上碎片和伙伴罐
     fresh(pg, prog, gems); parent(pg)

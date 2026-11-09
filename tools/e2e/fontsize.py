@@ -129,7 +129,7 @@ def part_a(root, prof, lang):
     url = (root / 'v2' / 'index.html').as_uri() + '#test'
     seed = {'v': 2, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'mistakes': {}, 'placedAt': 1, 'known': {}, 'settings': {'bilingual': lang == 'en'}}
     with sync_playwright() as p:
-        b = p.chromium.launch(); ctx = b.new_context(viewport=P['viewport'], screen=P['screen'])
+        sys.path.insert(0, str(HERE)); b = __import__('quiet').launch(p); ctx = b.new_context(viewport=P['viewport'], screen=P['screen'])
         ctx.add_init_script(SAMPLER % {'force': json.dumps(lang), 'k': P['k']}); pg = ctx.new_page()
         pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(400)
         for x in pg.evaluate(SCAN_A):
