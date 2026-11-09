@@ -6,6 +6,6 @@ test('GEMUI 接口齐全', () => {
   delete require.cache[require.resolve('../v2/gemui.js')];
   require('../v2/gemui.js');
   const api = global.window.GEMUI;
-  for (const k of ['init', 'enabled', 'exportState', 'importBackup', 'total', 'syncNow', 'answerQ', 'answerP', 'summary', 'placeLine', 'forgeBlocked', 'bind', 'openForge', 'state', 'parentStats', 'islandBtn', 'askQuit', 'finishChallenge'])
+  for (const k of ['init', 'enabled', 'exportState', 'importBackup', 'total', 'syncNow', 'answerQ', 'answerP', 'summary', 'placeLine', 'forgeBlocked', 'puzzle', 'bind', 'openForge', 'state', 'parentStats', 'islandBtn', 'askQuit', 'finishChallenge'])
     assert.equal(typeof api[k], 'function', `GEMUI.${k} 不见了`);
 });

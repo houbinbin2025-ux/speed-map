@@ -33,6 +33,24 @@
   const blank = () => ({v: 1, inv: {a: 0, b: 0, g: 0, s: 0, m: 0, h: 0, l: 0}, tickets: 0, best: 0, lvMax: {}, days: {}, seen: {day: '', keys: {}, cells: {}}, sent: {}});
   const blankDay = () => ({ok: 0, bad: 0, n: 0, m: 0, paid: 0, forged: 0, waste: 0});
   const dayOf = (st, day) => st.days[day] || (st.days[day] = blankDay());
+  // 谜题水晶（方案 7，中控 11-09 批准）：趣味题答对 1 道给 1 颗，只收藏、不进锻造（不影响宝石比例）；同一题型答对 PUZZLE_BADGE 道得这个题型的徽章。
+  // 存 st.puzzle = {n, by: {题型: 答对数}}，第一次答对才建。合并与清洗按 F 11-09 定的规则（cleanPuzzle / mergeBackup）
+  const PUZZLE_BADGE = 3;
+  const natural = v => Number.isInteger(v) && v >= 0;
+  const sumBy = by => Object.keys(by).reduce((n, k) => n + by[k], 0);
+  function cleanPuzzle(x) {   // 不是对象当没有；by 里不是非负整数的删掉；跳过 __proto__；查不到的题型保留；n 不是非负整数当 0，且不比 by 的总和小
+    if (!isObj(x)) return undefined;
+    const by = {}, src = isObj(x.by) ? x.by : {};
+    Object.keys(src).forEach(k => { if (k !== '__proto__' && Object.prototype.hasOwnProperty.call(src, k) && natural(src[k])) by[k] = src[k]; });
+    return {n: Math.max(natural(x.n) ? x.n : 0, sumBy(by)), by};
+  }
+  function puzzleAnswer(st, sid) {
+    const P = st.puzzle = cleanPuzzle(st.puzzle) || {n: 0, by: {}};
+    P.by[sid] = (P.by[sid] || 0) + 1; P.n += 1;
+    return {n: P.n, k: P.by[sid], badge: P.by[sid] === PUZZLE_BADGE};
+  }
+  const puzzleCount = st => (isObj(st.puzzle) && natural(st.puzzle.n) ? st.puzzle.n : 0);
+  const puzzleBadges = (st, sids) => sids.map(sid => { const n = (isObj(st.puzzle) && isObj(st.puzzle.by) && natural(st.puzzle.by[sid])) ? st.puzzle.by[sid] : 0; return {sid, n, got: n >= PUZZLE_BADGE}; });
   // 锻造室每天只能进 FORGE_DAY 次（Ben 11-09：少在锻造室里耗时间）。每次进门算一次，进了不炼也算；次数记 st.days[日].fin，合并按天取大
   const FORGE_DAY = 5;
   const finOf = (st, day) => { const v = +((st.days[day] || {}).fin); return v > 0 ? Math.floor(v) : 0; };
@@ -56,7 +74,9 @@
     if (!Object.keys(inv).filter(t => VALUE[t]).every(t => Number.isInteger(inv[t]) && inv[t] >= 0) || !isObj(seen.keys) || !isObj(seen.cells)) return null;
     if (!Object.values(o.days || {}).every(isObj) || (o.tickets !== undefined && !Number.isInteger(o.tickets))) return null;
     if (inv.p) { inv.b = (inv.b || 0) + inv.p; } delete inv.p;   // 11-07 的小碎片 2 和金色小碎片 2 一样，并成一种
-    return Object.assign(b, o, {inv, seen});
+    const r = Object.assign(b, o, {inv, seen});
+    if (o.puzzle !== undefined) { const P = cleanPuzzle(o.puzzle); if (P) r.puzzle = P; else delete r.puzzle; }   // 谜题水晶：读档时清洗（F 11-09）
+    return r;
   }
   // 思维地点（10.2，中控 11-08）：按一道题给，和练习页一样答对至少 1 个小碎片；思维题想得久是正常的，不按秒答多给。
   // 有效时间按练习页的口径（effSecs）：按实际用时，最多 30 秒（这里没有标准时间，传 10 秒，上限 = 10 × 3 = 30）。同一题当天再做：普通小碎片（filler）
@@ -87,6 +107,10 @@
     for (const k in b.lvMax) M.lvMax[k] = max(M.lvMax[k], b.lvMax[k]);
     for (const d in b.days) { const D = M.days[d]; if (!isObj(D)) { M.days[d] = Object.assign({}, b.days[d]); continue; } for (const f in b.days[d]) if (typeof b.days[d][f] === 'number') D[f] = max(D[f], b.days[d][f]); }
     for (const d in b.sent) M.sent[d] = max(M.sent[d], b.sent[d]);
+    {   // 谜题水晶（F 11-09）：by 按题型取大、不相加；n = max(本机, 备份, by 的总和)。b 已经过 parse 清洗
+      const L = cleanPuzzle(M.puzzle), R = cleanPuzzle(b.puzzle);
+      if (L || R) { const by = Object.assign({}, (L || {}).by); Object.keys((R || {}).by || {}).forEach(k => { by[k] = Math.max(by[k] || 0, R.by[k]); }); M.puzzle = {n: Math.max((L || {}).n || 0, (R || {}).n || 0, sumBy(by)), by}; }
+    }
     if (isObj(b.palJar)) {
       const J = M.palJar = isObj(M.palJar) ? M.palJar : {bal: 0, moved: {}, target: 0, res: {day: '', n: 0}}, BJ = b.palJar;
       J.bal = max(J.bal, BJ.bal); J.moved = isObj(J.moved) ? J.moved : {};
@@ -456,6 +480,6 @@
     return got;
   }
 
-  return {FORGE_DAY, forgeLeft, forgeEnter, placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
+  return {PUZZLE_BADGE, puzzleAnswer, puzzleCount, puzzleBadges, FORGE_DAY, forgeLeft, forgeEnter, placeAnswer, mergeBackup, thinkAnswer, forgeGap, TUNE, MAIN, BIG, BIG_SLOTS, forgeBig, exactBig, filler, effSecs, pieces, give, worth, focusNew, capOf, focusPct, focusTick, focusAnswer, noteFocus, comboNew, comboNeed, critOn, comboStep, exitHook, gapToGem, openBox, addSec, eventStep, acceptOffer, notePace, evTarget, pickEv, evStart, evEnd, evStats, evHard, noteRest, restDue, startRest, restLeft, BOLT, BOLT_DAY, speedBonus, KEY, VALUE, ODD, ODD_RATE, oddFor, GEM, SLOTS, DAY_MAX, CH_N, RECENT_DAYS, recentForged, blank, parse, prune, key, sync, top, levelOfCell, answer, settle, enough, dayFull, forge, bestRecipe,
     earnTicket, startChallenge, challengeAnswer, finishChallenge, pickChallenge, items, unsent, markSent, netTotal, moveToJar, jarWant, reserve};
 });
