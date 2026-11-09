@@ -391,8 +391,10 @@
     const col = fastClass(inst.id) === 'column' && column(inst), sp = o.speed || 1000;
     // 竖式中间的数（积、余数、进位）口答也得算出来记住，照样给时间；答案本身口答不用写
     const write = s.input === 'write' ? (o.oral ? 0 : sp * C.digits(inst.ans)) + (col ? sp * col.work : 0) : 0;
-    return write;
+    const cells = (inst.q || {}).cells, hop = !o.oral && s.input === 'write' && Array.isArray(cells) && cells.length > 1 ? (cells.length - 1) * CELL_HOP : 0;   // 2b-2 多格：每换一格多给 1 秒（B 方案 §3）
+    return write + hop;
   }
+  const CELL_HOP = 1000;
   const restMs = (inst, o) => readMs(inst, o) + writeMs(inst, o);
 
   // ---------- 按空空自己的速度定线（秒答校准第二步，说明书-秒答时间校准 §2） ----------
