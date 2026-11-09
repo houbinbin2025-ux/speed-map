@@ -99,14 +99,16 @@ def drive(prof, lang, outjson, script, args):
     def new_page(self, *a, **kw):
         ctx = new_context(self, *a, **kw); pg = ctx.new_page(); return pg
     Browser.new_context = new_context; Browser.new_page = new_page
-    # 导游截图 = 它想让人看的那一屏：截之前停 1.1 秒，让采样器等页面自己跑完再量（demofit 每张卡只停 40ms，原来一张都没量到，审查 R2）
-    from playwright.sync_api import Page
-    orig_shot = Page.screenshot
-    def screenshot(self, *a, **kw):
-        try: self.wait_for_timeout(1100)
-        except Exception: pass
-        return orig_shot(self, *a, **kw)
-    Page.screenshot = screenshot
+    # 导游截图 = 它想让人看的那一屏：截之前停 1.1 秒，让采样器等页面自己跑完再量（demofit 每张卡只停 40ms，原来一张都没量到，审查 R2）。
+    # 只对 SHOT_WAIT 里的导游这样做：别的导游有定时自动往下走的页面（思维地点学会提示），停了会打乱它的流程
+    if script in SHOT_WAIT:
+        from playwright.sync_api import Page
+        orig_shot = Page.screenshot
+        def screenshot(self, *a, **kw):
+            try: self.wait_for_timeout(1100)
+            except Exception: pass
+            return orig_shot(self, *a, **kw)
+        Page.screenshot = screenshot
     def dump():
         pathlib.Path(outjson).write_text(json.dumps(list(seen.values()), ensure_ascii=False))
     import atexit; atexit.register(dump)
@@ -119,6 +121,7 @@ def drive(prof, lang, outjson, script, args):
     dump()
 
 # 导游：脚本名 + 参数（{root} {out} 会替换）；超时秒数
+SHOT_WAIT = {'demofit.py'}   # 截图前要停一下才量得到的导游（见 drive）
 GUIDES = [   # 脚本、参数、只走哪种设备（None = 都走）、必须量到的页面（缺一个 = 导游走偏，判不通过，审查 R2）
     ('e2e-en.py', ['{root}', '{out}'], None, '#island #qplay #demo #qsum #home #house'),   # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、技能地图、秒答地图和练习、家、图鉴、奖状
     ('e2e.py', ['{root}', '{out}'], None, '#qplay #demo #placeResult'),                 # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
