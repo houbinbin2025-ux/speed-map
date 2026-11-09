@@ -682,7 +682,7 @@
   }
 
   return {qkey, demoDone, settle, noteThink, FTIME_N, BUDGET, NEW_SEC, BACKLOG, KEEP, REP, MAXPER, kindOf,
-    chosen, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,
+    chosen, funReady, autoLevel: S => { topMemo = null; return autoLevel(S); }, levelOn, itemOn, mistOn, groupEmpty, learnedOn, hardOn, activeItem,   // funReady：A 的地块卡片按同一个前置判断列趣味技能（A 11-09，经中控）
     prog: (S, id) => { topMemo = null; return prog(S, id); }, peek, lv, learned, ready, record, isKnown, noteAnswer, noteInk, noteSay, habit, addMistake, dueMistakes, session, free, placement, trimStats, stat, gapNow,
     hasMore, addTime, inGroup, lastSeen, GROUPS, FAST_OUT, MIST_DAY, spent, spentCount, outOf, addFast, sweep, groupOut, allOut,
     review: (S, day, group, opts) => free(S, day, group, Object.assign({mistOnly: true}, opts))};
