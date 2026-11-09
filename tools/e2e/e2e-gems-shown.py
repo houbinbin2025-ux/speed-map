@@ -21,7 +21,7 @@ def page(b, W, H, data):
     pg.close(); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e))); pg.goto(url); pg.wait_for_timeout(800)
     return pg
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for name, W, H in [('844', 844, 390), ('667', 667, 375), ('ipad', 1180, 820)]:
         # ① 今日练习答对：出对勾的那一刻碎片条看得见，不和对勾重叠，不出屏幕
         pg = page(b, W, H, seed); pg.click('#btnStart', force=True); pg.wait_for_timeout(1800)

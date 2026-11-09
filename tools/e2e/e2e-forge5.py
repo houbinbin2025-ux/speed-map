@@ -15,7 +15,7 @@ toast = lambda pg: pg.evaluate("(()=>{const t=document.getElementById('gemToast'
 def fresh(ctx):
     pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e))); pg.goto(url); pg.wait_for_timeout(900); return pg
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for name, W, H in [('844', 844, 390), ('667', 667, 375), ('ipad', 1180, 820)]:
         ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True, screen={'width': W, 'height': H})
         pg = ctx.new_page(); pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); localStorage.setItem('speedmap.ink.test', {json.dumps(json.dumps(ink))})"); pg.close()
