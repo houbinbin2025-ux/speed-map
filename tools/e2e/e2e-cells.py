@@ -5,6 +5,15 @@ import sys, json, pathlib
 src = (pathlib.Path(__file__).with_name('e2e2.py')).read_text().split('\ndef run(')[0]
 exec(src)
 fails = []
+def draw(pg, sel, text, scale=None):   # 同 e2e2 的 draw，但字按写字板宽度缩，最小屏（568 宽、写字板 190）两位数也画在板内
+    bb = pg.locator(sel).bounding_box(); n = len(text); h = min(bb['height'] * 0.62, bb['width'] * 0.85 / (n + (n - 1) * 0.45) * 1.4); w = h / 1.4
+    gap = w * 0.45; total = n * w + (n - 1) * gap; x0 = bb['x'] + (bb['width'] - total) / 2; y0 = bb['y'] + (bb['height'] - h) / 2
+    for i, ch in enumerate(text):
+        for stroke in D[int(ch)]:
+            pts = [(x0 + i * (w + gap) + px * w, y0 + py * h / 1.4) for px, py in stroke]
+            pg.mouse.move(*pts[0]); pg.mouse.down()
+            for q in pts[1:]: pg.mouse.move(*q, steps=2)
+            pg.mouse.up()
 def check(ok, msg):
     print(('ok  ' if ok else '不通过'), msg)
     if not ok: fails.append(msg)
