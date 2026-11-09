@@ -236,14 +236,15 @@
     for (const sk of Object.keys(S.ftime)) { if (sk === '__proto__') continue; const a = ftArr(S.ftime[sk]); if (a.length) out[sk] = a; }
     if (Object.keys(out).length) S.ftime = out; else delete S.ftime;
   }
-  // 导入合并：同一技能整组取样本多的一边，一样多取本机（不拼接：同一份导两次不重复）
+  // 导入合并：同一技能整组取样本多的一边，一样多取本机（不拼接：同一份导两次不重复）。
+  // 设计上不收敛：两边都满 10 条时各留各的；导入旧备份时，样本多的旧备份会换掉本机样本少的新数据。只影响个人秒答线校准，不丢进度（B、F 11-09 商定，F 审查 R1 记下）
   function mergeFtime(a, b) {
     const ok = o => o && typeof o === 'object' && !Array.isArray(o);
     if (!ok(a) && !ok(b)) return undefined;
     const out = {};
     for (const src of [ok(a) ? a : {}, ok(b) ? b : {}]) for (const sk of Object.keys(src)) {
       if (sk === '__proto__') continue;
-      const x = ftArr(src[sk]); if (x.length > (out[sk] ? out[sk].length : 0)) out[sk] = x;
+      const x = ftArr(src[sk]), had = Object.prototype.hasOwnProperty.call(out, sk) ? out[sk].length : 0; if (x.length > had) out[sk] = x;   // 用 hasOwnProperty：技能编号叫 constructor 之类也不会读到原型
     }
     return Object.keys(out).length ? out : undefined;
   }

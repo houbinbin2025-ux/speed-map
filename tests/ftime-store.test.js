@@ -22,6 +22,10 @@ test('第 4 条 两台设备各有一部分：同一技能整组取样本多的�
   assert.deepEqual(M.ftime.bond, [0.9]);                // 只有本机有
   assert.deepEqual(M.ftime.cmp, ten(0.3));              // 只有备份有
   assert.ok(Object.values(M.ftime).every(a => a.length <= 10));
+  // 设计上不收敛：两边都满 10 条时各留各的（互发两次后仍不同）
+  const X = base({add20: ten(0.5)}), Y = base({add20: ten(1.5)});
+  const X2 = C.importMerge(clone(X), C.exportText(Y)), Y2 = C.importMerge(clone(Y), C.exportText(X2));
+  assert.deepEqual(X2.ftime.add20, ten(0.5)); assert.deepEqual(Y2.ftime.add20, ten(1.5));
   assert.deepEqual(A.ftime.add20, [0.6, 0.7]);          // 不改本机对象
   // 旧备份（没有 ftime）→ 本机的留着；新备份 → 旧本机：带进来
   assert.deepEqual(C.importMerge(clone(A), C.exportText(base())).ftime, A.ftime);
@@ -43,8 +47,10 @@ test('第 5 条 坏值读档时被清洗（和 B 判线 ftOf、写入 noteThink 
   // 备份里只有备份有的坏数组：导入合并后也是干净的
   assert.deepEqual(C.importMerge(base(), JSON.stringify(base({x: [5, 50, 'q']}))).ftime, {x: [5]});
   // 备份里的 __proto__ 键不污染
-  C.importMerge(base({a: [1]}), '{"v":2,"cards":{},"mistakes":{},"ftime":{"__proto__":[1,2]}}');
-  assert.equal(({}).length, undefined); assert.equal(Object.prototype[0], undefined);
+  const P = C.importMerge(base({a: [1]}), '{"v":2,"cards":{},"mistakes":{},"ftime":{"__proto__":[1,2]}}').ftime;
+  assert.equal(Object.getPrototypeOf(P), Object.prototype); assert.deepEqual(Object.keys(P), ['a']);
+  // 技能编号撞上对象自带的属性名：照样按条数合并
+  assert.deepEqual(C.importMerge(base(), JSON.stringify(base({constructor: [1], toString: [2, 3]}))).ftime, {constructor: [1], toString: [2, 3]});
 });
 
 test('第 7 条 清空进度把 ftime 一起清掉；整份替换以备份为准并过清洗', () => {
