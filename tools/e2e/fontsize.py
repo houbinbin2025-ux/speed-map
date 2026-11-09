@@ -28,7 +28,7 @@ SAMPLER = r"""(() => {
   if (window.__fsOn) return; window.__fsOn = 1;
   const FORCE = %(force)s, K = %(k)s;
   if (FORCE) { let real; Object.defineProperty(window, 'I18N', {configurable: true, get() { return real; }, set(v) { real = v; if (v && v.isEn) v.isEn = () => FORCE === 'en'; }}); }
-  const SKIP = '#parent,#bankv,#habit,#ovQ,#ovCrash,#testBar,#mistp,[data-i18n-skip]';
+  const SKIP = '#parent,#bankv,#habit,#ovQ,#ovCrash,#testBar,#mistp,#pinOv,[data-i18n-skip]';   // #pinOv = 进家长区前的锁屏，属于家长区
   const QSEL = '#qBody,#qWide,#q,#think .say,#think .eq,#think .clues,#think .target,#think .grid,#think .cells,#think .shownbox,#think .scalewrap';
   const MAIN = '.eq,#q,.pickcard,.vg,.vcell,.vls,.vfillv,#think .eq,#think .target b';   // 题目档：主算式、选项、竖式格
   const BTN = 'button,.btn,.gobig,[role=button],a,label';
@@ -47,7 +47,7 @@ SAMPLER = r"""(() => {
     const inQ = el.closest(QSEL), numeric = /^[\s\d+\-−×x÷=.,/%%:：✓✗★·…()（）□?？<>]+$/.test(t), short = t.replace(/\s/g, '').length <= 4;
     const n = (t.match(CJK) || []).length, words = t.split(/\s+/).filter(w => /[a-z]/i.test(w)).length, sentence = n >= 9 || words >= 6 || /[，。？！；]|[.?!]$/.test(t.replace(/\d[.,]\d/g, ''));
     if (inQ && el.closest(MAIN) && !el.closest('svg') && !el.closest('.vs')) return '题目';   // 主算式、选项、竖式格
-    const bt = el.closest(BTN); if (bt && (bt === el || /^(B|STRONG)$/.test(el.tagName))) return '按钮';
+    const bt = el.closest(BTN); if (bt && (bt === el || /^(B|STRONG)$/.test(el.tagName) && !(numeric && short))) return '按钮';   // 按钮里加粗的数字（炉子的「4」）算角标
     if (numeric && short) return '角标';   // 1–4 位数字、符号
     if (el.closest(BODY_ROLE)) return '正文';   // 讲解、题干、提示：不管多长都按正文
     if (bt) return '说明';   // 按钮里的副标题小字
@@ -110,12 +110,12 @@ GUIDES = [
     ('e2e-en.py', ['{root}', '{out}']),          # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、错题宝箱、技能地图、秒答地图和练习、家、图鉴、奖状
     ('e2e.py', ['{root}', '{out}']),             # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
     ('e2e-gems.py', ['{root}', '{out}']),        # 碎片条、小目标弹窗（Goal done）、炉子、锻造确认
-    ('e2e-qsum.py', ['{root}', '{out}']),        # 结算页（信息最多）
+    ('e2e-qsum.py', ['{root}', '{out}'], 'phone'),   # 结算页（信息最多）；它要等的「碎片收起」只在矮屏出现
     ('e2e-v8.py', ['{root}', '{out}']),          # 四个思维地点
     ('e2e7.py', ['{root}', '{out}']),            # 家：开箱、奖状、图鉴、告示牌、摆放
     ('e2e13.py', ['{root}', '{out}']),           # 讲解卡、四年级题型
     ('e2e-fun.py', ['{root}', '{out}']),         # 趣味题和它们的讲解卡
-    ('e2e-vert.py', ['{root}', '{out}']),        # iPad 竖式
+    ('e2e-vert.py', ['{root}', '{out}'], 'ipad'),    # iPad 竖式（只在 iPad 出现）
     ('demofit.py', ['{root}', '{out}']),         # 示范卡
     ('e2e-mistkid.py', ['{root}', '{out}']),     # 错题宝箱三栏、复习、复习结算
 ]
@@ -163,7 +163,8 @@ def main():
             for x in a: x.update(combo=combo, part='题型', guide='overflow 式')
             rows += a; print(f'{combo} 题型 量了 {len(a)} 种 · {time.time() - t0:.0f}s', flush=True)
         if '--skip-b' not in sys.argv:
-            for g, args in GUIDES:
+            for g, args, *only_prof in GUIDES:
+                if only_prof and only_prof[0] != prof: continue   # 这个导游只走得通某种设备
                 f = out / f'raw-{combo}-{g}.json'; shots = out / 'shots' / combo / g.replace('.py', ''); shots.mkdir(parents=True, exist_ok=True)
                 cmd = [sys.executable, str(HERE / 'fontsize.py'), '--drive', prof, lang, str(f), g] + [s.replace('{root}', str(root)).replace('{out}', str(shots)) for s in args]
                 t0 = time.time(); why = ''

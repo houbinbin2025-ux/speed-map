@@ -616,6 +616,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #forgeToday img{width:26px;image-rendering:pixelated}#forgeToday b{font-size:24px;color:#fff}
 #forgeToday.bump{animation:fragLand .3s}
 #forgeToday{flex-wrap:wrap;row-gap:2px}#forgeToday .ft14{width:100%;white-space:nowrap;font-size:18px;line-height:1.2}#forgeToday>span:not(.ft14){font-size:18px;white-space:nowrap}
+@media (max-width:700px){.forgeSide{width:180px}#forgeToday>span:not(.ft14){white-space:normal}}   /* 667 宽的手机：右栏收窄到 180，「Forged today」可以换行，不出屏（字号不变） */
 .flying{position:fixed;left:0;top:0;z-index:50;image-rendering:pixelated;pointer-events:none}
 .gempop{position:fixed;left:0;top:0;width:120px;height:120px;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center}
 .gempop img{width:84px;image-rendering:pixelated;position:relative;filter:drop-shadow(0 4px 0 #000)}
@@ -1772,8 +1773,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
     document.querySelectorAll('svg.fig2').forEach(svg => { try {
       if (!svg.getClientRects().length || svg.closest('.mq,.bq,#parent,#bankv,#ovQ')) return;   // 错题小签里的缩略图只认形状，不算
       if (svg.dataset.vb0 === undefined) svg.dataset.vb0 = svg.getAttribute('viewBox') || ''; else if (svg.dataset.vb0) svg.setAttribute('viewBox', svg.dataset.vb0);   // 每次从原图算起（转屏、换尺寸不留空白）
-      for (let pass = 0, prev = 0; pass < 4; pass++) {   // 拆行后图变高、在限高的框里会再缩一点：算到缩放不再变为止
-      const sc = svgScale(svg); if (!sc || Math.abs(sc - prev) < sc * 0.01) break; prev = sc;
+      let sc0 = 0;   // 第一轮的缩放：拆行加高后图不许因此变小（图被挤矮时字越放越小，英文手机植树图）
+      for (let pass = 0, prev = 0; pass < 10; pass++) {   // 拆行后图变高、在限高的框里会再缩一点：算到缩放不再变为止（最多 10 轮）
+      const sc = svgScale(svg); if (!sc || Math.abs(sc - prev) < sc * 0.01) break; prev = sc; if (!sc0) sc0 = sc;
       svg.querySelectorAll('text').forEach(t => {
         t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
         if (t.dataset.split && !t.dataset.fs0) delete t.dataset.split;
@@ -1795,8 +1797,12 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
         } else { t.setAttribute('textLength', max); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); }
       });
       if (svg.querySelector('text[data-split]')) { const vb = svg.viewBox.baseVal, bb = svg.getBBox(); if (vb && vb.height && bb.y + bb.height > vb.y + vb.height) svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${Math.ceil(bb.y + bb.height - vb.y + 4)}`); }   // 拆成两行的标签：图加高到装得下
+        const w = svg.parentElement;   // 框是限高的：给框留出加高的那一截（最多 320），放不下由左栏上下滚
+        if (sc0 && w.classList.contains('fig2w') && svgScale(svg) < sc0 * 0.99) { const h = Math.min(320, Math.ceil(svg.viewBox.baseVal.height * sc0 / (effScale(svg) || 1))); if (h > w.clientHeight) { w.style.minHeight = h + 'px'; w.style.maxHeight = 'none'; } }
       }
     } catch (e) {} });
+    const b = $('qBody');   // 图加高后左栏放不下：改成栏内滚动（和 fitBody 第二步同一种）
+    if (b && !b.hidden && !b.classList.contains('scrolly') && b.scrollHeight > b.clientHeight + 2) { b.classList.add('scrolly'); b.classList.remove('atend'); }
   }
   let svgFitRaf = 0; new MutationObserver(() => { if (svgFitRaf) return; svgFitRaf = requestAnimationFrame(() => { svgFitRaf = 0; fitSvgText(); }); }).observe(document.body, {childList: true, subtree: true, characterData: true});
   window.__fitSvg = fitSvgText;
