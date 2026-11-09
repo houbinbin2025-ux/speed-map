@@ -102,3 +102,11 @@ test('「学会 N 个技能」「岛上 N 个地方」算上三四年级', () =>
   setLv(S, sp, 1); setLv(S, dk, 1); const t = H.stats(S);
   assert.equal(t.learned, 2); assert.equal(t.started, 2, '秒答类三四年级算「秒答」那个地方');
 });
+test('组里每一格都能出题才算开放：只选第 4 级或第 5 级、新存档自动模式，第 4–5 级组都不提示（审查 R2）', () => {
+  for (const lv of [[4], [5], [3, 4]]) {
+    const S = fresh(); S.settings = Object.assign(S.settings || {}, {levels: lv, levelsV: 2});
+    assert.ok(!H.opened(S, 5) && !H.next(S, 99).some(x => x.r.lv === 5), '手选 ' + lv);
+  }
+  const S = fresh(); S.settings = Object.assign(S.settings || {}, {levels: [4, 5], levelsV: 2}); assert.ok(H.opened(S, 5), '4、5 都选：开放');
+  const N = fresh(); assert.ok(E.autoLevel(N) <= 3 && !H.next(N, 99).some(x => x.r.lv), '新存档自动模式：没有三四年级目标');
+});
