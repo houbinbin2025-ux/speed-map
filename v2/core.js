@@ -225,6 +225,29 @@
     }
   }
 
+  // ---------- 逐题用时 S.ftime（秒答校准，B 记录、F 存储；tests/ftime-store.test.js）----------
+  // {技能编号: [倍数, …]}：最旧在前，每技能 ≤ 10 条，> 10 倍、非有限正数不要（和 engine.js noteThink、skills.js ftOf 同口径）
+  const FT_KEEP = 10, okFt = v => typeof v === 'number' && isFinite(v) && v > 0 && v <= 10;
+  const ftArr = a => (Array.isArray(a) ? a.filter(okFt).slice(-FT_KEEP) : []);
+  function cleanFtime(S) {
+    if (!('ftime' in S)) return;
+    if (!S.ftime || typeof S.ftime !== 'object' || Array.isArray(S.ftime)) { delete S.ftime; return; }
+    const out = {};
+    for (const sk of Object.keys(S.ftime)) { if (sk === '__proto__') continue; const a = ftArr(S.ftime[sk]); if (a.length) out[sk] = a; }
+    if (Object.keys(out).length) S.ftime = out; else delete S.ftime;
+  }
+  // 导入合并：同一技能整组取样本多的一边，一样多取本机（不拼接：同一份导两次不重复）
+  function mergeFtime(a, b) {
+    const ok = o => o && typeof o === 'object' && !Array.isArray(o);
+    if (!ok(a) && !ok(b)) return undefined;
+    const out = {};
+    for (const src of [ok(a) ? a : {}, ok(b) ? b : {}]) for (const sk of Object.keys(src)) {
+      if (sk === '__proto__') continue;
+      const x = ftArr(src[sk]); if (x.length > (out[sk] ? out[sk].length : 0)) out[sk] = x;
+    }
+    return Object.keys(out).length ? out : undefined;
+  }
+
   // ---------- 出题（v1 规则 + 错题合并） ----------
   const shuffle = (a, r) => { r = r || Math.random; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const DECK = 20, LEARN_MAX = 4, PROBE_MIN = 6, HARD_MAX = 8, ERR_FIRST = 4;
@@ -320,7 +343,7 @@
     if (Array.isArray(st.levels)) st.levels = [...new Set(st.levels.map(n => LEVEL_REMAP[n]).filter(Boolean))].sort((a, b) => a - b);
     st.levelsV = 2;
   }
-  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; migrateLevels(S.settings); cleanMist(S); return S; };
+  const upgrade = o => { const S = Object.assign(blank(), o, {v: 2}); S.mistakes = S.mistakes || {}; migrateLevels(S.settings); cleanMist(S); cleanFtime(S); return S; };
   const trySet = (store, k, v) => { try { store.setItem(k, v); return true; } catch (e) { return false; } };
   const TRANSIENT = ['readOnly', 'stopped', 'goodReset'];
   const litOf = S => [S.cards, S.skills].reduce((n, o) => n + Object.values(o || {}).filter(c => c && c.lv > 0).length, 0);
@@ -541,6 +564,7 @@
         else if (!(h[k] >= vh[k])) h[k] = vh[k];
       }
     }
+    { const ft = mergeFtime(S.ftime, v.ftime); if (ft) M.ftime = ft; else delete M.ftime; }   // 逐题用时（tests/ftime-store.test.js）
     mergeMist(M, S, v); cleanMist(M);   // 错题记录的新字段（docs/方案-错题数据字段.md §4）；只在备份里有的错题也洗一遍
     if (S.slips || v.slips) { const seen = new Set(); M.slips = [].concat(S.slips || [], v.slips || []).filter(m => { const k = JSON.stringify(m); if (seen.has(k)) return false; seen.add(k); return true; }).sort((a, b) => String(a.d).localeCompare(String(b.d))).slice(-30); }
     return M;
@@ -550,7 +574,7 @@
     upgrade, LEVEL_REMAP, isLow, LEVELS, UNITS, BYID, TYPES, TYPE_NEED, GAP_DAYS, unitsOf, deal, worldUnits, inst, show, label,
     blank, cs, tryUp, fastLimit, digits, dayOf, dayDiff, addDays,
     INTERVALS, mkeyOf, addMistake, reviewMistake, dueMistakes, mistakeGroups, seriesOk,
-    noteMistake, notePassed, cleanMist, HIST_MAX,
+    noteMistake, notePassed, cleanMist, HIST_MAX, cleanFtime, mergeFtime,
     keysFor, load, loadState, saveState, superseded, mergeV1, rollbackV1, resetProgress, dropBroken, litOf, mergePets, syncDiff, syncText, syncName, syncAgo, newerMistake, mergeMistakes, exportText, gemsOf, importText, importMerge, mergeCards, mergeProgress, fixCard,
     buildDaily, isDue, shuffle, stOf, DECK,
     _setRnd: f => { rnd = f; },
