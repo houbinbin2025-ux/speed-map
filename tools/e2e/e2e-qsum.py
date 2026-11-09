@@ -94,7 +94,7 @@ with sync_playwright() as p:
             ctx.close()
     # 秒答地图的 Boss 结算页（#summary，台账：667 宽右边超出）：口答答 19 题后长按结束
     BSEED = "localStorage.clear(); localStorage.setItem('speedmap.v2.test', JSON.stringify({v:2,savedAt:0,cards:{},boss:{},log:{},level:0,mistakes:{},lastBackup:Date.now(),placedAt:1,known:{},skills:{},stats:{},settings:{bilingual:false},oral:true})); localStorage.setItem('speedmap.ink.test', JSON.stringify({done:true,samples:[],speed:800}))"
-    for W, H in [(667, 375), (844, 390), (932, 651), (1194, 834)]:
+    for W, H in [(667, 375), (844, 390), (874, 297), (932, 430), (932, 651), (1194, 834)]:
         ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True); pg = ctx.new_page()
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto(url); pg.evaluate(BSEED); pg.reload(); pg.wait_for_timeout(800)
@@ -110,6 +110,7 @@ with sync_playwright() as p:
         for sel, name in [('#sumHome', '回到地图'), ('#sumHouse', '回家打开'), ('#summary .sumR > :first-child', '右栏第一行')]:
             if pg.locator(sel).count(): r = pg.evaluate(VIS, sel); check(r == 'ok', f'{W}x{H} Boss 结算页 {name} 不用滚动就看得见：{r}')
         check(pg.locator('#summary').inner_text().find('墙上') < 0, f'{W}x{H} Boss 结算页不再提墙上的地图')
+        check(pg.evaluate("(() => { const e = document.querySelector('#summary .sumbig'); return e.getBoundingClientRect().height < parseFloat(getComputedStyle(e).fontSize) * 1.6; })()"), f'{W}x{H} 大数字一行放得下')
         ctx.close()
     b.close()
 print('页面报错：', errs[:5])

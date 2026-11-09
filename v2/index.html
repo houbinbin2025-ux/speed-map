@@ -117,7 +117,7 @@ button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
 /* 结算、错题本、家长区 */
 #summary{gap:24px}
 /* 秒答地图结算页（Boss、摸底、秒答练习）：左栏随屏宽收窄；右栏内容多时在栏内滚、按钮固定在底部（台账：Boss 结算页 667 宽右边超出） */
-#summary .sumL{width:clamp(230px,38vw,330px);flex:none}
+#summary .sumL{width:clamp(230px,38vw,330px);flex:none}#summary .sumbig{white-space:nowrap;font-size:min(76px,10.5vw)}   /* 三位数也一行（审查 11-09） */
 #summary .sumR{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px}#summary .sumR>*{flex:none}
 #summary .sumR>:first-child{margin-top:auto}#summary .sumR>:last-child{margin-bottom:auto}   /* 放得下就上下居中，放不下从顶上开始滚，不裁掉第一行 */
 #summary .sumMistRow{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;flex:none;overflow:visible}
