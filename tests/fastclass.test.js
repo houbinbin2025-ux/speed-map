@@ -87,7 +87,8 @@ test('iPad 竖式和秒答时间对齐：点「写好了」的 1.5 秒从用时�
   const VERT = require('../v2/vert.js'), html = fs.readFileSync(path.join(__dirname, '../v2/index.html'), 'utf8');
   assert.equal(VERT.TAP_MS, 1500);
   assert.match(html, /Q\.ms = Math\.max\(0, performance\.now\(\) - Q\.t0 - VERT\.TAP_MS\)/, '竖式用时要扣掉点「写好了」');
-  assert.match(html, /const qLimit = inst => K\.fastMs\(inst, \{oral: S\.oral, speed: INKS\.speed, en: I18N\.on\}\)/, 'qLimit 要走 K.fastMs');
+  assert.match(html, /const limOpt = \(\) => \(\{oral: S\.oral, speed: INKS\.speed, en: I18N\.on\}\), qLimit = inst => K\.fastMs\(inst, limOpt\(\)\)/, 'qLimit 要走 K.fastMs');
+  assert.match(html, /think: r\.ok && !r\.oral \? K\.thinkRatio\(inst, used, limOpt\(\)\) : null/, '逐题用时和秒答线同一口径（同一个 used、同一组参数）');
   assert.match(html, /const used = Q\.v\.input === 'write' \|\| Q\.v\.input === 'vert' \? Q\.ms/, '闪电也用扣过的用时');
   Object.keys(VERT.IDS).forEach(id => assert.equal(K.fastClass(id), 'column', id + ' 是竖式，要归多位笔算'));
 });
