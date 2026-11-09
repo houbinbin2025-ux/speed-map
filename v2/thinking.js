@@ -118,19 +118,35 @@ const autoNext = () => { cancelAuto(); G.autoT = setTimeout(() => { G.autoT = nu
 document.addEventListener('visibilitychange', () => { if (document.hidden) { hush(); cancelAuto(); } });
 addEventListener('popstate', () => { hush(); cancelAuto(); });
 
+// 家长手选了级别时的默认档（中控 11-09）：按进度，再夹到「所选最低级对应的档」和「所选最高级对应的档」之间
+// （某级对应的档 = 建议级别 ≤ 这一级的最后一档）。全选 1–15 = 按进度；只选 9–12 = 至少从第 9 级那档起；选 3–8 = 按进度、最多停在第 8 级那档。
+// 只管进门停在哪：进度已经开放的档、默认档以前的档都能点，不锁、不倒退。没手选 = 按进度
+function lvRange() {
+  const r = o.levelRange ? o.levelRange() : [0, 0], lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
+  const at = top => { let t = -1; lv.forEach((n, i) => { if (n <= top) t = i; }); return t; };
+  return r[1] ? {lo: at(r[0]), hi: at(r[1])} : null;
+}
+// 从第 from 档起第一个没过关的档（都过关了 = 最后一档）。手选级别会让孩子跳过低档，所以不能只看「从第 0 档起连续过关」（审查 11-09）
+function nextFrom(n, from) { for (let i = Math.max(0, from); i < n.length; i++) if (n[i] < P.PASS) return i; return n.length - 1; }
+function startTier(pr) { const r = lvRange(); return r ? Math.max(0, Math.min(nextFrom(pr.n, r.lo), Math.max(r.hi, r.lo, 0))) : pr.tier; }
+// 能点到哪一档：进度档、已过关的最高档的下一档、手选时「所选最低级那档起第一个没过关的档」，取最大；不收回
+function openUpTo(pr) {
+  const r = lvRange(); let last = -1; pr.n.forEach((x, i) => { if (x >= P.PASS) last = i; });
+  return Math.min(pr.n.length - 1, Math.max(pr.tier, last + 1, r ? Math.max(r.lo, startTier(pr), nextFrom(pr.n, r.lo)) : -1));
+}
 function enter(id) {
-  G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = P.progress(o.S(), id).tier; G.tap = performance.now() + 500;
+  G.mod = P.modOf(id); G.ore = 0; G.q = null; G.up = false; G.tier = startTier(P.progress(o.S(), id)); G.tap = performance.now() + 500;
   o.show(); fit(); next();
 }
-function next() { hush(); cancelAuto(); if (G.up) { G.up = false; G.tier = Math.min(G.tier + 1, G.mod.tiers.length - 1); } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; G.t0 = performance.now(); render(); }
+function next() { hush(); cancelAuto(); if (G.up !== false) { G.tier = G.up; G.up = false; } const prev = JSON.stringify(G.q); let tries = 0; do { G.q = G.mod.make(R, G.tier); } while (JSON.stringify(G.q) === prev && ++tries < 20);   /* 不连续出同一题 */ G.done = false; G.got = false; G.wrong = 0; G.st = {}; G.t0 = performance.now(); render(); }
 function earn() {   // 一题一块矿石；进度和矿石马上存，中途退出不丢
   if (G.got) return; G.got = true; G.ore++; const n = $s.querySelector('#oreN'); if (n) n.textContent = G.ore;
   if (o.gem) o.gem({key: G.mod.id + ':' + G.tier + ':' + JSON.stringify(G.q), wrong: G.wrong, secs: (performance.now() - (G.t0 || performance.now())) / 1000});   // 答对给碎片、算有效时间（C 模块接线，中控 11-08）
   G.note = '';
   if (P.record(o.S(), G.mod.id, G.tier)) {
-    const last = G.tier === G.mod.tiers.length - 1, all = P.progress(o.S(), G.mod.id).passed === G.mod.tiers.length;
-    if (!last) G.up = true;
-    G.note = all ? `${G.mod.name}全部学会了` : last ? '' : `学会了，下一个：${G.mod.tiers[G.tier + 1]}`;
+    const pr = P.progress(o.S(), G.mod.id), up = pr.n.findIndex((x, i) => i > G.tier && x < P.PASS), all = pr.passed === G.mod.tiers.length;   // 升到后面第一个没过关的档（跳过低档时后面可能已经过关，审查 11-09）
+    if (up >= 0) G.up = up;
+    G.note = all ? `${G.mod.name}全部学会了` : up < 0 ? '' : `学会了，下一个：${G.mod.tiers[up]}`;
     const f = $s.querySelector('#fb'); if (f && G.note) setTimeout(() => { const t = document.createElement('div'); t.textContent = G.note; f.appendChild(t); G.note = ''; }, 0);
   }
   paintTabs();
@@ -146,7 +162,7 @@ function tabsHtml() {   // 没开放的技能点不了；当前技能显示还�
   const pr = P.progress(o.S(), G.mod.id);
   // 每档的建议级别（A 定在 skills.js THINK_LEVEL，只作参考、不锁）：小字给家长看
   const lv = ((typeof SKILLS !== 'undefined' && SKILLS.THINK_LEVEL) || {})[G.mod.id] || [];
-  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > pr.tier ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</span>${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}</button>`).join('');
+  return G.mod.tiers.map((t, i) => `<button data-t="${i}" class="${i === G.tier ? 'on' : ''}" ${i > openUpTo(pr) ? 'disabled' : ''}><span>${t}${pr.n[i] >= P.PASS ? ' ✓' : i === G.tier ? ` ${pr.n[i]}/${P.PASS}` : ''}</span>${lv[i] ? `<small class="tlv">建议第 ${lv[i]} 级起</small>` : ''}</button>`).join('');
 }
 function shell(say, sub) {
   $s.innerHTML = `<div class="bar"><button id="back">返回</button><div class="tabs">${tabsHtml()}</div><button id="say" class="spk" data-say="${say}${sub ? '。' + sub : ''}" aria-label="朗读">朗读</button><div class="ore"><i></i><span id="oreN">${G.ore}</span></div></div><div class="main" id="main"></div>`;

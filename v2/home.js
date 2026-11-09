@@ -10,9 +10,16 @@
   const LV = C.LEVELS.map((l, i) => ['speed:L' + (i + 1), '秒答 ' + l.name]);
   const inGroup = (s, g) => (s.speed ? 'speed:L' + (s.L + 1) : s.group) === g;
   const cells = g => K.SKILLS.filter(s => inGroup(s, g)).flatMap(s => s.items);
+  // 三四年级（K.HARD，第 4–15 级）：按级别发奖状和伙伴（C 方案 11-09：A 审查发现练了拿不到奖励）。一格算在它最高的那一级
+  const HARD = K.HARD || [], ALLSK = K.SKILLS.concat(HARD);
+  const lvOfSkill = s => Math.max(...s.items.map(i => Math.max(...K.itemLevels(i.id))));
+  // 第 4、5 级的三四年级技能只有 3 个（各 1 格），合成一组，免得 1 格就换一张奖状加一只伙伴（审查 11-09）；组名用最高那一级
+  const groupOf = n => (n <= 5 ? 5 : n), lvsOf = g => (g === 5 ? [4, 5] : [g]);
+  const HARD_LV = [...new Set(HARD.map(s => groupOf(lvOfSkill(s))))].sort((a, b) => a - b);
+  const lvCells = g => HARD.filter(s => groupOf(lvOfSkill(s)) === g).flatMap(s => s.items);
 
   function stats(S) {
-    const all = K.SKILLS.flatMap(s => s.items), lv = id => E.lv(S, id) || 0;
+    const all = ALLSK.flatMap(s => s.items), lv = id => E.lv(S, id) || 0;   // 格子、道具按全部技能算（含三四年级）
     const practiced = new Set(); // 这一天算「练过」：练满 5 分钟或今天的题做完了（防止每天答 1 题刷奖励，也不亏待都学会了的孩子）；秒答（含 v1 旧日子）不进时长，答满 10 题算
     Object.entries(S.stats || {}).forEach(([d, v]) => { if (v && (v.sec >= DAY_SEC || v.done)) practiced.add(d); });
     Object.entries(S.log || {}).forEach(([d, v]) => { if (v && v.n >= DAY_N) practiced.add(d); });
@@ -22,9 +29,10 @@
     return {
       S, iron: all.filter(i => lv(i.id) >= 1).length, gold: all.filter(i => lv(i.id) >= 2).length, diamond: all.filter(i => lv(i.id) >= 3).length, total: all.length,
       days, fullDays, passed: ms.filter(m => m.passes >= 1 || m.due === null).length, solved: ms.filter(m => m.due === null && !m.out).length,
-      learned: K.SKILLS.filter(s => s.items.every(i => lv(i.id) >= 1)).length,
-      started: PLACES.concat([['speed', '']]).filter(([g]) => K.SKILLS.some(s => (g === 'speed' ? s.speed : inGroup(s, g)) && s.items.some(i => lv(i.id) >= 1))).length,
+      learned: ALLSK.filter(s => s.items.every(i => lv(i.id) >= 1)).length,
+      started: PLACES.concat([['speed', '']]).filter(([g]) => ALLSK.some(s => (g === 'speed' ? s.speed || s.group === 'speedH' : inGroup(s, g)) && s.items.some(i => lv(i.id) >= 1))).length,
       ore: (S.home && S.home.ore) || 0,
+      lvAll: n => { const c = lvCells(n); return {n: c.length, l1: c.filter(i => lv(i.id) >= 1).length, l3: c.filter(i => lv(i.id) >= 3).length}; },
       all: g => { const c = cells(g); return {n: c.length, l1: c.filter(i => lv(i.id) >= 1).length, l3: c.filter(i => lv(i.id) >= 3).length}; },
     };
   }
@@ -39,6 +47,15 @@
   PLACES.concat(LV).forEach(([g, name]) => {
     CERTS.push({id: 'c:' + g + ':1', kind: 'learn', scene: g, place: g, name, title: TITLES[g][0], need: t => [t.all(g).l1, t.all(g).n], text: name + '全部格子点亮', say: t => `学会了${name}全部 ${t.all(g).n} 格`});
     CERTS.push({id: 'c:' + g + ':3', kind: 'keep', scene: g, place: g, name, title: TITLES[g][1], need: t => [t.all(g).l3, t.all(g).n], text: name + '全部格子变深红', say: t => `${name}全部 ${t.all(g).n} 格，都记牢了`});
+  });
+  // 三四年级：每一级一对奖状（全部点亮 / 全部深红），lv = 这一级开放后才显示、才进「下一个目标」
+  const LV_TITLES = {5: ['林间探路人', '林间向导'], 6: ['沙漠旅人', '沙漠向导'], 7: ['丛林猎人', '丛林之王'], 8: ['雪原骑士', '雪原守护者'], 9: ['海底潜水员', '海底探险家'],
+    10: ['山巅攀登者', '山巅守望者'], 11: ['下界勇士', '下界征服者'], 12: ['要塞侦察兵', '要塞指挥官'], 13: ['末地旅人', '末地守卫'], 14: ['天空工匠', '天空建筑师'], 15: ['末影龙骑士', '驯服末影龙']};
+  const lvName = g => (g === 5 ? '第 4–5 级' : `第 ${g} 级`);
+  HARD_LV.forEach(n => {
+    const T = LV_TITLES[n] || [lvName(n) + '新本领', lvName(n) + '大师'];
+    CERTS.push({id: 'c:lv:' + n + ':1', kind: 'learn', scene: 'lv:' + n, lv: n, name: lvName(n), title: T[0], need: t => [t.lvAll(n).l1, t.lvAll(n).n], text: lvName(n) + '新本领全部点亮', say: t => `学会了${lvName(n)}的 ${t.lvAll(n).n} 个新本领`});
+    CERTS.push({id: 'c:lv:' + n + ':3', kind: 'keep', scene: 'lv:' + n, lv: n, name: lvName(n), title: T[1], need: t => [t.lvAll(n).l3, t.lvAll(n).n], text: lvName(n) + '新本领全部变深红', say: t => `${lvName(n)}的 ${t.lvAll(n).n} 个新本领，都记牢了`});
   });
   [[1, '平安度过第一夜'], [7, '搭好营地'], [30, '老探险家'], [100, '百日传奇']].forEach(([n, title]) => CERTS.push({id: 'c:day:' + n, kind: 'day', scene: 'day:' + n, name: title, title, need: prog(t => t.days, n), text: `累计练习 ${n} 天`, say: () => `累计练习 ${n} 天`}));
   CERTS.push({id: 'c:fix:1', kind: 'fix', scene: 'fix:1', name: '点燃熔炉', title: '点燃熔炉', need: prog(t => t.passed, 1), text: '错题第一次复习做对', say: () => '写错的题，复习时做对了'});
@@ -77,10 +94,16 @@
     {id: 'm:' + s.id + ':1', kind: 'bronze', skill: s, name: s.name, need: t => [s.items.filter(i => E.lv(t.S, i.id) >= 1).length, s.items.length], text: '这个技能全部格子点亮'},
     {id: 'm:' + s.id + ':3', kind: 'gold', skill: s, name: s.name, need: t => [s.items.filter(i => E.lv(t.S, i.id) >= 3).length, s.items.length], text: '这个技能全部格子变深红'},
   ]);
+  // 三四年级的伙伴：每一级一只（85 个新技能不各配一只，美术量太大）；这一级新本领全部点亮 = 解锁，全部深红 = 附魔版
+  HARD_LV.forEach(n => {
+    const sk = {id: 'lv:' + n, name: lvName(n) + '伙伴', items: lvCells(n), level: n};
+    MEDALS.push({id: 'm:lv:' + n + ':1', kind: 'bronze', skill: sk, lv: n, name: sk.name, need: t => [t.lvAll(n).l1, t.lvAll(n).n], text: '这一级新本领全部点亮'});
+    MEDALS.push({id: 'm:lv:' + n + ':3', kind: 'gold', skill: sk, lv: n, name: sk.name, need: t => [t.lvAll(n).l3, t.lvAll(n).n], text: '这一级新本领全部变深红'});
+  });
   const done = (r, t) => { const [a, b] = r.need(t); return a >= b; };
   const ALL = CERTS.concat(ITEMS, MEDALS), BY = Object.fromEntries(ALL.map(r => [r.id, r]));
   // 伙伴：编号固定对应生物（art 在 house.js 的 CREATURES 里按这个下标取）。新增技能往后加
-  const CREATURE_IDS = ['look1', 'cmp1', 'look3', 'look4', 'bond2', 'line1', 'bond3', 'cmp2', 'bond4', 'bond5', 'line2', 'place1', 'place2', 'cmp3', 'cmp4', 'line3', 'line4', 'dockC', 'clockB', 'speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5', 'speed:L1:6', 'dockD', 'speed:L2:0', 'speed:L2:1', 'speed:L2:2', 'speed:L2:3', 'speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7', 'speed:L3:0', 'speed:L3:1', 'speed:L4:0', 'speed:L4:1', 'dockA', 'dockB', 'gardenA', 'gardenB', 'gardenC', 'clockA', 'money1', 'money2'];   // 下标 = house.js 的 CREATURES
+  const CREATURE_IDS = ['look1', 'cmp1', 'look3', 'look4', 'bond2', 'line1', 'bond3', 'cmp2', 'bond4', 'bond5', 'line2', 'place1', 'place2', 'cmp3', 'cmp4', 'line3', 'line4', 'dockC', 'clockB', 'speed:L1:1', 'speed:L1:2', 'speed:L1:3', 'speed:L1:4', 'speed:L1:5', 'speed:L1:6', 'dockD', 'speed:L2:0', 'speed:L2:1', 'speed:L2:2', 'speed:L2:3', 'speed:L2:4', 'speed:L2:5', 'speed:L2:6', 'speed:L2:7', 'speed:L3:0', 'speed:L3:1', 'speed:L4:0', 'speed:L4:1', 'dockA', 'dockB', 'gardenA', 'gardenB', 'gardenC', 'clockA', 'money1', 'money2', 'lv:5', 'lv:6', 'lv:7', 'lv:8', 'lv:9', 'lv:10', 'lv:11', 'lv:12', 'lv:13', 'lv:14', 'lv:15'];   // 下标 = house.js 的 CREATURES
   const creatureOf = sid => CREATURE_IDS.indexOf(sid);
 
   function ensure(S) {
@@ -100,10 +123,15 @@
     return {certs: CERTS.filter(has), items: ITEMS.filter(has), medals: MEDALS.filter(has), t: stats(S)};
   }
   function addOre(S, n) { const h = ensure(S); if (n > 0) h.ore += n; }
+  // 这一级开放了没有（家长选了这一级，或自动模式到过）：没开放的三四年级奖状不显示、不进「下一个目标」，得到了的照常显示
+  // 家长手选：只认选中的级别；自动模式：开到的级别以内（审查 11-09：练不到的奖状不能挂在目标里）
+  // 审查 R2：组里每一格都能出题才算开放（第 4–5 级组的格子分属第 4、5 级，只选其中一级时另一级的格子练不到）；直接用排课的 itemOn，手选、自动一个判断
+  const opened = (S, g) => lvCells(g).every(i => E.itemOn(S, i.id));
+  const shown = (S, r) => !r.lv || !!(ensure(S).got[r.id]) || opened(S, r.lv);
   // 下一个最接近的目标：屋里只提示 3 个，避免一屏清单
   function next(S, n) {
     const h = ensure(S), t = stats(S);
-    return CERTS.concat(ITEMS.filter(i => !i.hidden)).filter(r => !h.got[r.id]).map(r => { const [a, b] = r.need(t); return {r, a: Math.min(a, b), b, left: b - a}; }).sort((x, y) => x.left - y.left).slice(0, n || 3);
+    return CERTS.concat(ITEMS.filter(i => !i.hidden)).filter(r => !h.got[r.id] && shown(S, r)).map(r => { const [a, b] = r.need(t); return {r, a: Math.min(a, b), b, left: b - a}; }).sort((x, y) => x.left - y.left).slice(0, n || 3);
   }
-  return {PLACES, CERTS, ITEMS, MEDALS, BY, stats, sync, earned, ensure, addOre, next, done, creatureOf};
+  return {PLACES, CERTS, ITEMS, MEDALS, BY, HARD_LV, stats, sync, earned, ensure, addOre, next, done, creatureOf, opened, shown};
 });

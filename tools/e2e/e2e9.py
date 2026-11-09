@@ -80,7 +80,7 @@ with sync_playwright() as p:
         if pg.is_visible('#h_loot'): pg.evaluate("document.getElementById('h_loot').hidden=true")
         if pg.is_visible('#h_cClose'): shot(pg, 'f-' + c.replace(':', '_')); pg.click('#h_cClose'); pg.wait_for_timeout(200)
         else: fails.append(c + ' 奖状没打开')
-    pg.evaluate("__sm.HS.tap(__sm.HS.BOOK.x+6,50)"); pg.wait_for_timeout(400); shot(pg, 'g-book'); check(pg.locator('.bkc').count() == pg.evaluate("__sm.K.SKILLS.length"), '图鉴数量')
+    pg.evaluate("__sm.HS.tap(__sm.HS.BOOK.x+6,50)"); pg.wait_for_timeout(400); shot(pg, 'g-book'); check(pg.locator('.bkc').count() == pg.evaluate("__sm.K.SKILLS.length + HOME.MEDALS.filter(m => m.kind === 'bronze' && m.lv && HOME.shown(__sm.S, m)).length"), '图鉴数量（基础技能 + 开放了的三四年级伙伴）')
     # 家长区：真实打开，题库页没有 undefined，周报是真实总数，新题预览有可读的选项和答案
     pg.evaluate("document.getElementById('h_btnOut') && document.getElementById('h_btnOut').click()"); pg.wait_for_timeout(800)
     bb = pg.locator('#gear').bounding_box(); pg.mouse.move(bb['x'] + 20, bb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(2200); pg.mouse.up(); pg.wait_for_timeout(300)

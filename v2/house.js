@@ -138,6 +138,18 @@
     drummer: {n: '骨头鼓手', d: '一敲鼓，大家都想跳舞', rows: ['....WWWWWW......', '....WKWWKW......', '....WWWWWW......', '....WMWMWM......', '.....WWWW.......', '..WWWWWWWWWW....', '.....WWWW.......', '....RRRRRRRR.W..', '....YYYYYYYY.W..', '....RRRRRRRR....', '....WW....WW....'], pal: {W: '#e4e4dc', K: K2, M: '#6c6f76', R: '#b3261e', Y: '#f2c14e'}},
     wizard: {n: '雷电小巫', d: '挥一挥手杖，就有一道闪电', rows: ['......PP.......X', '.....PPPP.....X.', '....PPPPPP...XX.', '..PPPPPPPPPP..X.', '....SSSSSS...X..', '....SKSSKS......', '....SSSSSS.W....', '...BBBBBBBWW....', '...BBBBBBB.W....', '...BBBBBBB.W....', '..BBBBBBBBB.....'], pal: {P: '#8a1c16', S: '#e6b89c', K: K2, B: '#d9342b', W: '#8a5a2c', X: '#f2c14e'}},
     pirate: {n: '章鱼海盗', d: '八只手，抢的全是好吃的', rows: ['....KKKKKKKK....', '...KKKWWKKKKK...', '..KKKKKKKKKKKK..', '....OOOOOOOO....', '...OOKOOOOKOO...', '...OOOOOOOOOO...', '....OOOOOOOO....', '...O.O.OO.O.O...', '..O..O.OO.O..O..', '..O..O....O..O..'], pal: {K: '#2b2b2b', W: W0, O: '#e0762a'}},
+    // 三四年级每级一只（C 方案 11-09，CREATURE_IDS 的 lv:5 … lv:15，第 4–5 级合一只）：全部原创造型
+    lvDeer: {n: '林间小鹿', d: '在林子里认路', rows: ['...........B.B..', '............B...', '...........DDD..', '...........DKDW.', 'DDDDDDDDDDDDD...', '.DDWDDWDDDDDD...', '.DDDDDDDDDDD....', '.D.D.....D.D....', '.K.K.....K.K....'], pal: {D: '#b07840', B: '#6b4628', K: '#2b2b2b', W: '#f4ecd8'}},
+    lvCamel: {n: '驼驼', d: '背着水壶走沙漠', rows: ['..........CC....', '..C..C....CKC...', '.CCCCCC...CCC...', 'CCCCCCCCCCCC....', '.CCCCCCCCCC.....', '..C.C...C.C.....', '..C.C...C.C.....', '..K.K...K.K.....'], pal: {C: '#d9a85a', K: '#5a3a20'}},
+    lvJag: {n: '斑斑豹', d: '在丛林里跑得最快', rows: ['............Y.Y.', '...........YYYY.', '...........YKYK.', 'Y..........YYYYP', '.YYSYYSYYYYYY...', '..YYYYSYYSYY....', '..YY.YY..YY.YY..'], pal: {Y: '#e8b13a', S: '#5a3a20', K: '#1b1d22', P: '#f6a5a0'}},
+    lvBear: {n: '冰冰熊', d: '最爱在雪地打滚', rows: ['...........WW.W.', '..........WWWWW.', '..........WKWWWK', '.WWWWWWWWWWWWWW.', 'WWWWWWWWWWWWWW..', 'WWWWWWWWWWWWW...', '.WW.WW...WW.WW..', '.GG.GG...GG.GG..'], pal: {W: '#f4f6fa', K: '#1b1d22', G: '#c3cbd6'}},
+    lvOcto: {n: '泡泡海马', d: '在海草里捉迷藏', rows: ['.....OOO........', '....OOKOO.......', '....OOOOOOO.....', '.....OOO........', '....OOOOY.......', '...OOOOOY.......', '...OOOOY........', '....OOOO........', '......OO........', '.....OO.........'], pal: {O: '#f29a6b', K: '#1b1d22', Y: '#fbe3b8'}},
+    lvGoat: {n: '岩角羊', d: '爬到山顶看风景', rows: ['..........HH..H.', '...........H.H..', '...........GGGG.', '...........GKGG.', 'GGGGGGGGGGGGGW..', '.GGGGGGGGGGGW...', '.GGGGGGGGGG.....', '.G.G.....G.G....', '.K.K.....K.K....'], pal: {G: '#ecebe4', H: '#8a8d94', K: '#2b2b2b', W: '#c9ccd2'}},
+    lvLizard: {n: '火尾蜥', d: '尾巴像小火苗', rows: ['............RRR.', '...........RKRRR', 'Y.........RRRRY.', '.RR..RRRRRRRR...', '..RRRRYRRYRRR...', '....RRRRRRRR....', '....R.R..R.R....'], pal: {R: '#d9342b', Y: '#f2c14e', K: '#1b1d22'}},
+    lvBeetle: {n: '铜壳虫', d: '背着铜盾慢慢走', rows: ['....MMMMMMM.....', '...MLMMMMMLM....', '..MMMMMMMMMMMKK.', '..MLMMMMMMLMMKW.', '..MMMMMMMMMMMKK.', '...K.K.K.K.K....'], pal: {M: '#c08a52', L: '#f2c14e', K: '#2b2b2b', W: '#7bd88f'}},
+    lvOwl: {n: '紫夜鸮', d: '夜里眼睛亮晶晶', rows: ['..P......P......', '..PPPPPPPP......', '.PPYKPPYKPP.....', '.PPPPOOPPPP.....', '.PPPPPPPPPP.....', '..PPLLLLPP......', '..PPPPPPPP......', '...Y....Y.......'], pal: {P: '#b08cd8', Y: '#f2c14e', K: '#1b1d22', O: '#e0952e', L: '#e9c6ff'}},
+    lvWhale: {n: '云鲸', d: '在天上游泳', rows: ['.........WWW....', '..WWWWWWWWWWWW..', '.WWBBBBBBBBBWW..', 'WWBBBBBBBBKBBW..', 'WBBBBBBBBBBBBWW.', '.WBBLLLLLLBBW.WW', '..WWWWWWWWWW....'], pal: {B: '#6ea8fe', W: '#f2f6fb', K: '#1b1d22', L: '#bfe3ff'}},
+    lvDragon: {n: '小飞龙', d: '最勇敢的伙伴', rows: ['.......V....V...', '......VVV..VVV..', '.......VVVVVVV..', '..........DKDDY.', 'D.....DDDDDDDD..', '.D..DDDDDDDDD...', '..DDDDDDDDDD....', '....D.D..D.D....'], pal: {D: '#3fb98a', V: '#7bd88f', K: '#1b1d22', Y: '#c8fff4'}},   // 青绿色：在图鉴的深紫底和附魔紫底上都看得清（审查 11-09）
     bat: {n: '夜翼蝠', d: '白天睡觉，晚上巡逻', rows: ['...K.......K....', 'K..KK.....KK..K.', 'KK.KKKKKKKKK.KK.', 'KKKKKRKKKRKKKKK.', 'KKKKKKKKKKKKKKK.', '.KKK.KWKWK.KKK..', '..K...KKK...K...'], pal: {K: '#8d7ab8', R: '#f2c14e', W: W0}},
     wrap: {n: '绷带怪', d: '身上的绷带总是散开', rows: ['....WWWWWW......', '....LLLLLL......', '....WKWWKW......', '....LLLLLL......', '....WWWWWW..LL..', '...LLLLLLLLLL...', '..WWWWWWWW......', '...LLLLLL.......', '....WW..WW......', '....LL..LL......', '....WW..WW......'], pal: {W: '#e8e0c8', L: '#b5a97e', K: K2}},
     rock: {n: '岩石巨人', d: '睡一觉，身上就长满青苔', rows: ['...SSSSSSSSS....', '...SGGSSSSSS....', '...SKKSSKKSS....', '..SSSSSSSSSSS...', 'SSSSSSSSSSSSSSS.', 'SSSSSSSGSSSSSSS.', 'SS.SSSSSSSSS.SS.', 'SS.SSSSSSSSS.SS.', '...SSS...SSS....', '...SSS...SSS....'], pal: {S: '#8a8d94', G: '#6fae3a', K: '#f2c14e'}},
@@ -166,6 +178,7 @@
     px('knight'), px('drummer'), px('wizard'), px('pirate'), px('puffer'), px('bat'), px('wrap'), px('rock'),
     px('robot'), px('spark'), px('crystal'), px('gold'),
     px('gull'), px('crab'), px('butterfly'), px('snail'), px('ladybug'), px('cuckoo'), px('trader'), px('piggy'),
+    px('lvDeer'), px('lvCamel'), px('lvJag'), px('lvBear'), px('lvOcto'), px('lvGoat'), px('lvLizard'), px('lvBeetle'), px('lvOwl'), px('lvWhale'), px('lvDragon'),   // lv:5 … lv:15
   ];
   const BOSS = {'speed:L1': px('kingJelly'), 'speed:L2': px('general'), 'speed:L3': px('queen'), 'speed:L4': px('bigDragon')};
   // 画一只：x,y = 左下角；flip 朝左；scale 放大
@@ -183,6 +196,11 @@
   function sky(g, W, H, c1, c2) { r(g, c1, 0, 0, W, H); r(g, c2, 0, H * .45, W, H * .55); }
   function clouds(g, f) { const o = (f >> 1) % 20; r(g, '#f2f6fb', 8 + o, 6, 16, 3); r(g, '#f2f6fb', 12 + o, 4, 8, 2); r(g, '#f2f6fb', 60 + o / 2, 9, 12, 2); }
   // 奖状画面：96×54；keep = 附魔版；f = 动画帧；jump = 点一下全体跳
+  // 三四年级每级一对奖状（C 方案 11-09，scene = 'lv:5' … 'lv:15'，第 4–5 级合成 lv:5）：天、地两组颜色，按称号的地方配
+  const LVS = {5: ['#8ec8ff', '#bfe3ff', '#4f8a2e', '#3d7524'], 6: ['#ffcf9e', '#ffe2c0', '#e8c27a', '#c9a35a'], 7: ['#7fc79a', '#b8e0c0', '#2f6b1c', '#244f15'], 8: ['#c9dae9', '#eef3f8', '#ffffff', '#cfd9e3'],
+    9: ['#1f4f8a', '#3d7fd9', '#d9c9a0', '#b8a77a'], 10: ['#8ec8ff', '#d4e1ee', '#9a9da4', '#7c7f86'], 11: ['#4a1410', '#8a1c16', '#6b2a24', '#4a1a14'], 12: ['#2a2c33', '#3f434c', '#6c6f76', '#4a4d55'],
+    13: ['#14182e', '#2b2140', '#e8e6b0', '#cfcc8f'], 14: ['#8ec8ff', '#bfe3ff', '#ecebe4', '#c9ccd2'], 15: ['#14182e', '#2b2140', '#3a2a58', '#2a1d40']};
+  const lvPal = id => LVS[+String(id).split(':')[1]] || LVS[5];
   function scene(g, id, keep, f, jump) {
     const W = 96, H = 54, J = jump ? -2 - (f % 2) * 2 : 0, G = 44, C = CREATURES;
     if (id === 'look') {
@@ -234,6 +252,10 @@
         creature(g, BOSS[id], 48, G + 4 + (f % 2), f, {scale: 2, flip: true}); spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 18, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 4, G + 5 + J); A.item(g, 'pick3', 26, G - 18 + J);
         r(g, '#fff3b0', 38 + (f % 3) * 2, 26, 3, 3);
       }
+    } else if (String(id).startsWith('lv:')) {   // 三四年级：那一级的地方 + 主角举奖杯
+      const P2 = lvPal(id); sky(g, W, H, P2[0], P2[1]); if (P2[0] === '#14182e' || P2[0] === '#4a1410') for (let i = 0; i < 6; i++) r(g, '#fff3b0', (i * 37 + 9) % W, (i * 13 + 4) % 24, 1, 1); else clouds(g, f);
+      ground(g, W, H, G, P2[2], P2[3]); spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 34, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 18, G + 5 + J); A.item(g, 'trophy', 46, G - 18 + J);
+      r(g, '#6b4628', 72, G - 22, 1, 22); r(g, '#f2c14e', 73, G - 22, 9, 6);
     } else if (id.startsWith('day')) {
       const n = +id.split(':')[1];
       if (n === 1) { sky(g, W, H, '#14182e', '#232a4a'); r(g, '#f2f6fb', 73, 7, 6, 1); r(g, '#f2f6fb', 72, 8, 8, 6); r(g, '#f2f6fb', 73, 14, 6, 1); r(g, '#c9d2e0', 74, 9, 2, 2); r(g, '#c9d2e0', 77, 12, 1, 1); ground(g, W, H, G, '#3d6a22', '#2b2b2b'); for (let i = 0; i < 16; i++) if ((i + f) % 3) r(g, '#fff', (i * 37) % W, (i * 13) % 26, 1, 1); A.item(g, 'bed', 48, G - 16); r(g, '#6b4628', 38, G - 10, 2, 10); r(g, f % 2 ? '#f2c14e' : '#e0762a', 37, G - 14, 4, 4); spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 22, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 8, G + 5 + J); }
@@ -252,7 +274,7 @@
   const THUMB = {look: ['#8ec8ff'], bond: ['#2a2c33'], place: ['#bfe3ff'], cmp: ['#ffdcb0'], line: ['#bfe3ff'], garden: ['#bfe3ff'], market: ['#ffdcb0'], dock: ['#3d7fd9']};
   function thumb(g, c, x, y, w, h, f) {
     const sc = c.scene, keep = c.kind === 'keep';
-    const bg = sc.startsWith('speed') ? '#3a2a58' : sc.startsWith('day') ? (sc === 'day:7' || sc === 'day:30' ? '#8ec8ff' : '#1d2340') : sc.startsWith('fix') ? '#3f2c1a' : THUMB[sc][0];
+    const bg = sc.startsWith('speed') ? '#3a2a58' : sc.startsWith('day') ? (sc === 'day:7' || sc === 'day:30' ? '#8ec8ff' : '#1d2340') : sc.startsWith('fix') ? '#3f2c1a' : sc.startsWith('lv:') ? lvPal(sc)[0] : (THUMB[sc] || ['#3f2c1a'])[0];   // 不认识的奖状给通用底色，不报错
     r(g, bg, x, y, w, h);
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
     const cx = x + (w >> 1) - 7, by = y + h - 1;
@@ -263,6 +285,7 @@
     else if (sc === 'dock') { r(g, '#6b4628', x + 3, by - 3, 14, 3); r(g, '#5a3a20', x + 9, y + 1, 1, 9); r(g, '#ecebe4', x + 10, y + 2, 6, 7); }
     else if (sc === 'line') { r(g, '#2b2b2b', x + 3, by - 7, w - 6, 6); r(g, '#8a8d94', x + 4, by - 6, w - 8, 4); r(g, '#2b2b2b', x + 5, by - 1, 2, 1); r(g, '#2b2b2b', x + w - 7, by - 1, 2, 1); }
     else if (sc === 'cmp') { r(g, '#9a9da4', x + 3, by - 5, 5, 5); r(g, '#9a9da4', x + 11, by - 11, 5, 11); r(g, '#b3261e', x + 13, by - 13, 3, 2); }
+    else if (sc.startsWith('lv:')) creature(g, CREATURES[Math.max(0, typeof HOME !== 'undefined' ? HOME.creatureOf(sc) : 0)] || CREATURES[0], x + 1, by + 1, 0);   // 三四年级：那一级的伙伴
     else if (sc === 'place') { r(g, '#c08a52', x + 4, by - 6, 11, 6); r(g, '#b3261e', x + 2, by - 9, 15, 3); r(g, '#4a2f1b', x + 8, by - 3, 3, 3); }
     else { const id = sc === 'bond' ? 'pick3' : sc === 'day:1' ? 'bed' : sc.startsWith('fix') ? 'furnace' : sc === 'day:7' ? 'deco3' : sc === 'day:30' ? 'glass' : 'trophy'; const t = document.createElement('canvas'); t.width = 24; t.height = 16; A.item(t.getContext('2d'), id, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(t, 0, 0, 24, 16, x + (id === 'bed' ? 1 : 3), y + 1, id === 'bed' ? 18 : 18, 12); }
     if (keep) { const p = ((f || 0) * 4) % 40 - 8; g.fillStyle = 'rgba(190,110,255,.42)'; for (let i = 0; i < h; i++) g.fillRect(x + p - i / 2, y + i, 6, 1); }
@@ -301,14 +324,24 @@
   const el = id => rootEl.querySelector('#' + id);
   let S = o.S(), E0 = H.earned(S);
   // ---------- 屋子布局（art 像素） ----------
-  const RH = 76, FLOOR = 62, RW = 972;
+  const RH = 76, FLOOR = 62, RW0 = 972; let RW = RW0;
   const CW = {x: 8, y: 8, dx: 24, dy: 17.5, w: 19, h: 14};   // 奖状墙：3 排大图
-  const certPos = {};
-  H.CERTS.forEach(c => {
-    const list = c.kind === 'learn' ? H.CERTS.filter(x => x.kind === 'learn') : c.kind === 'keep' ? H.CERTS.filter(x => x.kind === 'keep') : H.CERTS.filter(x => x.kind === 'day' || x.kind === 'fix');
+  const certPos = {}, BASE = H.CERTS.filter(c => !c.lv);
+  BASE.forEach(c => {   // 原来的奖状墙：一二年级的地方、秒答、天数、错题，位置不变
+    const list = c.kind === 'learn' ? BASE.filter(x => x.kind === 'learn') : c.kind === 'keep' ? BASE.filter(x => x.kind === 'keep') : BASE.filter(x => x.kind === 'day' || x.kind === 'fix');
     const row = c.kind === 'learn' ? 0 : c.kind === 'keep' ? 1 : 2, col = list.indexOf(c);
     certPos[c.id] = {x: CW.x + col * CW.dx, y: CW.y + row * CW.dy};
   });
+  // 三四年级奖状（C 方案 11-09）：只放开放了的级别（H.shown），挂在屋子最右边另一面墙上，不挤原来的墙、不挡门口和告示牌
+  const LVX = RW0 + 12;   // 新墙的左边
+  let shownC = BASE;
+  function layoutCerts() {
+    const lv = H.CERTS.filter(c => c.lv && H.shown(S, c)), cols = Math.max(0, ...['learn', 'keep'].map(k => lv.filter(c => c.kind === k).length));
+    ['learn', 'keep'].forEach((k, row) => lv.filter(c => c.kind === k).sort((a, b) => a.lv - b.lv).forEach((c, col) => { certPos[c.id] = {x: LVX + 6 + col * CW.dx, y: CW.y + row * CW.dy}; }));
+    shownC = BASE.concat(lv); RW = cols ? LVX + 6 + cols * CW.dx + 16 : RW0;
+    NAVS.length = 4; if (cols) NAVS.push(['新本领', LVX + 6 + Math.min(cols, 6) * CW.dx / 2]);
+    el('h_nav').innerHTML = NAVS.map(([n], i) => `<button data-i="${i}">${n}</button>`).join('') + '<button class="toGo">开始今天的探险</button>';
+  }
   const DOOR = {x: 311, w: 18}, LOOT = {x: 287, w: 18}, CHEST = {x: 337, w: 16}, SIGN = {x: 333, y: 12, w: 22, h: 18}, BOOK = {x: 361, w: 22}, CAB = {x: 391, w: 30};
   const FS = [], WS = [];
   for (let i = 0; i < 22; i++) FS.push({id: 'F' + i, t: 'F', x: 431 + i * 24, y: FLOOR - 16});
@@ -335,7 +368,8 @@
     for (let x = 0; x < RW; x += 80) { r(g, '#5a3a20', x + 2, 4, 3, FLOOR - 4); }
     // 奖状墙
     r(g, '#6b4628', 3, 4, 297, 56); r(g, '#8a5a2c', 4, 5, 295, 54);
-    H.CERTS.forEach(c => {
+    if (RW > RW0) { r(g, '#6b4628', LVX - 1, 4, RW - LVX - 8, 38); r(g, '#8a5a2c', LVX, 5, RW - LVX - 10, 36); }   // 三四年级奖状墙（两排）
+    shownC.forEach(c => {
       const p = certPos[c.id], got = E0.certs.includes(c);
       if (got) { const a = frameCol[c.kind][0]; r(g, '#000', p.x - 2, p.y - 2, CW.w + 4, CW.h + 4); r(g, a, p.x - 1, p.y - 1, CW.w + 2, CW.h + 2); A.thumb(g, c, p.x, p.y, CW.w, CW.h, 0); }
       else { r(g, '#5a3a20', p.x - 1, p.y - 1, CW.w + 2, CW.h + 2); r(g, '#3f2c1a', p.x, p.y, CW.w, CW.h); r(g, '#6b4628', p.x + 8, p.y + 3, 3, 2); r(g, '#6b4628', p.x + 10, p.y + 5, 2, 2); r(g, '#6b4628', p.x + 9, p.y + 7, 2, 2); r(g, '#6b4628', p.x + 9, p.y + 10, 2, 2); }
@@ -362,7 +396,7 @@
     H.next(S, 3).filter(n => n.r.need && !n.r.kind && A.ITEM[n.r.id] && !n.r.part).slice(0, 3).forEach(n => { const t2 = A.ITEM[n.r.id].t, sl = (t2 === 'F' ? FS : WS).find(s => !used.has(s.id)); if (sl) { used.add(sl.id); A.shadow(g, n.r.id, sl.x, sl.y); shadows.push({slot: sl.id, n}); } });
     if (editing) (function () { FS.concat(WS).forEach(s => { if (!used.has(s.id)) { g.strokeStyle = '#f2c14e'; g.setLineDash([2, 2]); g.strokeRect(s.x + .5, s.y + .5, 15, 15); g.setLineDash([]); } }); }());
     if (editing && sel) { const s = SLOTS[S.home.place[sel]]; if (s) { g.strokeStyle = '#fff'; g.strokeRect(s.x - .5, s.y - .5, 17, 17); } }
-    el('h_tC').textContent = E0.certs.length + '/' + H.CERTS.length; el('h_tM').textContent = E0.medals.filter(m => m.kind === 'bronze').length + '/' + K.SKILLS.length; el('h_tD').textContent = t.diamond;
+    el('h_tC').textContent = E0.certs.length + '/' + shownC.length; el('h_tM').textContent = learned().length + '/' + bookSkills().length; el('h_tD').textContent = t.diamond;
   }
   // 动态：火、音符
   let fxT = 0;
@@ -386,6 +420,8 @@
   let pets = [], petF = 0, heroF = 'a';
   const crOf = sid => A.CREATURES[H.creatureOf(sid) < 0 ? 0 : H.creatureOf(sid)];   // 新增技能还没配伙伴时不报错（tests/home.test.js 会拦）
   const learned = () => E0.medals.filter(m => m.kind === 'bronze').map(m => m.skill.id);
+  // 图鉴：基础技能一只一格 + 三四年级每级一只（只放开放了的或已经得到的，同奖状墙）
+  const bookSkills = () => K.SKILLS.concat(H.MEDALS.filter(m => m.kind === 'bronze' && m.lv && H.shown(S, m)).map(m => m.skill));
   const isGold = sid => E0.medals.some(m => m.kind === 'gold' && m.skill.id === sid);
   function syncPets() {
     const h = S.home, L = learned();
@@ -436,7 +472,7 @@
   vp.addEventListener('pointercancel', e => { if (drag && e.pointerId !== undefined && e.pointerId !== drag.id) return; drag = null; panTo(camX); });
 
   // ---------- 导航 ----------
-  const NAVS = [['奖状墙', 150], ['门口', 331], ['矿物柜', 406], ['道具', 542]];
+  const NAVS = [['奖状墙', 150], ['门口', 331], ['矿物柜', 406], ['道具', 542]];   // 有三四年级奖状时，layoutCerts 再加一个「新本领」
   el('h_nav').innerHTML = NAVS.map(([n, x], i) => `<button data-i="${i}">${n}</button>`).join('') + '<button class="toGo">开始今天的探险</button>';
   el('h_nav').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.classList.contains('toGo')) { go(null); return; } closeSheet(); const i = +b.dataset.i, sl = placeable().map(x => SLOTS[S.home.place[x.id]]).filter(Boolean).sort((p, q) => p.x - q.x)[0]; panTo(i === 3 && sl ? (sl.x - 10) * P : NAVS[i][1] * P - VW() / 2, 300); });
   function nav() { const c = (camX + VW() / 2) / P; let k = 0; NAVS.forEach(([, x], i) => { if (c >= x - 40) k = i; }); [...el('h_nav').children].forEach((b, i) => { if (!b.classList.contains('toGo')) b.classList.toggle('on', i === k); }); }
@@ -446,7 +482,7 @@
   function tap(ax, ay) {
     if (performance.now() - enteredAt < 350) return;   // 连点门进来的那几下不算
     if (editing) return tapEdit(ax, ay);
-    for (const c of H.CERTS) { const p = certPos[c.id]; if (ax >= p.x - 1 && ax <= p.x + CW.w + 1 && ay >= p.y - 2 && ay <= p.y + CW.h + 3) return E0.certs.includes(c) ? showCert(c) : goal(c, p.x); }
+    for (const c of shownC) { const p = certPos[c.id]; if (ax >= p.x - 1 && ax <= p.x + CW.w + 1 && ay >= p.y - 2 && ay <= p.y + CW.h + 3) return E0.certs.includes(c) ? showCert(c) : goal(c, p.x); }
     if (ax >= DOOR.x && ax <= DOOR.x + DOOR.w && ay > FLOOR - 30) return leave();
     if (ax >= SIGN.x && ax <= SIGN.x + SIGN.w && ay >= SIGN.y && ay <= SIGN.y + SIGN.h) return showNext();
     if (S.home.loot && S.home.loot.length && ax >= LOOT.x - 2 && ax <= LOOT.x + LOOT.w + 2 && ay > FLOOR - 18 && ay <= FLOOR + 4) return openLoot();
@@ -501,15 +537,15 @@
   }
   // ---------- 伙伴图鉴 ----------
   function showBook() {
-    closeSheet(); const v = el('h_book'), L = learned(), SK = K.SKILLS;
+    closeSheet(); const v = el('h_book'), L = learned(), SK = bookSkills(), skOf = id => SK.find(x => x.id === id);
     v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2><span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${(S.home.pets || []).includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="18" height="16"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
     v.hidden = false; v.querySelectorAll('canvas[data-c]').forEach(c => { const i = c.dataset.c; A.creature(c.getContext('2d'), crOf(i), 0, 16, 0, L.includes(i) ? {} : {shadow: '#0c0d10'}); });
     el('h_bkClose').onclick = closeBook;
     v.querySelector('.bkg').onclick = e => {
-      const b = e.target.closest('.bkc'); if (!b) return; const i = b.dataset.i, s = K.BY[i], has = L.includes(i); blip(SND.tap);
-      if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · 学会「${s.name}」后解锁</span><button class="btn go" id="h_bkGo">去练这一块</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
+      const b = e.target.closest('.bkc'); if (!b) return; const i = b.dataset.i, s = skOf(i), has = L.includes(i); blip(SND.tap);
+      if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · ${s.level ? s.name.replace('伙伴', '') + '新本领全部点亮后解锁' : `学会「${s.name}」后解锁`}</span><button class="btn go" id="h_bkGo">${s.level ? goLabel() : '去练这一块'}</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
       const at = (S.home.pets || []).includes(i);
-      el('h_bkD').innerHTML = `<span><b>${crOf(i).n}${isGold(i) ? ' · 附魔' : ''}</b>${crOf(i).d ? ' · ' + crOf(i).d : ''}<br><small class="muted">学会了「${s.name}」${isGold(i) ? '，全部隔 3 天还做对' : ''}</small></span><button class="btn go" id="h_bkPet">${at ? '留在图鉴' : '带回家'}</button>`;
+      el('h_bkD').innerHTML = `<span><b>${crOf(i).n}${isGold(i) ? ' · 附魔' : ''}</b>${crOf(i).d ? ' · ' + crOf(i).d : ''}<br><small class="muted">${s.level ? '学会了' + s.name.replace('伙伴', '') + '的全部新本领' : `学会了「${s.name}」`}${isGold(i) ? '，全部隔 3 天还做对' : ''}</small></span><button class="btn go" id="h_bkPet">${at ? '留在图鉴' : '带回家'}</button>`;
       el('h_bkPet').onclick = () => { const p = S.home.pets = S.home.pets || []; if (at && p.length <= 1) { toast('至少带一个伙伴回家'); blip(SND.tap); return; }   // 不能全部取消：空列表只代表旧漏洞（C 模块，中控 11-08）
         if (at) p.splice(p.indexOf(i), 1); else { if (p.length >= 4) p.shift(); p.push(i); blip(SND.get); } o.save(); v.querySelectorAll('.bkc').forEach(x => x.classList.toggle('home', p.includes(x.dataset.i))); b.click(); };
     };
@@ -564,7 +600,7 @@
   let clock = 0;
   function stopClock() { if (!clock) return 0; const sec = Math.min(600, Math.round((Date.now() - clock) / 1000)); clock = 0; S.home.sec += sec; const st = E.stat(S, o.today()); st.home = (st.home || 0) + sec; o.save(); return sec; }
   function enter() {
-    S = o.S(); H.sync(S, o.today()); E0 = H.earned(S); autoPlace(); pets = []; syncPets(); hideAll();
+    S = o.S(); H.sync(S, o.today()); E0 = H.earned(S); layoutCerts(); autoPlace(); pets = []; syncPets(); hideAll();
     hero.x = DOOR.x + 2; hero.flip = false; dog.x = DOOR.x + 12; clock = Date.now(); enteredAt = performance.now(); o.save();
     navGo(); o.show(); layout(); drawHero('a'); drawRoom(); setCam(Math.max(0, Math.min(maxX, (DOOR.x + 10) * P - VW() / 2)));
   }
