@@ -22,7 +22,7 @@ SCAN = """async (en) => {
 }"""
 fails = []
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}); errs = []
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.wait_for_timeout(600)
     for en in (False, True):

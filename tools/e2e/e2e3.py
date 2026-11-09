@@ -7,7 +7,7 @@ seed = {'v': 2, 'savedAt': 0, 'cards': {}, 'boss': {}, 'log': {}, 'level': 0, 'm
         'known': {k: True for k in ['look1', 'look2', 'look3', 'look4', 'bond1', 'cmp1']}}
 errs = []
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     pg = b.new_page(viewport={'width': 932, 'height': 430}, device_scale_factor=1)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(page + '#test'); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})")
@@ -37,7 +37,7 @@ with sync_playwright() as p:
     nosave = pg.evaluate("!document.getElementById('bnWarn').hidden && document.getElementById('bnWarn').textContent")
     b.close()
     # 12f：预览页（地址在 /v2/ 下、不带 #test），正式键已经存在 → 停写、提示新版
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 932, 'height': 430})
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 932, 'height': 430})
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(page); pg.evaluate("localStorage.clear(); localStorage.setItem('speedmap.v2', JSON.stringify({v: 2, cards: {}, boss: {}, log: {}, level: 0, mistakes: {}, settings: {bilingual: false}}))"); pg.reload(); pg.wait_for_timeout(300)
     pg.screenshot(path=str(out / 'g3-newversion.png'))

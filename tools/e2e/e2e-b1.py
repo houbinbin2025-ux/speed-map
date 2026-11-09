@@ -10,7 +10,7 @@ def fresh(pg, extra=''):
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))}); {NODEMO}; {extra}"); pg.reload(); pg.wait_for_timeout(500)
 def cur(pg): return pg.evaluate("[...document.querySelectorAll('.scr')].find(e => !e.hidden)?.id")
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     # ---------- 第 10 条：数线题（宽版）有「不会」，提示不压在刻度上 ----------
     for W, H in [(956, 440), (844, 390), (667, 375)]:
         pg = b.new_page(viewport={'width': W, 'height': H}); pg.on('pageerror', lambda e: errs.append(str(e)))

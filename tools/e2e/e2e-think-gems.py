@@ -21,7 +21,7 @@ def solve(pg):   # 天平桥（和 e2e-v8.py 同样的解法）
 day = lambda pg: pg.evaluate("(()=>{const d=GEMUI.state().days;return d[Object.keys(d).sort().pop()]||{}})()")
 inv = lambda pg: pg.evaluate("GEMUI.state().inv")
 with sync_playwright() as p:
-    b = p.chromium.launch(); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
+    b = __import__('quiet').launch(p); pg = b.new_page(viewport={'width': 844, 'height': 390}, has_touch=True)
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto(url); pg.evaluate(f"localStorage.clear(); localStorage.setItem('speedmap.v2.test', {json.dumps(json.dumps(seed))})"); pg.reload(); pg.wait_for_timeout(600)
     pg.click('.w-mini button[data-z="balance"]'); pg.wait_for_timeout(700); pg.click('#zGo'); pg.wait_for_function("!document.getElementById('think').hidden", timeout=9000); pg.wait_for_timeout(650)

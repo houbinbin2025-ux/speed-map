@@ -31,7 +31,7 @@ VIS = """sel => { const e = document.querySelector(sel); if (!e) return 'missing
   let p = e.parentElement; while (p && p !== document.body) { const s = getComputedStyle(p); if (/auto|scroll|hidden/.test(s.overflowY)) { const q = p.getBoundingClientRect(); if (r.top < q.top - 1 || r.bottom > q.bottom + 1) return 'clipped ' + JSON.stringify([r.top|0, r.bottom|0, q.top|0, q.bottom|0]); } p = p.parentElement; }
   return 'ok'; }"""
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = __import__('quiet').launch(p)
     for W, H in SIZES:
         for mode in ('rich', 'plain') + (('en',) if H < 560 else ()):
             ctx = b.new_context(viewport={'width': W, 'height': H}, has_touch=True); pg = ctx.new_page()
