@@ -178,7 +178,9 @@
   const itemsOut = (S, its0, day) => { const its = its0.filter(it => itemOn(S, it.id)); return its.length > 0 && (!!chosen(S) || its.every(it => lv(S, it.id) === 3)) && its.every(it => !makeLive(S, it.id, Math.random, day)); };
   const groupItems = (S, group) => K.SKILLS.concat(K.HARD).filter(s => inGroup(s, group)).flatMap(s => s.items);
   const groupOut = (S, group, day) => itemsOut(S, groupItems(S, group), day);
-  const groupEmpty = (S, group) => !groupItems(S, group).some(it => itemOn(S, it.id));   // 这块地在现在的难度下没有题
+  // 这块地在现在的难度下没有题；趣味开关打开时也算趣味题（这一级开放、前置点亮、还没下架，和地块卡片 R.skillsOf 同一判断；B 11-09，中控认可）
+  const funOn = (S, group) => K.FUN_SEC > 0 && (K.FUN || []).some(s => inGroup(s, group) && funReady(S, s) && s.items.some(it => itemOn(S, it.id) && !outOf(S, it.id)));
+  const groupEmpty = (S, group) => !groupItems(S, group).some(it => itemOn(S, it.id)) && !funOn(S, group);
   const allOut = (S, day) => itemsOut(S, ALL_ITEMS, day);
   // 家长区题库页用：这一格有多少道题已经下架
   const spentCount = (S, id) => Object.keys(S.fast || {}).filter(k => (k === id || k.startsWith(id + '|')) && S.fast[k][0] >= FAST_OUT).length;
@@ -225,7 +227,7 @@
     const q = (inst, extra) => Object.assign({kind: 'q', inst, seg: 'fun', fun: 1}, extra);
     return {
       pick() {
-        if (!(K.FUN_SEC > 0) || (!o.mistOnly && (st.sinceFun || 0) < FUN_GAP)) return null;   // 复习这一组只管 90 秒，不管间隔
+        if (!(K.FUN_SEC > 0) || (!o.mistOnly && !(o.noGap && o.noGap()) && (st.sinceFun || 0) < FUN_GAP)) return null;   // 复习这一组只管 90 秒，不管间隔；o.noGap()：这一组没有普通题可出时不用先隔 5 道（只有趣味题的地块）
         const left = K.FUN_SEC - (st.funSec || 0); if (left <= 0) return null;
         const fits = inst => K.fastMs(inst, {}) / 1000 <= left, inG = sid => !o.group || inGroup(K.BY[sid], o.group);
         if (st.funRetry) { const inst = st.funRetry.inst; if (!fits(inst)) return null; st.funRetry = null; return q(inst, {retry: 1, credit: false}); }   // 答错只回来一次
@@ -583,7 +585,8 @@
     }
     let cur = null, count = 0;
     const pending = [], RT = retrier(S, {}, id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + (K.ITEM[id].gen ? FREE_EXTRA : 0));
-    const FC = funChannel(S, day, {}, {r, group, mistOnly: !!opts.mistOnly, room: id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + FREE_EXTRA});   // 自由加练按组出、这一次另外封顶；复习这一组只管 90 秒
+    const onlyFun = !queue.length && !mist.length;   // 开练时这一组这一级就没有普通题（只有趣味题的地块）：趣味题不用先隔 5 道；普通题练完以后不算
+    const FC = funChannel(S, day, {}, {r, group, mistOnly: !!opts.mistOnly, noGap: () => onlyFun, room: id => (asked[id] || 0) < MAXPER[kindOf(id)] + RETRY_EXTRA + FREE_EXTRA});   // 自由加练按组出、这一次另外封顶；复习这一组只管 90 秒
     const api = {
       demoTime(sec) { stat(S, day).sec += Math.max(0, Math.min(CARD_MAX_SEC, sec) - DEMO_SEC); },
       next() {
