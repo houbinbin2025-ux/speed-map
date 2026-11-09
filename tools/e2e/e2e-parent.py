@@ -116,6 +116,39 @@ def run(pg, tag, url):
     tap(pg, '#ioClose', f'{tag} 关闭')
     check('1.2 秒' in pg.inner_text('#inkInfo') and 'Infinity' not in pg.inner_text('#inkInfo'), f'{tag} 手写面板显示新速度：{pg.inner_text("#inkInfo")!r}')
 
+def run_mistp(pg, tag, url):
+    # 错题分析（docs/说明书-错题分析.md）：造三类错题 → 家长区格子 → 查看错题分析 → 结论、四个数、类别、明细 → 返回
+    fresh(pg, url)
+    pg.evaluate("""() => { const C = window.SM, K = window.SKILLS, E = window.ENGINE, S = __sm.S, t = __sm.today(), d = n => C.addDays(t, n);
+      const sp = (id, evs) => { let key; evs.forEach(([n, k, w], i) => { key = C.addMistake(S, C.inst({id}), d(n)); C.noteMistake(S, key, {k, w, s: 6, skill: K.ITEM[id].skill, fresh: i === 0}, d(n)); }); };
+      sp('6-1', [[-3, 'w', '7'], [-1, 'w', '7']]); sp('1+5', [[-2, 'd', null]]);
+      const ty = K.SKILLS.find(s => s.nb && s.input === 'write').items[0].id, inst = K.make(ty, () => 0.3), key = E.addMistake(S, inst, d(-1));
+      C.noteMistake(S, key, {k: 'd', w: null, skill: K.ITEM[ty].skill, fresh: true}, d(-1));
+      C.addMistake(S, C.inst({id: '2+4'}), d(-1)); }""")
+    parent(pg)
+    info = pg.inner_text('#mistInfo'); check('今日复习' in info and '还没学会' in info, f'{tag} 家长区格子有错题概况：{info!r}')
+    tap(pg, '#btnMistP', f'{tag} 查看错题分析'); check(pg.is_visible('#mistp'), f'{tag} 进了错题分析')
+    t = pg.inner_text('#mistp')
+    check('主要卡在' in t and '「' in t, f'{tag} 有结论句')
+    check(all(x in t for x in ['本周新增', '今日复习', '反复错', '本周学会']), f'{tag} 四个数都在')
+    check('需要讲解' in t and '记录不全' in t and '本周建议' in t and '口径说明' in t, f'{tag} 类别标签、建议、口径说明都在')
+    cats = pg.evaluate("document.querySelectorAll('#mistp .mcat').length"); check(cats >= 2, f'{tag} {cats} 个类别')
+    check('减法算成了加法' in t and '错 2 次' in t, f'{tag} 典型错法和错几次显示出来')
+    rows = pg.evaluate("[...document.querySelectorAll('#mistp .mcat[open] tr')].length"); check(rows >= 3, f'{tag} 展开的类别有明细表（{rows} 行）')
+    ov = pg.evaluate("(() => { const b = document.getElementById('mistpBody'); return {sw: b.scrollWidth, cw: b.clientWidth}; })()")
+    check(ov['sw'] <= ov['cw'] + 1, f'{tag} 没有横向滚动 {ov}')
+    pg.screenshot(path=str(out / f'{tag}-6-错题分析.png'))
+    closed = pg.evaluate("[...document.querySelectorAll('#mistp .mcat')].findIndex(x => !x.open)")
+    if closed >= 0:
+        tap(pg, f'#mistp .mcat:nth-of-type({closed + 1}) > summary', f'{tag} 展开一个折叠的类别')
+    pg.evaluate("document.getElementById('mistpBody').scrollTop = 1e6"); pg.wait_for_timeout(100)
+    pg.screenshot(path=str(out / f'{tag}-7-错题分析-底部.png'))
+    tap(pg, '#mistpBack', f'{tag} 错题分析返回'); check(pg.is_visible('#parent'), f'{tag} 回到家长区')
+    # 没有错题时
+    fresh(pg, url); parent(pg); tap(pg, '#btnMistP', f'{tag} 没有错题时查看错题分析')
+    check('近 14 天没有错题' in pg.inner_text('#mistp'), f'{tag} 没有错题时的结论')
+    tap(pg, '#mistpBack', f'{tag} 返回')
+
 def run_broken(pg, tag, url):
     # 主存档坏了：家长区提示 + 导出读不了的存档 + 删掉
     fresh(pg, url, f"localStorage.setItem('{PK}', '{{坏的'); ")
@@ -155,7 +188,7 @@ with sync_playwright() as p:
     b = p.chromium.launch()
     for tag, vw in [('iphone', {'width': 844, 'height': 390}), ('ipad', {'width': 1194, 'height': 834})]:
         ctx = b.new_context(viewport=vw, has_touch=True, permissions=['clipboard-read', 'clipboard-write']); pg = ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)))
-        run(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_broken_nocopy(pg, tag, base + '#test'); run_nogems(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')
+        run(pg, tag, base + '#test'); run_mistp(pg, tag, base + '#test'); run_broken(pg, tag, base + '#test'); run_broken_nocopy(pg, tag, base + '#test'); run_nogems(pg, tag, base + '#test'); run_gems(pg, tag, base + '?gems=1#test')
         ctx.close()
     b.close()
 check(not errs, f'页面无报错 {errs[:3]}')
