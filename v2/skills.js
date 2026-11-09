@@ -96,8 +96,7 @@
   const FUN_ON = 90;   // 第三批趣味题打开（Ben 11-09「先打开，补完再升级」）：每日练习、自由加练每段最多 90 秒
   const FUN_SEC = (typeof process === 'object' && process.env && process.env.FUN_SEC != null && process.env.FUN_SEC !== '') ? Math.max(0, Number(process.env.FUN_SEC) || 0) : FUN_ON;   // 网页里永远是 FUN_ON；node 测试可用 FUN_SEC=0 npm test 跑关掉时的路径
   // 2b-2 分步作答（一题几个空）：B 的多格答题界面做完前关着——两个技能不登记、不出题、级别说明不写「带分数」、讲解卡不出；题库数据照样在 hardbank。
-  // 网页里永远是 false；B 接好界面的那次提交改成 true。node 测试可用 MULTI_CELL=1 npm test 提前跑打开后的路径
-  const MULTI_CELL = typeof process === 'object' && !!process.env && process.env.MULTI_CELL === '1';
+  const MULTI_CELL = !(typeof process === 'object' && !!process.env && process.env.MULTI_CELL === '0');   // B 多格界面做完（手机一格一格写、iPad 蓝框分组），11-09 打开：网页里永远 true；node 测试可用 MULTI_CELL=0 跑关着时的路径
   const funAllowed = (o, sec) => !o.fun || sec > 0;
   const FUN = [];   // 趣味技能：登记进 BY / ITEM（内容、题库页、测试查得到），但永远不进 HARD —— 练习、挑战、开级、allOut 都从 HARD 取题；只走单独的插入通道（engine，FUN_SEC > 0 才出）
   const hard = o => { const s = Object.assign({hard: true, kind: 'type8', input: 'write', pre: []}, o); s.items = o.ids.map(id => ({id, skill: s.id, gen: r => { const p = HB.pools[id], x = p[C.deal(id, p.length, r)]; return {q: Object.assign({}, x.q), ans: x.ans}; }})); s.items.forEach(it => { ITEM[it.id] = it; }); BY[s.id] = s; (s.fun ? FUN : HARD).push(s); };

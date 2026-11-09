@@ -184,7 +184,7 @@ test('2b-2 多格蓝框：每道题分组、格数、组间字；判对 / 一组
     assert.equal(parts.join(''), a); assert.equal(p.seps[0], id === 'speed:g10:divrem2' ? '余' : '又');
     const h = V.layout(p, false); assert.equal((h.match(/class="vcell"/g) || []).length, p.n); assert.ok(h.includes(`<div class="vsep">${p.seps[0]}</div>`));
     assert.ok(V.layout(p, true).includes(`<div class="vsep">${id === 'speed:g10:divrem2' ? 'R' : 'and'}</div>`), '英文日组间字');
-    const right = [].concat(...parts.map((x, k) => x.padStart(p.groups[k], '').padStart(p.groups[k], ' ').split('').map(c => (c === ' ' ? '' : c))));
+    const right = [].concat(...parts.map((x, k) => x.padStart(p.groups[k], ' ').split('').map(c => (c === ' ' ? '' : c))));
     assert.ok(V.judge(right, p).ok, i.q.text + ' 靠右写对');
     assert.deepEqual(V.want(p).map(c => (c === ' ' ? '' : c)), right);
     const left = [].concat(...parts.map((x, k) => (x + ' '.repeat(p.groups[k] - x.length)).split('').map(c => (c === ' ' ? '' : c))));
@@ -222,4 +222,18 @@ test('2b-2 多格蓝框（构造的题，开关关着也跑）：分组、组间
   assert.ok(V.judge(['', '1', '3', '', '8'], c).ok, '多位格（商 13）'); assert.equal(V.judge(['', '', '1', '', '8'], c).ok, false, '商少写一位');
   assert.deepEqual(V.judge(['', '1', '3', '', '8'], c).cellOk, [true, true, true, true, true]);
   assert.deepEqual(V.judge(['', '1', '3', '', '7'], c).cellOk, [true, true, true, false, false], '错的那组标红');
+});
+
+// 审查 R2：普通蓝框（填空、应用题、看图题、递等式，一排格子、靠左写也算对）两可笔迹定夺也按写了的格对齐；竖式、带小数点的蓝框对数位，不动
+test('VERT.want：一排格子的蓝框按孩子写了的格对齐答案（靠左写也能按答案定夺）；竖式和小数蓝框仍靠右', () => {
+  let rows = 0;
+  BALL.forEach(i => {
+    const p = V.parse(i, maxLen(i.id)), n = (V.layout(p, false).match(/class="vcell"/g) || []).length, a = String(i.ans);
+    if (n <= a.length) return;
+    const left = Array.from({length: n}, (_, k) => k < a.length), w = V.want(p, n, left);
+    if (p.dp > 0 || p.inNum) assert.deepEqual(w, a.padStart(n, ' ').split(''), i.id + ' 小数 / 夹在数里：仍靠右');
+    else { rows++; assert.deepEqual(w, (a + ' '.repeat(n - a.length)).split(''), i.id + ' 靠左写按写了的格对齐'); }
+  });
+  assert.ok(rows > 100);
+  ALL.slice(0, 50).forEach(i => { const p = V.parse(i, 0), n = (V.layout(p, false).match(/class="vcell"/g) || []).length; assert.deepEqual(V.want(p, n, Array(n).fill(true).map((_, k) => k < String(i.ans).length)), String(i.ans).padStart(n, ' ').split(''), i.id + ' 竖式对数位'); });
 });

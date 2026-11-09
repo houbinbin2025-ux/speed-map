@@ -255,7 +255,11 @@
   // n = 答案格数（竖式题的解析结果里没有 p.n，由页面按格子数传进来，审查 R1 阻断）；filled = 每格写没写
   // 多格：每组按孩子实际写了的格对齐（写的格数 = 这一格位数时）；否则组内靠右
   function want(p, n, filled) {
-    if (!p.cells) return String(p.ans).padStart(n, ' ').split('');
+    if (!p.cells) {   // 一排格子的蓝框（靠左写也算对）：写了的格数 = 答案位数时按写了的格对齐（审查 R2）；竖式、小数、夹在数里的对数位，靠右
+      const a = String(p.ans), f = filled ? filled.map((x, k) => (x ? k : -1)).filter(k => k >= 0) : [];
+      const row = ['fill', 'word', 'fig', 'step'].includes(p.kind) && !(p.dp > 0) && !p.inNum;
+      return row && f.length === a.length ? Array.from({length: n}, (_, k) => (f.includes(k) ? a[f.indexOf(k)] : ' ')) : a.padStart(n, ' ').split('');
+    }
     let i = 0; return [].concat(...cellParts(p).map((x, k) => {
       const g = p.groups[k], idx = Array.from({length: g}, (_, j) => j), f = filled ? idx.filter(j => filled[i + j]) : [];
       const out = f.length === x.length ? idx.map(j => (f.includes(j) ? x[f.indexOf(j)] : ' ')) : x.padStart(g, ' ').split('');

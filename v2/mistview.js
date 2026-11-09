@@ -69,6 +69,7 @@
         if (i >= 0 && v.pickText) return String(v.pickText[i]).replace(/<[^>]*>/g, '').trim() || String(m.ans);
         return String(m.ans);   // 比大小等纯数字选项：选项就是数本身（同 pickTyped 最后一步）
       }
+      if (Array.isArray(q.cells) && q.cells.length > 1) return R.cellsText(q, m.ans);   // 2b-2 多格：「2 余 4」（B 11-09，审查 R2）
       return R.ansText(q, m.ans);
     } catch (e) { return '--'; }
   }
