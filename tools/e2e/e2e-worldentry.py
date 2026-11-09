@@ -8,6 +8,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from playwright.sync_api import sync_playwright
 root = pathlib.Path(sys.argv[1]).resolve(); out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 APPMODE = '--app' in sys.argv; args = [a for a in sys.argv[3:] if a != '--app']
+if APPMODE and args: sys.exit('--app 查的是打包进 ios/web 的那份入口脚本，不能另指定入口脚本')
 entry = pathlib.Path(args[0]) if args else root / 'ios' / 'world-entry.js'
 url = (root / 'ios' / 'web' / 'index.html').as_uri() if APPMODE else (root / 'v2' / 'index.html').as_uri() + '#test'
 APP = "window.webkit = { messageHandlers: { backup: { postMessage() {} } } }; window.__kongK = () => 1;"   # 同 e2e-world-time.py
