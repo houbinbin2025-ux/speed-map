@@ -1,5 +1,6 @@
 // 宝石比例模拟：引擎和碎片规则都是真代码（v2/engine.js、v2/gems.js），起点是 iPad 真实进度。孩子怎么作答是模型，结果不是空空的真实数据
-// 用法：node tools/sim-gems.js <进度备份.json> [天数=10] [种子=4]；环境变量 TUNE='{"midLv":1}' 可试参数
+// 用法：node tools/sim-gems.js <进度备份.json | new> [天数=10] [种子=4]；环境变量 TUNE='{"midLv":1}' 可试参数
+// 第一个参数写 new = 新孩子从零进度起（已摸底、什么都没点亮）；DAILY=1 另外按天打印碎片面值和宝石（看第 1 周节奏，中控 11-09）
 'use strict';
 const fs = require('fs');
 let seed = 1; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; Math.random = rnd;
@@ -11,7 +12,8 @@ const QCM = +(process.env.QCM || 2);   // 限时挑战里碎片倍数（试参�
 const THINK = +(process.env.THINK || 0), THINKS = +(process.env.THINKS || 40);   // 思维地点：每天答对几道、平均想几秒（10.2，拿不到真实数据，按假设）
 const FAST = +(process.env.FAST || 0.6), BOLTP = +(process.env.BOLTP || 0.4);
 const speed = ok => { const fast = ok && rnd() < FAST; return {fast, bolt: fast && rnd() < BOLTP}; };
-const S0 = JSON.parse(JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['speedmap.v2']);
+const S0 = process.argv[2] === 'new' ? Object.assign(C.blank(), {placedAt: 1}) : JSON.parse(JSON.parse(fs.readFileSync(process.argv[2], 'utf8'))['speedmap.v2']);
+const DAILY = {};   // DAILY=1：练法 → 第几天 → {碎片面值, 宝石, 题数, 答对, 暴击, 挑战券}（各种子加总）
 const DAYS = +process.argv[3] || 10, SEEDS = +process.argv[4] || 4;
 const input = i => K.BY[K.ITEM[i.id].skill].input;
 const t = (a, b) => () => a + rnd() * (b - a), flat = b => () => b;
@@ -94,7 +96,8 @@ for (const name of Object.keys(KIDS)) {
           const e = G.eventStep(st, day, R, effNow, clock, rnd, lit && !crit);
           if (e.offer && rnd() < (kid.take || 0)) { const k = G.acceptOffer(R, clock); if (k) { let r2 = false; for (;;) { const w = round(st, S, day, k, r2, kid, top); eff += w.t; clock += w.t; if (k === 'qc') { qcT++; if (w.won) qcW++; } else { dbT++; if (w.won) dbW++; if (r2 === 'chain') chT++; } if (w.chain && rnd() < (kid.take || 0)) { r2 = 'chain'; continue; } if (w.won || k !== 'dbl' || r2 || rnd() > 0.8) break; r2 = true; } } }
           const sp = speed(ok), got = G.answer(st, {day, inst: x.inst, ok, slow: ok && !sp.fast, top, lv: G.levelOfCell(st, S, x.inst.id), dunno: du, retry: x.retry, mistake: !!x.mkey, rand: rnd, mult});
-          if (got && !got.rep && sp.fast) G.speedBonus(st, day, sp.bolt, mult);
+          const sb = got && !got.rep && sp.fast ? G.speedBonus(st, day, sp.bolt, mult) : null;
+          if (process.env.DAILY) { const dd = (DAILY[name] = DAILY[name] || {})[d] = (DAILY[name] || {})[d] || {v: 0, gem: 0, q: 0, ok: 0, crit: 0, tk: 0}; dd.q++; if (ok) dd.ok++; if (got && !got.rep) got.forEach(t => { dd.v += G.VALUE[t] || 0; }); (sb ? sb.extra : []).forEach(t => { dd.v += G.VALUE[t] || 0; }); }
           if (!x.retry && !(got && got.rep)) G.comboStep(st, day, CB, clock, {ok, fast: sp.fast, dunno: du});
           sess.answer({ok, fast: sp.fast, secs});
         }
@@ -112,6 +115,7 @@ for (const name of Object.keys(KIDS)) {
       for (let i = 0, r; i < 200 && (r = fifty(st.inv)); i++) if (!G.forgeBig(st, r, day).big) break;
       for (let i = 0, r; i < 200 && (r = bestForge(st.inv)); i++) if (!G.forge(st, r, day).ok) break;
       crit += st.days[day].crit || 0; gems += st.days[day].forged;
+      if (process.env.DAILY) { const dd = (DAILY[name] = DAILY[name] || {})[d] = DAILY[name][d] || {v: 0, gem: 0, q: 0, ok: 0, crit: 0, tk: 0}; dd.gem += st.days[day].forged; dd.crit += st.days[day].crit || 0; }
       if (process.env.INV && d === DAYS - 1 && sd === 1 && name === '正确率90') console.error('正确率90 第' + DAYS + '天背包', JSON.stringify(Object.fromEntries(Object.entries(st.inv).filter(e => e[1]))));
     }
   }
@@ -120,3 +124,7 @@ for (const name of Object.keys(KIDS)) {
 }
 console.log('练法\t有效分钟\t题\t宝石\t比例\t暴击\t双倍挑战(完成率)\t限时挑战(完成率)');
 for (const n in out) { const r = out[n]; console.log([n, r.min, r.q, r.gem, r.ratio + ':1', r.crit, r.dbl, r.qc].join('\t')); }
+if (process.env.DAILY) for (const n of (process.env.DAILY === '1' ? ['正确率70', '正确率80', '正确率90', '正确率95'] : process.env.DAILY.split(','))) {
+  console.log(`\n${n}（每天平均，${SEEDS} 个种子）\t天\t题\t答对\t碎片面值\t宝石\t累计宝石\t暴击`); let cum = 0;
+  for (let d = 0; d < DAYS; d++) { const x = DAILY[n][d]; cum += x.gem / SEEDS; console.log(['', d + 1, Math.round(x.q / SEEDS), Math.round(x.ok / SEEDS), Math.round(x.v / SEEDS), fmt(x.gem / SEEDS), fmt(cum), fmt(x.crit / SEEDS)].join('\t')); }
+}

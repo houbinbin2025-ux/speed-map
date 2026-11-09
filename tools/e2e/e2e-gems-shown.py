@@ -47,7 +47,15 @@ with sync_playwright() as p:
         check(seen >= 2, f'{name} 走到了出对勾的写字题 {seen} 次')
         # 下一题出来后碎片条回到右上角原位
         pg.wait_for_timeout(400); r = pg.evaluate(RECT)
-        check(not r['check'] and r['feel'] and r['feel']['t'] < 70, f'{name} 下一题碎片条回到原位：{r["feel"]}')
+        wide = pg.evaluate("document.getElementById('qplay').classList.contains('wide')")
+        check(not r['check'] and r['feel'] and abs(r['feel']['t'] - (62 if wide else 16)) <= 4, f'{name} 下一题碎片条回到原位（{"宽版" if wide else "写字板"}）：{r["feel"]}')
+        for _ in range(20):
+            if cur(pg) != 'qplay': break
+            if pg.evaluate("__sm.Q && __sm.Q.phase") == 'q' and not pg.evaluate("document.getElementById('qplay').classList.contains('wide')"):
+                pg.wait_for_timeout(300); r = pg.evaluate(RECT); check(r['feel'] and abs(r['feel']['t'] - 16) <= 4, f'{name} 写字板版面碎片条在右上角原位：{r["feel"]}'); break
+            if pg.evaluate("__sm.Q && __sm.Q.phase") == 'q': pg.evaluate("__sm.Q.t0 = performance.now(); __sm.Q.ms = 500; __sm.resolve({ok:true,fast:true})"); pg.wait_for_timeout(1100)
+            else: pg.evaluate("(()=>{const b=document.getElementById('qNext');b&&!b.hidden&&b.click()})()"); pg.wait_for_timeout(300)
+        # 能量格：这次答对新加的格子在闪（class new）
         pg.context.close()
         # ② 摸底答对 3 题后长按结束：结果页有「这次的碎片 +3」，不挤出屏幕
         pg = page(b, W, H, fresh); pg.click('#btnStart', force=True); pg.wait_for_timeout(2200)

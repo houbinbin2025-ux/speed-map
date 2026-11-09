@@ -156,8 +156,9 @@
     const fire = c.$('qFire'); fire.classList.toggle('on', F.lit); fire.classList.toggle('low', F.lit && !!F.low);
     const fb = fire.querySelector('b'), ft = F.lit ? '×2' : ''; if (fb.textContent !== ft) fb.textContent = ft;
     const cb = c.$('qCombo'), key = crit ? 'c' + Math.ceil(C.until - t) : `${C.e}/${need}`;
-    if (cb.dataset.k !== key) { cb.dataset.k = key; cb.classList.toggle('crit', crit); const grew = !crit && cb.dataset.e !== undefined && C.e > +cb.dataset.e; cb.dataset.e = crit ? '' : C.e;   // 刚加的那一格闪一下（答对那一刻看得见能量到账）
-      cb.innerHTML = crit ? `<span>暴击时刻 ${Math.ceil(C.until - t)}</span>` : Array.from({length: need}, (_, i) => `<i${i < C.e ? (grew && i === C.e - 1 ? ' class="on new"' : ' class="on"') : ''}></i>`).join(''); }
+    if (cb.dataset.k !== key) { cb.dataset.k = key; cb.classList.toggle('crit', crit); if (cb._run !== q) { cb._run = q; cb.dataset.e = 0; }   // 每次练习从 0 记起：第一次答对也闪（审查建议 1）
+      const prev = crit ? C.e : Math.max(+cb.dataset.e || 0, C.e - 2); cb.dataset.e = crit ? '' : C.e;   // 这次加的格子闪一下（秒答一次加 2 格就闪 2 格，审查建议 2）：答对那一刻看得见能量到账
+      cb.innerHTML = crit ? `<span>暴击时刻 ${Math.ceil(C.until - t)}</span>` : Array.from({length: need}, (_, i) => `<i${i < C.e ? (i >= prev ? ' class="on new"' : ' class="on"') : ''}></i>`).join(''); }
     const g = c.$('qGoal'), gt = q.goal && !q.goal.shown ? (q.goal.kind === 'combo' ? '目标 暴击时刻' : `目标 ${Math.min(q.goal.n, (q.gAns || 0) - q.goal.from)}/${q.goal.n}`) : '';
     g.hidden = !gt; if (g.textContent !== gt) g.textContent = gt;
   }
