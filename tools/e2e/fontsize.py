@@ -122,7 +122,7 @@ def drive(prof, lang, outjson, script, args):
     dump()
 
 # 导游：脚本名 + 参数（{root} {out} 会替换）；超时秒数
-SHOT_WAIT = {'demofit.py', 'e2e-qsum.py', 'e2e-en.py', 'e2e.py'}   # 截图前要停一下才量得到的导游（见 drive）：不停的话示范卡、结算、地点卡片、技能地图一闪而过量不到（审查 R2、R3）
+SHOT_WAIT = {'demofit.py', 'e2e-qsum.py', 'e2e-en.py', 'e2e.py', 'e2e-badges.py'}   # 截图前要停一下才量得到的导游（见 drive）：不停的话示范卡、结算、地点卡片、技能地图一闪而过量不到（审查 R2、R3）
 GUIDES = [   # 脚本、参数、只走哪种设备（None = 都走）、必须量到的页面（缺一个 = 导游走偏，判不通过，审查 R2）
     ('e2e-en.py', ['{root}', '{out}'], None, '#island #qplay #demo #qsum #home #house #calib #play #summary #skillmap #mist'),   # 岛、地点卡片、校准、今日练习（对 / 错 / 不会）、结算、技能地图、秒答地图和练习、家、图鉴、奖状
     ('e2e.py', ['{root}', '{out}'], None, '#qplay #demo #placeIntro #placeResult #skillmap'),                 # 首次 → 摸底 → 今日练习 → 示范卡 → Boss
@@ -135,6 +135,7 @@ GUIDES = [   # 脚本、参数、只走哪种设备（None = 都走）、必须�
     ('e2e-vert.py', ['{root}', '{out}'], 'ipad', '#qplay'),                              # iPad 竖式（只在 iPad 出现）
     ('demofit.py', ['{root}', '{out}'], None, '#demo'),                                  # 示范卡
     ('e2e-mistkid.py', ['{root}', '{out}'], None, '#mist #qplay'),                       # 错题宝箱三栏、复习、复习结算
+    ('e2e-badges.py', ['{root}', '{out}'], None, '#house'),                              # 徽章册、矿物柜的谜题水晶（E 11-10）
 ]
 
 # ---------- A：题型逐个量 ----------

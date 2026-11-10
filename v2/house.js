@@ -55,9 +55,24 @@
   function shadow(g, id, x, y) { const c = document.createElement('canvas'); c.width = 24; c.height = 16; const h = c.getContext('2d'); item(h, id, 0, 0); h.globalCompositeOperation = 'source-in'; h.fillStyle = 'rgba(10,8,6,.42)'; h.fillRect(0, 0, 24, 16); g.drawImage(c, x, y); }
   function icon(cv, id) { cv.width = 24; cv.height = 16; const g = cv.getContext('2d'); g.clearRect(0, 0, 24, 16); if (ITEM[id]) item(g, id, (24 - (ITEM[id].w || 16)) >> 1, 0); }
   function ingot(g, x, y, c, c2) { r(g, K, x, y + 1, 7, 4); r(g, c, x + 1, y, 5, 3); r(g, c2, x, y + 3, 7, 1); }
+  // ---------- 趣味题徽章（C 方案 7 的 11 枚，E 11-10 画）：缎带 + 圆章，章面是这类题的记号；铜色 = 得到，金色加闪光 = 闪光版，暗影 = 还没得到 ----------
+  const BG = {pyr: [[0, 7, 5, 2, 2], [0, 6, 7, 4, 2], [0, 5, 9, 6, 2]], pyr2: [[0, 7, 5, 2, 1], [0, 6, 6, 4, 1], [0, 5, 7, 6, 1], [0, 4, 8, 8, 1], [0, 4, 10, 8, 1]], magic: [[0, 5, 5, 2, 2], [0, 9, 5, 2, 2], [0, 7, 7, 2, 2], [0, 5, 9, 2, 2], [0, 9, 9, 2, 2]],
+    tree: [[1, 6, 5, 4, 3], [0, 7, 8, 2, 3]], tree2: [[1, 4, 6, 3, 2], [0, 5, 8, 1, 2], [1, 9, 5, 3, 3], [0, 10, 8, 1, 2], [0, 4, 10, 8, 1]], tree3: [[1, 7, 4, 3, 3], [0, 8, 7, 1, 2], [0, 4, 10, 8, 1], [0, 4, 9, 1, 1], [0, 11, 9, 1, 1]],
+    saw: [[0, 4, 7, 8, 3], [2, 8, 7, 1, 3], [0, 5, 5, 6, 1]], order: [[0, 5, 9, 2, 2], [0, 7, 7, 2, 4], [0, 9, 5, 2, 6]], riddle: [[0, 6, 4, 4, 1], [0, 9, 5, 1, 2], [0, 7, 7, 2, 1], [0, 7, 8, 1, 1], [0, 7, 10, 1, 1]],
+    riddle2: [[0, 4, 5, 1, 1], [0, 6, 5, 1, 1], [0, 5, 6, 1, 1], [0, 7, 4, 3, 1], [0, 10, 5, 1, 2], [0, 8, 7, 2, 1], [0, 8, 8, 1, 1], [0, 8, 10, 1, 1]], cipher: [[0, 5, 5, 6, 1], [0, 5, 10, 6, 1], [0, 5, 6, 1, 4], [0, 10, 6, 1, 4], [0, 7, 7, 2, 1], [0, 7, 8, 2, 1]]};
+  const BADGE_KIND = {'g34:g4:pyr': 'pyr', 'g34:g7:pyr2': 'pyr2', 'g34:g7:magic': 'magic', 'g34:g5:tree': 'tree', 'g34:g7:tree2': 'tree2', 'g34:g9:tree3': 'tree3', 'g34:g5:saw': 'saw', 'g34:g5:order': 'order', 'g34:g7:riddle': 'riddle', 'g34:g9:riddle2': 'riddle2', 'g34:g7:cipher': 'cipher'};
+  const RIB = ['#b3261e', '#6ea8fe', '#7bd88f', '#f6a5a0', '#e9c6ff', '#5fd9e6'];
+  function badge(g, sid, x, y, st) {   // st：0 没得到、1 得到、2 闪光
+    const k = BADGE_KIND[sid] || 'riddle', n = Object.keys(BADGE_KIND).indexOf(sid), dark = !st;
+    const face = dark ? '#3a3448' : st === 2 ? G : '#c08a52', rim = dark ? '#2b2440' : st === 2 ? G2 : W2, ink = dark ? '#2b2440' : st === 2 ? '#7a4b00' : W3, leaf = dark ? '#2b2440' : '#3d7524';
+    const rb = dark ? '#2b2440' : RIB[n % RIB.length], rb2 = dark ? '#2b2440' : RIB[(n + 3) % RIB.length];
+    list(g, x, y, [[rb, 4, 0, 3, 4], [rb2, 9, 0, 3, 4], [K, 4, 2, 8, 1], [K, 3, 3, 10, 1], [K, 2, 4, 12, 8], [K, 3, 12, 10, 1], [K, 4, 13, 8, 1], [face, 5, 3, 6, 1], [face, 4, 4, 8, 1], [face, 3, 5, 10, 6], [face, 4, 11, 8, 1], [face, 5, 12, 6, 1], [rim, 3, 10, 10, 1], [rim, 4, 11, 8, 1], [rim, 5, 12, 6, 1]]);
+    BG[k].forEach(([c, a, b, w, h]) => { g.fillStyle = [ink, leaf, face][c]; g.fillRect(x + a, y + b, w, h); });
+    if (st === 2) list(g, x, y, [['#fff3b0', 5, 4, 2, 1], ['#fff3b0', 4, 5, 1, 2], [Wt, 14, 1, 1, 3], [Wt, 13, 2, 3, 1], [Wt, 1, 13, 1, 1]]);
+  }
   // 屋里能摆的格子数（中控 11-09 审查：方案 4 乙丙新加 6 件地上道具，原来地面 22 格只剩 2 格，autoPlace 找不到空位会静默跳过）；tests/house-slots.test.js 按地上 / 墙上核对道具数不超过格子数
   const SLOTS_N = {F: 30, W: 18};
-  root.ART = {SLOTS_N, ITEM, item, armorParts, shadow, icon, ingot, r, list, COL: {K, W1, W2, W3, S1, S2, S3, G, G2, D, D2, Rd, Wt}};
+  root.ART = {SLOTS_N, badge, BADGE_KIND, ITEM, item, armorParts, shadow, icon, ingot, r, list, COL: {K, W1, W2, W3, S1, S2, S3, G, G2, D, D2, Rd, Wt}};
 })(this);
 // ---------- 生物：全部原创，按模板 + 配色画 ----------
 (function (root) {
@@ -267,6 +282,11 @@
       const P2 = lvPal(id); sky(g, W, H, P2[0], P2[1]); if (P2[0] === '#14182e' || P2[0] === '#4a1410') for (let i = 0; i < 6; i++) r(g, '#fff3b0', (i * 37 + 9) % W, (i * 13 + 4) % 24, 1, 1); else clouds(g, f);
       ground(g, W, H, G, P2[2], P2[3]); spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 34, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 18, G + 5 + J); A.item(g, 'trophy', 46, G - 18 + J);
       r(g, '#6b4628', 72, G - 22, 1, 22); r(g, '#f2c14e', 73, G - 22, 9, 6);
+    } else if (id === 'puzzle:master') {   // 解谜大师：紫色水晶洞，主角举起闪光徽章，头顶一排 11 枚小徽章
+      r(g, '#2b2140', 0, 0, W, H); for (let i = 0; i < 14; i++) r(g, i % 2 ? '#3a2a58' : '#4a2f78', (i * 37) % W, (i * 19) % 36, 6, 3); ground(g, W, H, G, '#5b3fa8', '#3a2a58');
+      [[6, 30], [82, 26], [88, 34]].forEach(([x, y], i) => { r(g, '#1b1d22', x - 1, y - 1, 6, G - y + 1); r(g, '#8e4fe0', x, y, 4, G - y); r(g, '#efe2ff', x + 1, y + 1, 1, G - y - 3); });
+      for (let i = 0; i < 11; i++) { const lit = (f + i) % 11 < 2; r(g, '#1b1d22', 5 + i * 8, 5, 6, 6); r(g, lit ? '#fff3b0' : '#f2c14e', 6 + i * 8, 6, 4, 4); }
+      spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 34, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 18, G + 5 + J); A.badge(g, 'g34:g7:magic', 46, G - 30 + J, 2);
     } else if (id.startsWith('day')) {
       const n = +id.split(':')[1];
       if (n === 1) { sky(g, W, H, '#14182e', '#232a4a'); r(g, '#f2f6fb', 73, 7, 6, 1); r(g, '#f2f6fb', 72, 8, 8, 6); r(g, '#f2f6fb', 73, 14, 6, 1); r(g, '#c9d2e0', 74, 9, 2, 2); r(g, '#c9d2e0', 77, 12, 1, 1); ground(g, W, H, G, '#3d6a22', '#2b2b2b'); for (let i = 0; i < 16; i++) if ((i + f) % 3) r(g, '#fff', (i * 37) % W, (i * 13) % 26, 1, 1); A.item(g, 'bed', 48, G - 16); r(g, '#6b4628', 38, G - 10, 2, 10); r(g, f % 2 ? '#f2c14e' : '#e0762a', 37, G - 14, 4, 4); spr(g, WORLD.HERO, f % 2 ? 'a' : 'b', 22, G + 4 + J); spr(g, WORLD.DOG, f % 2 ? 'a' : 'b', 8, G + 5 + J); }
@@ -285,7 +305,7 @@
   const THUMB = {look: ['#8ec8ff'], bond: ['#2a2c33'], place: ['#bfe3ff'], cmp: ['#ffdcb0'], line: ['#bfe3ff'], garden: ['#bfe3ff'], market: ['#ffdcb0'], dock: ['#3d7fd9']};
   function thumb(g, c, x, y, w, h, f) {
     const sc = c.scene, keep = c.kind === 'keep';
-    const bg = sc.startsWith('speed') ? '#3a2a58' : sc.startsWith('day') ? (sc === 'day:7' || sc === 'day:30' ? '#8ec8ff' : '#1d2340') : sc.startsWith('fix') ? '#3f2c1a' : sc.startsWith('lv:') ? lvPal(sc)[0] : (THUMB[sc] || ['#3f2c1a'])[0];   // 不认识的奖状给通用底色，不报错
+    const bg = sc.startsWith('speed') ? '#3a2a58' : sc.startsWith('day') ? (sc === 'day:7' || sc === 'day:30' ? '#8ec8ff' : '#1d2340') : sc.startsWith('fix') ? '#3f2c1a' : sc.startsWith('puzzle') ? '#2b2140' : sc.startsWith('lv:') ? lvPal(sc)[0] : (THUMB[sc] || ['#3f2c1a'])[0];   // 不认识的奖状给通用底色，不报错
     r(g, bg, x, y, w, h);
     g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
     const cx = x + (w >> 1) - 7, by = y + h - 1;
@@ -297,6 +317,7 @@
     else if (sc === 'line') { r(g, '#2b2b2b', x + 3, by - 7, w - 6, 6); r(g, '#8a8d94', x + 4, by - 6, w - 8, 4); r(g, '#2b2b2b', x + 5, by - 1, 2, 1); r(g, '#2b2b2b', x + w - 7, by - 1, 2, 1); }
     else if (sc === 'cmp') { r(g, '#9a9da4', x + 3, by - 5, 5, 5); r(g, '#9a9da4', x + 11, by - 11, 5, 11); r(g, '#b3261e', x + 13, by - 13, 3, 2); }
     else if (sc.startsWith('lv:')) creature(g, CREATURES[Math.max(0, typeof HOME !== 'undefined' ? HOME.creatureOf(sc) : 0)] || CREATURES[0], x + 1, by + 1, 0);   // 三四年级：那一级的伙伴
+    else if (sc === 'puzzle:master') A.badge(g, 'g34:g7:magic', x + (w >> 1) - 8, y - 1, 2);   // 解谜大师：闪光徽章
     else if (sc === 'place') { r(g, '#c08a52', x + 4, by - 6, 11, 6); r(g, '#b3261e', x + 2, by - 9, 15, 3); r(g, '#4a2f1b', x + 8, by - 3, 3, 3); }
     else { const id = sc === 'bond' ? 'pick3' : sc === 'day:1' ? 'bed' : sc.startsWith('fix') ? 'furnace' : sc === 'day:7' ? 'deco3' : sc === 'day:30' ? 'glass' : 'trophy'; const t = document.createElement('canvas'); t.width = 24; t.height = 16; A.item(t.getContext('2d'), id, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(t, 0, 0, 24, 16, x + (id === 'bed' ? 1 : 3), y + 1, id === 'bed' ? 18 : 18, 12); }
     if (keep) { const p = ((f || 0) * 4) % 40 - 8; g.fillStyle = 'rgba(190,110,255,.42)'; for (let i = 0; i < h; i++) g.fillRect(x + p - i / 2, y + i, 6, 1); }
@@ -339,7 +360,7 @@
   const CW = {x: 8, y: 8, dx: 24, dy: 17.5, w: 19, h: 14};   // 奖状墙：3 排大图
   const certPos = {}, BASE = H.CERTS.filter(c => !c.lv);
   BASE.forEach(c => {   // 原来的奖状墙：一二年级的地方、秒答、天数、错题，位置不变
-    const list = c.kind === 'learn' ? BASE.filter(x => x.kind === 'learn') : c.kind === 'keep' ? BASE.filter(x => x.kind === 'keep') : BASE.filter(x => x.kind === 'day' || x.kind === 'fix');
+    const list = c.kind === 'learn' ? BASE.filter(x => x.kind === 'learn') : c.kind === 'keep' ? BASE.filter(x => x.kind === 'keep') : BASE.filter(x => x.kind === 'day' || x.kind === 'fix' || x.kind === 'puzzle');
     const row = c.kind === 'learn' ? 0 : c.kind === 'keep' ? 1 : 2, col = list.indexOf(c);
     certPos[c.id] = {x: CW.x + col * CW.dx, y: CW.y + row * CW.dy};
   });
@@ -369,7 +390,7 @@
 
   // ---------- 画屋子 ----------
   const cvRoom = el('h_cvRoom'), cvFx = el('h_cvFx'), cvHero = el('h_cvHero');
-  const frameCol = {learn: ['#c9a36b', '#f4ecd8'], keep: ['#f2c14e', '#fff3b0'], day: ['#6ea8fe', '#e6f0ff'], fix: ['#7bd88f', '#e7f8ea']};
+  const frameCol = {learn: ['#c9a36b', '#f4ecd8'], keep: ['#f2c14e', '#fff3b0'], day: ['#6ea8fe', '#e6f0ff'], fix: ['#7bd88f', '#e7f8ea'], puzzle: ['#b98af2', '#efe2ff']};
   let shadows = [];
   function drawRoom() {
     cvRoom.width = RW; cvRoom.height = RH; const g = cvRoom.getContext('2d'), C2 = A.COL, r = A.r;
@@ -539,10 +560,13 @@
       el('h_goP').onclick = () => go(null);
     });
   }
+  // 矿物柜第 4 格：谜题水晶（C 方案 7，数据 GEMUI.puzzle().n；碎片关着或还没得过就不显示，不占地方）
+  const crystalRow = () => { const P = root.GEMUI && root.GEMUI.puzzle && root.GEMUI.puzzle(); if (!P || !P.n) return '';
+    return `<div class="row"><img class="md md-img" src="${root.GEMUI.CRYSTAL}" alt=""><span>谜题水晶<br><small class="muted">答对趣味题得到</small></span><em>${P.n}</em></div>`; };
   function showOres() {
     near(CAB.x + 4, () => {
       const t = E0.t, row = (n, name, what, c) => `<div class="row"><i class="md" style="background:${c}"></i><span>${name}<br><small class="muted">${what}</small></span><em>${n} / ${t.total}</em></div>`;
-      sheet(`<div class="sh-h"><h2>矿物柜</h2><button class="sh-x">×</button></div><div class="ore3">${row(t.diamond, '钻石', '记牢了', '#5fd9e6')}${row(t.gold, '金锭', '另一天再次做对', '#f2c14e')}${row(t.iron, '铁锭', '格子第一次点亮', '#c9ccd2')}</div><div class="muted">格子每升一档，多一件。只增不减。</div>`);
+      sheet(`<div class="sh-h"><h2>矿物柜</h2><button class="sh-x">×</button></div><div class="ore3">${row(t.diamond, '钻石', '记牢了', '#5fd9e6')}${row(t.gold, '金锭', '另一天再次做对', '#f2c14e')}${row(t.iron, '铁锭', '格子第一次点亮', '#c9ccd2')}${crystalRow()}</div><div class="muted">格子每升一档，多一件。只增不减。</div>`);
     });
   }
   function showChest() {
@@ -551,9 +575,10 @@
   // ---------- 伙伴图鉴 ----------
   function showBook() {
     closeSheet(); const v = el('h_book'), L = learned(), SK = bookSkills(), skOf = id => SK.find(x => x.id === id);
-    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2><span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${(S.home.pets || []).includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="18" height="16"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
+    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkClose">合上图鉴</button><h2>伙伴图鉴</h2>${puzzleOf() ? '<button class="btn" id="h_bkBadge">徽章册</button>' : ''}<span class="tally"><span>已解锁 <b>${L.length}/${SK.length}</b></span></span></div><div class="bkg">${SK.map(s => `<button class="bkc${L.includes(s.id) ? '' : ' lock'}${isGold(s.id) ? ' gold' : ''}${(S.home.pets || []).includes(s.id) ? ' home' : ''}" data-i="${s.id}"><canvas data-c="${s.id}" width="18" height="16"></canvas><small>${L.includes(s.id) ? crOf(s.id).n : '？'}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">学会一个技能，解锁一只伙伴</div>`;
     v.hidden = false; v.querySelectorAll('canvas[data-c]').forEach(c => { const i = c.dataset.c; A.creature(c.getContext('2d'), crOf(i), 0, 16, 0, L.includes(i) ? {} : {shadow: '#0c0d10'}); });
     el('h_bkClose').onclick = closeBook;
+    if (el('h_bkBadge')) el('h_bkBadge').onclick = () => { blip(SND.tap); showBadges(); };
     v.querySelector('.bkg').onclick = e => {
       const b = e.target.closest('.bkc'); if (!b) return; const i = b.dataset.i, s = skOf(i), has = L.includes(i); blip(SND.tap);
       if (!has) { el('h_bkD').innerHTML = `<span><b>未解锁</b> · ${s.level ? s.name.replace('伙伴', '') + '新本领全部点亮后解锁' : `学会「${s.name}」后解锁`}</span><button class="btn go" id="h_bkGo">${s.level ? goLabel() : '去练这一块'}</button>`; el('h_bkGo').onclick = () => go({skill: s}); return; }
@@ -563,12 +588,24 @@
         if (at) p.splice(p.indexOf(i), 1); else { if (p.length >= 4) p.shift(); p.push(i); blip(SND.get); } o.save(); v.querySelectorAll('.bkc').forEach(x => x.classList.toggle('home', p.includes(x.dataset.i))); b.click(); };
     };
   }
+  // ---------- 徽章册（C 方案 7：趣味题 11 枚徽章，数据 GEMUI.puzzle()；放在伙伴图鉴里，从图鉴顶上的「徽章册」进） ----------
+  const puzzleOf = () => { try { return root.GEMUI && root.GEMUI.puzzle ? root.GEMUI.puzzle() : null; } catch (e) { return null; } };
+  function showBadges() {
+    const P = puzzleOf(); if (!P) return showBook();
+    const v = el('h_book'), st = b => b.shiny ? 2 : b.got ? 1 : 0, got = P.badges.filter(b => b.got).length;
+    v.innerHTML = `<div class="bkh"><button class="btn" id="h_bkBack">返回图鉴</button><h2>徽章册</h2><span class="tally"><span>已得到 <b>${got}/${P.badges.length}</b></span></span></div><div class="bkg">${P.badges.map(b => `<button class="bkc badge${b.got ? '' : ' lock'}${b.shiny ? ' gold' : ''}" data-s="${b.sid}"><canvas data-b="${b.sid}" width="16" height="16"></canvas><small>${b.name}</small></button>`).join('')}</div><div class="bkd" id="h_bkD">${P.master ? '11 枚都得到了：解谜大师' : '答对趣味题，得到徽章'}</div>`;
+    v.hidden = false;
+    v.querySelectorAll('canvas[data-b]').forEach(c => { const b = P.badges.find(x => x.sid === c.dataset.b); A.badge(c.getContext('2d'), b.sid, 0, 0, st(b)); });
+    el('h_bkBack').onclick = () => { blip(SND.tap); showBook(); };
+    v.querySelector('.bkg').onclick = e => { const k = e.target.closest('.bkc'); if (!k) return; blip(SND.tap); const b = P.badges.find(x => x.sid === k.dataset.s);
+      el('h_bkD').innerHTML = `<span><b>${b.name}</b><span class="bdx">${b.shiny ? '闪光徽章 · 这一块全部变深红' : b.got ? '已得到 · 这一块全部变深红后会闪光' : `答对 3 道「${b.name}」得到这枚徽章 · 已答对 ${b.n} 道`}</span></span>`; };
+  }
   function closeBook() { el('h_book').hidden = true; blip(SND.tap); syncPets(); drawHero(); }
   // 奖状大图：称号 + 会动的画面；记牢 = 附魔版；点画面全体跳一下
   let certT = 0;
   function showCert(c) {
     closeSheet(); blip(SND.get);
-    const v = el('h_certV'), cols = {learn: ['#8a5a2c', '#f2c14e'], keep: ['#6d3bc9', '#e9c6ff'], day: ['#2f6fb0', '#bfe3ff'], fix: ['#2e7d4a', '#bfe8c8']}[c.kind], keep = c.kind === 'keep';
+    const v = el('h_certV'), cols = {learn: ['#8a5a2c', '#f2c14e'], keep: ['#6d3bc9', '#e9c6ff'], day: ['#2f6fb0', '#bfe3ff'], fix: ['#2e7d4a', '#bfe8c8'], puzzle: ['#5b2fa8', '#e9c6ff']}[c.kind], keep = c.kind === 'keep';
     v.innerHTML = `<div class="cert${keep ? ' ench' : ''}" style="--fr:${cols[0]};--fr2:${cols[1]}"><canvas id="h_certC" width="96" height="54"></canvas><div class="certR"><div class="clab">奖状${keep ? ' · 附魔' : ''}</div><h1>${c.title}</h1><div class="cwho">空空</div><div class="csay">${c.say(E0.t)}</div><div class="cdate">${dateCN(S.home.got[c.id])}</div></div></div><div class="certbtns"><button class="btn" id="h_cClose">收好</button><button class="btn" id="h_cPrint">打印奖状</button></div>`;
     v.hidden = false; const g = el('h_certC').getContext('2d'); let f = 0, jump = 0;
     clearInterval(certT); const draw = () => { g.clearRect(0, 0, 96, 54); A.scene(g, c.scene, keep, f, jump > 0); f++; if (jump > 0) jump--; }; draw(); certT = setInterval(draw, 200);

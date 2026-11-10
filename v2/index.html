@@ -499,7 +499,7 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #house .row em{font-style:normal;color:var(--warn);font-weight:900;white-space:nowrap}
 #house .ore3{display:grid;grid-template-columns:1fr;gap:6px}
 #house .medals{display:grid;grid-template-columns:1fr auto auto;gap:4px 8px;font-size:15px;align-items:center}
-#house .md{width:18px;height:18px;border:2px solid #000;display:block}
+#house .md{width:18px;height:18px;border:2px solid #000;display:block}.md.md-img{width:22px;height:22px;border:0;image-rendering:pixelated}
 #house #h_certV{position:absolute;inset:0;background:rgba(10,10,12,.88);display:flex;align-items:center;justify-content:center;gap:12px;padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));z-index:20}
 #house #h_certV[hidden]{display:none}
 #house .cert{display:flex;gap:12px;align-items:stretch;background:var(--panel);border:6px solid var(--fr);outline:4px solid #000;box-shadow:inset 0 0 0 3px var(--fr2);padding:10px;max-width:calc(100vw - 140px);animation:hstamp .35s cubic-bezier(.2,1.5,.5,1) backwards}
@@ -520,13 +520,13 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 #house .bkh h2{margin:0;flex:1;font-size:20px}
 #house .bkg{flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;align-content:start}
 #house .bkc{min-height:84px;background:#3a2d58;border:3px solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px}
-#house .bkc canvas{height:42px;width:48px}
+#house .bkc canvas{height:42px;width:48px}#house .bkc.badge canvas{height:48px;width:48px;image-rendering:pixelated}
 #house .bkc small{font-size:15px;font-weight:800;line-height:1.05;text-align:center}   /* 英文名长（Little Wolf）折两行，卡片跟着长高（字号审查 11-09） */
 #house .bkc.gold{background:#5a3db0;box-shadow:inset 0 0 0 2px #e9c6ff}
 #house .bkc.home{outline:3px solid var(--warn);outline-offset:-3px}
 #house .bkc.lock small{color:var(--dim)}
 #house .bkd{min-height:54px;background:var(--panel);border:3px solid #000;padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:17px;line-height:1.35}
-#house .bkd .go{min-height:44px;font-size:17px}
+#house .bkd .go{min-height:44px;font-size:17px}#house .bkd .bdx{display:block;font-size:17px;color:var(--mute);line-height:1.3}
 #house #h_loot{position:absolute;inset:0;background:rgba(14,10,28,.92);z-index:21;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}
 #house #h_loot[hidden]{display:none}
 #house #h_lootC{height:38vh;aspect-ratio:40/32;cursor:pointer}
@@ -1029,7 +1029,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
   <div style="font-size:18px;color:var(--mute)">横着放，右边有地方写字</div>
 </div>
 
-<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v160:620c178df9da -->
+<!-- 改了 core / ink / skills / engine / render 任何一个，必须同时把 5 个 v= 都加 1，否则手机可能拿旧脚本配新页面而出错；npm test 会提示新指纹 · 脚本指纹 v164:55861b88c5dd -->
 <script>
 // 12c 出错兜底：任何没接住的错误 → 全屏「哎呀，卡住了」+「重新打开」（每题都已存）
 (function () {
@@ -1039,27 +1039,27 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
   window.addEventListener('unhandledrejection', function (e) { crash((e.reason && e.reason.message) || String(e.reason)); });
 })();
 </script>
-<script src="touchfix.js?v=160"></script>
-<script src="i18n.js?v=160"></script>
-<script src="bank.js?v=160"></script>
-<script src="hardbank.js?v=160"></script>
-<script src="placebank.js?v=160"></script>
-<script src="core.js?v=160"></script>
-<script src="ink.js?v=160"></script>
-<script src="skills.js?v=160"></script>
-<script src="engine.js?v=160"></script>
-<script src="render.js?v=160"></script>
-<script src="world.js?v=160"></script>
-<script src="home.js?v=160"></script>
-<script src="puzzles.js?v=160"></script>
-<script src="thinking.js?v=160"></script>
-<script src="house.js?v=160"></script>
-<script src="kongmine.js?v=160"></script>
-<script src="gems.js?v=160"></script>
-<script src="gemui.js?v=160"></script>
-<script src="vert.js?v=160"></script>
-<script src="lock.js?v=160"></script>
-<script src="mistview.js?v=160"></script>
+<script src="touchfix.js?v=164"></script>
+<script src="i18n.js?v=164"></script>
+<script src="bank.js?v=164"></script>
+<script src="hardbank.js?v=164"></script>
+<script src="placebank.js?v=164"></script>
+<script src="core.js?v=164"></script>
+<script src="ink.js?v=164"></script>
+<script src="skills.js?v=164"></script>
+<script src="engine.js?v=164"></script>
+<script src="render.js?v=164"></script>
+<script src="world.js?v=164"></script>
+<script src="home.js?v=164"></script>
+<script src="puzzles.js?v=164"></script>
+<script src="thinking.js?v=164"></script>
+<script src="house.js?v=164"></script>
+<script src="kongmine.js?v=164"></script>
+<script src="gems.js?v=164"></script>
+<script src="gemui.js?v=164"></script>
+<script src="vert.js?v=164"></script>
+<script src="lock.js?v=164"></script>
+<script src="mistview.js?v=164"></script>
 <script>
 (() => {
   const C = window.SM, I = window.INK, K = window.SKILLS, E = window.ENGINE, R = window.RENDER, MV = window.MISTVIEW, LK = window.LOCK.create(), $ = id => document.getElementById(id);
@@ -2699,6 +2699,7 @@ html .dnb .dbody .dstep>.pclock{width:min(108px,29vh);height:min(108px,29vh)}
   const inApp = !!(window.webkit && webkit.messageHandlers && webkit.messageHandlers.backup) && !TEST && !PREVIEW;
   GM.init({finishQ, goIsland, qLimit: inst => qLimit(inst), curQ: () => Q, leaveQ: () => { timers(); clearInterval(Q.tick); try { Q.lock && Q.lock.release(); } catch (e) {} const q = Q; Q = null; save(); return q; }, enabled: !TEST || /[?&]gems=1/.test(location.search), canClaim: inApp || TEST, enabledInApp: inApp, key: TEST ? 'speedmap.test.gems' : 'speedmap.gems', store, $, C, E, K, S: () => S, today, show, cur: () => cur, begin, startQ, goIsland,
     canWrite: () => !frozen && !S.readOnly && !S.stopped});
+  HOME.setExt(() => { try { const p = GM.puzzle(); return {puzzleMaster: !!(p && p.master)}; } catch (e) { return {puzzleMaster: false}; } });
   GM.islandBtn(); $('btnForge').addEventListener('click', () => { if (!WD.entering) GM.openForge('island'); });
   window.__sm = {TH, today, resolve: r => resolve(r), startP: (k, t, picks, extra) => start(k, t, picks, extra), get S() { return S; }, get P() { return P; }, get Q() { return Q; }, get INK() { return INKS; }, get HS() { return HS; }, CTX, E, K, R, LOAD, fitBody, FLASHLOG, pad: playPad, qPad, startQ: (k, o) => startQ(k, o)}; // 调试 / 测试用
   if (LOAD.notes.includes('superseded')) $('ovNew').hidden = false;

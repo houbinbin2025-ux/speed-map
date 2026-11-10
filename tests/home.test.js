@@ -50,7 +50,8 @@ test('每张奖状都有称号、画面、说明；编号不重复；全部能�
   const S = C.blank(); K.SKILLS.concat(K.HARD).forEach(s => lit(S, s.id, 3));
   S.stats = {}; for (let i = 0; i < 200; i++) S.stats[D(-i)] = {sec: 700, n: 5};
   S.mistakes = {}; for (let i = 0; i < 400; i++) S.mistakes['x' + i]   /* 方案 4 乙：最高一档 400 道 */ = {key: 'x' + i, uid: 'x', due: null, passes: 5};
-  H.sync(S, D(0)); const e = H.earned(S), t = e.t;
+  H.setExt(() => ({puzzleMaster: true}));   // 解谜大师要 11 枚趣味题徽章（碎片那边的数据，由页面注入）
+  H.sync(S, D(0)); const e = H.earned(S), t = e.t; H.setExt(null);
   assert.equal(e.certs.length, H.CERTS.length); assert.equal(e.items.length, H.ITEMS.length); assert.equal(e.medals.length, H.MEDALS.length);
   H.CERTS.forEach(c => { assert.ok(c.title && c.scene && c.text && c.say(t), c.id); });
   const all = ids(H.CERTS.concat(H.ITEMS, H.MEDALS)); assert.equal(new Set(all).size, all.length);
@@ -129,4 +130,17 @@ test('伙伴合并：取并集、本机在前、去重、最多 4 个；空数�
   assert.deepEqual(C.importMerge(A, C.exportText(B)).home.pets, ['look1', 'look2'], '导入进度：伙伴回来');
   const old = C.blank(); old.home = {ore: 1, got: {}, loot: [], place: {}, sec: 0, go: 0};   // 更早的备份没有 pets 字段
   assert.deepEqual(C.importMerge(A, C.exportText(old)).home.pets, [], '旧备份没有 pets：本机的照旧（空数组进屋时会自动补）');
+});
+
+test('解谜大师：徽章没集齐不发；集齐发；之后碎片数据没了也不收回；不进告示牌目标', () => {
+  const S = C.blank(); S.placedAt = 1;
+  H.setExt(() => ({puzzleMaster: false})); H.sync(S, D(0));
+  assert.ok(!H.earned(S).certs.some(c => c.id === 'c:puzzle:master'), '没集齐就发了');
+  assert.ok(!H.next(S, 99).some(n => n.r.id === 'c:puzzle:master'), '告示牌目标里不该有解谜大师');
+  H.setExt(() => ({puzzleMaster: true})); const news = H.sync(S, D(1));
+  assert.ok(news.some(r => r.id === 'c:puzzle:master') && S.home.got['c:puzzle:master'] === D(1), '集齐了没发');
+  H.setExt(() => ({puzzleMaster: false})); H.sync(S, D(2));
+  assert.ok(H.earned(S).certs.some(c => c.id === 'c:puzzle:master'), '得到过的被收回了');
+  H.setExt(() => { throw new Error('碎片坏了'); }); assert.doesNotThrow(() => H.sync(S, D(3)));   // 碎片出错不挡别的奖状
+  H.setExt(null);
 });

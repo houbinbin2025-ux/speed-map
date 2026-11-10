@@ -69,13 +69,16 @@ with sync_playwright() as p:
     check(pg.evaluate("__sm.S.home.go") == 1, '去练次数没记')
     check(pg.evaluate("Object.values(__sm.S.stats).some(d => d.home >= 0 && 'home' in d)"), '家里时间没记')
     # 全部获得：每件道具都放得下
-    pg.goto(url); pg.evaluate("""() => { const S = __sm.S; __sm.K.SKILLS.forEach(s => s.items.forEach(i => { const p = __sm.E.prog(S, i.id); p.lv = 3; p.d = ['2026-01-01', '2026-01-02', '2026-01-06']; })); S.stats = {}; for (let i = 0; i < 200; i++) S.stats['2026-0' + (1 + (i >> 5) % 9) + '-' + String(1 + i % 28).padStart(2, '0') + 'x' + i] = {sec: 700, n: 5}; S.mistakes = {}; for (let i = 0; i < 60; i++) S.mistakes['x' + i] = {key: 'x' + i, uid: 'x', due: null, passes: 5}; }""")
+    pg.goto(url.replace('#test', '?gems=1#test')); pg.evaluate("""() => { const S = __sm.S; __sm.K.SKILLS.forEach(s => s.items.forEach(i => { const p = __sm.E.prog(S, i.id); p.lv = 3; p.d = ['2026-01-01', '2026-01-02', '2026-01-06']; })); S.stats = {}; for (let i = 0; i < 200; i++) S.stats['2026-0' + (1 + (i >> 5) % 9) + '-' + String(1 + i % 28).padStart(2, '0') + 'x' + i] = {sec: 700, n: 5}; S.mistakes = {}; for (let i = 0; i < 60; i++) S.mistakes['x' + i] = {key: 'x' + i, uid: 'x', due: null, passes: 5}; }""")
+    # 11 枚趣味题徽章都得到 → 解谜大师（C 方案 7，数据在碎片自己的存储里，经 HOME.setExt 注入）
+    pz = pg.evaluate("(() => { if (!(window.GEMUI && GEMUI.enabled() && GEMUI.state())) return false; GEMUI.state().puzzle = {n: 33, by: Object.fromEntries(Object.keys(ART.BADGE_KIND).map(k => [k, 3]))}; return GEMUI.puzzle().master; })()")
+    check(pz, '碎片没开，或 11 枚徽章都给了 3 道还不算集齐')
     pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2600); shot(pg, 'm-full')
     # 每件道具都要有图（画图单收尾，E 11-10：等图名单 PENDING 已删空，恢复全部检查；以后加新道具没画图这里会报错）
     noart = pg.evaluate("(() => __sm.HS.E0.items.filter(i => !i.part && !ART.ITEM[i.id]).map(i => i.id))()")
     check(not noart, '没画图的道具：' + str(noart))
     miss = pg.evaluate("(() => { const h = __sm.S.home; return __sm.HS.E0.items.filter(i => !i.part && ART.ITEM[i.id] && !__sm.HS.SLOTS[h.place[i.id]]).map(i => i.name); })()")
-    check(not miss, '放不下的道具：' + str(miss)); check(pg.evaluate("__sm.HS.E0.certs.length") == 31, '全部奖状数不对')
+    check(not miss, '放不下的道具：' + str(miss)); check(pg.evaluate("__sm.HS.E0.certs.length") == 32, '全部奖状数不对（31 张 + 解谜大师）'); check(pg.evaluate("__sm.HS.E0.certs.some(c => c.id === 'c:puzzle:master')"), '集齐 11 枚徽章没发解谜大师')
     b.close()
 print('错误', errs or '无'); print('不通过', fails or '无')
 sys.exit(1 if fails or errs else 0)

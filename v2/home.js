@@ -18,6 +18,10 @@
   const HARD_LV = [...new Set(HARD.map(s => groupOf(lvOfSkill(s))))].sort((a, b) => a - b);
   const lvCells = g => HARD.filter(s => groupOf(lvOfSkill(s)) === g).flatMap(s => s.items);
 
+  // 家以外的状态（C 方案 7：趣味题徽章存在碎片自己的存储里），由页面注入一次（index.html 在 GM.init 之后调 setExt），sync、next、earned 同一个口径（C 11-10）
+  let EXT = () => ({});
+  function setExt(fn) { EXT = typeof fn === 'function' ? fn : () => ({}); }
+  const ext = () => { try { return EXT() || {}; } catch (e) { return {}; } };
   function stats(S) {
     const all = ALLSK.flatMap(s => s.items), lv = id => E.lv(S, id) || 0;   // 格子、道具按全部技能算（含三四年级）
     const practiced = new Set(); // 这一天算「练过」：练满 5 分钟或今天的题做完了（防止每天答 1 题刷奖励，也不亏待都学会了的孩子）；秒答（含 v1 旧日子）不进时长，答满 10 题算
@@ -32,6 +36,7 @@
       learned: ALLSK.filter(s => s.items.every(i => lv(i.id) >= 1)).length,
       started: PLACES.concat([['speed', '']]).filter(([g]) => ALLSK.some(s => (g === 'speed' ? s.speed || s.group === 'speedH' : inGroup(s, g)) && s.items.some(i => lv(i.id) >= 1))).length,
       ore: (S.home && S.home.ore) || 0,
+      puzzleMaster: !!ext().puzzleMaster,   // 11 枚趣味题徽章都得到（GEMUI.puzzle().master）
       lvAll: n => { const c = lvCells(n); return {n: c.length, l1: c.filter(i => lv(i.id) >= 1).length, l3: c.filter(i => lv(i.id) >= 3).length}; },
       all: g => { const c = cells(g); return {n: c.length, l1: c.filter(i => lv(i.id) >= 1).length, l3: c.filter(i => lv(i.id) >= 3).length}; },
     };
@@ -61,6 +66,8 @@
   CERTS.push({id: 'c:fix:1', kind: 'fix', scene: 'fix:1', name: '点燃熔炉', title: '点燃熔炉', need: prog(t => t.passed, 1), text: '错题第一次复习做对', say: () => '写错的题，复习时做对了'});
   CERTS.push({id: 'c:fix:10', kind: 'fix', scene: 'fix:10', name: '熔炉师傅', title: '熔炉师傅', need: prog(t => t.solved, 10), text: '10 道错题真的会了', say: () => '10 道错题，都会了'});
   CERTS.push({id: 'c:fix:50', kind: 'fix', scene: 'fix:50', name: '炼金大师', title: '炼金大师', need: prog(t => t.solved, 50), text: '50 道错题真的会了', say: () => '50 道错题，都会了'});
+  // 解谜大师（C 方案 7，E 11-10 接）：11 枚趣味题徽章都得到；要好几个月，不进告示牌「下一个目标」（next 排除 kind 'puzzle'）
+  CERTS.push({id: 'c:puzzle:master', kind: 'puzzle', scene: 'puzzle:master', name: '解谜大师', title: '解谜大师', need: t => [t.puzzleMaster ? 1 : 0, 1], text: '11 枚趣味题徽章都得到', say: () => '11 枚徽章，都得到了'});
 
   // 道具：摆在屋里；hidden = 没得到前显示「？」（意料之外的奖励）
   const ITEMS = [
@@ -137,7 +144,7 @@
   // 下一个最接近的目标：屋里只提示 3 个，避免一屏清单
   function next(S, n) {
     const h = ensure(S), t = stats(S);
-    return CERTS.concat(ITEMS.filter(i => !i.hidden)).filter(r => !h.got[r.id] && shown(S, r)).map(r => { const [a, b] = r.need(t); return {r, a: Math.min(a, b), b, left: b - a}; }).sort((x, y) => x.left - y.left).slice(0, n || 3);
+    return CERTS.concat(ITEMS.filter(i => !i.hidden)).filter(r => !h.got[r.id] && r.kind !== 'puzzle' && shown(S, r)).map(r => { const [a, b] = r.need(t); return {r, a: Math.min(a, b), b, left: b - a}; }).sort((x, y) => x.left - y.left).slice(0, n || 3);
   }
-  return {PLACES, CERTS, ITEMS, MEDALS, BY, HARD_LV, stats, sync, earned, ensure, addOre, next, done, creatureOf, opened, shown};
+  return {PLACES, CERTS, ITEMS, MEDALS, BY, HARD_LV, setExt, stats, sync, earned, ensure, addOre, next, done, creatureOf, opened, shown};
 });
