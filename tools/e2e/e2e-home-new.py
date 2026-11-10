@@ -1,5 +1,5 @@
 # 方案 4 乙丙的 8 件新道具、新摆设还没画图（等 E）：拿到了也不能让家卡住（中控 11-09 审查要求 ③，审查员的验证脚本改写）。
-# 场景 1：旧奖励都拿过 + 400 道下架错题 + 175 天 → 进家战利品箱里正好是 8 件新的，开箱、收好、告示牌、图鉴、全屋每格点一遍、摆放模式每格点一遍，都不报错，没图的不摆
+# 场景 1：旧奖励都拿过 + 400 道下架错题 + 175 天 → 进家战利品箱里正好是 8 件新的，开箱、收好、告示牌、图鉴、全屋每格点一遍、摆放模式每格点一遍，都不报错，8 件新道具都摆出来
 # 场景 2：99 道 + 99 天 → 告示牌出现「铁砧 99/100」「风车 99/100」，不报错
 # 用法：python3 tools/e2e/e2e-home-new.py <项目根> <截图目录>
 import sys, pathlib, json
@@ -42,7 +42,7 @@ with sync_playwright() as p:
         pg.screenshot(path=str(out / f'loot-{W}.png'))
         pg.click('#h_lootOk'); pg.wait_for_timeout(800)
         check(pg.evaluate("__sm.S.home.loot.length") == 0, f'{W} 收好后箱子清空')
-        placed = pg.evaluate("Object.keys(__sm.S.home.place)"); check(not any(i in placed for i in NEW), f'{W} 没图的不摆')
+        placed = pg.evaluate("Object.keys(__sm.S.home.place)"); check(all(i in placed for i in NEW), f'{W} 8 件新道具都摆出来了（E 11-10 画好图）：缺 {[i for i in NEW if i not in placed]}')
         # 告示牌
         S_ = pg.evaluate("__sm.HS.SIGN"); pg.evaluate(f"__sm.HS.tap({S_['x']+10}, {S_['y']+8})"); pg.wait_for_timeout(1800)
         print(W, '告示牌:', pg.evaluate("(document.getElementById('h_sheet')||{}).innerText"))
@@ -52,7 +52,7 @@ with sync_playwright() as p:
         check(vis(pg, '#h_book'), f'{W} 图鉴打开'); pg.screenshot(path=str(out / f'book-{W}.png'))
         pg.click('#h_bkClose'); pg.wait_for_timeout(400)
         # 扫全屋每一格（点道具、奖状墙、影子），每点一下关掉弹出
-        for x in range(4, 972, 12):
+        for x in range(4, pg.evaluate("document.getElementById('h_cvRoom').width"), 12):   # 屋宽跟着地面格数走（原来写死 972）
             for y in (8, 20, 32, 44, 56):
                 pg.evaluate(f"__sm.HS.tap({x}, {y})"); pg.wait_for_timeout(15)
                 pg.evaluate("document.querySelectorAll('#h_certV, #h_book, #h_loot').forEach(e => e.hidden = true)")
@@ -63,7 +63,7 @@ with sync_playwright() as p:
         for s in pg.evaluate("Object.values(__sm.HS.SLOTS).map(s => [s.x + 8, s.y + 8])"): pg.evaluate(f"__sm.HS.tap({s[0]}, {s[1]})"); pg.wait_for_timeout(10)
         pg.click('#h_btnEdit'); pg.wait_for_timeout(300)
         pg.screenshot(path=str(out / f'room-{W}.png'))
-        # 场景 2：99 道下架 + 99 天，旧的都拿过 → 告示牌上应出现铁砧 99/100、风车 99/100，影子不画没图的
+        # 场景 2：99 道下架 + 99 天，旧的都拿过 → 告示牌上应出现铁砧 99/100、风车 99/100，影子照常画
         setup(pg, 99, 99, True)
         pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2500)
         nx = pg.evaluate("HOME.next(__sm.S, 3).map(n => n.r.id + ' ' + n.a + '/' + n.b)"); print(W, '场景2 next:', nx)

@@ -71,13 +71,9 @@ with sync_playwright() as p:
     # 全部获得：每件道具都放得下
     pg.goto(url); pg.evaluate("""() => { const S = __sm.S; __sm.K.SKILLS.forEach(s => s.items.forEach(i => { const p = __sm.E.prog(S, i.id); p.lv = 3; p.d = ['2026-01-01', '2026-01-02', '2026-01-06']; })); S.stats = {}; for (let i = 0; i < 200; i++) S.stats['2026-0' + (1 + (i >> 5) % 9) + '-' + String(1 + i % 28).padStart(2, '0') + 'x' + i] = {sec: 700, n: 5}; S.mistakes = {}; for (let i = 0; i < 60; i++) S.mistakes['x' + i] = {key: 'x' + i, uid: 'x', due: null, passes: 5}; }""")
     pg.click('.w-mini button[data-z="home"]'); pg.wait_for_timeout(2600); shot(pg, 'm-full')
-    # 和 house.js placeable() 同一口径：没画图的道具先不摆（C 方案 4 乙丙，中控 11-09 批准）。只放过下面这 8 件「等 E 出图」的：
-    # 别的道具没图照样报错；这 8 件里哪件 E 画好了，下面的检查会报错提醒把它从名单删掉，删光后就恢复成全部检查（记在 E 的画图单）
-    PENDING = ['fix100', 'fix200', 'fix400', 'deco15', 'deco16', 'deco17', 'deco18', 'deco19']
+    # 每件道具都要有图（画图单收尾，E 11-10：等图名单 PENDING 已删空，恢复全部检查；以后加新道具没画图这里会报错）
     noart = pg.evaluate("(() => __sm.HS.E0.items.filter(i => !i.part && !ART.ITEM[i.id]).map(i => i.id))()")
-    check(not [i for i in noart if i not in PENDING], '没画图、也不在等图名单里的道具：' + str([i for i in noart if i not in PENDING]))
-    drawn = pg.evaluate(f"{PENDING}.filter(id => ART.ITEM[id])")
-    check(not drawn, '这几件 E 已经画好图，请从 e2e7 的 PENDING 名单删掉，恢复检查：' + str(drawn))
+    check(not noart, '没画图的道具：' + str(noart))
     miss = pg.evaluate("(() => { const h = __sm.S.home; return __sm.HS.E0.items.filter(i => !i.part && ART.ITEM[i.id] && !__sm.HS.SLOTS[h.place[i.id]]).map(i => i.name); })()")
     check(not miss, '放不下的道具：' + str(miss)); check(pg.evaluate("__sm.HS.E0.certs.length") == 31, '全部奖状数不对')
     b.close()

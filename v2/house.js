@@ -38,6 +38,15 @@
     deco12: {t: 'F', a: [[W2, 2, 11, 12, 3], [W3, 7, 2, 1, 9], [Wt, 8, 3, 5, 6], [Wt, 4, 5, 3, 4], [W3, 5, 14, 6, 2]]},
     deco13: {t: 'W', a: [[K, 7, 0, 1, 3], [G, 7, 3, 2, 8], [G, 4, 6, 8, 2], ['#fff3b0', 7, 5, 2, 4]]},
     deco14: {t: 'F', a: [[S1, 2, 8, 12, 8], [S1, 1, 4, 3, 5], [S1, 12, 4, 3, 5], [S1, 6, 2, 4, 7], [K, 7, 11, 2, 5], [Rd, 8, 0, 3, 2], [W3, 7, 0, 1, 2]]},
+    // 方案 4 乙丙（C 11-09 规则，E 11-10 画）：错题真的会了 100 / 200 / 400 道，练习满 100–172 天
+    fix100: {t: 'F', a: [[S1, 2, 5, 12, 3], [S3, 2, 5, 12, 1], [S1, 0, 5, 2, 2], [S2, 6, 8, 5, 4], [S2, 3, 12, 11, 4], [S1, 3, 12, 11, 1], [K, 13, 6, 1, 2]]},
+    fix200: {t: 'F', a: [['#7bd88f', 5, 3, 2, 2], ['#b8f5c4', 9, 1, 2, 2], ['#7bd88f', 3, 6, 10, 1], [S2, 1, 7, 14, 2], [K, 2, 9, 12, 5], [K, 3, 14, 10, 1], ['#3a3d44', 4, 10, 3, 2], [K, 3, 15, 2, 1], [K, 11, 15, 2, 1]], fx: 'fire'},
+    fix400: {t: 'F', a: [[G2, 1, 1, 14, 15], [G, 1, 1, 14, 2], [G, 1, 7, 14, 1], [G, 1, 13, 14, 1], ['#fff3b0', 2, 1, 4, 1], [K, 4, 8, 8, 5], [D, 7, 3, 2, 2], [D2, 7, 4, 2, 1]], fx: 'fire'},
+    deco15: {t: 'F', a: [[S1, 6, 9, 4, 7], [S1, 5, 12, 6, 4], [S3, 6, 9, 1, 7], [Rd, 5, 8, 6, 1], [W3, 7, 13, 2, 3], [Wt, 5, 3, 2, 2], [Wt, 3, 1, 2, 2], [Wt, 9, 3, 2, 2], [Wt, 11, 1, 2, 2], [Wt, 5, 7, 2, 2], [Wt, 3, 9, 2, 2], [Wt, 9, 7, 2, 2], [Wt, 11, 9, 2, 2], [W2, 7, 5, 2, 2]]},
+    deco16: {t: 'F', a: [['#3d7524', 3, 3, 7, 4], ['#6fae3a', 4, 3, 5, 2], ['#3d7524', 9, 5, 5, 3], ['#6fae3a', 10, 5, 3, 1], [W3, 7, 7, 2, 5], [W3, 9, 7, 1, 2], [W1, 3, 12, 10, 1], [W2, 4, 13, 8, 3]]},
+    deco17: {t: 'W', a: [[K, 7, 0, 1, 3], [W2, 3, 3, 10, 2], [W1, 3, 3, 10, 1], [D, 4, 5, 1, 6], [S3, 6, 5, 1, 9], [G, 9, 5, 1, 7], ['#f6a5a0', 11, 5, 1, 5], [K, 7, 14, 2, 2]]},
+    deco18: {t: 'F', a: [['#6ea8fe', 2, 3, 4, 4], [Wt, 2, 3, 4, 1], [G, 11, 2, 3, 2], [W3, 12, 4, 1, 3], [W1, 0, 7, 16, 1], [W2, 0, 8, 16, 1], [W3, 1, 9, 2, 7], [W3, 13, 9, 2, 7], [W2, 8, 9, 5, 3], [G, 10, 10, 1, 1]]},
+    deco19: {t: 'W', a: [[W2, 1, 2, 14, 12], ['#1d2b5a', 2, 3, 12, 10], ['#fff3b0', 4, 5, 1, 1], [Wt, 7, 4, 1, 1], ['#fff3b0', 11, 5, 1, 1], [Wt, 12, 9, 1, 1], ['#fff3b0', 5, 10, 1, 1], [Wt, 8, 8, 1, 1], [S2, 5, 6, 2, 1], [S2, 8, 6, 3, 1], [G, 10, 10, 2, 2], ['#1d2b5a', 11, 10, 1, 1]]},
   };
   const PIECE = {helm: [[D, 5, 0, 6, 3], [D2, 5, 3, 1, 1], [D2, 10, 3, 1, 1]], chest2: [[D, 4, 4, 8, 5], [D2, 2, 4, 2, 3], [D2, 12, 4, 2, 3]], legs: [[D2, 5, 9, 6, 3], [D, 5, 9, 2, 3], [D, 9, 9, 2, 3]], boots: [[D, 4, 13, 3, 2], [D, 9, 13, 3, 2]]};
   function item(g, id, x, y) { list(g, x, y, ITEM[id].a); }
@@ -46,7 +55,9 @@
   function shadow(g, id, x, y) { const c = document.createElement('canvas'); c.width = 24; c.height = 16; const h = c.getContext('2d'); item(h, id, 0, 0); h.globalCompositeOperation = 'source-in'; h.fillStyle = 'rgba(10,8,6,.42)'; h.fillRect(0, 0, 24, 16); g.drawImage(c, x, y); }
   function icon(cv, id) { cv.width = 24; cv.height = 16; const g = cv.getContext('2d'); g.clearRect(0, 0, 24, 16); if (ITEM[id]) item(g, id, (24 - (ITEM[id].w || 16)) >> 1, 0); }
   function ingot(g, x, y, c, c2) { r(g, K, x, y + 1, 7, 4); r(g, c, x + 1, y, 5, 3); r(g, c2, x, y + 3, 7, 1); }
-  root.ART = {ITEM, item, armorParts, shadow, icon, ingot, r, list, COL: {K, W1, W2, W3, S1, S2, S3, G, G2, D, D2, Rd, Wt}};
+  // 屋里能摆的格子数（中控 11-09 审查：方案 4 乙丙新加 6 件地上道具，原来地面 22 格只剩 2 格，autoPlace 找不到空位会静默跳过）；tests/house-slots.test.js 按地上 / 墙上核对道具数不超过格子数
+  const SLOTS_N = {F: 30, W: 18};
+  root.ART = {SLOTS_N, ITEM, item, armorParts, shadow, icon, ingot, r, list, COL: {K, W1, W2, W3, S1, S2, S3, G, G2, D, D2, Rd, Wt}};
 })(this);
 // ---------- 生物：全部原创，按模板 + 配色画 ----------
 (function (root) {
@@ -324,7 +335,7 @@
   const el = id => rootEl.querySelector('#' + id);
   let S = o.S(), E0 = H.earned(S);
   // ---------- 屋子布局（art 像素） ----------
-  const RH = 76, FLOOR = 62, RW0 = 972; let RW = RW0;
+  const RH = 76, FLOOR = 62, RW0 = 431 + A.SLOTS_N.F * 24 + 16; let RW = RW0;   // 屋宽跟着地面格数走（原来 972 = 22 格）
   const CW = {x: 8, y: 8, dx: 24, dy: 17.5, w: 19, h: 14};   // 奖状墙：3 排大图
   const certPos = {}, BASE = H.CERTS.filter(c => !c.lv);
   BASE.forEach(c => {   // 原来的奖状墙：一二年级的地方、秒答、天数、错题，位置不变
@@ -344,8 +355,8 @@
   }
   const DOOR = {x: 311, w: 18}, LOOT = {x: 287, w: 18}, CHEST = {x: 337, w: 16}, SIGN = {x: 333, y: 12, w: 22, h: 18}, BOOK = {x: 361, w: 22}, CAB = {x: 391, w: 30};
   const FS = [], WS = [];
-  for (let i = 0; i < 22; i++) FS.push({id: 'F' + i, t: 'F', x: 431 + i * 24, y: FLOOR - 16});
-  for (let i = 0; i < 18; i++) WS.push({id: 'W' + i, t: 'W', x: 431 + i * 24, y: 16});
+  for (let i = 0; i < A.SLOTS_N.F; i++) FS.push({id: 'F' + i, t: 'F', x: 431 + i * 24, y: FLOOR - 16});
+  for (let i = 0; i < A.SLOTS_N.W; i++) WS.push({id: 'W' + i, t: 'W', x: 431 + i * 24, y: 16});
   const SLOTS = {}; FS.concat(WS).forEach(s => { SLOTS[s.id] = s; });
   // 还没画图的道具先不摆（C 方案 4 乙丙的新道具、新摆设等 E 画；不加这道判断，第 354 行取 A.ITEM[id].t 会报错，一进家就卡住）
   const placeable = () => E0.items.filter(i => !i.part && A.ITEM[i.id]);
