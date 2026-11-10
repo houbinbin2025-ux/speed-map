@@ -1,5 +1,5 @@
 # 孩子「错题宝箱」页（11-09 Ben 确认简化）：一个「开始复习」大按钮 + 今天要复习 / 过几天再来 / 已经学会三栏
-# 11-09 第二批：点「开始复习」一次最多 15 道、题签「第 x / 15」、进度条；复习结算有「回到错题宝箱」
+# 11-09 第二批：点「开始复习」一次最多 15 道、顶栏进度条旁「第 x / 15」；复习结算有「回到错题宝箱」
 # 查：三栏分组和 F 的 MISTVIEW.shelves 一致（多于 12 道折成「还有 N 道」）；按钮和三栏标题不用滚动就看得见、不超宽；
 #     页面上不再有规则说明和统计；英文日没有中文；点「开始复习」进复习，第一题是今天要复习的题；
 #     从地点卡片「这里的错题」进来只看这一块、有「看全部错题」；今天没有要复习的 → 按钮灰掉、写「今天没有要复习的」
@@ -88,7 +88,7 @@ with sync_playwright() as p:
                 check(uid in due, f'{name}：第一题 {uid} 不在今天要复习里')
                 check(pg.evaluate("getComputedStyle(document.getElementById('qBar')).visibility") == 'visible', f'{name}：复习时没有进度条')
                 pg.screenshot(path=str(out / f'{name}-review.png'))
-                # 一次最多 15 道（中控 11-09）：题签写「第 x / 15」，全答对快速，做完 15 道就结算，剩下 5 道留到下一次
+                # 一次最多 15 道（中控 11-09）：顶栏写「第 x / 15」，全答对快速，做完 15 道就结算，剩下 5 道留到下一次
                 seen = 0
                 for _ in range(120):
                     c = pg.evaluate("['qplay','demo','qsum'].find(k => !document.getElementById(k).hidden) || ''")
@@ -97,8 +97,15 @@ with sync_playwright() as p:
                     st = pg.evaluate("__sm.Q && __sm.Q.phase === 'q' && __sm.Q.x && __sm.Q.x.inst ? [!!__sm.Q.x.retry, __sm.Q.sess.pos, document.getElementById('qPos').textContent] : null")
                     if not st: pg.wait_for_timeout(250); continue
                     if not st[0]: seen += 1
-                    check(st[1] == seen and (f'第 {seen} / 15' if mode == 'zh' else f'{seen} / 15') == st[2], f'{name}：第 {seen} 道题签不对 {st}')
-                    if seen == 3: pg.screenshot(path=str(out / f'{name}-review3.png'))
+                    check(st[1] == seen and (f'第 {seen} / 15' if mode == 'zh' else f'{seen} / 15') == st[2], f'{name}：第 {seen} 道顶栏进度不对 {st}')
+                    if seen == 3:
+                        pg.screenshot(path=str(out / f'{name}-review3.png'))
+                        # 顶栏多了「第 x / 15」后，矿石数 #qMined 和它自己都要整个看得见：不出左栏、不钻到写字板下（审查 R2）
+                        ov = pg.evaluate("""() => { const r = id => document.getElementById(id).getBoundingClientRect(), top = document.querySelector('#qplay .qtop'), T = top.getBoundingClientRect(), pad = document.getElementById('qPad');
+                          const P = pad && !pad.hidden && pad.offsetParent ? pad.getBoundingClientRect() : null, bad = [];
+                          for (const id of ['qPos', 'qMined', 'qQuit']) { const b = r(id); if (!b.width) continue; if (b.right > T.right + 1 || b.left < T.left - 1 || b.right > innerWidth + 1) bad.push(id + ' 出顶栏'); if (P && b.right > P.left + 1 && b.left < P.right - 1 && b.bottom > P.top + 1 && b.top < P.bottom - 1) bad.push(id + ' 压在写字板下'); }
+                          if (top.scrollWidth > top.clientWidth + 1) bad.push('顶栏横向溢出 ' + top.scrollWidth + '>' + top.clientWidth); return bad; }""")
+                        check(not ov, f'{name}：复习时顶栏 {ov}')
                     pg.evaluate("__sm.resolve({ok: true, fast: true})"); pg.wait_for_timeout(250)
                 check(seen == 15, f'{name}：一次复习出了 {seen} 道，应 15 道')
                 pg.wait_for_selector('#qsMist', timeout=5000)
